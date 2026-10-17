@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Smooth the audio-synchronous body movement so beats breathe continuously instead of producing abrupt compression-like jumps.
+- Remove audio-synchronous geometry scaling after screencast review exposed beat-periodic tearing and compression-like jumps.
 
 ### Added
 

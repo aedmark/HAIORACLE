@@ -88,11 +88,6 @@ function paletteFor(score) {
   return shifts.map((shift) => wrapHue(score.hue + shift));
 }
 
-function smoothBeatScale(elapsed, pulsesPerMinute) {
-  const phase = elapsed * pulsesPerMinute / 60 * Math.PI * 2;
-  return 1 + Math.sin(phase - Math.PI / 2) * 0.006;
-}
-
 function shapeRadius(score, angle, elapsed) {
   const folded = Math.cos(angle * score.symmetry);
   const edge = score.edge / 100;
@@ -638,7 +633,6 @@ class OracleVision {
     const width = this.width;
     const height = this.height;
     const elapsed = this.reducedMotion ? 1.25 : (timestamp - this.startedAt) / 1000;
-    const beatScale = smoothBeatScale(elapsed, score.pulse);
     const colors = paletteFor(score);
 
     const backdrop = ctx.createRadialGradient(width * 0.58, height * 0.44, 0, width * 0.58, height * 0.44, Math.max(width, height) * 0.78);
@@ -664,7 +658,7 @@ class OracleVision {
     const centerX = width * (width < 760 ? 0.66 : 0.72) + Math.cos(elapsed * 0.21) * orbitDistance;
     const centerY = height * (width < 760 ? 0.66 : 0.5) + Math.sin(elapsed * 0.27) * orbitDistance;
     const sizeFactor = 0.15 + score.size / 100 * (width < 760 ? 0.14 : 0.22);
-    const base = Math.min(width, height) * sizeFactor * beatScale;
+    const base = Math.min(width, height) * sizeFactor;
     const points = Math.max(120, score.symmetry * 28);
     const aspectX = [1, 1, 1.08, 1, 0.9, 1.16, 1.25, 1, 0.92, 0.88][score.shape];
     const aspectY = [1, 1, 0.92, 1, 1.12, 0.88, 0.72, 1, 1.08, 1.25][score.shape];
