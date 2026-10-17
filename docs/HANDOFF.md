@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-17, session 4, on `main`: bounded kinetic geometry and silhouette flux are implemented and verified._
+_Last updated: 2026-10-17, session 5, on `main`: beat-synchronous body movement is smoothly eased and verified._
 
 **Where things stand:** P1, P2, P5-01, P5-02, and P5-03 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition. The largest gap is sensory and accessibility review in real browsers and on a real phone.
 
@@ -12,7 +12,7 @@ _Last updated: 2026-10-17, session 4, on `main`: bounded kinetic geometry and si
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **12/12 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **13/13 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 13 documents** |
 
 **What works**
@@ -26,6 +26,7 @@ _Last updated: 2026-10-17, session 4, on `main`: bounded kinetic geometry and si
 - The expanded grammar covers twelve-note phrases, eight scales, six rhythms and voices, ten shapes, broader size and color ranges, and six name templates (P5-01, D-005).
 - Eye silhouette, iris treatment and color, pupil shape, layout, size, and gaze vary deterministically (P5-02, D-006).
 - Body boundaries continuously deform through eight clamped flux grammars while eight seed-selected kinetic systems move independently inside them (P5-03, D-007).
+- Beat-synchronous body scale follows a continuous 1.2% peak-to-peak envelope rather than a sharp spike, avoiding compression-like visual jumps.
 - Runtime assets are local and dependency-free (D-001).
 
 **Not verified**
@@ -51,6 +52,28 @@ _Last updated: 2026-10-17, session 4, on `main`: bounded kinetic geometry and si
 - Q-001 blocks P6-01: choose public hosting and domain after browser review.
 
 ## Session log
+
+### Session 5: 2026-10-17: no more macroblock heartbeat
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Remove the glitchy, compression-artifact quality from sound-synchronous body movement.
+
+**Done:** Incidental rendering fix; no roadmap item added.
+
+**Changed:** Replaced the six-percent, eighth-power beat spike with a continuously differentiable 1.2% peak-to-peak sinusoidal scale envelope. Independent boundary flux and kinetic-core movement are unchanged.
+
+**Decisions:** No new durable decision; this corrects the pulse treatment already defined by D-007.
+
+**Verified:** Thirteen Node checks passed, including a regression marker for the smooth envelope; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Subjective visual quality in a real browser remains P4-01.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** P4-01.
 
 ### Session 4: 2026-10-17: impossible geometry with boundaries
 

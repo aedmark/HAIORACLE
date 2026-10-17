@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- Smooth the audio-synchronous body movement so beats breathe continuously instead of producing abrupt compression-like jumps.
+
 ### Added
 
 - Enter a phrase to summon a deterministic named audiovisual creature.

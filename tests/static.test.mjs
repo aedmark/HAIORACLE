@@ -40,6 +40,13 @@ test("kinetic geometry remains inside a bounded, deforming silhouette", async ()
   assert.match(app, /case 7: drawCrystalNetwork/);
 });
 
+test("the beat uses a small continuous scale envelope instead of a sharp spike", async () => {
+  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  assert.match(app, /function smoothBeatScale\(elapsed, pulsesPerMinute\)/);
+  assert.match(app, /Math\.sin\(phase - Math\.PI \/ 2\) \* 0\.006/);
+  assert.doesNotMatch(app, /Math\.max\(0, Math\.sin\(beat \* Math\.PI \* 2\)\) \*\* 8/);
+});
+
 test("the application has no remote runtime assets", async () => {
   const files = await Promise.all([
     "index.html",

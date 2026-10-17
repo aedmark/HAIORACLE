@@ -7,7 +7,7 @@ Automated checks prove determinism, boundary validation, the required LOLCODE su
 | Suite | File | Proves | Does not prove | Needs |
 | --- | --- | --- | --- | --- |
 | Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/body/eye/scale/kinetic diversity, negative interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
-| Static structure | `tests/static.test.mjs` | required assets, basic labels, continuous scheduler marker, bounded silhouette and clipped-core markers, no remote runtime references | computed accessibility tree, scheduler timing, or visual layout | Node 20 or newer |
+| Static structure | `tests/static.test.mjs` | required assets, basic labels, continuous scheduler marker, bounded silhouette and clipped-core markers, smooth beat-envelope marker, no remote runtime references | computed accessibility tree, scheduler timing, or visual layout | Node 20 or newer |
 | Documentation | `tools/check_docs.py` | no placeholders, broken local links, or unknown roadmap and decision references | factual accuracy of every claim | Python 3 |
 
 The fast set and full automated set are currently identical:
