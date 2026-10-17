@@ -1,0 +1,44 @@
+# Roadmap
+
+Item IDs are permanent. `[ ]` is open, `[~]` is active, `[x]` is done, and `[-]` is dropped.
+
+## Phase 1: Foundations
+
+Goal: establish a documented, dependency-free project whose LOLCODE boundary is honest and testable.
+
+- [x] P1-01 Adopt the Manifold documentation template and replace every placeholder with project truth. Verified by `python3 tools/check_docs.py` on 2026-10-17.
+- [x] P1-02 Implement the required LOLCODE 1.2 subset with line-numbered failures for unsupported syntax. Verified by `tests/oracle.test.mjs` on 2026-10-17.
+
+## Phase 2: Core experience
+
+Goal: summon one coherent audiovisual creature from one phrase.
+
+- [x] P2-01 Generate a deterministic, validated score in `src/oracle.lol`. Verified by deterministic and range tests on 2026-10-17.
+- [x] P2-02 Render the score as a ten-second Web Audio composition and animated Canvas creature. Implemented 2026-10-17; subjective browser review remains P4-01.
+- [x] P2-03 Provide responsive summon, surprise, mute, and replay controls with accessible labels and status text. Static checks passed 2026-10-17; assistive-technology review remains P4-02.
+
+## Phase 3: Output and sharing
+
+Goal: let a creature travel without adding accounts or remote storage.
+
+- [ ] P3-01 Encode the phrase in a shareable URL while preserving the deterministic privacy model. Origin: product workshop, 2026-10-17.
+- [ ] P3-02 Export a still image containing the creature name and originating phrase. Origin: prototype follow-up, 2026-10-17.
+
+## Phase 4: Quality
+
+Goal: verify the sensory experience beyond structural automation.
+
+- [ ] P4-01 Review animation, mix, controls, and responsive layout in current Chrome, Firefox, Safari, and a real phone. Origin: unverified prototype boundary, 2026-10-17.
+- [ ] P4-02 Test keyboard navigation, reduced motion, contrast, screen-reader announcements, and mute behavior with real assistive technology. Origin: accessibility review, 2026-10-17.
+
+## Phase 5: Later experiments
+
+Goal: expand only where additional complexity creates more play.
+
+- [ ] P5-01 Evaluate longer LOLCODE compositions, alternate scales, and additional visual grammars after observing real users. Origin: product workshop, 2026-10-17.
+
+## Phase 6: Release
+
+Goal: give the finished toy a durable public home.
+
+- [ ] P6-01 Choose hosting, domain, and first release version. Publishing requires maintainer approval. Origin: repository setup, 2026-10-17.

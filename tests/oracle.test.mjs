@@ -1,0 +1,45 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+import { runLolcode } from "../src/lolcode.mjs";
+import { composeScore, hashPhrase, parseScore } from "../src/score.mjs";
+
+const source = await readFile(new URL("../src/oracle.lol", import.meta.url), "utf8");
+
+test("the LOLCODE spell produces every required score field", () => {
+  const score = composeScore(source, "the moon owes me five dollars");
+  assert.equal(score.steps.length, 8);
+  assert.match(score.name, /^THE /);
+  assert.ok(score.pulse >= 54 && score.pulse <= 132);
+  assert.ok(score.hue >= 0 && score.hue <= 359);
+  assert.ok(score.symmetry >= 3 && score.symmetry <= 10);
+});
+
+test("the same normalized phrase summons the same creature", () => {
+  const first = composeScore(source, "  A Cucumber With Excellent Boundaries  ");
+  const second = composeScore(source, "a cucumber with excellent boundaries");
+  assert.deepEqual(first, second);
+});
+
+test("different phrases produce different seeds and scores", () => {
+  const first = composeScore(source, "Tuesday smells faintly purple");
+  const second = composeScore(source, "the wallpaper knows jazz");
+  assert.notEqual(first.seed, second.seed);
+  assert.notDeepEqual(first.steps, second.steps);
+});
+
+test("empty phrases are rejected at the input boundary", () => {
+  assert.throws(() => hashPhrase("   "), /visible character/);
+});
+
+test("malformed or out-of-range score output is rejected", () => {
+  assert.throws(() => parseScore(["pulse=999"], 1, "bad omen"), /escaped its range|Oracle field/);
+  assert.throws(() => parseScore(["surprise=4"], 1, "bad omen"), /Unexpected oracle field/);
+});
+
+test("unsupported LOLCODE fails with a useful line number", () => {
+  assert.throws(
+    () => runLolcode("HAI 1.2\nHOW DUZ I WAT\nKTHXBYE"),
+    /LOLCODE line 2: Unsupported statement/,
+  );
+});
