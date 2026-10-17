@@ -10,6 +10,7 @@ test("the static entry points exist", async () => {
     "styles.css",
     "src/app.mjs",
     "src/lolcode.mjs",
+    "src/music.mjs",
     "src/score.mjs",
     "src/oracle.lol",
   ].map((path) => access(new URL(path, root))));
@@ -23,6 +24,7 @@ test("the page exposes one labeled text input and its core controls", async () =
   assert.match(html, /<label for="master-volume">MASTER VOLUME<\/label>/);
   assert.match(html, /id="master-volume" type="range" min="0" max="100" value="82"/);
   assert.match(html, /id="volume-value"/);
+  assert.match(html, /id="score-melody"/);
   assert.match(html, /id="replay"/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /RESTART LOOP/);
@@ -71,6 +73,7 @@ test("the application has no remote runtime assets", async () => {
     "styles.css",
     "src/app.mjs",
     "src/lolcode.mjs",
+    "src/music.mjs",
     "src/score.mjs",
   ].map((path) => readFile(new URL(path, root), "utf8")));
   assert.equal(files.some((contents) => /https?:\/\//i.test(contents)), false);

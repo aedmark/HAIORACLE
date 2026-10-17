@@ -6,7 +6,7 @@ Automated checks prove determinism, boundary validation, the required LOLCODE su
 
 | Suite | File | Proves | Does not prove | Needs |
 | --- | --- | --- | --- | --- |
-| Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/body/eye/scale/kinetic diversity, negative interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
+| Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/body/eye/scale/kinetic/melody diversity, exact twelve-note arpeggio and chromatic motifs, negative interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
 | Static structure | `tests/static.test.mjs` | required assets, basic labels, continuous scheduler and master-volume markers, bounded silhouette and clipped-core markers, no audio-driven visual resizing, scoped body glow, no remote runtime references | computed accessibility tree, scheduler timing, perceived loudness, or visual layout | Node 20 or newer |
 | Documentation | `tools/check_docs.py` | no placeholders, broken local links, or unknown roadmap and decision references | factual accuracy of every claim | Python 3 |
 
@@ -48,12 +48,13 @@ Expected results from specific runs live in `HANDOFF.md`.
 1. Serve the repository and summon three phrases in current Chrome, Firefox, and Safari.
 2. Confirm sound starts only after a gesture, loops without an audible gap, mutes immediately, restarts, and is replaced cleanly by a new summon.
 3. Move master volume through zero, the default 82 percent, and maximum using pointer and keyboard; confirm live ramps are smooth and the loudest dense voice does not clip or pump.
-4. Confirm repeated text produces identical metadata and creature structure.
-5. Summon enough creatures to inspect every eye silhouette, iris treatment, pupil geometry, and layout for clipping or illegibility.
-6. Inspect all eight kinetic cores and silhouette-flux families for distinct motion, boundary containment, legibility, and stable frame rate.
-7. Use keyboard-only controls at desktop and narrow mobile widths.
-8. Enable reduced motion and confirm the interface remains legible, calm, and frozen at a representative phase.
-9. Inspect the network panel for unexpected outbound requests.
+4. Listen to every named motif family; confirm each forms a recognizable twelve-note loop and that restarts return to its first note.
+5. Confirm repeated text produces identical metadata and creature structure.
+6. Summon enough creatures to inspect every eye silhouette, iris treatment, pupil geometry, and layout for clipping or illegibility.
+7. Inspect all eight kinetic cores and silhouette-flux families for distinct motion, boundary containment, legibility, and stable frame rate.
+8. Use keyboard-only controls at desktop and narrow mobile widths.
+9. Enable reduced motion and confirm the interface remains legible, calm, and frozen at a representative phase.
+10. Inspect the network panel for unexpected outbound requests.
 
 ## Known pitfalls
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { runLolcode } from "../src/lolcode.mjs";
+import { MELODY_NAMES, melodyFor } from "../src/music.mjs";
 import { composeScore, hashPhrase, parseScore } from "../src/score.mjs";
 
 const source = await readFile(new URL("../src/oracle.lol", import.meta.url), "utf8");
@@ -26,6 +27,9 @@ test("the LOLCODE spell produces every required score field", () => {
   assert.ok(score.kineticDepth >= 20 && score.kineticDepth <= 100);
   assert.ok(score.kineticTilt >= 0 && score.kineticTilt <= 7);
   assert.ok(score.fluxMode >= 0 && score.fluxMode <= 7);
+  assert.ok(score.melodyMode >= 0 && score.melodyMode <= 11);
+  assert.ok(score.melodyTurn >= 0 && score.melodyTurn <= 11);
+  assert.equal(melodyFor(score).length, 12);
 });
 
 test("the same normalized phrase summons the same creature", () => {
@@ -52,6 +56,15 @@ test("a phrase batch exercises the expanded name, shape, sound, eye, and kinetic
   assert.equal(new Set(scores.map((score) => score.eyeLayout)).size, 6);
   assert.equal(new Set(scores.map((score) => score.kineticMode)).size, 8);
   assert.equal(new Set(scores.map((score) => score.fluxMode)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.melodyMode)).size, 12);
+});
+
+test("arpeggio and chromatic motifs are exact twelve-note loops", () => {
+  const base = { scale: 0, steps: Array(12).fill(0), melodyTurn: 0 };
+  assert.deepEqual(melodyFor({ ...base, melodyMode: 1 }), [0, 4, 7, 12, 16, 12, 7, 4, 0, 7, 12, 19]);
+  assert.deepEqual(melodyFor({ ...base, melodyMode: 5 }), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  assert.deepEqual(melodyFor({ ...base, melodyMode: 6 }), [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
+  assert.equal(MELODY_NAMES.length, 12);
 });
 
 test("empty phrases are rejected at the input boundary", () => {

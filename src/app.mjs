@@ -1,15 +1,5 @@
+import { MELODY_NAMES, melodyFor } from "./music.mjs";
 import { composeScore, WAVEFORMS } from "./score.mjs";
-
-const SCALES = Object.freeze([
-  [0, 2, 3, 5, 7, 9, 10, 12, 14],
-  [0, 2, 4, 7, 9, 12, 14, 16, 19],
-  [0, 1, 4, 5, 7, 8, 11, 12, 13],
-  [0, 3, 5, 6, 7, 10, 12, 15, 17],
-  [0, 2, 4, 6, 8, 10, 12, 14, 16],
-  [0, 1, 3, 5, 7, 8, 10, 12, 13],
-  [0, 2, 3, 6, 7, 9, 10, 12, 14],
-  [0, 4, 7, 11, 14, 16, 19, 23, 24],
-]);
 
 const RHYTHMS = Object.freeze([
   [1, 1, 1, 1],
@@ -48,6 +38,7 @@ const elements = {
   pulse: document.querySelector("#score-pulse"),
   wave: document.querySelector("#score-wave"),
   formValue: document.querySelector("#score-form"),
+  melody: document.querySelector("#score-melody"),
   status: document.querySelector("#status"),
 };
 
@@ -605,7 +596,8 @@ class OracleVision {
     this.context = canvas.getContext("2d", { alpha: false });
     this.score = {
       seed: 132071, pulse: 72, hue: 274, hueShift: 126, saturation: 88, palette: 2,
-      symmetry: 7, twist: 4, bloom: 66, eyes: 3, eyeShape: 3, irisStyle: 2,
+      symmetry: 7, twist: 4, bloom: 66, melodyMode: 1, melodyTurn: 0,
+      eyes: 3, eyeShape: 3, irisStyle: 2,
       pupilShape: 1, irisHue: 164, irisShift: 72, eyeSize: 68, gaze: 1, eyeLayout: 0,
       shape: 0, size: 66, edge: 50, motion: 2, kineticMode: 0, kineticSpeed: 64,
       kineticDepth: 72, kineticTilt: 3, fluxMode: 1,
@@ -783,10 +775,7 @@ function voiceStack(score, step) {
 }
 
 function scheduleNote(context, transport, score, step, at, duration) {
-  const scale = SCALES[score.scale];
-  const scaleStep = score.steps[step % score.steps.length];
-  const phraseLift = step % score.steps.length >= 8 ? 12 : 0;
-  const note = score.root + scale[scaleStep] + phraseLift;
+  const note = score.root + transport.melody[step % transport.melody.length];
   const envelope = context.createGain();
   const attack = Math.min(0.045, duration * 0.18);
   envelope.gain.setValueAtTime(0.0001, at);
@@ -827,7 +816,15 @@ async function playScore(score) {
   const feedback = context.createGain();
   const output = context.createGain();
   const drones = [];
-  const transport = { mix, output, drones, timer: 0, nextNoteTime: now, step: 0 };
+  const transport = {
+    mix,
+    output,
+    drones,
+    melody: melodyFor(score),
+    timer: 0,
+    nextNoteTime: now,
+    step: 0,
+  };
   currentTransport = transport;
 
   mix.gain.setValueAtTime(0.0001, now);
@@ -885,6 +882,7 @@ function showScore(score) {
   elements.pulse.textContent = String(score.pulse);
   elements.wave.textContent = WAVEFORMS[score.wave];
   elements.formValue.textContent = score.shapeName;
+  elements.melody.textContent = MELODY_NAMES[score.melodyMode];
   elements.replay.disabled = false;
 }
 

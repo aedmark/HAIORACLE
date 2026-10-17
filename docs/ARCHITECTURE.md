@@ -11,6 +11,7 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Page shell | `index.html`, `styles.css` | document load | browser host |
 | Browser host | `src/app.mjs` | form submission | score compiler, Canvas, Web Audio |
 | Phrase and score boundary | `src/score.mjs` | `composeScore()` | interpreter |
+| Melody grammar | `src/music.mjs` | `melodyFor()` | validated score, browser host |
 | LOLCODE runtime | `src/lolcode.mjs` | `runLolcode()` | spell source only |
 | Composition | `src/oracle.lol` | `HAI 1.2` program | interpreter output |
 | Verification | `tests/` | Node test runner | pure modules and static assets |
@@ -20,7 +21,8 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 ```text
 phrase -> normalize and FNV-1a hash -> INPUT_SEED
       -> LOLCODE spell -> key=value lines -> strict score validation
-      -> shared immutable score -> Canvas creature + Web Audio composition + text reading
+      -> shared immutable score -> twelve-note motif -> Web Audio composition
+                              +-> Canvas creature + text reading
 ```
 
 | Interface | Producer | Consumer | Contract |
@@ -30,6 +32,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with twelve note choices plus musical, body, eye-anatomy, palette, bounded-flux, kinetic-core, and naming grammar indices |
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
+| Melody motif | `melodyFor()` | audio transport | exactly twelve frozen semitone offsets selected and rotated by validated score fields |
 | Master volume | range input | active transport output gain | session-local `0..100` value mapped through a bounded perceptual curve; changes ramp over 18 ms |
 
 ## Invariants
@@ -42,6 +45,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - Rendering and sound share one immutable score. Enforced by the `showScore()` and `playScore()` call path.
 - Only one audio transport loops at a time. Enforced by `stopCurrentSound()` before every start.
 - Master volume changes only the post-compressor output gain and never changes the deterministic creature score. Enforced structurally in `tests/static.test.mjs` (D-009).
+- Every melody family resolves to exactly twelve deterministic semitone offsets and the transport repeats them modulo twelve. Enforced by exact arpeggio and chromatic tests (D-010).
 - Eye silhouette, layout, size, gaze, iris, and pupil all originate in the validated spell output. Enforced by required score fields and the batch diversity test (D-006).
 - Every silhouette stays within a radius envelope of `0.38..1.08`, and every kinetic core is clipped to the current deforming body path. Enforced structurally in `tests/static.test.mjs` (D-007).
 - Kinetic family, speed, depth, tilt, and boundary-flux family originate in validated spell output. Enforced by required ranges and the 256-phrase coverage test (D-007).

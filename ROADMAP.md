@@ -39,6 +39,7 @@ Goal: expand only where additional complexity creates more play.
 - [x] P5-02 Give eyes distinct silhouettes, arrangements, iris colors and treatments, pupil geometries, sizes, and gaze behavior. Added after maintainer review on 2026-10-17 and verified across the phrase batch; visual review remains P4-01.
 - [x] P5-03 Replace pulse-dominated blobs with bounded kinetic geometries. Added eight independently animated internal systems, including a projected tesseract, and eight silhouette-flux grammars on 2026-10-17. Score coverage and clipping invariants are automated; visual review remains P4-01.
 - [x] P5-04 Add an accessible master-volume control and raise the default mix after listening review found quiet creatures difficult to hear. Added a live 0–100 control, perceptual gain curve, stronger dry mix, and compressor-protected wet path on 2026-10-17; listening review remains P4-01.
+- [x] P5-05 Expand deterministic melody into twelve repeating motif families. Added major, minor, diminished, augmented and minor-seventh arpeggios; ascending, descending and interleaved chromatic motifs; fifths, whole-tone, glass-ladder, and seeded scale-walk patterns on 2026-10-17. Exact motif tests pass; listening review remains P4-01.
 
 ## Phase 6: Release
 

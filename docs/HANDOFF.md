@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-17, session 8, on `main`: master volume and a louder compressor-protected mix are implemented and verified._
+_Last updated: 2026-10-17, session 9, on `main`: twelve deterministic repeating melody families are implemented and verified._
 
-**Where things stand:** P1, P2, P5-01 through P5-04 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume. The largest gap is sensory and accessibility review in real browsers and on a real phone.
+**Where things stand:** P1, P2, and P5-01 through P5-05 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume. The largest gap is sensory and accessibility review in real browsers and on a real phone.
 
 **Verified** (2026-10-17, initial repository, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **15/15 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **16/16 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 13 documents** |
 
 **What works**
@@ -29,6 +29,7 @@ _Last updated: 2026-10-17, session 8, on `main`: master volume and a louder comp
 - Canvas geometry does not resize on audio beats; sound and image remain paired through their shared immutable score (D-008).
 - The large exterior glow is isolated to the body fill; kinetic lines, rings, and eyes no longer inherit its expensive per-primitive blur.
 - Master volume adjusts the active loop smoothly from silence through a compressor-protected boost; the default dry mix is substantially louder (P5-04, D-009).
+- Every phrase selects and rotates one of twelve named twelve-note motifs, including five arpeggio and three chromatic families, then repeats it exactly (P5-05, D-010).
 - Runtime assets are local and dependency-free (D-001).
 
 **Not verified**
@@ -54,6 +55,28 @@ _Last updated: 2026-10-17, session 8, on `main`: master volume and a louder comp
 - Q-001 blocks P6-01: choose public hosting and domain after browser review.
 
 ## Session log
+
+### Session 9: 2026-10-17: twelve notes walk into infinity
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Give every creature a deterministic repeating melody with explicit arpeggio and chromatic vocabularies.
+
+**Done:** P5-05
+
+**Changed:** Added LOLCODE-selected melody family and rotation fields, a pure twelve-step motif engine, twelve named melodic families, transport-level motif caching, and a visible motif label in the score readout.
+
+**Decisions:** D-010
+
+**Verified:** Sixteen Node checks passed, including all score ranges, coverage of all twelve families across 256 phrases, and exact major-arpeggio plus ascending and descending chromatic sequences; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Musicality, loop transitions, register balance, and the score-label layout in real browsers remain P4-01 work.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** Listen across all twelve named motifs, then continue P4-01.
 
 ### Session 8: 2026-10-17: give the oracle a volume knob
 

@@ -277,6 +277,7 @@ input[type="text"]:focus {
 
 .score-card {
   display: flex;
+  flex-wrap: wrap;
   gap: clamp(1rem, 3vw, 3rem);
 }
 
