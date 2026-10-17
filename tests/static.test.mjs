@@ -20,6 +20,9 @@ test("the page exposes one labeled text input and its core controls", async () =
   assert.match(html, /<label for="phrase">/);
   assert.match(html, /id="phrase"/);
   assert.match(html, /id="sound-toggle"/);
+  assert.match(html, /<label for="master-volume">MASTER VOLUME<\/label>/);
+  assert.match(html, /id="master-volume" type="range" min="0" max="100" value="82"/);
+  assert.match(html, /id="volume-value"/);
   assert.match(html, /id="replay"/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /RESTART LOOP/);
@@ -30,6 +33,15 @@ test("audio uses a continuing look-ahead scheduler", async () => {
   assert.match(app, /setInterval\(scheduleAhead, 90\)/);
   assert.match(app, /OMEN LOOPING/);
   assert.doesNotMatch(app, /OMEN COMPLETE/);
+});
+
+test("master volume raises the default mix and updates the live output safely", async () => {
+  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  assert.match(app, /function masterGainFor\(volume\)/);
+  assert.match(app, /exponentialRampToValueAtTime\(0\.28, now \+ 0\.16\)/);
+  assert.match(app, /output\.gain\.value = masterGainFor\(masterVolume\)/);
+  assert.match(app, /output\.gain\.setTargetAtTime\(masterGainFor\(masterVolume\), now, 0\.018\)/);
+  assert.match(app, /delay\.connect\(compressor\)/);
 });
 
 test("kinetic geometry remains inside a bounded, deforming silhouette", async () => {

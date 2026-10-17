@@ -30,6 +30,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with twelve note choices plus musical, body, eye-anatomy, palette, bounded-flux, kinetic-core, and naming grammar indices |
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
+| Master volume | range input | active transport output gain | session-local `0..100` value mapped through a bounded perceptual curve; changes ramp over 18 ms |
 
 ## Invariants
 
@@ -40,6 +41,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - Unsupported LOLCODE syntax fails with a line number. Enforced by the interpreter and its negative test.
 - Rendering and sound share one immutable score. Enforced by the `showScore()` and `playScore()` call path.
 - Only one audio transport loops at a time. Enforced by `stopCurrentSound()` before every start.
+- Master volume changes only the post-compressor output gain and never changes the deterministic creature score. Enforced structurally in `tests/static.test.mjs` (D-009).
 - Eye silhouette, layout, size, gaze, iris, and pupil all originate in the validated spell output. Enforced by required score fields and the batch diversity test (D-006).
 - Every silhouette stays within a radius envelope of `0.38..1.08`, and every kinetic core is clipped to the current deforming body path. Enforced structurally in `tests/static.test.mjs` (D-007).
 - Kinetic family, speed, depth, tilt, and boundary-flux family originate in validated spell output. Enforced by required ranges and the 256-phrase coverage test (D-007).

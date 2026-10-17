@@ -193,7 +193,7 @@ h1 em {
   border-bottom: 2px solid var(--ink);
 }
 
-input {
+input[type="text"] {
   min-width: 0;
   padding: 1rem 0;
   border: 0;
@@ -202,11 +202,11 @@ input {
   font-size: clamp(1.05rem, 2.2vw, 1.8rem);
 }
 
-input::placeholder {
+input[type="text"]::placeholder {
   color: rgba(247, 241, 220, 0.36);
 }
 
-input:focus {
+input[type="text"]:focus {
   outline: 0;
 }
 
@@ -252,7 +252,7 @@ input:focus {
 
 .reading {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(8rem, 11rem) auto;
   align-items: center;
   gap: clamp(1.5rem, 4vw, 5rem);
   min-height: 7.5rem;
@@ -291,6 +291,35 @@ input:focus {
 .score-card b {
   color: var(--ink);
   font-size: 0.88rem;
+}
+
+.volume-control {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 8rem;
+}
+
+.volume-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--muted);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.volume-heading output {
+  color: var(--acid);
+}
+
+#master-volume {
+  width: 100%;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--acid);
+  cursor: pointer;
 }
 
 .replay-button {
@@ -375,6 +404,12 @@ noscript {
   .score-card {
     grid-column: 1 / -1;
     grid-row: 2;
+  }
+
+  .volume-control {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: min(16rem, 100%);
   }
 
   .replay-button {

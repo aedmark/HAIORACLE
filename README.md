@@ -16,7 +16,7 @@ python3 -m http.server 8000
 
 Open [http://localhost:8000](http://localhost:8000), enter a phrase, and choose **SUMMON**. Sound requires the button press because browsers block unsolicited audio.
 
-The composition loops until you summon another creature, mute it, or close the page. **RESTART LOOP** returns the current creature to the first note.
+The composition loops until you summon another creature, mute it, or close the page. **RESTART LOOP** returns the current creature to the first note. The master-volume slider starts at a stronger listening level and can move continuously from silence to a compressor-protected boost.
 
 Opening `index.html` directly through a `file:` URL is unsupported. The browser must fetch the separate LOLCODE spell from the same HTTP origin.
 

@@ -12,6 +12,7 @@
 - Enter a phrase to summon a deterministic named audiovisual creature.
 - Hear a continuously looping synthesized composition generated from the creature's LOLCODE score.
 - Use surprise, replay, and mute controls.
+- Control a louder default mix with a live, keyboard-accessible master-volume slider.
 - Explore ten visual families, eight musical scales, six rhythmic grammars, wider color and size ranges, and more than 220,000 possible ceremonial names.
 - Meet creatures with eight eye silhouettes, eight colored iris treatments, eight pupil geometries, six eye arrangements, varied sizes, and independent gaze behavior.
 - Watch eight bounded kinetic cores—including a rotating projected tesseract—move inside eight independently deforming silhouette grammars.

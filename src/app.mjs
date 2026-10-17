@@ -42,6 +42,8 @@ const elements = {
   surprise: document.querySelector("#surprise"),
   replay: document.querySelector("#replay"),
   sound: document.querySelector("#sound-toggle"),
+  volume: document.querySelector("#master-volume"),
+  volumeValue: document.querySelector("#volume-value"),
   name: document.querySelector("#creature-name"),
   pulse: document.querySelector("#score-pulse"),
   wave: document.querySelector("#score-wave"),
@@ -54,6 +56,7 @@ let currentScore = null;
 let audioContext = null;
 let currentTransport = null;
 let muted = false;
+let masterVolume = Number(elements.volume.value);
 
 function mulberry32(seed) {
   let state = seed >>> 0;
@@ -68,6 +71,20 @@ function mulberry32(seed) {
 
 function midiToFrequency(note) {
   return 440 * (2 ** ((note - 69) / 12));
+}
+
+function masterGainFor(volume) {
+  if (volume <= 0) return 0;
+  return Math.min(1.4, (volume / 82) ** 1.6);
+}
+
+function setMasterVolume(value) {
+  masterVolume = Math.max(0, Math.min(100, Number(value)));
+  elements.volumeValue.value = `${Math.round(masterVolume)}%`;
+  if (!audioContext || !currentTransport) return;
+  const now = audioContext.currentTime;
+  currentTransport.output.gain.cancelScheduledValues(now);
+  currentTransport.output.gain.setTargetAtTime(masterGainFor(masterVolume), now, 0.018);
 }
 
 function wrapHue(hue) {
@@ -814,7 +831,7 @@ async function playScore(score) {
   currentTransport = transport;
 
   mix.gain.setValueAtTime(0.0001, now);
-  mix.gain.exponentialRampToValueAtTime(0.19, now + 0.16);
+  mix.gain.exponentialRampToValueAtTime(0.28, now + 0.16);
   filter.type = ["lowpass", "bandpass", "lowpass", "highpass", "lowpass", "bandpass"][score.voice];
   filter.frequency.value = 620 + score.bloom * 24 + score.hueShift * 2;
   filter.Q.value = 2.5 + score.edge / 16;
@@ -823,13 +840,13 @@ async function playScore(score) {
   compressor.ratio.value = 5;
   delay.delayTime.value = unit * [1, 1.5, 0.75, 2, 1.25, 0.5][score.rhythm];
   feedback.gain.value = 0.14 + score.bloom / 650;
-  output.gain.value = 0.72;
+  output.gain.value = masterGainFor(masterVolume);
 
   mix.connect(filter);
   filter.connect(compressor).connect(output).connect(context.destination);
   filter.connect(delay);
   delay.connect(feedback).connect(delay);
-  delay.connect(output);
+  delay.connect(compressor);
 
   const droneCount = score.voice === 5 ? 2 : 1;
   for (let index = 0; index < droneCount; index += 1) {
@@ -912,6 +929,10 @@ elements.sound.addEventListener("click", () => {
   } else if (currentScore) {
     playScore(currentScore);
   }
+});
+
+elements.volume.addEventListener("input", (event) => {
+  setMasterVolume(event.currentTarget.value);
 });
 
 try {

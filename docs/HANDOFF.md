@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-17, session 7, on `main`: the inherited Canvas blur bottleneck is removed and verified._
+_Last updated: 2026-10-17, session 8, on `main`: master volume and a louder compressor-protected mix are implemented and verified._
 
-**Where things stand:** P1, P2, P5-01, P5-02, and P5-03 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition. The largest gap is sensory and accessibility review in real browsers and on a real phone.
+**Where things stand:** P1, P2, P5-01 through P5-04 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume. The largest gap is sensory and accessibility review in real browsers and on a real phone.
 
 **Verified** (2026-10-17, initial repository, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **14/14 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **15/15 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 13 documents** |
 
 **What works**
@@ -28,6 +28,7 @@ _Last updated: 2026-10-17, session 7, on `main`: the inherited Canvas blur bottl
 - Body boundaries continuously deform through eight clamped flux grammars while eight seed-selected kinetic systems move independently inside them (P5-03, D-007).
 - Canvas geometry does not resize on audio beats; sound and image remain paired through their shared immutable score (D-008).
 - The large exterior glow is isolated to the body fill; kinetic lines, rings, and eyes no longer inherit its expensive per-primitive blur.
+- Master volume adjusts the active loop smoothly from silence through a compressor-protected boost; the default dry mix is substantially louder (P5-04, D-009).
 - Runtime assets are local and dependency-free (D-001).
 
 **Not verified**
@@ -53,6 +54,28 @@ _Last updated: 2026-10-17, session 7, on `main`: the inherited Canvas blur bottl
 - Q-001 blocks P6-01: choose public hosting and domain after browser review.
 
 ## Session log
+
+### Session 8: 2026-10-17: give the oracle a volume knob
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Make quiet generated voices easier to hear and give the listener direct loudness control.
+
+**Done:** P5-04
+
+**Changed:** Raised the dry-mix target from `0.19` to `0.28`, routed the wet delay through the compressor, and added a labeled 0–100 master-volume slider with a perceptual gain curve, live 18-millisecond ramps, and a stronger default setting.
+
+**Decisions:** D-009
+
+**Verified:** Fifteen Node checks passed, including control labeling, default value, stronger mix, compressor routing, and live gain-ramp markers; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Perceived loudness, clipping, compressor pumping, and slider presentation in real browsers remain P4-01 and P4-02 work.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** Listen to several sparse and dense creatures at default and maximum volume, then continue P4-01.
 
 ### Session 7: 2026-10-17: take the fog machine off the linework
 

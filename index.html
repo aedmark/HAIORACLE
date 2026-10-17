@@ -56,6 +56,13 @@
         <span><b id="score-wave">---</b> WAVE</span>
         <span><b id="score-form">---</b> FORM</span>
       </div>
+      <div class="volume-control">
+        <div class="volume-heading">
+          <label for="master-volume">MASTER VOLUME</label>
+          <output id="volume-value" for="master-volume">82%</output>
+        </div>
+        <input id="master-volume" type="range" min="0" max="100" value="82" step="1">
+      </div>
       <button class="replay-button" id="replay" type="button" disabled>
         RESTART LOOP <span aria-hidden="true">↻</span>
       </button>
