@@ -21,6 +21,11 @@ test("the LOLCODE spell produces every required score field", () => {
   assert.ok(score.pupilShape >= 0 && score.pupilShape <= 7);
   assert.ok(score.irisHue >= 0 && score.irisHue <= 359);
   assert.ok(score.eyeLayout >= 0 && score.eyeLayout <= 5);
+  assert.ok(score.kineticMode >= 0 && score.kineticMode <= 7);
+  assert.ok(score.kineticSpeed >= 20 && score.kineticSpeed <= 100);
+  assert.ok(score.kineticDepth >= 20 && score.kineticDepth <= 100);
+  assert.ok(score.kineticTilt >= 0 && score.kineticTilt <= 7);
+  assert.ok(score.fluxMode >= 0 && score.fluxMode <= 7);
 });
 
 test("the same normalized phrase summons the same creature", () => {
@@ -36,7 +41,7 @@ test("different phrases produce different seeds and scores", () => {
   assert.notDeepEqual(first.steps, second.steps);
 });
 
-test("a phrase batch exercises the expanded name, shape, and scale spaces", () => {
+test("a phrase batch exercises the expanded name, shape, sound, eye, and kinetic spaces", () => {
   const scores = Array.from({ length: 256 }, (_, index) => composeScore(source, `omen ${index}`));
   assert.ok(new Set(scores.map((score) => score.name)).size >= 250);
   assert.equal(new Set(scores.map((score) => score.shape)).size, 10);
@@ -45,6 +50,8 @@ test("a phrase batch exercises the expanded name, shape, and scale spaces", () =
   assert.equal(new Set(scores.map((score) => score.irisStyle)).size, 8);
   assert.equal(new Set(scores.map((score) => score.pupilShape)).size, 8);
   assert.equal(new Set(scores.map((score) => score.eyeLayout)).size, 6);
+  assert.equal(new Set(scores.map((score) => score.kineticMode)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.fluxMode)).size, 8);
 });
 
 test("empty phrases are rejected at the input boundary", () => {

@@ -90,22 +90,256 @@ function paletteFor(score) {
 
 function shapeRadius(score, angle, elapsed) {
   const folded = Math.cos(angle * score.symmetry);
-  const moving = Math.sin(angle * score.twist + elapsed * (0.35 + score.motion * 0.08));
   const edge = score.edge / 100;
-
+  let radius;
   switch (score.shape) {
-    case 0: return 0.72 + folded * (0.12 + edge * 0.16) + moving * 0.05;
-    case 1: return 0.58 + (Math.abs(folded) ** (3 + edge * 8)) * 0.38 + moving * 0.025;
-    case 2: return 0.68 + folded * 0.08 + moving * (0.1 + edge * 0.08);
-    case 3: return 0.58 + (Math.floor((angle / Math.PI) * score.symmetry * 2) % 2) * (0.2 + edge * 0.16);
-    case 4: return 0.64 + Math.abs(folded) * (0.16 + edge * 0.18);
-    case 5: return 0.7 + Math.sin(angle * 2 + elapsed * 0.35) * 0.12 + Math.cos(angle * 3 - 1.7) * 0.08 + folded * 0.04;
-    case 6: return 0.63 + Math.sin(angle + elapsed * 0.22) * 0.18 + Math.cos(angle * score.symmetry) * 0.07;
-    case 7: return 0.74 + Math.sin(angle * score.twist - elapsed * 0.28) * 0.055 + folded * 0.045;
-    case 8: return 0.52 + Math.max(0, folded) * (0.28 + edge * 0.17) + moving * 0.035;
-    case 9: return 0.67 + Math.cos(angle * 2) * 0.15 + Math.max(0, Math.sin(angle)) * 0.12 + folded * 0.055;
-    default: return 0.72;
+    case 0: radius = 0.72 + folded * (0.12 + edge * 0.16); break;
+    case 1: radius = 0.58 + (Math.abs(folded) ** (3 + edge * 8)) * 0.38; break;
+    case 2: radius = 0.68 + folded * 0.11; break;
+    case 3: radius = 0.58 + (Math.floor((angle / Math.PI) * score.symmetry * 2) % 2) * (0.2 + edge * 0.16); break;
+    case 4: radius = 0.64 + Math.abs(folded) * (0.16 + edge * 0.18); break;
+    case 5: radius = 0.7 + Math.sin(angle * 2) * 0.12 + Math.cos(angle * 3 - 1.7) * 0.08 + folded * 0.04; break;
+    case 6: radius = 0.63 + Math.sin(angle) * 0.18 + Math.cos(angle * score.symmetry) * 0.07; break;
+    case 7: radius = 0.74 + Math.sin(angle * score.twist) * 0.055 + folded * 0.045; break;
+    case 8: radius = 0.52 + Math.max(0, folded) * (0.28 + edge * 0.17); break;
+    case 9: radius = 0.67 + Math.cos(angle * 2) * 0.15 + Math.max(0, Math.sin(angle)) * 0.12 + folded * 0.055; break;
+    default: radius = 0.72;
   }
+  return Math.max(0.38, Math.min(1.08, radius + fluxOffset(score, angle, elapsed)));
+}
+
+function fluxOffset(score, angle, elapsed) {
+  const speed = 0.12 + score.kineticSpeed / 92;
+  const time = elapsed * speed + score.kineticTilt / 8 * Math.PI * 2;
+  const depth = 0.022 + score.kineticDepth / 100 * 0.095;
+  switch (score.fluxMode) {
+    case 0: return Math.sin(angle * score.twist - time) * depth;
+    case 1: return Math.sin(angle * score.symmetry + time) * Math.cos(angle * score.twist - time * 0.63) * depth;
+    case 2: return Math.sin(angle * 2 + time) * Math.sin(angle * (score.symmetry + 1) - time * 0.8) * depth;
+    case 3: return Math.tanh(Math.sin(angle * score.symmetry - time) * 3) * depth * 0.82;
+    case 4: {
+      const morph = (Math.sin(time * 0.55) + 1) / 2;
+      return (Math.cos(angle * score.symmetry) * (1 - morph) + Math.cos(angle * (score.symmetry + 1)) * morph) * depth;
+    }
+    case 5: return (Math.sin(angle * 3 - time) * 0.55 + Math.sin(angle * 7 + time * 0.73) * 0.3 + Math.cos(angle * 11 - time * 0.41) * 0.15) * depth;
+    case 6: return Math.sin(angle + Math.sin(time) * 1.4) * Math.cos(angle * score.twist - time) * depth;
+    case 7: return Math.sin(angle * score.symmetry - time) ** 3 * depth;
+    default: return 0;
+  }
+}
+
+function traceBody(ctx, score, base, elapsed, points) {
+  ctx.beginPath();
+  for (let index = 0; index <= points; index += 1) {
+    const angle = index / points * Math.PI * 2;
+    const radius = base * shapeRadius(score, angle, elapsed);
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+const TESSERACT_VERTICES = Object.freeze(Array.from({ length: 16 }, (_, index) => [
+  index & 1 ? 1 : -1,
+  index & 2 ? 1 : -1,
+  index & 4 ? 1 : -1,
+  index & 8 ? 1 : -1,
+]));
+
+const TESSERACT_EDGES = Object.freeze(TESSERACT_VERTICES.flatMap((_, index) => (
+  [1, 2, 4, 8]
+    .filter((bit) => (index & bit) === 0)
+    .map((bit) => [index, index | bit])
+)));
+
+function rotatePlane(point, first, second, angle) {
+  const cosine = Math.cos(angle);
+  const sine = Math.sin(angle);
+  const a = point[first] * cosine - point[second] * sine;
+  const b = point[first] * sine + point[second] * cosine;
+  point[first] = a;
+  point[second] = b;
+}
+
+function projectedTesseract(score, base, elapsed) {
+  const speed = 0.08 + score.kineticSpeed / 145;
+  const phase = score.kineticTilt / 8 * Math.PI * 2;
+  return TESSERACT_VERTICES.map((source) => {
+    const point = [...source];
+    rotatePlane(point, 0, 3, elapsed * speed + phase);
+    rotatePlane(point, 1, 2, elapsed * speed * 0.73 - phase * 0.4);
+    rotatePlane(point, 1, 3, elapsed * speed * 0.47 + phase * 0.7);
+    rotatePlane(point, 0, 2, elapsed * speed * 0.29);
+    const perspective4 = 3.1 / (3.1 - point[3]);
+    const x3 = point[0] * perspective4;
+    const y3 = point[1] * perspective4;
+    const z3 = point[2] * perspective4;
+    const perspective3 = 4.2 / (4.2 - z3);
+    const scale = base * (0.15 + score.kineticDepth / 1000);
+    return { x: x3 * perspective3 * scale, y: y3 * perspective3 * scale, depth: z3 };
+  });
+}
+
+function drawTesseract(ctx, score, base, elapsed, colors) {
+  const vertices = projectedTesseract(score, base, elapsed);
+  for (const [start, end] of TESSERACT_EDGES) {
+    const a = vertices[start];
+    const b = vertices[end];
+    const depth = Math.max(-1.8, Math.min(1.8, (a.depth + b.depth) / 2));
+    ctx.globalAlpha = 0.28 + (depth + 1.8) / 3.6 * 0.58;
+    ctx.strokeStyle = `hsl(${colors[(start + end) % colors.length]} 100% ${62 + depth * 8}%)`;
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 0.85;
+  for (const [index, vertex] of vertices.entries()) {
+    ctx.fillStyle = `hsl(${colors[index % colors.length]} 100% 76%)`;
+    ctx.beginPath();
+    ctx.arc(vertex.x, vertex.y, Math.max(1, base * 0.008), 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawNestedFrames(ctx, score, base, elapsed, colors) {
+  const sides = 4 + score.kineticTilt % 5;
+  const speed = 0.08 + score.kineticSpeed / 180;
+  for (let layer = 0; layer < 6; layer += 1) {
+    const radius = base * (0.13 + layer * 0.085);
+    const rotation = elapsed * speed * (layer % 2 ? -1 : 1) + layer * 0.37;
+    ctx.strokeStyle = `hsla(${colors[layer % colors.length]} 100% 76% / ${0.75 - layer * 0.07})`;
+    ctx.beginPath();
+    for (let point = 0; point <= sides; point += 1) {
+      const angle = point / sides * Math.PI * 2 + rotation;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius * Math.cos(rotation * 0.6 + layer);
+      if (point === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawRibbons(ctx, score, base, elapsed, colors) {
+  const speed = 0.15 + score.kineticSpeed / 150;
+  for (let ribbon = 0; ribbon < 4; ribbon += 1) {
+    ctx.strokeStyle = `hsla(${colors[ribbon % colors.length]} 100% 78% / 0.62)`;
+    ctx.beginPath();
+    for (let point = 0; point <= 120; point += 1) {
+      const phase = point / 120 * Math.PI * 2;
+      const radius = base * (0.2 + ribbon * 0.08 + Math.sin(phase * score.twist + elapsed * speed) * 0.04);
+      const x = Math.cos(phase + elapsed * speed * 0.2 * (ribbon + 1)) * radius;
+      const y = Math.sin(phase * (1 + ribbon * 0.5) - elapsed * speed) * radius * 0.8;
+      if (point === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawChordWeb(ctx, score, base, elapsed, colors) {
+  const count = 18 + score.kineticTilt;
+  const rotation = elapsed * (0.05 + score.kineticSpeed / 300);
+  const vertices = Array.from({ length: count }, (_, index) => {
+    const angle = index / count * Math.PI * 2 + rotation;
+    const radius = base * (0.33 + Math.sin(index * score.twist + elapsed * 0.4) * 0.05);
+    return [Math.cos(angle) * radius, Math.sin(angle) * radius];
+  });
+  for (let index = 0; index < count; index += 1) {
+    const target = (index + score.symmetry) % count;
+    ctx.strokeStyle = `hsla(${colors[index % colors.length]} 100% 76% / 0.42)`;
+    ctx.beginPath();
+    ctx.moveTo(vertices[index][0], vertices[index][1]);
+    ctx.lineTo(vertices[target][0], vertices[target][1]);
+    ctx.stroke();
+  }
+}
+
+function drawDimensionalGrid(ctx, score, base, elapsed, colors) {
+  const speed = 0.12 + score.kineticSpeed / 190;
+  const rotation = elapsed * speed;
+  ctx.save();
+  ctx.rotate(rotation * 0.3);
+  for (let line = -5; line <= 5; line += 1) {
+    const shift = Math.sin(rotation + line * 0.7) * base * 0.08;
+    ctx.strokeStyle = `hsla(${colors[(line + 6) % colors.length]} 100% 78% / 0.42)`;
+    ctx.beginPath();
+    ctx.moveTo(-base * 0.55, line * base * 0.075 + shift);
+    ctx.bezierCurveTo(-base * 0.15, line * base * 0.04 - shift, base * 0.15, line * base * 0.11 + shift, base * 0.55, line * base * 0.075 - shift);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(line * base * 0.075 + shift, -base * 0.55);
+    ctx.bezierCurveTo(line * base * 0.04 - shift, -base * 0.15, line * base * 0.11 + shift, base * 0.15, line * base * 0.075 - shift, base * 0.55);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawContourMembrane(ctx, score, base, elapsed, colors) {
+  for (let layer = 1; layer <= 6; layer += 1) {
+    ctx.strokeStyle = `hsla(${colors[layer % colors.length]} 100% 82% / ${0.24 + layer * 0.055})`;
+    traceBody(ctx, score, base * layer / 7, elapsed + layer * 0.7, Math.max(80, score.symmetry * 16));
+    ctx.stroke();
+  }
+}
+
+function drawGyroscope(ctx, score, base, elapsed, colors) {
+  const speed = 0.14 + score.kineticSpeed / 175;
+  for (let ring = 0; ring < 7; ring += 1) {
+    ctx.save();
+    ctx.rotate(ring / 7 * Math.PI + elapsed * speed * (ring % 2 ? -0.32 : 0.28));
+    ctx.strokeStyle = `hsla(${colors[ring % colors.length]} 100% 80% / 0.58)`;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, base * (0.18 + ring * 0.045), base * (0.05 + (ring % 3) * 0.035), 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawCrystalNetwork(ctx, score, base, elapsed, colors) {
+  const speed = 0.11 + score.kineticSpeed / 210;
+  const nodes = Array.from({ length: 14 }, (_, index) => {
+    const angle = index / 14 * Math.PI * 2 + elapsed * speed * (index % 2 ? -1 : 1);
+    const radius = base * (0.14 + (index % 5) * 0.07 + Math.sin(elapsed * speed + index) * 0.025);
+    return [Math.cos(angle) * radius, Math.sin(angle * (1 + score.kineticTilt / 16)) * radius];
+  });
+  for (let index = 0; index < nodes.length; index += 1) {
+    for (const jump of [3, 5]) {
+      const target = (index + jump) % nodes.length;
+      ctx.strokeStyle = `hsla(${colors[(index + jump) % colors.length]} 100% 78% / 0.34)`;
+      ctx.beginPath();
+      ctx.moveTo(nodes[index][0], nodes[index][1]);
+      ctx.lineTo(nodes[target][0], nodes[target][1]);
+      ctx.stroke();
+    }
+    ctx.fillStyle = `hsl(${colors[index % colors.length]} 100% 78%)`;
+    ctx.beginPath();
+    ctx.arc(nodes[index][0], nodes[index][1], Math.max(1, base * 0.009), 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawKineticCore(ctx, score, base, elapsed, colors) {
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  ctx.lineWidth = Math.max(0.7, base * (0.003 + score.kineticDepth / 32000));
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  switch (score.kineticMode) {
+    case 0: drawTesseract(ctx, score, base, elapsed, colors); break;
+    case 1: drawNestedFrames(ctx, score, base, elapsed, colors); break;
+    case 2: drawRibbons(ctx, score, base, elapsed, colors); break;
+    case 3: drawChordWeb(ctx, score, base, elapsed, colors); break;
+    case 4: drawDimensionalGrid(ctx, score, base, elapsed, colors); break;
+    case 5: drawContourMembrane(ctx, score, base, elapsed, colors); break;
+    case 6: drawGyroscope(ctx, score, base, elapsed, colors); break;
+    case 7: drawCrystalNetwork(ctx, score, base, elapsed, colors); break;
+    default: drawTesseract(ctx, score, base, elapsed, colors);
+  }
+  ctx.restore();
 }
 
 function traceEyeShape(ctx, shape, size) {
@@ -355,7 +589,8 @@ class OracleVision {
       seed: 132071, pulse: 72, hue: 274, hueShift: 126, saturation: 88, palette: 2,
       symmetry: 7, twist: 4, bloom: 66, eyes: 3, eyeShape: 3, irisStyle: 2,
       pupilShape: 1, irisHue: 164, irisShift: 72, eyeSize: 68, gaze: 1, eyeLayout: 0,
-      shape: 0, size: 66, edge: 50, motion: 2,
+      shape: 0, size: 66, edge: 50, motion: 2, kineticMode: 0, kineticSpeed: 64,
+      kineticDepth: 72, kineticTilt: 3, fluxMode: 1,
     };
     this.startedAt = performance.now();
     this.particles = [];
@@ -399,7 +634,7 @@ class OracleVision {
     const height = this.height;
     const elapsed = this.reducedMotion ? 1.25 : (timestamp - this.startedAt) / 1000;
     const beat = elapsed * score.pulse / 60;
-    const pulse = 0.84 + Math.max(0, Math.sin(beat * Math.PI * 2)) ** 8 * 0.16;
+    const pulse = 0.94 + Math.max(0, Math.sin(beat * Math.PI * 2)) ** 8 * 0.06;
     const colors = paletteFor(score);
 
     const backdrop = ctx.createRadialGradient(width * 0.58, height * 0.44, 0, width * 0.58, height * 0.44, Math.max(width, height) * 0.78);
@@ -432,8 +667,8 @@ class OracleVision {
 
     ctx.save();
     ctx.translate(centerX, centerY);
-    const direction = score.motion % 2 ? 1 : -1;
-    ctx.rotate(this.reducedMotion ? 0.16 : elapsed * (0.012 + score.motion * 0.006) * direction);
+    const direction = score.kineticTilt % 2 ? 1 : -1;
+    ctx.rotate(this.reducedMotion ? 0.16 : elapsed * (0.004 + score.kineticSpeed / 12000) * direction);
     ctx.scale(aspectX, aspectY);
     ctx.shadowColor = `hsla(${colors[1]} 100% 70% / 0.58)`;
     ctx.shadowBlur = score.bloom * 0.62;
@@ -444,27 +679,29 @@ class OracleVision {
     aura.addColorStop(0.68, `hsla(${colors[1]} ${score.saturation}% 48% / 0.38)`);
     aura.addColorStop(1, `hsla(${colors[2]} ${score.saturation}% 48% / 0)`);
     ctx.fillStyle = aura;
-    ctx.beginPath();
-    for (let i = 0; i <= points; i += 1) {
-      const angle = i / points * Math.PI * 2;
-      const radius = base * shapeRadius(score, angle, elapsed);
-      const x = Math.cos(angle) * radius;
-      const y = Math.sin(angle) * radius;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
+    traceBody(ctx, score, base, elapsed, points);
     ctx.fill();
+
+    ctx.save();
+    traceBody(ctx, score, base, elapsed, points);
+    ctx.clip();
+    drawKineticCore(ctx, score, base, elapsed, colors);
+    ctx.restore();
 
     ctx.globalCompositeOperation = "screen";
     ctx.lineWidth = 0.7 + score.edge / 70;
     ctx.strokeStyle = `hsla(${colors[2]} 100% 84% / 0.58)`;
     const ringCount = 2 + score.palette % 4;
+    const kineticRate = 0.12 + score.kineticSpeed / 180;
+    const kineticPhase = score.kineticTilt / 8 * Math.PI * 2;
     for (let ring = 0; ring < ringCount; ring += 1) {
       ctx.beginPath();
       for (let i = 0; i <= points; i += 1) {
         const angle = i / points * Math.PI * 2;
-        const motion = Math.sin(angle * (score.symmetry + ring) - elapsed * (0.3 + ring * 0.08)) * (0.035 + score.edge / 1800);
+        const ringDirection = ring % 2 ? -1 : 1;
+        const motion = Math.sin(
+          angle * (score.symmetry + ring) + elapsed * kineticRate * ringDirection + kineticPhase,
+        ) * (0.022 + score.kineticDepth / 2400);
         const radius = base * (0.25 + ring * (0.52 / ringCount) + motion);
         const x = Math.cos(angle) * radius;
         const y = Math.sin(angle) * radius;

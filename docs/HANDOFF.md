@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-17, session 3, on `main`: the expanded deterministic eye-anatomy grammar is implemented and verified._
+_Last updated: 2026-10-17, session 4, on `main`: bounded kinetic geometry and silhouette flux are implemented and verified._
 
-**Where things stand:** P1, P2, P5-01, and P5-02 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of ten animated Canvas families, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition. The largest gap is sensory and accessibility review in real browsers and on a real phone.
+**Where things stand:** P1, P2, P5-01, P5-02, and P5-03 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition. The largest gap is sensory and accessibility review in real browsers and on a real phone.
 
 **Verified** (2026-10-17, initial repository, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **11/11 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **12/12 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 13 documents** |
 
 **What works**
@@ -25,6 +25,7 @@ _Last updated: 2026-10-17, session 3, on `main`: the expanded deterministic eye-
 - Audio loops continuously until mute, restart, replacement, or page close (D-005).
 - The expanded grammar covers twelve-note phrases, eight scales, six rhythms and voices, ten shapes, broader size and color ranges, and six name templates (P5-01, D-005).
 - Eye silhouette, iris treatment and color, pupil shape, layout, size, and gaze vary deterministically (P5-02, D-006).
+- Body boundaries continuously deform through eight clamped flux grammars while eight seed-selected kinetic systems move independently inside them (P5-03, D-007).
 - Runtime assets are local and dependency-free (D-001).
 
 **Not verified**
@@ -37,7 +38,7 @@ _Last updated: 2026-10-17, session 3, on `main`: the expanded deterministic eye-
 
 - Serve the directory over HTTP. A direct `file:` URL cannot fetch `src/oracle.lol`.
 - The interpreter deliberately implements a subset. Read D-002 before extending the spell.
-- Changes to hash, normalization, formula constants, scale, or name tables can break phrase identity. D-005 records the intentional pre-release compatibility break.
+- Changes to hash, normalization, formula constants, scale, or name tables can break phrase identity. D-005 through D-007 record intentional pre-release compatibility breaks.
 
 ## Next steps
 
@@ -50,6 +51,28 @@ _Last updated: 2026-10-17, session 3, on `main`: the expanded deterministic eye-
 - Q-001 blocks P6-01: choose public hosting and domain after browser review.
 
 ## Session log
+
+### Session 4: 2026-10-17: impossible geometry with boundaries
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Replace pulse-dominated blobs with complex self-contained forms that have their own kinetic movement.
+
+**Done:** P5-03
+
+**Changed:** Added five deterministic kinetic score fields, eight silhouette-flux grammars, and eight internal motion systems. The tesseract renderer rotates in four dimensions before two-stage perspective projection; every system is clipped to the currently deforming body. Reduced the shared beat pulse so it no longer dominates motion.
+
+**Decisions:** D-007
+
+**Verified:** Twelve Node checks passed, including 256-phrase categorical coverage and structural boundary containment; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Subjective motion quality, frame rate, clipping, and legibility in real browsers.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** P4-01.
 
 ### Session 3: 2026-10-17: eyes with opinions
 

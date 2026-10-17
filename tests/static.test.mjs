@@ -32,6 +32,14 @@ test("audio uses a continuing look-ahead scheduler", async () => {
   assert.doesNotMatch(app, /OMEN COMPLETE/);
 });
 
+test("kinetic geometry remains inside a bounded, deforming silhouette", async () => {
+  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  assert.match(app, /Math\.max\(0\.38, Math\.min\(1\.08, radius \+ fluxOffset/);
+  assert.match(app, /ctx\.clip\(\);\s*drawKineticCore\(ctx, score, base, elapsed, colors\)/);
+  assert.match(app, /case 0: drawTesseract/);
+  assert.match(app, /case 7: drawCrystalNetwork/);
+});
+
 test("the application has no remote runtime assets", async () => {
   const files = await Promise.all([
     "index.html",

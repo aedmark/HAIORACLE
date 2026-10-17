@@ -2,7 +2,7 @@
 
 Feed it a thought. See what hums back.
 
-HAI, ORACLE! turns a short phrase into a deterministic looping audiovisual creature. The same normalized phrase always produces the same name, melody, pulse, waveform, scale, rhythm, color grammar, shape, size, motion, and questionable anatomy. Eyes vary by count, silhouette, arrangement, size, gaze, iris color and treatment, and pupil geometry.
+HAI, ORACLE! turns a short phrase into a deterministic looping audiovisual creature. The same normalized phrase always produces the same name, melody, pulse, waveform, scale, rhythm, color grammar, shape, size, motion, and questionable anatomy. Each creature deforms through one of eight bounded silhouette grammars while one of eight kinetic geometries folds, spins, or travels inside it. Eyes vary by count, silhouette, arrangement, size, gaze, iris color and treatment, and pupil geometry.
 
 The score is composed by [`src/oracle.lol`](src/oracle.lol). A small browser-side interpreter executes the LOLCODE, validates its output, and hands the score to Canvas and Web Audio. Everything runs locally. There are no packages, remote assets, analytics, cookies, accounts, or network calls after the static files load.
 
