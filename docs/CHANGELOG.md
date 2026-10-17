@@ -5,6 +5,7 @@
 ### Fixed
 
 - Remove audio-synchronous geometry scaling after screencast review exposed beat-periodic tearing and compression-like jumps.
+- Confine the large body-glow blur to one silhouette fill instead of applying it to every kinetic line, ring, and eye.
 
 ### Added
 

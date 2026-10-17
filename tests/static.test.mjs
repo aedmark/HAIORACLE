@@ -46,6 +46,13 @@ test("audio pulse does not resize the visual geometry", async () => {
   assert.doesNotMatch(visualDraw, /score\.pulse|beatScale|smoothBeatScale/);
 });
 
+test("the expensive body glow is cleared before kinetic linework", async () => {
+  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  const bodyDraw = app.slice(app.indexOf("const direction ="), app.indexOf("const ringCount ="));
+  assert.match(bodyDraw, /ctx\.save\(\);\s*ctx\.shadowColor[\s\S]*ctx\.fill\(\);\s*ctx\.restore\(\);\s*ctx\.save\(\);\s*traceBody/);
+  assert.match(app, /function drawKineticCore[\s\S]*ctx\.shadowBlur = 0;/);
+});
+
 test("the application has no remote runtime assets", async () => {
   const files = await Promise.all([
     "index.html",

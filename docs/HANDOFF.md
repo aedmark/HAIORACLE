@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-17, session 6, on `main`: beat-synchronous geometry scaling is removed and verified._
+_Last updated: 2026-10-17, session 7, on `main`: the inherited Canvas blur bottleneck is removed and verified._
 
 **Where things stand:** P1, P2, P5-01, P5-02, and P5-03 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition. The largest gap is sensory and accessibility review in real browsers and on a real phone.
 
@@ -12,7 +12,7 @@ _Last updated: 2026-10-17, session 6, on `main`: beat-synchronous geometry scali
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **13/13 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **14/14 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 13 documents** |
 
 **What works**
@@ -27,6 +27,7 @@ _Last updated: 2026-10-17, session 6, on `main`: beat-synchronous geometry scali
 - Eye silhouette, iris treatment and color, pupil shape, layout, size, and gaze vary deterministically (P5-02, D-006).
 - Body boundaries continuously deform through eight clamped flux grammars while eight seed-selected kinetic systems move independently inside them (P5-03, D-007).
 - Canvas geometry does not resize on audio beats; sound and image remain paired through their shared immutable score (D-008).
+- The large exterior glow is isolated to the body fill; kinetic lines, rings, and eyes no longer inherit its expensive per-primitive blur.
 - Runtime assets are local and dependency-free (D-001).
 
 **Not verified**
@@ -52,6 +53,28 @@ _Last updated: 2026-10-17, session 6, on `main`: beat-synchronous geometry scali
 - Q-001 blocks P6-01: choose public hosting and domain after browser review.
 
 ## Session log
+
+### Session 7: 2026-10-17: take the fog machine off the linework
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Correct persistent animation judder without sacrificing kinetic motion or audio playback.
+
+**Done:** Incidental Canvas performance fix; no roadmap item added.
+
+**Changed:** Scoped the large silhouette shadow blur to the single body-fill pass and explicitly disabled shadow blur inside the kinetic renderer. Previously every internal line, ring, and eye inherited a blur as large as 62 pixels, multiplying per-frame compositing work.
+
+**Decisions:** No new durable product decision; this corrects leaked Canvas state.
+
+**Verified:** Fourteen Node checks passed, including a regression check that the body blur is restored before kinetic linework; the continuous audio scheduler marker still passes; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Follow-up subjective motion and audio playback in the maintainer's browser remain P4-01.
+
+**Problems:** The prior beat-decoupling change removed one synchronized repaint but did not address the underlying leaked blur cost. A page reload also stops the old audio context; playback requires a new Summon gesture under browser autoplay policy.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** Summon the same phrase after reload and record frame pacing; then continue P4-01.
 
 ### Session 6: 2026-10-17: let the geometry keep its footing
 

@@ -325,6 +325,7 @@ function drawCrystalNetwork(ctx, score, base, elapsed, colors) {
 function drawKineticCore(ctx, score, base, elapsed, colors) {
   ctx.save();
   ctx.globalCompositeOperation = "screen";
+  ctx.shadowBlur = 0;
   ctx.lineWidth = Math.max(0.7, base * (0.003 + score.kineticDepth / 32000));
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
@@ -668,6 +669,8 @@ class OracleVision {
     const direction = score.kineticTilt % 2 ? 1 : -1;
     ctx.rotate(this.reducedMotion ? 0.16 : elapsed * (0.004 + score.kineticSpeed / 12000) * direction);
     ctx.scale(aspectX, aspectY);
+
+    ctx.save();
     ctx.shadowColor = `hsla(${colors[1]} 100% 70% / 0.58)`;
     ctx.shadowBlur = score.bloom * 0.62;
 
@@ -679,6 +682,7 @@ class OracleVision {
     ctx.fillStyle = aura;
     traceBody(ctx, score, base, elapsed, points);
     ctx.fill();
+    ctx.restore();
 
     ctx.save();
     traceBody(ctx, score, base, elapsed, points);
