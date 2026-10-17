@@ -1,6 +1,6 @@
 # HAI, ORACLE!
 
-HAI, ORACLE! is a zero-dependency browser toy that turns a short phrase into a deterministic ten-second audiovisual omen. A purpose-built browser interpreter executes the generative score in LOLCODE 1.2; Canvas and Web Audio render the score without sending data off-device.
+HAI, ORACLE! is a zero-dependency browser toy that turns a short phrase into a deterministic looping audiovisual omen. A purpose-built browser interpreter executes the generative score in LOLCODE 1.2; Canvas and Web Audio render the score without sending data off-device.
 
 This is the canonical instruction file for coding agents. `CLAUDE.md` imports it. Project facts belong in the documents linked below.
 

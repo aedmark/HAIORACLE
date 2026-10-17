@@ -19,7 +19,7 @@ Until a public reporting address exists, contact the repository maintainer priva
 | Phrase input | oversized input or DOM injection | 72-character control limit, normalization, text-only DOM assignment | score boundary |
 | LOLCODE source | malformed or expanded program | same-origin asset, narrow interpreter, unsupported syntax fails closed | interpreter |
 | Score output | unknown keys, duplicate fields, invalid values | allowlist, exact required set, integer and range checks | score parser |
-| Audio output | startling or persistent playback | user gesture, visible mute, bounded ten-second gain envelope | browser host |
+| Audio output | startling or persistent playback | user gesture, visible mute, low master gain, clean stop on mute or replacement | browser host |
 | User privacy | phrase disclosure | no outbound requests, logs, analytics, or persistence | whole application |
 
 ## Secure development rules
@@ -27,7 +27,7 @@ Until a public reporting address exists, contact the repository maintainer priva
 - Keep credentials, personal data, and production-derived material out of the repository.
 - Insert user-controlled text with `textContent` or form values, never HTML parsing.
 - Preserve score validation between interpreter and renderers.
-- Keep audio bounded and user-controlled.
+- Keep audio user-controlled, moderate in level, and immediately stoppable.
 - Treat any proposed remote asset, analytics call, storage, or dependency as a boundary change requiring a decision and review.
 - Do not describe the deterministic seed as cryptographic or globally unique.
 

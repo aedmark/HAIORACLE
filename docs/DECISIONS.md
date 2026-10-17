@@ -32,7 +32,7 @@ This append-only record holds choices that a future session might otherwise re-l
 
 **Consequences:** Changes to normalization, hashing, score formulas, name tables, or scale mapping are compatibility changes and require an explicit superseding decision.
 
-## D-004 One score drives a ten-second paired omen  (2026-10-17, status: accepted)
+## D-004 One score drives a ten-second paired omen  (2026-10-17, status: superseded by D-005)
 
 **Context:** Sound and image need shared causality, and a browser toy benefits from a bounded encounter.
 
@@ -41,6 +41,16 @@ This append-only record holds choices that a future session might otherwise re-l
 **Alternatives:** Endless playback risks fatigue. A generic audio analyser would make the image react to volume without sharing compositional structure.
 
 **Consequences:** Replay repeats the same omen. Future length or parameter changes must preserve the shared-score invariant.
+
+## D-005 Continuous loops and expanded creature grammar  (2026-10-17, status: accepted)
+
+**Context:** The first hands-on review found that ten seconds ended too quickly and narrow visual, musical, and naming ranges made repeats visible.
+
+**Decision:** Keep an omen sounding until it is muted, replaced, restarted, or the page closes. Expand the LOLCODE score to twelve melodic steps, eight scales, six rhythms, six voice stacks, ten shape families, 65 sizes, eight palette grammars, broader motion and form ranges, and a six-template ceremonial name grammar.
+
+**Alternatives:** A longer fixed duration still ends without user intent. Fresh randomness would create variety at the cost of deterministic identity. Cosmetic host-side variation would weaken LOLCODE's causal role.
+
+**Consequences:** Phrase outputs from the initial prototype intentionally change under this pre-release schema expansion. Continuous audio increases the importance of visible mute behavior and clean replacement scheduling. The shared-score and phrase-determinism invariants remain intact for the new schema.
 
 ## Open questions
 

@@ -22,6 +22,14 @@ test("the page exposes one labeled text input and its core controls", async () =
   assert.match(html, /id="sound-toggle"/);
   assert.match(html, /id="replay"/);
   assert.match(html, /aria-live="polite"/);
+  assert.match(html, /RESTART LOOP/);
+});
+
+test("audio uses a continuing look-ahead scheduler", async () => {
+  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  assert.match(app, /setInterval\(scheduleAhead, 90\)/);
+  assert.match(app, /OMEN LOOPING/);
+  assert.doesNotMatch(app, /OMEN COMPLETE/);
 });
 
 test("the application has no remote runtime assets", async () => {

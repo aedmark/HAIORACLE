@@ -8,11 +8,14 @@ const source = await readFile(new URL("../src/oracle.lol", import.meta.url), "ut
 
 test("the LOLCODE spell produces every required score field", () => {
   const score = composeScore(source, "the moon owes me five dollars");
-  assert.equal(score.steps.length, 8);
-  assert.match(score.name, /^THE /);
-  assert.ok(score.pulse >= 54 && score.pulse <= 132);
+  assert.equal(score.steps.length, 12);
+  assert.ok(score.name.length > 12);
+  assert.ok(score.pulse >= 42 && score.pulse <= 167);
   assert.ok(score.hue >= 0 && score.hue <= 359);
-  assert.ok(score.symmetry >= 3 && score.symmetry <= 10);
+  assert.ok(score.symmetry >= 2 && score.symmetry <= 15);
+  assert.ok(score.shape >= 0 && score.shape <= 9);
+  assert.ok(score.size >= 36 && score.size <= 100);
+  assert.ok(score.scale >= 0 && score.scale <= 7);
 });
 
 test("the same normalized phrase summons the same creature", () => {
@@ -26,6 +29,13 @@ test("different phrases produce different seeds and scores", () => {
   const second = composeScore(source, "the wallpaper knows jazz");
   assert.notEqual(first.seed, second.seed);
   assert.notDeepEqual(first.steps, second.steps);
+});
+
+test("a phrase batch exercises the expanded name, shape, and scale spaces", () => {
+  const scores = Array.from({ length: 256 }, (_, index) => composeScore(source, `omen ${index}`));
+  assert.ok(new Set(scores.map((score) => score.name)).size >= 250);
+  assert.equal(new Set(scores.map((score) => score.shape)).size, 10);
+  assert.equal(new Set(scores.map((score) => score.scale)).size, 8);
 });
 
 test("empty phrases are rejected at the input boundary", () => {

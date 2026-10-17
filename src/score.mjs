@@ -1,34 +1,89 @@
 import { runLolcode } from "./lolcode.mjs";
 
 const REQUIRED_RANGES = Object.freeze({
-  pulse: [54, 132],
-  root: [36, 60],
+  pulse: [42, 167],
+  root: [30, 65],
   wave: [0, 3],
+  scale: [0, 7],
+  rhythm: [0, 5],
+  gate: [28, 95],
+  voice: [0, 5],
   hue: [0, 359],
-  symmetry: [3, 10],
-  twist: [1, 9],
-  bloom: [35, 90],
-  eyes: [1, 7],
-  name_a: [0, 7],
-  name_b: [0, 7],
-  name_c: [0, 7],
-  step_0: [0, 6],
-  step_1: [0, 6],
-  step_2: [0, 6],
-  step_3: [0, 6],
-  step_4: [0, 6],
-  step_5: [0, 6],
-  step_6: [0, 6],
-  step_7: [0, 6],
+  hue_shift: [24, 240],
+  saturation: [55, 100],
+  palette: [0, 7],
+  symmetry: [2, 15],
+  twist: [1, 14],
+  bloom: [20, 100],
+  eyes: [0, 12],
+  shape: [0, 9],
+  size: [36, 100],
+  edge: [0, 100],
+  motion: [0, 7],
+  name_a: [0, 31],
+  name_b: [0, 31],
+  name_c: [0, 47],
+  name_d: [0, 23],
+  name_form: [0, 5],
+  ...Object.fromEntries(Array.from({ length: 12 }, (_, index) => [`step_${index}`, [0, 8]])),
 });
 
 const NAME_PARTS = Object.freeze({
-  first: ["CERULEAN", "VELVET", "WOBBLING", "LUMINOUS", "TINY", "ANCIENT", "POLITE", "ILLEGAL"],
-  second: ["POTATO", "MOTH", "TURNIP", "COMET", "PUDDLE", "TEAPOT", "ORBIT", "MARMALADE"],
-  third: ["REMEMBERS", "IS LISTENING", "HAS QUESTIONS", "SINGS SIDEWAYS", "REFUSES GRAVITY", "KNOWS A DOOR", "OWES YOU SOUP", "DREAMS IN PLAID"],
+  first: [
+    "CERULEAN", "VELVET", "WOBBLING", "LUMINOUS", "TINY", "ANCIENT", "POLITE", "ILLEGAL",
+    "SLEEPY", "ELECTRIC", "WAYWARD", "GENTLE", "FURIOUS", "GLASS", "SECRET", "MOSSY",
+    "INFINITE", "PAPER", "SIDEWAYS", "HONEYED", "ASTRAL", "WILD", "LOST", "GIGGLING",
+    "ORANGE", "TENDER", "UNLICENSED", "FIZZY", "IMPOSSIBLE", "SOFT", "FERAL", "NEON",
+  ],
+  second: [
+    "POTATO", "MOTH", "TURNIP", "COMET", "PUDDLE", "TEAPOT", "ORBIT", "MARMALADE",
+    "THUNDER", "SNAIL", "MOON", "CABBAGE", "GHOST", "SPOON", "CLOUD", "FERN",
+    "ACCORDION", "TADPOLE", "MIRROR", "BISCUIT", "PLANET", "MUSHROOM", "KETTLE", "SHADOW",
+    "VOLCANO", "PIGEON", "LANTERN", "ONION", "JELLYFISH", "WALRUS", "DOORKNOB", "MELODY",
+  ],
+  third: [
+    "REMEMBERS", "IS LISTENING", "HAS QUESTIONS", "SINGS SIDEWAYS", "REFUSES GRAVITY", "KNOWS A DOOR",
+    "OWES YOU SOUP", "DREAMS IN PLAID", "MISPLACED TUESDAY", "HAS SEEN THE MENU", "CALLS AT MIDNIGHT",
+    "INVENTED A COLOR", "WANTS YOUR HAT", "KEEPS THE WEATHER", "SPEAKS IN BUBBLES", "ATE THE MAP",
+    "PREDICTS SANDWICHES", "FORGOT ITS PASSWORD", "COLLECTS SMALL THUNDER", "IS MOSTLY HARMLESS",
+    "WAITS BEHIND THE CURTAIN", "HAS BECOME JAZZ", "BORROWED THE HORIZON", "WIGGLES WITH PURPOSE",
+    "IS FULL OF BEES", "FOUND A SHORTCUT", "MARRIED THE OCEAN", "COUNTS BACKWARDS", "KNITS THE STATIC",
+    "IS NOT A METAPHOR", "PACKED TOO MANY STARS", "WHISPERS TO FURNITURE", "REJECTS THE PROPHECY",
+    "HAS EXCELLENT BOUNDARIES", "IS LEARNING TO FLOAT", "SMELLS FAINTLY PURPLE", "MISHEARD THE COSMOS",
+    "RUNS ON CRUMBS", "HAS A UNION CARD", "IS LATE FOR INFINITY", "KEEPS ONE EYE OPEN", "TASTES LIKE RADIO",
+    "APPLAUDS THE VOID", "HAS NO FURTHER NOTES", "IS WEARING THE MOON", "LEFT THE OVEN ON",
+    "HUMS YOUR TRUE NAME", "BROUGHT EXTRA NAPKINS",
+  ],
+  fourth: [
+    "VELVET WEATHER", "THE OUTER PANTRY", "A BORROWED TUESDAY", "THE LAST PICNIC", "MARMALADE TIME",
+    "THE SOUP DIMENSION", "A QUIET APOCALYPSE", "THE CELESTIAL LAUNDROMAT", "LOW ORBIT", "THE GREEN ROOM",
+    "A POCKET UNIVERSE", "THE INFINITE HALLWAY", "SECOND BREAKFAST", "THE WRONG TIMELINE", "THE MOON'S ATTIC",
+    "A GENTLE EMERGENCY", "THE FORBIDDEN GARDEN", "A VERY LONG MINUTE", "THE STATIC BETWEEN STARS",
+    "THE DEPARTMENT OF MYSTERIES", "A SMALLER INFINITY", "THE SUBMERGED LIBRARY", "THE NEON MEADOW",
+    "THE UNFINISHED PARADE",
+  ],
 });
 
 export const WAVEFORMS = Object.freeze(["SINE", "TRIANGLE", "SQUARE", "SAWTOOTH"]);
+export const SHAPE_NAMES = Object.freeze([
+  "BLOOM", "STAR", "RIPPLE", "GEAR", "CRYSTAL", "AMOEBA", "RIBBON", "PORTAL", "CROWN", "JELLY",
+]);
+
+function creatureName(values) {
+  const adjective = NAME_PARTS.first[values.name_a];
+  const noun = NAME_PARTS.second[values.name_b];
+  const action = NAME_PARTS.third[values.name_c];
+  const realm = NAME_PARTS.fourth[values.name_d];
+  const forms = [
+    `THE ${adjective} ${noun} ${action}`,
+    `${adjective} ${noun} OF ${realm}`,
+    `THE ${noun} ${action} IN ${realm}`,
+    `${adjective} ${noun}, ${action}`,
+    `${noun} NUMBER ${values.name_d + 3}: ${action}`,
+    `${realm}'S ${adjective} ${noun}`,
+  ];
+  return forms[values.name_form];
+}
 
 export function hashPhrase(phrase) {
   const normalized = phrase.normalize("NFKC").trim().toLocaleLowerCase("en-US");
@@ -36,8 +91,7 @@ export function hashPhrase(phrase) {
 
   let hash = 0x811c9dc5;
   for (const character of normalized) {
-    const codePoint = character.codePointAt(0);
-    hash ^= codePoint;
+    hash ^= character.codePointAt(0);
     hash = Math.imul(hash, 0x01000193);
   }
   return hash >>> 0;
@@ -63,9 +117,7 @@ export function parseScore(lines, seed, phrase) {
     }
   }
 
-  const steps = Array.from({ length: 8 }, (_, index) => values[`step_${index}`]);
-  const name = `THE ${NAME_PARTS.first[values.name_a]} ${NAME_PARTS.second[values.name_b]} ${NAME_PARTS.third[values.name_c]}`;
-
+  const steps = Array.from({ length: 12 }, (_, index) => values[`step_${index}`]);
   return Object.freeze({
     seed,
     phrase,
@@ -73,13 +125,25 @@ export function parseScore(lines, seed, phrase) {
     root: values.root,
     wave: values.wave,
     waveform: WAVEFORMS[values.wave].toLowerCase(),
+    scale: values.scale,
+    rhythm: values.rhythm,
+    gate: values.gate,
+    voice: values.voice,
     hue: values.hue,
+    hueShift: values.hue_shift,
+    saturation: values.saturation,
+    palette: values.palette,
     symmetry: values.symmetry,
     twist: values.twist,
     bloom: values.bloom,
     eyes: values.eyes,
+    shape: values.shape,
+    shapeName: SHAPE_NAMES[values.shape],
+    size: values.size,
+    edge: values.edge,
+    motion: values.motion,
     steps: Object.freeze(steps),
-    name,
+    name: creatureName(values),
   });
 }
 

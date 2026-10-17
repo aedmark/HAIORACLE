@@ -14,7 +14,7 @@ Goal: establish a documented, dependency-free project whose LOLCODE boundary is 
 Goal: summon one coherent audiovisual creature from one phrase.
 
 - [x] P2-01 Generate a deterministic, validated score in `src/oracle.lol`. Verified by deterministic and range tests on 2026-10-17.
-- [x] P2-02 Render the score as a ten-second Web Audio composition and animated Canvas creature. Implemented 2026-10-17; subjective browser review remains P4-01.
+- [x] P2-02 Render the score as a continuously looping Web Audio composition and animated Canvas creature. Expanded from a ten-second playback after maintainer feedback on 2026-10-17; subjective browser review remains P4-01.
 - [x] P2-03 Provide responsive summon, surprise, mute, and replay controls with accessible labels and status text. Static checks passed 2026-10-17; assistive-technology review remains P4-02.
 
 ## Phase 3: Output and sharing
@@ -35,7 +35,7 @@ Goal: verify the sensory experience beyond structural automation.
 
 Goal: expand only where additional complexity creates more play.
 
-- [ ] P5-01 Evaluate longer LOLCODE compositions, alternate scales, and additional visual grammars after observing real users. Origin: product workshop, 2026-10-17.
+- [x] P5-01 Expand musical, visual, and naming variation after the first hands-on review exposed repetition. Added twelve-note phrases, eight scales, six rhythms and voice stacks, ten shape families, broader size and color ranges, and six name grammars on 2026-10-17. Verified by batch diversity tests; sensory review remains P4-01.
 
 ## Phase 6: Release
 

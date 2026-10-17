@@ -1,6 +1,6 @@
 # Architecture
 
-HAI, ORACLE! is a static browser application. A phrase is normalized and hashed locally, the resulting seed enters a purpose-built LOLCODE interpreter, and `src/oracle.lol` emits a text score. The host validates every field before Canvas and Web Audio render a named ten-second creature. Nothing leaves the browser and the app retains no state after the page closes.
+HAI, ORACLE! is a static browser application. A phrase is normalized and hashed locally, the resulting seed enters a purpose-built LOLCODE interpreter, and `src/oracle.lol` emits a text score. The host validates every field before Canvas and Web Audio render a named looping creature. Nothing leaves the browser and the app retains no state after the page closes.
 
 Rationale lives in [DECISIONS.md](DECISIONS.md).
 
@@ -27,8 +27,9 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | --- | --- | --- | --- |
 | `INPUT_SEED` | `hashPhrase()` | `src/oracle.lol` | unsigned 32-bit integer |
 | LOLCODE output | `runLolcode()` | `parseScore()` | one known `key=integer` per line; all required keys exactly once |
-| Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with eight scale steps |
+| Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with twelve note choices plus musical, visual, and naming grammar indices |
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
+| Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
 
 ## Invariants
 
@@ -38,6 +39,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - Runtime assets remain local and dependency-free. Enforced by `tests/static.test.mjs` and D-001.
 - Unsupported LOLCODE syntax fails with a line number. Enforced by the interpreter and its negative test.
 - Rendering and sound share one immutable score. Enforced by the `showScore()` and `playScore()` call path.
+- Only one audio transport loops at a time. Enforced by `stopCurrentSound()` before every start.
 
 ## Boundaries
 
@@ -57,7 +59,7 @@ The application has no third-party runtime or build dependencies. It relies on c
 | What | Where | Written by | Reset by | Committed? |
 | --- | --- | --- | --- | --- |
 | Current phrase and score | browser memory | `src/app.mjs` | reload or tab close | no |
-| Audio graph | browser audio context | `playScore()` | fade, reload, or tab close | no |
+| Audio graph and loop timer | browser audio context and window | `playScore()` | mute, replacement, reload, or tab close | no |
 | Static HTTP cache | browser-managed | browser | browser controls | no |
 
 The prototype uses no cookies, local storage, indexed database, analytics, or service worker.

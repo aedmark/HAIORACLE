@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-17, session 1, on `main`: the first local prototype and project specification are complete._
+_Last updated: 2026-10-17, session 2, on `main`: continuous playback and the expanded variation grammar are implemented and awaiting final commit._
 
-**Where things stand:** P1 and P2 are implemented. A phrase now deterministically drives a LOLCODE-generated score, animated Canvas creature, ceremonial name, and ten-second Web Audio composition. The largest gap is sensory and accessibility review in real browsers and on a real phone.
+**Where things stand:** P1, P2, and P5-01 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of ten animated Canvas families, a multi-template ceremonial name, and a continuously looping Web Audio composition. The largest gap is sensory and accessibility review in real browsers and on a real phone.
 
 **Verified** (2026-10-17, initial repository, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **9/9 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **11/11 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 13 documents** |
 
 **What works**
@@ -22,6 +22,8 @@ _Last updated: 2026-10-17, session 1, on `main`: the first local prototype and p
 - A purpose-built interpreter executes `src/oracle.lol` and rejects unsupported syntax with line numbers (P1-02, D-002).
 - The spell emits validated audio, visual, and naming parameters (P2-01).
 - Canvas and Web Audio share the same immutable score (P2-02, D-004).
+- Audio loops continuously until mute, restart, replacement, or page close (D-005).
+- The expanded grammar covers twelve-note phrases, eight scales, six rhythms and voices, ten shapes, broader size and color ranges, and six name templates (P5-01, D-005).
 - Runtime assets are local and dependency-free (D-001).
 
 **Not verified**
@@ -34,7 +36,7 @@ _Last updated: 2026-10-17, session 1, on `main`: the first local prototype and p
 
 - Serve the directory over HTTP. A direct `file:` URL cannot fetch `src/oracle.lol`.
 - The interpreter deliberately implements a subset. Read D-002 before extending the spell.
-- Changes to hash, normalization, formula constants, scale, or name tables can break phrase identity.
+- Changes to hash, normalization, formula constants, scale, or name tables can break phrase identity. D-005 records the intentional pre-release compatibility break.
 
 ## Next steps
 
@@ -47,6 +49,28 @@ _Last updated: 2026-10-17, session 1, on `main`: the first local prototype and p
 - Q-001 blocks P6-01: choose public hosting and domain after browser review.
 
 ## Session log
+
+### Session 2: 2026-10-17: the omen keeps humming
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Loop sound continuously and expand repeated musical, visual, and naming outcomes.
+
+**Done:** P5-01; expanded P2-02 behavior
+
+**Changed:** Added a continuous look-ahead audio scheduler, twelve-note phrases, eight scales, six rhythms and voice stacks, ten shape families, larger visual ranges, and six ceremonial name templates with larger vocabularies.
+
+**Decisions:** D-005 supersedes the fixed-duration part of D-004.
+
+**Verified:** Eleven Node checks passed; documentation checker and whitespace review passed.
+
+**Not verified:** Listening continuity, subjective mix, animation quality, and cross-browser behavior.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** P4-01.
 
 ### Session 1: 2026-10-17: first summoning
 
