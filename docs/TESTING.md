@@ -6,7 +6,7 @@ Automated checks prove determinism, boundary validation, the required LOLCODE su
 
 | Suite | File | Proves | Does not prove | Needs |
 | --- | --- | --- | --- | --- |
-| Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/shape/scale diversity, negative interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
+| Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/body/eye/scale diversity, negative interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
 | Static structure | `tests/static.test.mjs` | required assets, basic labels, continuous scheduler marker, no remote runtime references | computed accessibility tree, scheduler timing, or visual layout | Node 20 or newer |
 | Documentation | `tools/check_docs.py` | no placeholders, broken local links, or unknown roadmap and decision references | factual accuracy of every claim | Python 3 |
 
@@ -48,9 +48,10 @@ Expected results from specific runs live in `HANDOFF.md`.
 1. Serve the repository and summon three phrases in current Chrome, Firefox, and Safari.
 2. Confirm sound starts only after a gesture, loops without an audible gap, mutes immediately, restarts, and is replaced cleanly by a new summon.
 3. Confirm repeated text produces identical metadata and creature structure.
-4. Use keyboard-only controls at desktop and narrow mobile widths.
-5. Enable reduced motion and confirm the interface remains legible and calm.
-6. Inspect the network panel for unexpected outbound requests.
+4. Summon enough creatures to inspect every eye silhouette, iris treatment, pupil geometry, and layout for clipping or illegibility.
+5. Use keyboard-only controls at desktop and narrow mobile widths.
+6. Enable reduced motion and confirm the interface remains legible and calm.
+7. Inspect the network panel for unexpected outbound requests.
 
 ## Known pitfalls
 

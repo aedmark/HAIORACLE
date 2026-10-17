@@ -27,7 +27,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | --- | --- | --- | --- |
 | `INPUT_SEED` | `hashPhrase()` | `src/oracle.lol` | unsigned 32-bit integer |
 | LOLCODE output | `runLolcode()` | `parseScore()` | one known `key=integer` per line; all required keys exactly once |
-| Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with twelve note choices plus musical, visual, and naming grammar indices |
+| Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with twelve note choices plus musical, body, eye-anatomy, palette, motion, and naming grammar indices |
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
 
@@ -40,6 +40,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - Unsupported LOLCODE syntax fails with a line number. Enforced by the interpreter and its negative test.
 - Rendering and sound share one immutable score. Enforced by the `showScore()` and `playScore()` call path.
 - Only one audio transport loops at a time. Enforced by `stopCurrentSound()` before every start.
+- Eye silhouette, layout, size, gaze, iris, and pupil all originate in the validated spell output. Enforced by required score fields and the batch diversity test (D-006).
 
 ## Boundaries
 

@@ -4,9 +4,9 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-17, session 2, on `main`: continuous playback and the expanded variation grammar are implemented and awaiting final commit._
+_Last updated: 2026-10-17, session 3, on `main`: the expanded deterministic eye-anatomy grammar is implemented and verified._
 
-**Where things stand:** P1, P2, and P5-01 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of ten animated Canvas families, a multi-template ceremonial name, and a continuously looping Web Audio composition. The largest gap is sensory and accessibility review in real browsers and on a real phone.
+**Where things stand:** P1, P2, P5-01, and P5-02 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of ten animated Canvas families, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition. The largest gap is sensory and accessibility review in real browsers and on a real phone.
 
 **Verified** (2026-10-17, initial repository, local Linux environment)
 
@@ -24,6 +24,7 @@ _Last updated: 2026-10-17, session 2, on `main`: continuous playback and the exp
 - Canvas and Web Audio share the same immutable score (P2-02, D-004).
 - Audio loops continuously until mute, restart, replacement, or page close (D-005).
 - The expanded grammar covers twelve-note phrases, eight scales, six rhythms and voices, ten shapes, broader size and color ranges, and six name templates (P5-01, D-005).
+- Eye silhouette, iris treatment and color, pupil shape, layout, size, and gaze vary deterministically (P5-02, D-006).
 - Runtime assets are local and dependency-free (D-001).
 
 **Not verified**
@@ -49,6 +50,28 @@ _Last updated: 2026-10-17, session 2, on `main`: continuous playback and the exp
 - Q-001 blocks P6-01: choose public hosting and domain after browser review.
 
 ## Session log
+
+### Session 3: 2026-10-17: eyes with opinions
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Replace repeated stamped eyes with varied anatomy and expression.
+
+**Done:** P5-02
+
+**Changed:** Added eight eye silhouettes, eight iris treatments, eight pupil geometries, six layouts, eight gaze directions, size variation, and per-eye color shifts driven by new LOLCODE score fields.
+
+**Decisions:** D-006
+
+**Verified:** Eleven Node checks passed, including score ranges and 256-phrase coverage of every categorical eye variant; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Subjective eye rendering, clipping, and legibility in real browsers.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** P4-01.
 
 ### Session 2: 2026-10-17: the omen keeps humming
 

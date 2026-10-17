@@ -108,13 +108,254 @@ function shapeRadius(score, angle, elapsed) {
   }
 }
 
+function traceEyeShape(ctx, shape, size) {
+  ctx.beginPath();
+  switch (shape) {
+    case 0:
+      ctx.ellipse(0, 0, size * 1.55, size, 0, 0, Math.PI * 2);
+      break;
+    case 1:
+      ctx.arc(0, 0, size * 1.12, 0, Math.PI * 2);
+      break;
+    case 2:
+      ctx.moveTo(-size * 1.5, 0);
+      ctx.lineTo(0, -size);
+      ctx.lineTo(size * 1.5, 0);
+      ctx.lineTo(0, size);
+      ctx.closePath();
+      break;
+    case 3:
+      ctx.moveTo(-size * 1.6, 0);
+      ctx.bezierCurveTo(-size * 0.72, -size * 1.15, size * 0.72, -size * 1.15, size * 1.6, 0);
+      ctx.bezierCurveTo(size * 0.72, size * 0.68, -size * 0.72, size * 0.68, -size * 1.6, 0);
+      ctx.closePath();
+      break;
+    case 4:
+      ctx.moveTo(0, -size * 1.18);
+      ctx.lineTo(size * 1.38, size * 0.88);
+      ctx.lineTo(-size * 1.38, size * 0.88);
+      ctx.closePath();
+      break;
+    case 5:
+      ctx.roundRect(-size * 1.42, -size * 0.86, size * 2.84, size * 1.72, size * 0.48);
+      break;
+    case 6:
+      ctx.moveTo(-size * 1.55, size * 0.16);
+      ctx.quadraticCurveTo(0, -size * 1.42, size * 1.55, size * 0.16);
+      ctx.quadraticCurveTo(0, size * 0.72, -size * 1.55, size * 0.16);
+      ctx.closePath();
+      break;
+    case 7:
+      for (let point = 0; point < 6; point += 1) {
+        const angle = -Math.PI / 2 + point / 6 * Math.PI * 2;
+        const x = Math.cos(angle) * size * (point % 2 ? 1.18 : 1.42);
+        const y = Math.sin(angle) * size;
+        if (point === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      break;
+    default:
+      ctx.arc(0, 0, size, 0, Math.PI * 2);
+  }
+}
+
+function tracePupil(ctx, shape, x, y, size) {
+  ctx.beginPath();
+  switch (shape) {
+    case 0:
+      ctx.arc(x, y, size * 0.38, 0, Math.PI * 2);
+      break;
+    case 1:
+      ctx.ellipse(x, y, size * 0.17, size * 0.58, 0, 0, Math.PI * 2);
+      break;
+    case 2:
+      ctx.ellipse(x, y, size * 0.62, size * 0.16, 0, 0, Math.PI * 2);
+      break;
+    case 3:
+      ctx.moveTo(x, y - size * 0.56);
+      ctx.lineTo(x + size * 0.42, y);
+      ctx.lineTo(x, y + size * 0.56);
+      ctx.lineTo(x - size * 0.42, y);
+      ctx.closePath();
+      break;
+    case 4:
+      for (let point = 0; point < 10; point += 1) {
+        const angle = -Math.PI / 2 + point / 10 * Math.PI * 2;
+        const radius = point % 2 ? size * 0.2 : size * 0.58;
+        const px = x + Math.cos(angle) * radius;
+        const py = y + Math.sin(angle) * radius;
+        if (point === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      break;
+    case 5:
+      ctx.rect(x - size * 0.14, y - size * 0.6, size * 0.28, size * 1.2);
+      ctx.rect(x - size * 0.6, y - size * 0.14, size * 1.2, size * 0.28);
+      break;
+    case 6:
+      ctx.arc(x, y, size * 0.48, 0, Math.PI * 2);
+      ctx.arc(x, y, size * 0.25, 0, Math.PI * 2, true);
+      break;
+    case 7:
+      ctx.moveTo(x, y - size * 0.58);
+      ctx.lineTo(x + size * 0.55, y + size * 0.48);
+      ctx.lineTo(x - size * 0.55, y + size * 0.48);
+      ctx.closePath();
+      break;
+    default:
+      ctx.arc(x, y, size * 0.38, 0, Math.PI * 2);
+  }
+}
+
+function eyePlacement(score, index, count, base, elapsed) {
+  const ratio = count <= 1 ? 0.5 : index / (count - 1);
+  switch (score.eyeLayout) {
+    case 0: {
+      const angle = index / count * Math.PI * 2 + elapsed * 0.055 * (score.motion % 2 ? 1 : -1);
+      const orbit = base * (0.15 + Math.min(count, 8) * 0.014);
+      return { x: Math.cos(angle) * orbit, y: Math.sin(angle) * orbit, angle, scale: 1 };
+    }
+    case 1: {
+      const columns = Math.min(6, count);
+      const row = Math.floor(index / columns);
+      const column = index % columns;
+      const rowCount = Math.ceil(count / columns);
+      return {
+        x: (column - (Math.min(columns, count - row * columns) - 1) / 2) * base * 0.13,
+        y: (row - (rowCount - 1) / 2) * base * 0.13,
+        angle: 0,
+        scale: 0.9,
+      };
+    }
+    case 2: {
+      const angle = index * 2.399 + elapsed * 0.025;
+      const orbit = base * (0.04 + ratio * 0.28);
+      return { x: Math.cos(angle) * orbit, y: Math.sin(angle) * orbit, angle: angle + Math.PI / 2, scale: 0.72 + ratio * 0.34 };
+    }
+    case 3: {
+      const angle = Math.PI + ratio * Math.PI;
+      return { x: Math.cos(angle) * base * 0.31, y: Math.sin(angle) * base * 0.31, angle: angle + Math.PI / 2, scale: 0.82 + Math.sin(ratio * Math.PI) * 0.28 };
+    }
+    case 4: {
+      const columns = Math.ceil(Math.sqrt(count));
+      const rows = Math.ceil(count / columns);
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      return {
+        x: (column - (columns - 1) / 2) * base * 0.13,
+        y: (row - (rows - 1) / 2) * base * 0.13,
+        angle: (column - row) * 0.12,
+        scale: 0.78 + ((index * 3) % 4) * 0.08,
+      };
+    }
+    case 5:
+      return { x: Math.sin(index * 1.7) * base * 0.08, y: (ratio - 0.5) * base * 0.58, angle: index % 2 ? 0.12 : -0.12, scale: 0.72 + (index % 3) * 0.13 };
+    default:
+      return { x: 0, y: 0, angle: 0, scale: 1 };
+  }
+}
+
+function drawIris(ctx, score, eye, size, elapsed) {
+  const hue = wrapHue(score.irisHue + eye * score.irisShift);
+  const secondHue = wrapHue(hue + score.hueShift);
+  const gazeAngle = score.gaze / 8 * Math.PI * 2 + Math.sin(elapsed * 0.32 + eye) * 0.16;
+  const x = Math.cos(gazeAngle) * size * 0.24;
+  const y = Math.sin(gazeAngle) * size * 0.16;
+  const radius = size * (0.48 + (eye % 3) * 0.055);
+  const gradient = ctx.createRadialGradient(x - radius * 0.18, y - radius * 0.2, radius * 0.08, x, y, radius);
+  gradient.addColorStop(0, `hsl(${secondHue} 100% 88%)`);
+  gradient.addColorStop(0.3, `hsl(${hue} 94% 58%)`);
+  gradient.addColorStop(1, `hsl(${wrapHue(hue - 35)} 82% 22%)`);
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.lineWidth = Math.max(0.7, size * 0.07);
+  ctx.strokeStyle = `hsla(${secondHue} 100% 84% / 0.72)`;
+  ctx.fillStyle = `hsla(${secondHue} 100% 72% / 0.52)`;
+
+  if (score.irisStyle === 1 || score.irisStyle === 5) {
+    const rings = score.irisStyle === 1 ? 3 : 5;
+    for (let ring = 1; ring <= rings; ring += 1) {
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * ring / (rings + 1), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  } else if (score.irisStyle === 2 || score.irisStyle === 6) {
+    const spokes = score.irisStyle === 2 ? 8 : 16;
+    for (let spoke = 0; spoke < spokes; spoke += 1) {
+      const angle = spoke / spokes * Math.PI * 2 + elapsed * 0.04;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(angle) * radius * 0.22, Math.sin(angle) * radius * 0.22);
+      ctx.lineTo(Math.cos(angle) * radius * 0.9, Math.sin(angle) * radius * 0.9);
+      ctx.stroke();
+    }
+  } else if (score.irisStyle === 3) {
+    for (let dot = 0; dot < 7; dot += 1) {
+      const angle = dot / 7 * Math.PI * 2 + eye;
+      ctx.beginPath();
+      ctx.arc(Math.cos(angle) * radius * 0.64, Math.sin(angle) * radius * 0.64, radius * 0.09, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (score.irisStyle === 4) {
+    ctx.fillStyle = `hsla(${secondHue} 100% 66% / 0.62)`;
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.88, -Math.PI / 2, Math.PI / 2);
+    ctx.lineTo(0, 0);
+    ctx.closePath();
+    ctx.fill();
+  } else if (score.irisStyle === 7) {
+    ctx.strokeStyle = `hsl(${secondHue} 100% 74%)`;
+    ctx.lineWidth = Math.max(1, size * 0.12);
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.76, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.fillStyle = `hsl(${wrapHue(hue + 180)} 36% 5%)`;
+  tracePupil(ctx, score.pupilShape, x, y, radius);
+  ctx.fill("evenodd");
+}
+
+function drawEye(ctx, score, eye, base, elapsed, colors) {
+  const placement = eyePlacement(score, eye, score.eyes, base, elapsed);
+  const crowding = 1 - Math.max(0, score.eyes - 7) * 0.025;
+  const size = Math.max(4, base * (0.022 + score.eyeSize / 2450) * placement.scale * crowding);
+  ctx.save();
+  ctx.translate(placement.x, placement.y);
+  ctx.rotate(placement.angle);
+  ctx.shadowBlur = size * 0.35;
+  ctx.shadowColor = `hsla(${score.irisHue} 100% 72% / 0.55)`;
+  traceEyeShape(ctx, score.eyeShape, size);
+  ctx.fillStyle = `hsl(${wrapHue(colors[2] + 20)} 34% 92%)`;
+  ctx.fill();
+  ctx.save();
+  traceEyeShape(ctx, score.eyeShape, size);
+  ctx.clip();
+  drawIris(ctx, score, eye, size, elapsed);
+  ctx.restore();
+  traceEyeShape(ctx, score.eyeShape, size);
+  ctx.lineWidth = Math.max(0.8, size * 0.11);
+  ctx.strokeStyle = `hsl(${colors[0]} 70% 8%)`;
+  ctx.stroke();
+  ctx.restore();
+}
+
 class OracleVision {
   constructor(canvas) {
     this.canvas = canvas;
     this.context = canvas.getContext("2d", { alpha: false });
     this.score = {
       seed: 132071, pulse: 72, hue: 274, hueShift: 126, saturation: 88, palette: 2,
-      symmetry: 7, twist: 4, bloom: 66, eyes: 3, shape: 0, size: 66, edge: 50, motion: 2,
+      symmetry: 7, twist: 4, bloom: 66, eyes: 3, eyeShape: 3, irisStyle: 2,
+      pupilShape: 1, irisHue: 164, irisShift: 72, eyeSize: 68, gaze: 1, eyeLayout: 0,
+      shape: 0, size: 66, edge: 50, motion: 2,
     };
     this.startedAt = performance.now();
     this.particles = [];
@@ -235,21 +476,8 @@ class OracleVision {
     }
 
     ctx.globalCompositeOperation = "source-over";
-    const eyeOrbit = base * (0.16 + Math.min(score.eyes, 8) * 0.014);
     for (let eye = 0; eye < score.eyes; eye += 1) {
-      const angle = (eye / Math.max(1, score.eyes)) * Math.PI * 2 + elapsed * 0.055 * direction;
-      const layer = 0.72 + (eye % 3) * 0.16;
-      const x = Math.cos(angle) * eyeOrbit * layer;
-      const y = Math.sin(angle) * eyeOrbit * layer;
-      const eyeSize = Math.max(3.5, base * (0.027 + (eye % 2) * 0.006));
-      ctx.fillStyle = "#f7f1dc";
-      ctx.beginPath();
-      ctx.ellipse(x, y, eyeSize * 1.55, eyeSize, angle, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = `hsl(${colors[0]} 65% 8%)`;
-      ctx.beginPath();
-      ctx.arc(x + Math.sin(elapsed + eye) * eyeSize * 0.24, y, eyeSize * 0.42, 0, Math.PI * 2);
-      ctx.fill();
+      drawEye(ctx, score, eye, base, elapsed, colors);
     }
     ctx.restore();
 

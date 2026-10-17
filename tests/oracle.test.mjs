@@ -16,6 +16,11 @@ test("the LOLCODE spell produces every required score field", () => {
   assert.ok(score.shape >= 0 && score.shape <= 9);
   assert.ok(score.size >= 36 && score.size <= 100);
   assert.ok(score.scale >= 0 && score.scale <= 7);
+  assert.ok(score.eyeShape >= 0 && score.eyeShape <= 7);
+  assert.ok(score.irisStyle >= 0 && score.irisStyle <= 7);
+  assert.ok(score.pupilShape >= 0 && score.pupilShape <= 7);
+  assert.ok(score.irisHue >= 0 && score.irisHue <= 359);
+  assert.ok(score.eyeLayout >= 0 && score.eyeLayout <= 5);
 });
 
 test("the same normalized phrase summons the same creature", () => {
@@ -36,6 +41,10 @@ test("a phrase batch exercises the expanded name, shape, and scale spaces", () =
   assert.ok(new Set(scores.map((score) => score.name)).size >= 250);
   assert.equal(new Set(scores.map((score) => score.shape)).size, 10);
   assert.equal(new Set(scores.map((score) => score.scale)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.eyeShape)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.irisStyle)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.pupilShape)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.eyeLayout)).size, 6);
 });
 
 test("empty phrases are rejected at the input boundary", () => {

@@ -36,6 +36,7 @@ Goal: verify the sensory experience beyond structural automation.
 Goal: expand only where additional complexity creates more play.
 
 - [x] P5-01 Expand musical, visual, and naming variation after the first hands-on review exposed repetition. Added twelve-note phrases, eight scales, six rhythms and voice stacks, ten shape families, broader size and color ranges, and six name grammars on 2026-10-17. Verified by batch diversity tests; sensory review remains P4-01.
+- [x] P5-02 Give eyes distinct silhouettes, arrangements, iris colors and treatments, pupil geometries, sizes, and gaze behavior. Added after maintainer review on 2026-10-17 and verified across the phrase batch; visual review remains P4-01.
 
 ## Phase 6: Release
 
