@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-17, session 9, on `main`: twelve deterministic repeating melody families are implemented and verified._
+_Last updated: 2026-10-17, session 10, on `main`: the esoteric old-timey macabre parlor cabinet redesign and interactive vitrine gestures are implemented and structurally verified._
 
-**Where things stand:** P1, P2, and P5-01 through P5-05 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume. The largest gap is sensory and accessibility review in real browsers and on a real phone.
+**Where things stand:** P1, P2, and P5-01 through P5-07 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume. The experience now lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine that responds to tapping, holding, and dragging across both audio and visuals. The largest gap is sensory and accessibility review in real browsers and on a real phone.
 
 **Verified** (2026-10-17, initial repository, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **16/16 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **18/18 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 13 documents** |
 
 **What works**
@@ -30,12 +30,13 @@ _Last updated: 2026-10-17, session 9, on `main`: twelve deterministic repeating 
 - The large exterior glow is isolated to the body fill; kinetic lines, rings, and eyes no longer inherit its expensive per-primitive blur.
 - Master volume adjusts the active loop smoothly from silence through a compressor-protected boost; the default dry mix is substantially louder (P5-04, D-009).
 - Every phrase selects and rotates one of twelve named twelve-note motifs, including five arpeggio and three chromatic families, then repeats it exactly (P5-05, D-010).
+- The responsive page shell uses an engraved book-serif and telegraph-monospace stack, foxed parchment and tarnished brass parlor framing, inline SVG sigil and spandrel linework, and a centered bell-jar apparition vitrine without remote or proprietary assets (P5-06, D-011).
+- Tapping/clicking, holding, and holding-and-dragging inside the vitrine trigger synthesized glass and membrane percussion, bend pitch and filter/echo intensity, and morph, tug, and accelerate the creature's silhouette, kinetic core, and gaze before decaying smoothly back to its deterministic score (P5-07, D-012).
 - Runtime assets are local and dependency-free (D-001).
 
 **Not verified**
 
-- No visual or listening review has been recorded in a real browser.
-- Firefox, Safari, mobile browsers, assistive technology, and reduced-motion presentation remain P4 work.
+- Cross-browser listening and touch-drag review in Firefox, Safari, mobile browsers, and assistive technology remain P4 work.
 - No public hosting or domain exists.
 
 **Gotchas**
@@ -55,6 +56,28 @@ _Last updated: 2026-10-17, session 9, on `main`: twelve deterministic repeating 
 - Q-001 blocks P6-01: choose public hosting and domain after browser review.
 
 ## Session log
+
+### Session 10: 2026-10-17: the parlor vitrine opens and answers the glass
+
+**Contributor:** Codex and Antigravity with maintainer direction
+
+**Goal:** Replace the futuristic interface and intermediate pastel storybook draft with a bespoke, esoteric, old-timey macabre parlor cabinet and make the apparition vitrine interactive on tap, hold, and drag.
+
+**Done:** P5-06, P5-07
+
+**Changed:** Rebuilt `index.html` and `styles.css` as an aged vellum, ebonized wood, oxblood, and tarnished brass spiritualist cabinet with engraved old-style serif and telegraph-monospace typography, inline SVG eye crest and astrolabe spandrels, a bell-jar apparition vitrine, centered Canvas coordinates, a lined calling-slip form, and an ebony telemetry drawer. Added pointer gesture handling on `#vision` for tap/click, press-and-hold, and hold-and-drag that drives synthesized strike, ratchet, and step percussion, continuous pitch/filter/echo modulation, shape-family morphing, directional lobe tugging, gaze tracking, and vitrine ripples.
+
+**Decisions:** D-011, D-012
+
+**Verified:** Eighteen Node checks passed, including the serif-display stack, centered stage, symmetrical grid, vitrine gesture and percussion markers, and existing accessibility and dependency markers; headless Chromium captures confirmed desktop and mobile vitrine bounds; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Subjective fidelity, exact installed-font rendering, vertical rhythm, text collision, and responsive composition in real browsers remain P4-01 work.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** Review the cabinet at desktop and phone widths, then continue P4-01.
 
 ### Session 9: 2026-10-17: twelve notes walk into infinity
 

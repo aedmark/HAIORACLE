@@ -14,6 +14,8 @@
 - Use surprise, replay, and mute controls.
 - Control a louder default mix with a live, keyboard-accessible master-volume slider.
 - Hear twelve deterministic repeating motif families spanning seeded scale walks, arpeggios, chromatic movement, fifths, whole tones, and stranger ladders.
+- Enter a redesigned esoteric parlor cabinet and broadsheet with engraved serif type, foxed parchment, oxblood and tarnished brass trim, formal specimen labels, and a framed central apparition vitrine.
+- Tap, hold, or drag inside the apparition vitrine to trigger synthesized glass and membrane percussion, bend pitch and filter intensity, and morph and tug the creature's geometry in real time.
 - Explore ten visual families, eight musical scales, six rhythmic grammars, wider color and size ranges, and more than 220,000 possible ceremonial names.
 - Meet creatures with eight eye silhouettes, eight colored iris treatments, eight pupil geometries, six eye arrangements, varied sizes, and independent gaze behavior.
 - Watch eight bounded kinetic cores—including a rotating projected tesseract—move inside eight independently deforming silhouette grammars.

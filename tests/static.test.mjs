@@ -27,7 +27,21 @@ test("the page exposes one labeled text input and its core controls", async () =
   assert.match(html, /id="score-melody"/);
   assert.match(html, /id="replay"/);
   assert.match(html, /aria-live="polite"/);
-  assert.match(html, /RESTART LOOP/);
+  assert.match(html, /RESTART THE MELODY/);
+});
+
+test("the interface uses the centered esoteric parlor cabinet design system", async () => {
+  const [html, styles, app] = await Promise.all([
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("styles.css", root), "utf8"),
+    readFile(new URL("src/app.mjs", root), "utf8"),
+  ]);
+  assert.match(html, /class="vision-stage"/);
+  assert.match(html, /CONFIDE A PHRASE<br><em>UNTO THE PARLOR GLASS<\/em>/);
+  assert.match(styles, /--serif-display: "Palatino Linotype", "Book Antiqua", Palatino/);
+  assert.match(styles, /grid-template-columns: 1fr auto 1fr/);
+  assert.match(app, /const centerX = width \* 0\.5/);
+  assert.match(app, /const centerY = height \* 0\.5/);
 });
 
 test("audio uses a continuing look-ahead scheduler", async () => {
@@ -65,6 +79,23 @@ test("the expensive body glow is cleared before kinetic linework", async () => {
   const bodyDraw = app.slice(app.indexOf("const direction ="), app.indexOf("const ringCount ="));
   assert.match(bodyDraw, /ctx\.save\(\);\s*ctx\.shadowColor[\s\S]*ctx\.fill\(\);\s*ctx\.restore\(\);\s*ctx\.save\(\);\s*traceBody/);
   assert.match(app, /function drawKineticCore[\s\S]*ctx\.shadowBlur = 0;/);
+});
+
+test("tapping, holding, and dragging the vitrine modulate shape morphing, movement, pitch, intensity, and percussion", async () => {
+  const [styles, app] = await Promise.all([
+    readFile(new URL("styles.css", root), "utf8"),
+    readFile(new URL("src/app.mjs", root), "utf8"),
+  ]);
+  assert.match(styles, /touch-action:\s*none/);
+  assert.match(app, /elements\.canvas\.addEventListener\("pointerdown"/);
+  assert.match(app, /elements\.canvas\.addEventListener\("pointermove"/);
+  assert.match(app, /elements\.canvas\.addEventListener\("pointerup"/);
+  assert.match(app, /function triggerPercussion\(kind/);
+  assert.match(app, /triggerPercussion\("strike"/);
+  assert.match(app, /triggerPercussion\("ratchet"/);
+  assert.match(app, /function updateAudioInteraction\(\)/);
+  assert.match(app, /interaction\.pitchBend/);
+  assert.match(app, /const morphMix = Math\.min\(1, interaction\.hold/);
 });
 
 test("the application has no remote runtime assets", async () => {

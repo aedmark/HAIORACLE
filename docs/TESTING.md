@@ -7,7 +7,7 @@ Automated checks prove determinism, boundary validation, the required LOLCODE su
 | Suite | File | Proves | Does not prove | Needs |
 | --- | --- | --- | --- | --- |
 | Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/body/eye/scale/kinetic/melody diversity, exact twelve-note arpeggio and chromatic motifs, negative interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
-| Static structure | `tests/static.test.mjs` | required assets, basic labels, continuous scheduler and master-volume markers, bounded silhouette and clipped-core markers, no audio-driven visual resizing, scoped body glow, no remote runtime references | computed accessibility tree, scheduler timing, perceived loudness, or visual layout | Node 20 or newer |
+| Static structure | `tests/static.test.mjs` | required assets, basic labels, centered apparition-stage and serif-broadsheet markers, continuous scheduler and master-volume markers, bounded silhouette and clipped-core markers, vitrine tap/hold/drag interaction and percussion markers, no audio-driven visual resizing, scoped body glow, no remote runtime references | computed accessibility tree, scheduler timing, perceived loudness, or visual quality | Node 20 or newer |
 | Documentation | `tools/check_docs.py` | no placeholders, broken local links, or unknown roadmap and decision references | factual accuracy of every claim | Python 3 |
 
 The fast set and full automated set are currently identical:
@@ -52,9 +52,11 @@ Expected results from specific runs live in `HANDOFF.md`.
 5. Confirm repeated text produces identical metadata and creature structure.
 6. Summon enough creatures to inspect every eye silhouette, iris treatment, pupil geometry, and layout for clipping or illegibility.
 7. Inspect all eight kinetic cores and silhouette-flux families for distinct motion, boundary containment, legibility, and stable frame rate.
-8. Use keyboard-only controls at desktop and narrow mobile widths.
-9. Enable reduced motion and confirm the interface remains legible, calm, and frozen at a representative phase.
-10. Inspect the network panel for unexpected outbound requests.
+8. Tap, press-and-hold, and hold-and-drag across the vitrine with mouse and touch; confirm percussive strikes, ratchet ticks, pitch bends, filter swells, eye tracking, and shape morphing respond smoothly and return to the resting creature on release.
+9. Use keyboard-only controls at desktop and narrow mobile widths.
+10. Confirm the cabinet remains bilaterally balanced, the apparition stays centered in its bell-jar vitrine, labels do not collide, and the serif and telegraph-monospace stacks remain legible at desktop and phone widths.
+11. Enable reduced motion and confirm the interface remains legible, calm, and frozen at a representative phase.
+12. Inspect the network panel for unexpected outbound requests.
 
 ## Known pitfalls
 

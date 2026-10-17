@@ -3,52 +3,102 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#110d20">
+  <meta name="theme-color" content="#120e0c">
   <meta name="description" content="Enter a phrase. Receive a deterministic audiovisual omen composed in LOLCODE.">
-  <title>HAI, ORACLE!</title>
+  <title>HAI, ORACLE! — Cabinet of Synthetic Omens</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <a class="skip-link" href="#oracle-controls">Skip to the oracle</a>
 
-  <main>
-    <canvas id="vision" aria-label="The oracle's animated audiovisual creature"></canvas>
-    <div class="grain" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
 
+  <main class="oracle-cabinet">
     <header class="masthead">
+      <span class="folio">FOLIO XVII · Nº 409 · SPECIMEN ARCHIVE</span>
       <a class="wordmark" href="#" aria-label="HAI, ORACLE! home">
-        <span class="prompt-mark">&gt;</span> HAI, ORACLE!
+        <span class="prompt-mark" aria-hidden="true">☽</span>
+        <span class="wordmark-text">HAI, ORACLE!</span>
+        <span class="prompt-mark" aria-hidden="true">☉</span>
       </a>
       <button class="icon-button" id="sound-toggle" type="button" aria-pressed="false" aria-label="Mute sound">
-        <span class="sound-on" aria-hidden="true">SOUND: ON</span>
-        <span class="sound-off" aria-hidden="true">SOUND: OFF</span>
+        <span class="sound-on" aria-hidden="true">BELL: UNSEALED (ON)</span>
+        <span class="sound-off" aria-hidden="true">BELL: MUFFLED (OFF)</span>
       </button>
     </header>
 
     <section class="oracle-shell" aria-labelledby="invitation">
-      <p class="eyebrow">A TINY MACHINE FOR SYNTHETIC OMENS</p>
-      <h1 id="invitation">FEED IT A THOUGHT.<br><em>SEE WHAT HUMS BACK.</em></h1>
+      <div class="cabinet-corner cabinet-corner-tl" aria-hidden="true"></div>
+      <div class="cabinet-corner cabinet-corner-tr" aria-hidden="true"></div>
+      <div class="cabinet-corner cabinet-corner-bl" aria-hidden="true"></div>
+      <div class="cabinet-corner cabinet-corner-br" aria-hidden="true"></div>
+      <div class="introduction">
+        <div class="esoteric-crest" aria-hidden="true">
+          <svg viewBox="0 0 240 56" focusable="false">
+            <line x1="8" y1="28" x2="78" y2="28" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" />
+            <line x1="162" y1="28" x2="232" y2="28" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" />
+            <circle cx="84" cy="28" r="2.5" fill="currentColor" />
+            <circle cx="156" cy="28" r="2.5" fill="currentColor" />
+            <path d="M92 28 C104 10, 136 10, 148 28 C136 46, 104 46, 92 28 Z" fill="none" stroke="currentColor" stroke-width="1.5" />
+            <circle cx="120" cy="28" r="9.5" fill="none" stroke="currentColor" stroke-width="1.2" />
+            <polygon points="120,21 124,28 120,35 116,28" fill="currentColor" />
+            <line x1="120" y1="3" x2="120" y2="11" stroke="currentColor" stroke-width="1.2" />
+            <line x1="120" y1="45" x2="120" y2="53" stroke="currentColor" stroke-width="1.2" />
+            <line x1="103" y1="8" x2="108" y2="15" stroke="currentColor" stroke-width="1" />
+            <line x1="137" y1="8" x2="132" y2="15" stroke="currentColor" stroke-width="1" />
+            <line x1="103" y1="48" x2="108" y2="41" stroke="currentColor" stroke-width="1" />
+            <line x1="137" y1="48" x2="132" y2="41" stroke="currentColor" stroke-width="1" />
+          </svg>
+        </div>
+        <p class="eyebrow">❧ THE SOCIETY FOR QUESTIONABLE SPIRITUALISM &amp; HARMONIC AUTOMATA ❧</p>
+        <h1 id="invitation">CONFIDE A PHRASE<br><em>UNTO THE PARLOR GLASS</em></h1>
+        <p class="dek">
+          Slip any ordinary remark into the apparatus. Its internal arithmetic will raise one invariant ectoplasmic specimen
+          and chime its peculiar twelve-note refrain until the bell is muffled or another creature is called.
+        </p>
+      </div>
+
+      <div class="vision-cabinet">
+        <div class="vision-stage">
+          <svg class="stage-spandrels" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <circle cx="400" cy="244" r="176" fill="none" stroke="currentColor" stroke-width="0.85" stroke-dasharray="2 6" opacity="0.48" />
+            <circle cx="400" cy="244" r="144" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.28" />
+            <line x1="400" y1="54" x2="400" y2="74" stroke="currentColor" stroke-width="0.9" opacity="0.45" />
+            <line x1="400" y1="414" x2="400" y2="434" stroke="currentColor" stroke-width="0.9" opacity="0.45" />
+            <line x1="210" y1="244" x2="230" y2="244" stroke="currentColor" stroke-width="0.9" opacity="0.45" />
+            <line x1="570" y1="244" x2="590" y2="244" stroke="currentColor" stroke-width="0.9" opacity="0.45" />
+          </svg>
+          <span class="stage-marker stage-marker-left">PLATE I · LIVE SPECIMEN</span>
+          <span class="stage-marker stage-marker-right">BELL JAR Nº 01</span>
+          <canvas id="vision" aria-label="The oracle's animated audiovisual creature"></canvas>
+          <p class="stage-caption">FIG. 1 — ECTOPLASMIC APPARITION UNDER CURVED GLASS · DO NOT TAP THE VITRINE</p>
+        </div>
+      </div>
 
       <form id="oracle-controls" class="summon-form">
-        <label for="phrase">YOUR PERFECTLY ORDINARY PHRASE</label>
+        <label for="phrase">
+          <span class="manicule" aria-hidden="true">☞</span>
+          INSCRIBE ONE PERFECTLY ORDINARY PHRASE UPON THE CALLING SLIP
+        </label>
         <div class="input-row">
           <input id="phrase" name="phrase" type="text" maxlength="72" autocomplete="off"
                  placeholder="the moon owes me five dollars" required>
           <button class="summon-button" type="submit">
-            <span>SUMMON</span>
-            <span aria-hidden="true">↗</span>
+            <span>SUMMON THE ORACLE</span>
+            <span class="sigil" aria-hidden="true">✠</span>
           </button>
         </div>
         <div class="form-foot">
-          <button class="text-button" id="surprise" type="button">SURPRISE ME</button>
-          <span>SAME WORDS. SAME CREATURE. EVERY TIME.</span>
+          <button class="text-button" id="surprise" type="button">✦ DRAW A RANDOM SLIP FROM THE URN</button>
+          <span>IDENTICAL WORDS INVARIABLY SUMMON THE IDENTICAL SPECIMEN.</span>
         </div>
       </form>
     </section>
 
     <section class="reading" id="reading" aria-live="polite" aria-atomic="true">
-      <div>
-        <p class="reading-label">NOW CHANNELING</p>
+      <div class="reading-identity">
+        <p class="reading-label">CATALOGUED MANIFESTATION</p>
         <h2 id="creature-name">THE ORACLE IS LISTENING</h2>
       </div>
       <div class="score-card" aria-label="Generated score">
@@ -65,14 +115,14 @@
         <input id="master-volume" type="range" min="0" max="100" value="82" step="1">
       </div>
       <button class="replay-button" id="replay" type="button" disabled>
-        RESTART LOOP <span aria-hidden="true">↻</span>
+        RESTART THE MELODY <span aria-hidden="true">↻</span>
       </button>
     </section>
 
     <footer>
-      <span>COMPOSED IN LOLCODE 1.2</span>
+      <span>COMPOSED IN LOLCODE 1.2 · ANNO MMXXVI</span>
       <span id="status" role="status">AWAITING INPUT</span>
-      <a href="src/oracle.lol">VIEW THE SPELL</a>
+      <a href="src/oracle.lol">INSPECT THE GRIMOIRE</a>
     </footer>
   </main>
 

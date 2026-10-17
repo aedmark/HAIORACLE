@@ -49,6 +49,24 @@ let currentTransport = null;
 let muted = false;
 let masterVolume = Number(elements.volume.value);
 
+const interaction = {
+  active: false,
+  pointerId: null,
+  x: 0,
+  y: 0,
+  smoothX: 0,
+  smoothY: 0,
+  hold: 0,
+  tap: 0,
+  dragSpeed: 0,
+  dragTravel: 0,
+  morphPhase: 0,
+  pitchBend: 0,
+  lastFrameAt: 0,
+  lastTickAt: 0,
+  ripples: [],
+};
+
 function mulberry32(seed) {
   let state = seed >>> 0;
   return () => {
@@ -96,43 +114,66 @@ function paletteFor(score) {
   return shifts.map((shift) => wrapHue(score.hue + shift));
 }
 
+function shapeFamilyRadius(shape, symmetry, edge, twist, angle) {
+  const folded = Math.cos(angle * symmetry);
+  switch (shape) {
+    case 0: return 0.72 + folded * (0.12 + edge * 0.16);
+    case 1: return 0.58 + (Math.abs(folded) ** (3 + edge * 8)) * 0.38;
+    case 2: return 0.68 + folded * 0.11;
+    case 3: return 0.58 + (Math.floor((angle / Math.PI) * symmetry * 2) % 2) * (0.2 + edge * 0.16);
+    case 4: return 0.64 + Math.abs(folded) * (0.16 + edge * 0.18);
+    case 5: return 0.7 + Math.sin(angle * 2) * 0.12 + Math.cos(angle * 3 - 1.7) * 0.08 + folded * 0.04;
+    case 6: return 0.63 + Math.sin(angle) * 0.18 + Math.cos(angle * symmetry) * 0.07;
+    case 7: return 0.74 + Math.sin(angle * twist) * 0.055 + folded * 0.045;
+    case 8: return 0.52 + Math.max(0, folded) * (0.28 + edge * 0.17);
+    case 9: return 0.67 + Math.cos(angle * 2) * 0.15 + Math.max(0, Math.sin(angle)) * 0.12 + folded * 0.055;
+    default: return 0.72;
+  }
+}
+
 function shapeRadius(score, angle, elapsed) {
-  const folded = Math.cos(angle * score.symmetry);
   const edge = score.edge / 100;
-  let radius;
-  switch (score.shape) {
-    case 0: radius = 0.72 + folded * (0.12 + edge * 0.16); break;
-    case 1: radius = 0.58 + (Math.abs(folded) ** (3 + edge * 8)) * 0.38; break;
-    case 2: radius = 0.68 + folded * 0.11; break;
-    case 3: radius = 0.58 + (Math.floor((angle / Math.PI) * score.symmetry * 2) % 2) * (0.2 + edge * 0.16); break;
-    case 4: radius = 0.64 + Math.abs(folded) * (0.16 + edge * 0.18); break;
-    case 5: radius = 0.7 + Math.sin(angle * 2) * 0.12 + Math.cos(angle * 3 - 1.7) * 0.08 + folded * 0.04; break;
-    case 6: radius = 0.63 + Math.sin(angle) * 0.18 + Math.cos(angle * score.symmetry) * 0.07; break;
-    case 7: radius = 0.74 + Math.sin(angle * score.twist) * 0.055 + folded * 0.045; break;
-    case 8: radius = 0.52 + Math.max(0, folded) * (0.28 + edge * 0.17); break;
-    case 9: radius = 0.67 + Math.cos(angle * 2) * 0.15 + Math.max(0, Math.sin(angle)) * 0.12 + folded * 0.055; break;
-    default: radius = 0.72;
+  let radius = shapeFamilyRadius(score.shape, score.symmetry, edge, score.twist, angle);
+  const morphMix = Math.min(1, interaction.hold * 0.72 + interaction.tap * 0.42 + interaction.dragSpeed * 0.5);
+  if (morphMix > 0.001) {
+    const altShape = (score.shape + 3 + Math.floor(interaction.morphPhase * 0.35)) % 10;
+    const altSymmetry = 2 + ((score.symmetry + 2) % 14);
+    const altTwist = 1 + ((score.twist + 3) % 14);
+    const morphed = shapeFamilyRadius(
+      altShape,
+      altSymmetry,
+      Math.min(1, edge + 0.22),
+      altTwist,
+      angle + interaction.morphPhase * 0.45,
+    );
+    radius = radius * (1 - morphMix) + morphed * morphMix;
+    const pointerAngle = Math.atan2(interaction.smoothY, interaction.smoothX);
+    const pointerReach = Math.min(1, Math.hypot(interaction.smoothX, interaction.smoothY));
+    const directionalPull = Math.cos(angle - pointerAngle) * pointerReach * (interaction.hold * 0.11 + interaction.dragSpeed * 0.09);
+    const harmonicPinch = Math.cos((angle - pointerAngle) * (2 + (score.symmetry % 4)) + interaction.morphPhase) * interaction.tap * 0.07;
+    radius += directionalPull + harmonicPinch;
   }
   return Math.max(0.38, Math.min(1.08, radius + fluxOffset(score, angle, elapsed)));
 }
 
 function fluxOffset(score, angle, elapsed) {
   const speed = 0.12 + score.kineticSpeed / 92;
-  const time = elapsed * speed + score.kineticTilt / 8 * Math.PI * 2;
-  const depth = 0.022 + score.kineticDepth / 100 * 0.095;
+  const time = elapsed * speed + interaction.morphPhase * 1.35 + score.kineticTilt / 8 * Math.PI * 2;
+  const depth = (0.022 + score.kineticDepth / 100 * 0.095) * (1 + interaction.hold * 0.75 + interaction.dragSpeed * 0.6);
+  const tapWave = Math.sin(angle * (score.symmetry + 5) - elapsed * 10.5) * interaction.tap * 0.068;
   switch (score.fluxMode) {
-    case 0: return Math.sin(angle * score.twist - time) * depth;
-    case 1: return Math.sin(angle * score.symmetry + time) * Math.cos(angle * score.twist - time * 0.63) * depth;
-    case 2: return Math.sin(angle * 2 + time) * Math.sin(angle * (score.symmetry + 1) - time * 0.8) * depth;
-    case 3: return Math.tanh(Math.sin(angle * score.symmetry - time) * 3) * depth * 0.82;
+    case 0: return Math.sin(angle * score.twist - time) * depth + tapWave;
+    case 1: return Math.sin(angle * score.symmetry + time) * Math.cos(angle * score.twist - time * 0.63) * depth + tapWave;
+    case 2: return Math.sin(angle * 2 + time) * Math.sin(angle * (score.symmetry + 1) - time * 0.8) * depth + tapWave;
+    case 3: return Math.tanh(Math.sin(angle * score.symmetry - time) * 3) * depth * 0.82 + tapWave;
     case 4: {
       const morph = (Math.sin(time * 0.55) + 1) / 2;
-      return (Math.cos(angle * score.symmetry) * (1 - morph) + Math.cos(angle * (score.symmetry + 1)) * morph) * depth;
+      return (Math.cos(angle * score.symmetry) * (1 - morph) + Math.cos(angle * (score.symmetry + 1)) * morph) * depth + tapWave;
     }
-    case 5: return (Math.sin(angle * 3 - time) * 0.55 + Math.sin(angle * 7 + time * 0.73) * 0.3 + Math.cos(angle * 11 - time * 0.41) * 0.15) * depth;
-    case 6: return Math.sin(angle + Math.sin(time) * 1.4) * Math.cos(angle * score.twist - time) * depth;
-    case 7: return Math.sin(angle * score.symmetry - time) ** 3 * depth;
-    default: return 0;
+    case 5: return (Math.sin(angle * 3 - time) * 0.55 + Math.sin(angle * 7 + time * 0.73) * 0.3 + Math.cos(angle * 11 - time * 0.41) * 0.15) * depth + tapWave;
+    case 6: return Math.sin(angle + Math.sin(time) * 1.4) * Math.cos(angle * score.twist - time) * depth + tapWave;
+    case 7: return Math.sin(angle * score.symmetry - time) ** 3 * depth + tapWave;
+    default: return tapWave;
   }
 }
 
@@ -331,22 +372,23 @@ function drawCrystalNetwork(ctx, score, base, elapsed, colors) {
 }
 
 function drawKineticCore(ctx, score, base, elapsed, colors) {
+  const coreElapsed = elapsed + interaction.morphPhase * 1.9;
   ctx.save();
   ctx.globalCompositeOperation = "screen";
   ctx.shadowBlur = 0;
-  ctx.lineWidth = Math.max(0.7, base * (0.003 + score.kineticDepth / 32000));
+  ctx.lineWidth = Math.max(0.7, base * (0.003 + score.kineticDepth / 32000) * (1 + interaction.hold * 0.55 + interaction.tap * 0.4));
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   switch (score.kineticMode) {
-    case 0: drawTesseract(ctx, score, base, elapsed, colors); break;
-    case 1: drawNestedFrames(ctx, score, base, elapsed, colors); break;
-    case 2: drawRibbons(ctx, score, base, elapsed, colors); break;
-    case 3: drawChordWeb(ctx, score, base, elapsed, colors); break;
-    case 4: drawDimensionalGrid(ctx, score, base, elapsed, colors); break;
-    case 5: drawContourMembrane(ctx, score, base, elapsed, colors); break;
-    case 6: drawGyroscope(ctx, score, base, elapsed, colors); break;
-    case 7: drawCrystalNetwork(ctx, score, base, elapsed, colors); break;
-    default: drawTesseract(ctx, score, base, elapsed, colors);
+    case 0: drawTesseract(ctx, score, base, coreElapsed, colors); break;
+    case 1: drawNestedFrames(ctx, score, base, coreElapsed, colors); break;
+    case 2: drawRibbons(ctx, score, base, coreElapsed, colors); break;
+    case 3: drawChordWeb(ctx, score, base, coreElapsed, colors); break;
+    case 4: drawDimensionalGrid(ctx, score, base, coreElapsed, colors); break;
+    case 5: drawContourMembrane(ctx, score, base, coreElapsed, colors); break;
+    case 6: drawGyroscope(ctx, score, base, coreElapsed, colors); break;
+    case 7: drawCrystalNetwork(ctx, score, base, coreElapsed, colors); break;
+    default: drawTesseract(ctx, score, base, coreElapsed, colors);
   }
   ctx.restore();
 }
@@ -503,9 +545,12 @@ function eyePlacement(score, index, count, base, elapsed) {
 function drawIris(ctx, score, eye, size, elapsed) {
   const hue = wrapHue(score.irisHue + eye * score.irisShift);
   const secondHue = wrapHue(hue + score.hueShift);
-  const gazeAngle = score.gaze / 8 * Math.PI * 2 + Math.sin(elapsed * 0.32 + eye) * 0.16;
-  const x = Math.cos(gazeAngle) * size * 0.24;
-  const y = Math.sin(gazeAngle) * size * 0.16;
+  const baseGazeAngle = score.gaze / 8 * Math.PI * 2 + Math.sin(elapsed * 0.32 + eye) * 0.16;
+  const attention = Math.min(1, interaction.hold * 0.85 + interaction.tap * 0.65);
+  const pointerAngle = Math.atan2(interaction.smoothY, interaction.smoothX);
+  const pointerReach = Math.min(1.35, 0.45 + Math.hypot(interaction.smoothX, interaction.smoothY));
+  const x = (Math.cos(baseGazeAngle) * (1 - attention) + Math.cos(pointerAngle) * pointerReach * attention) * size * 0.24;
+  const y = (Math.sin(baseGazeAngle) * (1 - attention) + Math.sin(pointerAngle) * pointerReach * attention) * size * 0.16;
   const radius = size * (0.48 + (eye % 3) * 0.055);
   const gradient = ctx.createRadialGradient(x - radius * 0.18, y - radius * 0.2, radius * 0.08, x, y, radius);
   gradient.addColorStop(0, `hsl(${secondHue} 100% 88%)`);
@@ -532,7 +577,7 @@ function drawIris(ctx, score, eye, size, elapsed) {
   } else if (score.irisStyle === 2 || score.irisStyle === 6) {
     const spokes = score.irisStyle === 2 ? 8 : 16;
     for (let spoke = 0; spoke < spokes; spoke += 1) {
-      const angle = spoke / spokes * Math.PI * 2 + elapsed * 0.04;
+      const angle = spoke / spokes * Math.PI * 2 + elapsed * 0.04 + interaction.morphPhase * 0.5;
       ctx.beginPath();
       ctx.moveTo(Math.cos(angle) * radius * 0.22, Math.sin(angle) * radius * 0.22);
       ctx.lineTo(Math.cos(angle) * radius * 0.9, Math.sin(angle) * radius * 0.9);
@@ -540,7 +585,7 @@ function drawIris(ctx, score, eye, size, elapsed) {
     }
   } else if (score.irisStyle === 3) {
     for (let dot = 0; dot < 7; dot += 1) {
-      const angle = dot / 7 * Math.PI * 2 + eye;
+      const angle = dot / 7 * Math.PI * 2 + eye + interaction.morphPhase * 0.3;
       ctx.beginPath();
       ctx.arc(Math.cos(angle) * radius * 0.64, Math.sin(angle) * radius * 0.64, radius * 0.09, 0, Math.PI * 2);
       ctx.fill();
@@ -561,13 +606,14 @@ function drawIris(ctx, score, eye, size, elapsed) {
   }
   ctx.restore();
 
+  const pupilScale = Math.max(0.65, Math.min(1.42, 1 + interaction.tap * 0.36 - interaction.hold * 0.22 + interaction.dragSpeed * 0.25));
   ctx.fillStyle = `hsl(${wrapHue(hue + 180)} 36% 5%)`;
-  tracePupil(ctx, score.pupilShape, x, y, radius);
+  tracePupil(ctx, score.pupilShape, x, y, radius * pupilScale);
   ctx.fill("evenodd");
 }
 
 function drawEye(ctx, score, eye, base, elapsed, colors) {
-  const placement = eyePlacement(score, eye, score.eyes, base, elapsed);
+  const placement = eyePlacement(score, eye, score.eyes, base, elapsed + interaction.morphPhase * 0.6);
   const crowding = 1 - Math.max(0, score.eyes - 7) * 0.025;
   const size = Math.max(4, base * (0.022 + score.eyeSize / 2450) * placement.scale * crowding);
   ctx.save();
@@ -588,6 +634,29 @@ function drawEye(ctx, score, eye, base, elapsed, colors) {
   ctx.strokeStyle = `hsl(${colors[0]} 70% 8%)`;
   ctx.stroke();
   ctx.restore();
+}
+
+function stepInteraction(timestamp, reducedMotion) {
+  const dt = interaction.lastFrameAt ? Math.min(0.06, (timestamp - interaction.lastFrameAt) / 1000) : 0.016;
+  interaction.lastFrameAt = timestamp;
+  const targetHold = interaction.active ? 1 : 0;
+  interaction.hold += (targetHold - interaction.hold) * Math.min(1, dt * (interaction.active ? 4.2 : 2.8));
+  interaction.tap *= Math.exp(-dt * 3.8);
+  interaction.dragSpeed *= Math.exp(-dt * 6.0);
+  const followRate = Math.min(1, dt * (interaction.active ? 9.5 : 3.6));
+  const targetX = interaction.active ? interaction.x : 0;
+  const targetY = interaction.active ? interaction.y : 0;
+  interaction.smoothX += (targetX - interaction.smoothX) * followRate;
+  interaction.smoothY += (targetY - interaction.smoothY) * followRate;
+  if (!reducedMotion) {
+    interaction.morphPhase += dt * (interaction.hold * 2.2 + interaction.dragSpeed * 4.8 + interaction.tap * 1.9);
+  }
+  const targetPitch = interaction.active
+    ? -interaction.smoothY
+    : interaction.tap * 0.25;
+  interaction.pitchBend += (targetPitch - interaction.pitchBend) * Math.min(1, dt * 6.5);
+  interaction.ripples = interaction.ripples.filter((ripple) => (timestamp - ripple.bornAt) < 920);
+  updateAudioInteraction();
 }
 
 class OracleVision {
@@ -638,6 +707,7 @@ class OracleVision {
   }
 
   draw(timestamp) {
+    stepInteraction(timestamp, this.reducedMotion);
     const ctx = this.context;
     const score = this.score;
     const width = this.width;
@@ -645,38 +715,44 @@ class OracleVision {
     const elapsed = this.reducedMotion ? 1.25 : (timestamp - this.startedAt) / 1000;
     const colors = paletteFor(score);
 
-    const backdrop = ctx.createRadialGradient(width * 0.58, height * 0.44, 0, width * 0.58, height * 0.44, Math.max(width, height) * 0.78);
-    backdrop.addColorStop(0, `hsl(${colors[0]} ${Math.max(30, score.saturation - 24)}% 16%)`);
-    backdrop.addColorStop(0.48, `hsl(${colors[1]} ${Math.max(25, score.saturation - 35)}% 8%)`);
+    const glowFocusX = width * (0.5 + interaction.smoothX * 0.14);
+    const glowFocusY = height * (0.48 + interaction.smoothY * 0.14);
+    const backdrop = ctx.createRadialGradient(glowFocusX, glowFocusY, 0, width * 0.5, height * 0.48, Math.max(width, height) * 0.78);
+    backdrop.addColorStop(0, `hsl(${colors[0]} ${Math.max(30, score.saturation - 24)}% ${16 + interaction.hold * 7 + interaction.tap * 6}%)`);
+    backdrop.addColorStop(0.48, `hsl(${colors[1]} ${Math.max(25, score.saturation - 35)}% ${8 + interaction.hold * 4}%)`);
     backdrop.addColorStop(1, `hsl(${colors[2]} 32% 3%)`);
     ctx.fillStyle = backdrop;
     ctx.fillRect(0, 0, width, height);
 
     ctx.save();
     for (const particle of this.particles) {
-      const driftX = this.reducedMotion ? 0 : Math.sin(elapsed * particle.drift + particle.phase) * (4 + score.motion * 1.8);
-      const driftY = this.reducedMotion ? 0 : Math.cos(elapsed * 0.3 + particle.phase) * score.motion;
-      ctx.globalAlpha = 0.15 + Math.sin(elapsed + particle.phase) * 0.1;
+      const driftX = this.reducedMotion ? 0 : Math.sin(elapsed * particle.drift + particle.phase + interaction.morphPhase * 0.5) * (4 + score.motion * 1.8);
+      const driftY = this.reducedMotion ? 0 : Math.cos(elapsed * 0.3 + particle.phase + interaction.morphPhase * 0.4) * score.motion;
+      ctx.globalAlpha = 0.15 + Math.sin(elapsed + particle.phase) * 0.1 + interaction.hold * 0.12;
       ctx.fillStyle = `hsl(${colors[Math.floor(particle.phase) % colors.length]} ${score.saturation}% 78%)`;
       ctx.beginPath();
-      ctx.arc(particle.x * width + driftX, particle.y * height + driftY, particle.radius, 0, Math.PI * 2);
+      ctx.arc(particle.x * width + driftX, particle.y * height + driftY, particle.radius * (1 + interaction.tap * 0.45), 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
 
     const orbitDistance = this.reducedMotion ? 0 : score.motion * Math.min(width, height) * 0.004;
-    const centerX = width * (width < 760 ? 0.66 : 0.72) + Math.cos(elapsed * 0.21) * orbitDistance;
-    const centerY = height * (width < 760 ? 0.66 : 0.5) + Math.sin(elapsed * 0.27) * orbitDistance;
+    const tugX = this.reducedMotion ? 0 : interaction.smoothX * width * (0.075 + interaction.hold * 0.065);
+    const tugY = this.reducedMotion ? 0 : interaction.smoothY * height * (0.075 + interaction.hold * 0.065);
+    const centerX = width * 0.5 + Math.cos(elapsed * 0.21) * orbitDistance + tugX;
+    const centerY = height * 0.5 + Math.sin(elapsed * 0.27) * orbitDistance + tugY;
     const sizeFactor = 0.15 + score.size / 100 * (width < 760 ? 0.14 : 0.22);
     const base = Math.min(width, height) * sizeFactor;
     const points = Math.max(120, score.symmetry * 28);
-    const aspectX = [1, 1, 1.08, 1, 0.9, 1.16, 1.25, 1, 0.92, 0.88][score.shape];
-    const aspectY = [1, 1, 0.92, 1, 1.12, 0.88, 0.72, 1, 1.08, 1.25][score.shape];
+    const stretchX = 1 + (this.reducedMotion ? 0 : (interaction.smoothX * interaction.hold * 0.14 + interaction.tap * 0.05));
+    const stretchY = 1 + (this.reducedMotion ? 0 : (interaction.smoothY * interaction.hold * 0.14 - interaction.tap * 0.04));
+    const aspectX = [1, 1, 1.08, 1, 0.9, 1.16, 1.25, 1, 0.92, 0.88][score.shape] * stretchX;
+    const aspectY = [1, 1, 0.92, 1, 1.12, 0.88, 0.72, 1, 1.08, 1.25][score.shape] * stretchY;
 
     ctx.save();
     ctx.translate(centerX, centerY);
     const direction = score.kineticTilt % 2 ? 1 : -1;
-    ctx.rotate(this.reducedMotion ? 0.16 : elapsed * (0.004 + score.kineticSpeed / 12000) * direction);
+    ctx.rotate(this.reducedMotion ? 0.16 : (elapsed * (0.004 + score.kineticSpeed / 12000) + interaction.morphPhase * 0.14) * direction);
     ctx.scale(aspectX, aspectY);
 
     ctx.save();
@@ -700,11 +776,11 @@ class OracleVision {
     ctx.restore();
 
     ctx.globalCompositeOperation = "screen";
-    ctx.lineWidth = 0.7 + score.edge / 70;
-    ctx.strokeStyle = `hsla(${colors[2]} 100% 84% / 0.58)`;
+    ctx.lineWidth = (0.7 + score.edge / 70) * (1 + interaction.hold * 0.45 + interaction.tap * 0.35);
+    ctx.strokeStyle = `hsla(${colors[2]} 100% 84% / ${0.58 + interaction.hold * 0.24})`;
     const ringCount = 2 + score.palette % 4;
     const kineticRate = 0.12 + score.kineticSpeed / 180;
-    const kineticPhase = score.kineticTilt / 8 * Math.PI * 2;
+    const kineticPhase = score.kineticTilt / 8 * Math.PI * 2 + interaction.morphPhase * 1.2;
     for (let ring = 0; ring < ringCount; ring += 1) {
       ctx.beginPath();
       for (let i = 0; i <= points; i += 1) {
@@ -712,7 +788,7 @@ class OracleVision {
         const ringDirection = ring % 2 ? -1 : 1;
         const motion = Math.sin(
           angle * (score.symmetry + ring) + elapsed * kineticRate * ringDirection + kineticPhase,
-        ) * (0.022 + score.kineticDepth / 2400);
+        ) * (0.022 + score.kineticDepth / 2400) * (1 + interaction.hold * 0.8 + interaction.dragSpeed * 0.7);
         const radius = base * (0.25 + ring * (0.52 / ringCount) + motion);
         const x = Math.cos(angle) * radius;
         const y = Math.sin(angle) * radius;
@@ -729,6 +805,23 @@ class OracleVision {
     }
     ctx.restore();
 
+    if (interaction.ripples.length > 0) {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for (const ripple of interaction.ripples) {
+        const age = Math.max(0, (timestamp - ripple.bornAt) / 920);
+        const rx = (ripple.x * 0.5 + 0.5) * width;
+        const ry = (ripple.y * 0.5 + 0.5) * height;
+        const rippleRadius = base * (0.1 + age * (0.95 + ripple.strength * 0.45));
+        ctx.strokeStyle = `hsla(${colors[2]} 100% 86% / ${(1 - age) ** 1.6 * 0.52})`;
+        ctx.lineWidth = 1.6 * (1 - age * 0.6);
+        ctx.beginPath();
+        ctx.arc(rx, ry, rippleRadius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     requestAnimationFrame(this.draw);
   }
 }
@@ -739,6 +832,105 @@ async function ensureAudioContext() {
   if (!audioContext) audioContext = new AudioContext();
   if (audioContext.state === "suspended") await audioContext.resume();
   return audioContext;
+}
+
+function harmonicField() {
+  const radius = Math.min(1, Math.hypot(interaction.smoothX, interaction.smoothY)) * interaction.hold;
+  const angle = Math.atan2(interaction.smoothY, interaction.smoothX);
+  const unitPhase = (angle + Math.PI) / (Math.PI * 2);
+  const cyclePosition = unitPhase * 12;
+  const phaseStep = Math.floor(cyclePosition) % 12;
+  const phaseFraction = cyclePosition - Math.floor(cyclePosition);
+  const crossfadeAngle = (Math.PI * 0.5) * Math.min(1, radius * (0.45 + 0.55 * phaseFraction));
+  return {
+    radius,
+    angle,
+    unitPhase,
+    phaseStep: (phaseStep + 1) % 12,
+    primaryWeight: Math.cos(crossfadeAngle),
+    shiftedWeight: Math.sin(crossfadeAngle),
+  };
+}
+
+function updateAudioInteraction() {
+  if (!audioContext || !currentTransport || muted) return;
+  const score = currentScore || vision.score;
+  const now = audioContext.currentTime;
+  const transport = currentTransport;
+  const field = harmonicField();
+
+  const baseCutoff = 620 + score.bloom * 24 + score.hueShift * 2;
+  const harmonicExponent = (interaction.pitchBend * 0.58 + Math.sin(field.angle) * 0.28) * Math.max(0.25, interaction.hold) + interaction.tap * 0.22;
+  const targetCutoff = Math.max(240, Math.min(4800, baseCutoff * (2 ** harmonicExponent)));
+  const baseQ = 2.5 + score.edge / 16;
+  const targetQ = Math.min(5.2, baseQ + field.radius * 1.35 + interaction.tap * 0.6);
+  const targetMix = 0.28 * (1 + interaction.hold * 0.16 + interaction.tap * 0.1);
+  const baseFeedback = 0.14 + score.bloom / 650;
+  const targetFeedback = Math.min(0.46, baseFeedback + field.radius * 0.12);
+
+  transport.filter.frequency.setTargetAtTime(targetCutoff, now, 0.045);
+  transport.filter.Q.setTargetAtTime(targetQ, now, 0.045);
+  transport.mix.gain.setTargetAtTime(targetMix, now, 0.045);
+  transport.feedback.gain.setTargetAtTime(targetFeedback, now, 0.05);
+
+  const subWeight = 0.085 * (1 + Math.max(0, -interaction.pitchBend) * 0.45 * interaction.hold);
+  const fifthWeight = 0.035 + field.radius * 0.055 * (0.5 - 0.5 * Math.cos(field.angle * 2));
+  const shimmerWeight = field.radius * 0.048 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5));
+  const targetDroneGains = [subWeight, fifthWeight, shimmerWeight];
+
+  for (const [index, drone] of transport.drones.entries()) {
+    const baseDetune = [-5, 4, -3][index] || 0;
+    const phaseBeating = Math.sin(field.angle + index * 2.094) * 3.5 * field.radius;
+    drone.detune.setTargetAtTime(baseDetune + phaseBeating, now, 0.05);
+    if (transport.droneGains?.[index]) {
+      transport.droneGains[index].gain.setTargetAtTime(targetDroneGains[index] ?? 0.03, now, 0.06);
+    }
+  }
+}
+
+function triggerPercussion(kind, normX = 0, normY = 0, strength = 1) {
+  if (!audioContext || !currentTransport || muted) return;
+  const score = currentScore || vision.score;
+  const now = audioContext.currentTime;
+  const melody = currentTransport.melody;
+  const sector = Math.floor((((Math.atan2(normY, normX) + Math.PI) / (Math.PI * 2)) * 12)) % 12;
+  const degree = melody[(currentTransport.step + sector) % melody.length] || 0;
+  const registerLift = -normY > 0.35 ? 12 : (-normY < -0.35 ? 0 : 7);
+  const baseMidi = score.root + degree + registerLift;
+  const baseFreq = midiToFrequency(baseMidi);
+
+  if (kind === "strike") {
+    for (const [partialIndex, ratio] of [0.5, 1, 1.5, 2].entries()) {
+      const partialOsc = audioContext.createOscillator();
+      const partialGain = audioContext.createGain();
+      partialOsc.type = partialIndex < 2 ? "sine" : "triangle";
+      partialOsc.frequency.setValueAtTime(baseFreq * ratio, now);
+      partialOsc.detune.setValueAtTime((partialIndex - 1.5) * 2.5, now);
+      const duration = 0.42 - partialIndex * 0.065;
+      const peak = [0.09, 0.13, 0.075, 0.045][partialIndex] * strength;
+      partialGain.gain.setValueAtTime(0.0001, now);
+      partialGain.gain.exponentialRampToValueAtTime(peak, now + 0.016);
+      partialGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      partialOsc.connect(partialGain).connect(currentTransport.mix);
+      partialOsc.start(now);
+      partialOsc.stop(now + duration + 0.04);
+    }
+  } else if (kind === "ratchet") {
+    for (const [partialIndex, ratio] of [1, 2].entries()) {
+      const harmonicOsc = audioContext.createOscillator();
+      const harmonicGain = audioContext.createGain();
+      harmonicOsc.type = partialIndex === 0 ? "sine" : "triangle";
+      harmonicOsc.frequency.setValueAtTime(baseFreq * ratio, now);
+      const duration = partialIndex === 0 ? 0.24 : 0.15;
+      const peak = (partialIndex === 0 ? 0.085 : 0.038) * strength;
+      harmonicGain.gain.setValueAtTime(0.0001, now);
+      harmonicGain.gain.exponentialRampToValueAtTime(peak, now + 0.014);
+      harmonicGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      harmonicOsc.connect(harmonicGain).connect(currentTransport.mix);
+      harmonicOsc.start(now);
+      harmonicOsc.stop(now + duration + 0.03);
+    }
+  }
 }
 
 function stopCurrentSound() {
@@ -775,26 +967,40 @@ function voiceStack(score, step) {
 }
 
 function scheduleNote(context, transport, score, step, at, duration) {
-  const note = score.root + transport.melody[step % transport.melody.length];
+  const field = harmonicField();
+  const primaryNote = score.root + transport.melody[step % transport.melody.length];
+  const consonantInterval = interaction.pitchBend > 0.32 ? 7 : (interaction.pitchBend < -0.32 ? -5 : 0);
+  const shiftedNote = score.root + transport.melody[(step + field.phaseStep) % transport.melody.length] + consonantInterval;
   const envelope = context.createGain();
-  const attack = Math.min(0.045, duration * 0.18);
+  const attack = Math.min(0.055, duration * (0.2 + field.radius * 0.06));
+  const peakGain = 0.3 * (1 + interaction.hold * 0.12);
   envelope.gain.setValueAtTime(0.0001, at);
-  envelope.gain.exponentialRampToValueAtTime(0.3, at + attack);
+  envelope.gain.exponentialRampToValueAtTime(peakGain, at + Math.max(0.01, attack));
   envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
   envelope.connect(transport.mix);
 
-  for (const [voiceIndex, voice] of voiceStack(score, step).entries()) {
-    const oscillator = context.createOscillator();
-    oscillator.type = voiceIndex === 0
-      ? score.waveform
-      : ["triangle", "sine", "sawtooth", "square"][(score.wave + voiceIndex + score.voice) % 4];
-    oscillator.frequency.value = midiToFrequency(note + voice.interval);
-    oscillator.detune.value = voice.detune + (step % 3 - 1) * score.twist * 0.55;
-    const level = context.createGain();
-    level.gain.value = voice.gain;
-    oscillator.connect(level).connect(envelope);
-    oscillator.start(at);
-    oscillator.stop(at + duration + 0.06);
+  const chorusPhaseCents = Math.sin(field.angle + step * 0.52) * 3.5 * field.radius;
+  const layers = field.shiftedWeight > 0.04
+    ? [
+      { note: primaryNote, weight: field.primaryWeight, detuneOffset: -chorusPhaseCents },
+      { note: shiftedNote, weight: field.shiftedWeight, detuneOffset: chorusPhaseCents },
+    ]
+    : [{ note: primaryNote, weight: 1, detuneOffset: 0 }];
+
+  for (const layer of layers) {
+    for (const [voiceIndex, voice] of voiceStack(score, step).entries()) {
+      const oscillator = context.createOscillator();
+      oscillator.type = voiceIndex === 0
+        ? score.waveform
+        : ["triangle", "sine", "sawtooth", "square"][(score.wave + voiceIndex + score.voice) % 4];
+      oscillator.frequency.value = midiToFrequency(layer.note + voice.interval);
+      oscillator.detune.value = voice.detune + layer.detuneOffset + (step % 3 - 1) * score.twist * 0.55;
+      const level = context.createGain();
+      level.gain.value = voice.gain * layer.weight;
+      oscillator.connect(level).connect(envelope);
+      oscillator.start(at);
+      oscillator.stop(at + duration + 0.06);
+    }
   }
 }
 
@@ -816,10 +1022,15 @@ async function playScore(score) {
   const feedback = context.createGain();
   const output = context.createGain();
   const drones = [];
+  const droneGains = [];
   const transport = {
     mix,
+    filter,
+    delay,
+    feedback,
     output,
     drones,
+    droneGains,
     melody: melodyFor(score),
     timer: 0,
     nextNoteTime: now,
@@ -845,26 +1056,32 @@ async function playScore(score) {
   delay.connect(feedback).connect(delay);
   delay.connect(compressor);
 
-  const droneCount = score.voice === 5 ? 2 : 1;
-  for (let index = 0; index < droneCount; index += 1) {
+  const droneIntervals = [-12, -5, 7];
+  const initialDroneGains = [0.085, score.voice === 5 ? 0.035 : 0.018, 0.0001];
+  for (const [index, interval] of droneIntervals.entries()) {
     const drone = context.createOscillator();
     const droneGain = context.createGain();
-    drone.type = index ? "sine" : (score.waveform === "square" ? "triangle" : score.waveform);
-    drone.frequency.value = midiToFrequency(score.root - 12 + index * 7);
-    drone.detune.value = index ? 8 : -6;
-    droneGain.gain.value = index ? 0.035 : 0.085;
+    drone.type = index === 0
+      ? (score.waveform === "square" ? "triangle" : score.waveform)
+      : "sine";
+    drone.frequency.value = midiToFrequency(score.root + interval);
+    drone.detune.value = [-5, 4, -3][index];
+    droneGain.gain.value = initialDroneGains[index];
     drone.connect(droneGain).connect(mix);
     drone.start(now);
     drones.push(drone);
+    droneGains.push(droneGain);
   }
 
   const scheduleAhead = () => {
     if (currentTransport !== transport) return;
+    updateAudioInteraction();
     const rhythm = RHYTHMS[score.rhythm];
     while (transport.nextNoteTime < context.currentTime + 0.28) {
       const lengthMultiplier = rhythm[transport.step % rhythm.length];
       const stepDuration = unit * lengthMultiplier;
-      const soundingDuration = Math.max(0.06, stepDuration * score.gate / 100);
+      const gateRatio = Math.min(0.94, score.gate / 100 + interaction.hold * 0.12);
+      const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
       scheduleNote(context, transport, score, transport.step, transport.nextNoteTime, soundingDuration);
       transport.nextNoteTime += stepDuration;
       transport.step += 1;
@@ -901,6 +1118,93 @@ async function summon(phrase) {
     console.error(error);
   }
 }
+
+function vitrineCoordinates(event) {
+  const rect = elements.canvas.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
+  const y = ((event.clientY - rect.top) / Math.max(1, rect.height)) * 2 - 1;
+  return {
+    x: Math.max(-1, Math.min(1, x)),
+    y: Math.max(-1, Math.min(1, y)),
+  };
+}
+
+const stageContainer = elements.canvas.closest(".vision-stage");
+
+elements.canvas.addEventListener("pointerdown", async (event) => {
+  if (event.button !== undefined && event.button !== 0) return;
+  const coords = vitrineCoordinates(event);
+  interaction.active = true;
+  interaction.pointerId = event.pointerId;
+  interaction.x = coords.x;
+  interaction.y = coords.y;
+  interaction.smoothX = coords.x;
+  interaction.smoothY = coords.y;
+  interaction.tap = 1;
+  interaction.hold = Math.max(interaction.hold, 0.35);
+  interaction.dragTravel = Math.floor((((Math.atan2(coords.y, coords.x) + Math.PI) / (Math.PI * 2)) * 12)) % 12;
+  interaction.pitchBend = -coords.y;
+  interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: performance.now(), strength: 1 });
+  stageContainer?.classList.add("is-interacting");
+  try {
+    elements.canvas.setPointerCapture(event.pointerId);
+  } catch {
+    // Synthetic or non-capturable pointers safely continue without capture.
+  }
+
+  if (!currentScore && oracleSource) {
+    const initialPhrase = elements.phrase.value.trim() || SURPRISES[0];
+    elements.phrase.value = initialPhrase;
+    await summon(initialPhrase);
+  } else if (currentScore && !currentTransport && !muted) {
+    await playScore(currentScore);
+  }
+
+  updateAudioInteraction();
+  triggerPercussion("strike", coords.x, coords.y, 1);
+  if (!muted) {
+    elements.status.textContent = "VITRINE DISTURBED";
+  }
+});
+
+elements.canvas.addEventListener("pointermove", (event) => {
+  if (!interaction.active || event.pointerId !== interaction.pointerId) return;
+  const coords = vitrineCoordinates(event);
+  const dx = coords.x - interaction.x;
+  const dy = coords.y - interaction.y;
+  const delta = Math.hypot(dx, dy);
+  interaction.x = coords.x;
+  interaction.y = coords.y;
+  interaction.dragSpeed = Math.min(1, interaction.dragSpeed + delta * 2.8);
+  interaction.pitchBend = -coords.y;
+  updateAudioInteraction();
+
+  const now = performance.now();
+  const sector = Math.floor((((Math.atan2(coords.y, coords.x) + Math.PI) / (Math.PI * 2)) * 12)) % 12;
+  if (sector !== interaction.dragTravel && now - interaction.lastTickAt > 140) {
+    interaction.dragTravel = sector;
+    interaction.lastTickAt = now;
+    interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: now, strength: 0.55 });
+    triggerPercussion("ratchet", coords.x, coords.y, Math.min(0.85, 0.4 + interaction.dragSpeed * 0.45));
+  }
+});
+
+function endVitrineInteraction(event) {
+  if (!interaction.active) return;
+  if (event?.pointerId !== undefined && interaction.pointerId !== null && event.pointerId !== interaction.pointerId) {
+    return;
+  }
+  interaction.active = false;
+  interaction.pointerId = null;
+  stageContainer?.classList.remove("is-interacting");
+  if (currentTransport && !muted) {
+    elements.status.textContent = "OMEN LOOPING";
+  }
+}
+
+elements.canvas.addEventListener("pointerup", endVitrineInteraction);
+elements.canvas.addEventListener("pointercancel", endVitrineInteraction);
+elements.canvas.addEventListener("lostpointercapture", endVitrineInteraction);
 
 elements.form.addEventListener("submit", (event) => {
   event.preventDefault();

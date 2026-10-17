@@ -34,6 +34,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
 | Melody motif | `melodyFor()` | audio transport | exactly twelve frozen semitone offsets selected and rotated by validated score fields |
 | Master volume | range input | active transport output gain | session-local `0..100` value mapped through a bounded perceptual curve; changes ramp over 18 ms |
+| Vitrine gesture | pointer events on `#vision` | Canvas renderer and active audio transport | transient normalized coordinates, hold, tap, and drag velocity modulate shape morphing, gaze, pitch bend, filter/mix intensity, and synthesized percussion without mutating the score |
 
 ## Invariants
 
@@ -41,10 +42,12 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - The LOLCODE spell produces every parameter used to distinguish the creature. Enforced by required score fields and range validation.
 - Malformed, duplicate, missing, unknown, or out-of-range output never reaches renderers. Enforced by `parseScore()` tests.
 - Runtime assets remain local and dependency-free. Enforced by `tests/static.test.mjs` and D-001.
+- The creature canvas lives in a centered, bounded apparition chamber at every viewport instead of acting as a full-page background. Enforced structurally in `tests/static.test.mjs` (D-011).
 - Unsupported LOLCODE syntax fails with a line number. Enforced by the interpreter and its negative test.
 - Rendering and sound share one immutable score. Enforced by the `showScore()` and `playScore()` call path.
 - Only one audio transport loops at a time. Enforced by `stopCurrentSound()` before every start.
 - Master volume changes only the post-compressor output gain and never changes the deterministic creature score. Enforced structurally in `tests/static.test.mjs` (D-009).
+- Vitrine tap, hold, and drag gestures modulate transient visual morphing, pitch, intensity, and synthesized percussion and decay smoothly back to the immutable score on release. Enforced structurally in `tests/static.test.mjs` (D-012).
 - Every melody family resolves to exactly twelve deterministic semitone offsets and the transport repeats them modulo twelve. Enforced by exact arpeggio and chromatic tests (D-010).
 - Eye silhouette, layout, size, gaze, iris, and pupil all originate in the validated spell output. Enforced by required score fields and the batch diversity test (D-006).
 - Every silhouette stays within a radius envelope of `0.38..1.08`, and every kinetic core is clipped to the current deforming body path. Enforced structurally in `tests/static.test.mjs` (D-007).
@@ -62,6 +65,8 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 ## Dependencies
 
 The application has no third-party runtime or build dependencies. It relies on current browser implementations of Canvas, Web Audio, ECMAScript modules, and `fetch`. Local verification uses Node and Python standard-library tools supplied by the development environment.
+
+The visual system uses locally installed old-style and transitional book serifs (`Palatino Linotype`, `Book Antiqua`, `Palatino`, `Iowan Old Style`, `Baskerville`, `Goudy Old Style`, `Garamond`, `Georgia`) paired with telegraph monospace (`Courier New`, `Courier`). It deliberately ships no proprietary font binary or remote font request.
 
 ## State and caches
 

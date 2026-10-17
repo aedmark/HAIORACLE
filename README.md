@@ -6,6 +6,8 @@ HAI, ORACLE! turns a short phrase into a deterministic looping audiovisual creat
 
 The score is composed by [`src/oracle.lol`](src/oracle.lol). A small browser-side interpreter executes the LOLCODE, validates its output, and hands the score to Canvas and Web Audio. Everything runs locally. There are no packages, remote assets, analytics, cookies, accounts, or network calls after the static files load.
 
+The interface is a bespoke, esoteric parlor cabinet and broadsheet built around an engraved old-style serif and telegraph-monospace type stack, foxed parchment, ebonized wood, sealing-wax oxblood, tarnished brass rules, inline SVG astrolabe spandrels, and a bell-jar apparition vitrine. No remote or proprietary font file is distributed: browsers use locally installed book serifs and monospace faces.
+
 ## Run it
 
 From the repository root:
@@ -16,7 +18,7 @@ python3 -m http.server 8000
 
 Open [http://localhost:8000](http://localhost:8000), enter a phrase, and choose **SUMMON**. Sound requires the button press because browsers block unsolicited audio.
 
-The composition loops until you summon another creature, mute it, or close the page. **RESTART LOOP** returns the current creature to the first note. The master-volume slider starts at a stronger listening level and can move continuously from silence to a compressor-protected boost.
+The composition loops until you summon another creature, mute it, or close the page. **RESTART THE MELODY** returns the current creature to the first note. The master-volume slider starts at a stronger listening level and can move continuously from silence to a compressor-protected boost. Tapping, holding, or dragging directly across the apparition vitrine disturbs the specimen—striking synthesized glass and membrane percussion, bending pitch and filter intensity, and morphing and tugging its geometry until you let go.
 
 Opening `index.html` directly through a `file:` URL is unsupported. The browser must fetch the separate LOLCODE spell from the same HTTP origin.
 

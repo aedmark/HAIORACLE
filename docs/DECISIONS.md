@@ -102,6 +102,26 @@ This append-only record holds choices that a future session might otherwise re-l
 
 **Consequences:** Pre-release phrase audio changes because the score schema gains two fields and most phrases select a new motif. The same normalized phrase remains deterministic under the new schema. The score readout names the motif, and exact tests pin representative arpeggio and chromatic sequences.
 
+## D-011 The interface is an esoteric parlor cabinet and broadsheet  (2026-10-17, status: accepted)
+
+**Context:** Art direction moved away from both the dark futuristic interface and bright geometric pastel storybook framing toward a bespoke, esoteric, old-timey macabre parlor vibe—not sinister, just weird.
+
+**Decision:** Reframe the application as a 19th-century spiritualist broadsheet and parlor specimen cabinet. Give the creature a bounded bell-jar apparition vitrine with inline SVG astrolabe spandrels; use bilateral broadsheet composition, folio and specimen-plate inscriptions, double brass rules, foxed vellum parchment, ebonized cabinet wood, and sealing-wax oxblood. Use a local engraved book-serif stack paired with telegraph monospace for catalog telemetry. Preserve the generative Canvas as the primary animated specimen and use no remote assets or external font binaries.
+
+**Alternatives:** Keeping a futuristic dark UI or a pastel Futura hotel aesthetic missed the desired esoteric, eccentric Victorian macabre tone. Loading remote web fonts would violate the local zero-dependency boundary (D-001).
+
+**Consequences:** The canvas is centered inside a framed bell-jar vitrine rather than acting as a full-screen background. Inline SVG ornaments and layered CSS gradients supply the engraved broadsheet and cabinet textures without external image files. P4-01 must verify composition at real desktop and phone sizes.
+
+## D-012 Vitrine gestures modulate live expression without mutating the score  (2026-10-17, status: accepted)
+
+**Context:** Maintainer direction called for tapping/clicking, holding, and holding-and-dragging on the specimen vitrine to alter audio pitch, intensity, and percussives as well as visual shape, movement, and morphing.
+
+**Decision:** Handle pointer gestures (`pointerdown`, `pointermove`, `pointerup`) directly on `#vision` via a transient session state object (`interaction`) coupled with a polar harmonic field (`harmonicField`). Tapping triggers a synthesized four-partial harmonic bloom (`[0.5, 1, 1.5, 2]`) and membrane strike, spawns a concentric vitrine ripple, and jolts silhouette lobes and pupil dilation. Holding swells filter cutoff/resonance, mix and echo feedback, tempo density, and motif-locked step percussion while morphing the silhouette toward a secondary shape family and locking the creature's gaze onto the pointer. Holding and dragging maps pointer coordinates into polar `(radius, angle)` to drive a constant-power ($\cos\alpha, \sin\alpha$) harmonic phase shift across the creature's 12-note motif and consonant fifth/fourth intervals, crossfades a three-partial harmonic drone choir (`-12`, `-5` fifth, `+7` twelfth) via raised-cosine angular weights without bending `delayTime`, fires motif-locked harmonic bell plucks along the drag path, and elastically tugs and stretches the creature within its `[0.38, 1.08]` silhouette clamp. Releasing the pointer decays all offsets smoothly back to the creature's deterministic resting state.
+
+**Alternatives:** Permanently mutating the score on click would break phrase determinism (D-003). Bending oscillator detune microtonally or modulating `delayTime` during echoes created atonal Doppler smearing against the repeating motif. Using external audio samples for percussion would violate the zero-dependency boundary (D-001).
+
+**Consequences:** The immutable LOLCODE score still defines the creature's identity and resting behavior, while direct manipulation turns the vitrine into an expressive performance instrument. Reduced-motion mode suppresses the extra phase spin and elastic tug while keeping audio modulation and percussion active.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)
