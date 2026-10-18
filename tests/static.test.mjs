@@ -37,6 +37,9 @@ test("the page exposes one labeled text input and its core controls", async () =
   assert.match(html, /<label for="master-volume">MASTER VOLUME<\/label>/);
   assert.match(html, /id="master-volume" type="range" min="0" max="100" value="82"/);
   assert.match(html, /id="volume-value"/);
+  assert.match(html, /<label for="tempo-bpm">TEMPO<\/label>/);
+  assert.match(html, /id="tempo-bpm" type="range" min="36" max="208" value="108"/);
+  assert.match(html, /id="tempo-value"/);
   assert.match(html, /id="score-melody"/);
   assert.match(html, /id="score-beat"/);
   assert.match(html, /id="beat-grid"/);
@@ -94,6 +97,7 @@ test("audio uses a continuing look-ahead scheduler", async () => {
 test("master volume raises the default mix and updates the live output safely", async () => {
   const app = await readFile(new URL("src/app.mjs", root), "utf8");
   assert.match(app, /function masterGainFor\(volume\)/);
+  assert.match(app, /function setTempoBpm\(value\)/);
   assert.match(app, /exponentialRampToValueAtTime\(0\.28, now \+ 0\.16\)/);
   assert.match(app, /output\.gain\.value = masterGainFor\(masterVolume\)/);
   assert.match(app, /output\.gain\.setTargetAtTime\(masterGainFor\(masterVolume\), now, 0\.018\)/);

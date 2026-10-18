@@ -57,6 +57,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
 | Melody motif | `melodyFor()` | audio transport | exactly twelve frozen semitone offsets selected and rotated by validated score fields |
 | Master volume | range input | active transport output gain | session-local `0..100` value mapped through a bounded perceptual curve; changes ramp over 18 ms |
+| Tempo (BPM) | range input (`#tempo-bpm`) | active audio transport scheduler | session-local `36..208` BPM value initialized to `score.pulse` on summon (double-click restores native pulse); updates upcoming step durations in real time |
 | Vitrine gesture | pointer events on `#vision` | Canvas renderer and active audio transport | transient normalized coordinates, hold, tap, and drag velocity modulate shape morphing, gaze, harmonic phase shift, filter/mix intensity, and synthesized percussion without mutating the score |
 
 ## Invariants

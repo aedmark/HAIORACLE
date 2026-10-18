@@ -12,7 +12,7 @@
 - Enter a phrase to summon a deterministic named audiovisual creature.
 - Hear a continuously looping synthesized composition generated from the creature's LOLCODE score.
 - Use surprise, replay, and mute controls.
-- Control a louder default mix with a live, keyboard-accessible master-volume slider.
+- Control a louder default mix and live ensemble pace with keyboard-accessible master-volume (`0..100%`) and tempo (`36..208` BPM) sliders.
 - Hear twelve deterministic repeating motif families spanning seeded scale walks, arpeggios, chromatic movement, fifths, whole tones, and stranger ladders.
 - Enter a redesigned esoteric parlor cabinet and broadsheet with engraved serif type, foxed parchment, oxblood and tarnished brass trim, formal specimen labels, and a framed central apparition vitrine.
 - Tap, hold, or drag inside the apparition vitrine to trigger synthesized glass and membrane percussion, drive a harmonic phase shift, and morph and tug the creature's geometry in real time.

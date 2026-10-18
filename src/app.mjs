@@ -43,6 +43,8 @@ const elements = {
   sound: document.querySelector("#sound-toggle"),
   volume: document.querySelector("#master-volume"),
   volumeValue: document.querySelector("#volume-value"),
+  tempo: document.querySelector("#tempo-bpm"),
+  tempoValue: document.querySelector("#tempo-value"),
   name: document.querySelector("#creature-name"),
   pulse: document.querySelector("#score-pulse"),
   wave: document.querySelector("#score-wave"),
@@ -110,6 +112,7 @@ let noiseBuffer = null;
 let currentTransport = null;
 let muted = false;
 let masterVolume = Number(elements.volume.value);
+let activeTempoBpm = Number(elements.tempo?.value || 108);
 
 const interaction = {
   active: false,
@@ -156,6 +159,13 @@ function setMasterVolume(value) {
   const now = audioContext.currentTime;
   currentTransport.output.gain.cancelScheduledValues(now);
   currentTransport.output.gain.setTargetAtTime(masterGainFor(masterVolume), now, 0.018);
+}
+
+function setTempoBpm(value) {
+  activeTempoBpm = Math.max(36, Math.min(208, Math.round(Number(value))));
+  if (elements.tempo) elements.tempo.value = String(activeTempoBpm);
+  if (elements.tempoValue) elements.tempoValue.value = `${activeTempoBpm} BPM`;
+  if (elements.pulse && currentScore) elements.pulse.textContent = String(activeTempoBpm);
 }
 
 function wrapHue(hue) {
@@ -1778,7 +1788,8 @@ async function playScore(score) {
 
   const context = await ensureAudioContext();
   const now = context.currentTime + 0.045;
-  const unit = 60 / score.pulse / 2;
+  const initialPulse = activeTempoBpm || score.pulse;
+  const initialUnit = 60 / initialPulse / 2;
   const mix = context.createGain();
   const beatBus = context.createGain();
   const bassBus = context.createGain();
@@ -1825,7 +1836,7 @@ async function playScore(score) {
   compressor.threshold.value = -18;
   compressor.knee.value = 18;
   compressor.ratio.value = 5;
-  delay.delayTime.value = unit * [1, 1.5, 0.75, 2, 1.25, 0.5][score.rhythm];
+  delay.delayTime.value = Math.min(1.45, initialUnit * [1, 1.5, 0.75, 2, 1.25, 0.5][score.rhythm]);
   feedback.gain.value = 0.14 + score.bloom / 650;
   output.gain.value = masterGainFor(masterVolume);
 
@@ -1864,6 +1875,8 @@ async function playScore(score) {
     updateAudioInteraction();
     const rhythm = RHYTHMS[score.rhythm];
     while (transport.nextNoteTime < context.currentTime + 0.28) {
+      const livePulse = activeTempoBpm || score.pulse;
+      const unit = 60 / livePulse / 2;
       const currentStep = transport.step;
       const lengthMultiplier = rhythm[currentStep % rhythm.length];
       const stepDuration = unit * lengthMultiplier;
@@ -1979,7 +1992,7 @@ function showScore(score) {
   if (elements.bandstandMutateAll) elements.bandstandMutateAll.disabled = false;
   updateBandstandStatus();
   elements.name.textContent = score.name;
-  elements.pulse.textContent = String(score.pulse);
+  setTempoBpm(score.pulse);
   elements.wave.textContent = WAVEFORMS[score.wave];
   elements.formValue.textContent = score.shapeName;
   elements.melody.textContent = MELODY_NAMES[score.melodyMode];
@@ -2625,6 +2638,16 @@ elements.sound.addEventListener("click", () => {
 
 elements.volume.addEventListener("input", (event) => {
   setMasterVolume(event.currentTarget.value);
+});
+
+elements.tempo?.addEventListener("input", (event) => {
+  setTempoBpm(event.currentTarget.value);
+});
+
+elements.tempo?.addEventListener("dblclick", () => {
+  if (currentScore) {
+    setTempoBpm(currentScore.pulse);
+  }
 });
 
 try {
