@@ -1,11 +1,24 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { HARMONY_NAMES, composeHarmony, cycleHarmonyCell, runBefunge } from "../src/befunge.mjs";
+import { BASS_NAMES, composeBass, cycleBassCell, runBrainfuck } from "../src/brainfuck.mjs";
+import { CHIME_NAMES, composeChimes, cycleChimeCell, runFractran, runPiet } from "../src/fractran.mjs";
 import { runLolcode } from "../src/lolcode.mjs";
+import { BEAT_NAMES, composeBeat, crazy, cycleBeatStep, rotr, runMalbolge } from "../src/malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "../src/music.mjs";
 import { composeScore, hashPhrase, parseScore } from "../src/score.mjs";
+import { CHANT_NAMES, FORMANT_VOWELS, PERSONA_ROLES, composeChant, cycleChantCell, runShakespeare } from "../src/shakespeare.mjs";
 
-const source = await readFile(new URL("../src/oracle.lol", import.meta.url), "utf8");
+const [source, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource] = await Promise.all([
+  readFile(new URL("../src/oracle.lol", import.meta.url), "utf8"),
+  readFile(new URL("../src/beat.mal", import.meta.url), "utf8"),
+  readFile(new URL("../src/bass.bf", import.meta.url), "utf8"),
+  readFile(new URL("../src/harmony.bfg", import.meta.url), "utf8"),
+  readFile(new URL("../src/pad.piet", import.meta.url), "utf8"),
+  readFile(new URL("../src/chimes.frac", import.meta.url), "utf8"),
+  readFile(new URL("../src/chant.spl", import.meta.url), "utf8"),
+]);
 
 test("the LOLCODE spell produces every required score field", () => {
   const score = composeScore(source, "the moon owes me five dollars");
@@ -29,6 +42,16 @@ test("the LOLCODE spell produces every required score field", () => {
   assert.ok(score.fluxMode >= 0 && score.fluxMode <= 7);
   assert.ok(score.melodyMode >= 0 && score.melodyMode <= 11);
   assert.ok(score.melodyTurn >= 0 && score.melodyTurn <= 11);
+  assert.ok(score.beatMode >= 0 && score.beatMode <= 7);
+  assert.ok(score.beatDensity >= 35 && score.beatDensity <= 100);
+  assert.ok(score.bassMode >= 0 && score.bassMode <= 7);
+  assert.ok(score.bassGlide >= 20 && score.bassGlide <= 100);
+  assert.ok(score.harmonyMode >= 0 && score.harmonyMode <= 7);
+  assert.ok(score.harmonyStrum >= 15 && score.harmonyStrum <= 100);
+  assert.ok(score.chimeMode >= 0 && score.chimeMode <= 7);
+  assert.ok(score.chimeShimmer >= 20 && score.chimeShimmer <= 100);
+  assert.ok(score.chantMode >= 0 && score.chantMode <= 7);
+  assert.ok(score.chantFormant >= 25 && score.chantFormant <= 100);
   assert.equal(melodyFor(score).length, 12);
 });
 
@@ -57,6 +80,11 @@ test("a phrase batch exercises the expanded name, shape, sound, eye, and kinetic
   assert.equal(new Set(scores.map((score) => score.kineticMode)).size, 8);
   assert.equal(new Set(scores.map((score) => score.fluxMode)).size, 8);
   assert.equal(new Set(scores.map((score) => score.melodyMode)).size, 12);
+  assert.equal(new Set(scores.map((score) => score.beatMode)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.bassMode)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.harmonyMode)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.chimeMode)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.chantMode)).size, 8);
 });
 
 test("arpeggio and chromatic motifs are exact twelve-note loops", () => {
@@ -65,6 +93,163 @@ test("arpeggio and chromatic motifs are exact twelve-note loops", () => {
   assert.deepEqual(melodyFor({ ...base, melodyMode: 5 }), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
   assert.deepEqual(melodyFor({ ...base, melodyMode: 6 }), [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
   assert.equal(MELODY_NAMES.length, 12);
+});
+
+test("the Malbolge virtual machine executes src/beat.mal deterministically across all eight cadences", () => {
+  assert.equal(crazy(0, 0), 29524);
+  assert.equal(rotr(1), 19683);
+  assert.equal(BEAT_NAMES.length, 8);
+  const score = composeScore(source, "the moon owes me five dollars");
+  const firstBeat = composeBeat(beatSource, score, 0);
+  const secondBeat = composeBeat(beatSource, score, 0);
+  const mutatedBeat = composeBeat(beatSource, score, 1);
+  assert.deepEqual(firstBeat, secondBeat);
+  assert.equal(firstBeat.steps.length, 12);
+  assert.equal(firstBeat.stepsExecuted, 50);
+  assert.notDeepEqual(firstBeat.rawOutput, mutatedBeat.rawOutput);
+  for (const step of firstBeat.steps) {
+    assert.match(step.trits, /^[012]{3}$/);
+  }
+  const cycled = cycleBeatStep(firstBeat.steps[0]);
+  assert.match(cycled.trits, /^[012]{3}$/);
+  assert.notEqual(cycled.trits, firstBeat.steps[0].trits);
+});
+
+test("invalid Malbolge instructions fail with a line-numbered error", () => {
+  assert.throws(
+    () => runMalbolge("!!"),
+    /Malbolge line 1: Invalid instruction/,
+  );
+});
+
+test("the Brainfuck interpreter executes src/bass.bf deterministically across all eight bass grooves", () => {
+  assert.equal(BASS_NAMES.length, 8);
+  const score = composeScore(source, "the moon owes me five dollars");
+  const firstBass = composeBass(bassSource, score, 0);
+  const secondBass = composeBass(bassSource, score, 0);
+  const shiftedBass = composeBass(bassSource, score, 1);
+  assert.deepEqual(firstBass, secondBass);
+  assert.equal(firstBass.steps.length, 12);
+  assert.ok(firstBass.stepsExecuted > 100);
+  assert.notDeepEqual(
+    firstBass.steps.map((s) => s.cell),
+    shiftedBass.steps.map((s) => s.cell),
+  );
+  const cycled = cycleBassCell(firstBass.steps[0]);
+  assert.notEqual(cycled.cell, firstBass.steps[0].cell);
+});
+
+test("unmatched Brainfuck brackets fail with a line-numbered error", () => {
+  assert.throws(
+    () => runBrainfuck("++[>+<-"),
+    /Brainfuck line 1: Unmatched '\['/,
+  );
+  assert.throws(
+    () => runBrainfuck("++]>+<"),
+    /Brainfuck line 1: Unmatched '\]'/,
+  );
+});
+
+test("the Befunge-93 torus interpreter executes src/harmony.bfg deterministically across all eight chord organs", () => {
+  assert.equal(HARMONY_NAMES.length, 8);
+  const score = composeScore(source, "the moon owes me five dollars");
+  const firstHarmony = composeHarmony(harmonySource, score, 0);
+  const secondHarmony = composeHarmony(harmonySource, score, 0);
+  const flippedHarmony = composeHarmony(harmonySource, score, 1);
+  assert.deepEqual(firstHarmony, secondHarmony);
+  assert.equal(firstHarmony.steps.length, 12);
+  assert.equal(firstHarmony.stepsExecuted, 93);
+  assert.notDeepEqual(
+    firstHarmony.steps.map((s) => s.raw),
+    flippedHarmony.steps.map((s) => s.raw),
+  );
+  for (const step of firstHarmony.steps) {
+    assert.equal(step.chord.length, 3);
+    assert.match(step.mirror, /^[\\/]$/);
+  }
+  const cycled = cycleHarmonyCell(firstHarmony.steps[0], score);
+  assert.notEqual(cycled.raw, firstHarmony.steps[0].raw);
+});
+
+test("unsupported Befunge-93 instructions fail with row and column coordinates", () => {
+  assert.throws(
+    () => runBefunge(">?@"),
+    /Befunge line 1: Unsupported instruction '\?' at column 2/,
+  );
+});
+
+test("the Piet codel interpreter and FRACTRAN prime-ratio engine execute src/pad.piet and src/chimes.frac deterministically", () => {
+  assert.equal(CHIME_NAMES.length, 8);
+  const score = composeScore(source, "the moon owes me five dollars");
+  const firstChimes = composeChimes(pietSource, fractranSource, score, 0);
+  const secondChimes = composeChimes(pietSource, fractranSource, score, 0);
+  const refractedChimes = composeChimes(pietSource, fractranSource, score, 1);
+  assert.deepEqual(firstChimes, secondChimes);
+  assert.equal(firstChimes.steps.length, 12);
+  assert.equal(firstChimes.pietStepsExecuted, 49);
+  assert.equal(firstChimes.fractranStepsExecuted, 12);
+  assert.notDeepEqual(
+    firstChimes.steps.map((s) => s.pietByte),
+    refractedChimes.steps.map((s) => s.pietByte),
+  );
+  for (const step of firstChimes.steps) {
+    assert.match(step.codelCode, /^[LND][RYGCBM]$/);
+    assert.ok(step.ratioValue >= 1 && step.ratioValue <= 2);
+  }
+  const cycled = cycleChimeCell(firstChimes.steps[0]);
+  assert.notEqual(cycled.ratioIndex, firstChimes.steps[0].ratioIndex);
+  assert.notEqual(cycled.codelCode, firstChimes.steps[0].codelCode);
+});
+
+test("invalid Piet codels and FRACTRAN fractions fail with line-numbered errors", () => {
+  assert.throws(
+    () => runPiet("LR ZZ WH"),
+    /Piet line 1: Invalid codel 'ZZ' at column 2/,
+  );
+  assert.throws(
+    () => runFractran("35/6 bad/fraction"),
+    /FRACTRAN line 1: Invalid fraction 'bad\/fraction'/,
+  );
+});
+
+test("the Shakespeare Programming Language interpreter executes src/chant.spl deterministically across all eight dramatic modes", () => {
+  assert.equal(CHANT_NAMES.length, 8);
+  assert.equal(FORMANT_VOWELS.length, 6);
+  assert.equal(Object.keys(PERSONA_ROLES).length, 4);
+  const score = composeScore(source, "the moon owes me five dollars");
+  const firstChant = composeChant(chantSource, score, 0);
+  const secondChant = composeChant(chantSource, score, 0);
+  const mutatedChant = composeChant(chantSource, score, 1);
+
+  assert.deepEqual(firstChant, secondChant);
+  assert.equal(firstChant.steps.length, 12);
+  assert.equal(firstChant.title, "The Oracular Tragedy of the Parlor Glass.");
+  assert.ok(firstChant.statementsExecuted > 30 && firstChant.statementsExecuted <= 512);
+  assert.notDeepEqual(
+    firstChant.steps.map((step) => `${step.gate}:${step.vowelIpa}:${step.personaShort}`),
+    mutatedChant.steps.map((step) => `${step.gate}:${step.vowelIpa}:${step.personaShort}`),
+  );
+
+  for (let mode = 0; mode < 8; mode += 1) {
+    const chant = composeChant(chantSource, { ...score, chantMode: mode, chantFormant: 75 }, mode);
+    assert.equal(chant.steps.length, 12);
+    assert.equal(chant.modeName, CHANT_NAMES[mode]);
+    assert.ok(chant.steps.some((step) => step.gate > 0));
+    chant.steps.forEach((step) => {
+      assert.ok(step.gate === 0 || step.gate === 1 || step.gate === 2);
+      assert.ok(step.f1 > 200 && step.f2 > step.f1 && step.f3 > step.f2);
+      assert.ok(step.voiceType.length > 3);
+    });
+  }
+
+  const cycled = cycleChantCell(firstChant.steps[0], score);
+  assert.equal(cycled.gate, (firstChant.steps[0].gate + 1) % 3);
+  assert.equal(cycled.vowelIndex, (firstChant.steps[0].vowelIndex + 1) % FORMANT_VOWELS.length);
+
+  assert.throws(
+    () => runShakespeare("The Bad Play.\nHamlet, a prince.\nAct I: Start.\nScene I: Here.\n[Enter Ghost]"),
+    /Shakespeare line 5: Undeclared character 'GHOST'/,
+  );
 });
 
 test("empty phrases are rejected at the input boundary", () => {

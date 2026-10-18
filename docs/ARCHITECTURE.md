@@ -14,6 +14,16 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Melody grammar | `src/music.mjs` | `melodyFor()` | validated score, browser host |
 | LOLCODE runtime | `src/lolcode.mjs` | `runLolcode()` | spell source only |
 | Composition | `src/oracle.lol` | `HAI 1.2` program | interpreter output |
+| Malbolge runtime | `src/malbolge.mjs` | `runMalbolge()`, `composeBeat()` | `src/beat.mal`, validated score, browser host |
+| Beat spell | `src/beat.mal` | 1998 Malbolge program | Malbolge VM output |
+| Brainfuck runtime | `src/brainfuck.mjs` | `runBrainfuck()`, `composeBass()` | `src/bass.bf`, validated score, browser host |
+| Bass spell | `src/bass.bf` | 1993 Brainfuck tape program | Brainfuck VM output |
+| Befunge-93 runtime | `src/befunge.mjs` | `runBefunge()`, `composeHarmony()` | `src/harmony.bfg`, validated score, browser host |
+| Harmony spell | `src/harmony.bfg` | 1993 Befunge 2D torus program | Befunge VM output |
+| Piet & FRACTRAN runtime | `src/fractran.mjs` | `runPiet()`, `runFractran()`, `composeChimes()` | `src/pad.piet`, `src/chimes.frac`, validated score, browser host |
+| Codel & fraction spells | `src/pad.piet`, `src/chimes.frac` | 2001 Piet codel canvas & 1987 FRACTRAN fractions | Piet and FRACTRAN VM output |
+| Shakespeare runtime | `src/shakespeare.mjs` | `runShakespeare()`, `composeChant()` | `src/chant.spl`, validated score, browser host |
+| Dramatic choir spell | `src/chant.spl` | 2001 Shakespeare Programming Language play | Shakespeare VM output |
 | Verification | `tests/` | Node test runner | pure modules and static assets |
 
 ## Interfaces and data flow
@@ -22,6 +32,11 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 phrase -> normalize and FNV-1a hash -> INPUT_SEED
       -> LOLCODE spell -> key=value lines -> strict score validation
       -> shared immutable score -> twelve-note motif -> Web Audio composition
+                              +-> Malbolge VM (src/beat.mal) -> 12-step ternary beat matrix
+                              +-> Brainfuck VM (src/bass.bf) -> 12-cell walking bass tape
+                              +-> Befunge-93 VM (src/harmony.bfg) -> 12-cell 2D mirror chord organ
+                              +-> Piet & FRACTRAN VMs (src/pad.piet, src/chimes.frac) -> 12-step prime-ratio chimes & codel chorus
+                              +-> Shakespeare VM (src/chant.spl) -> 12-scene formant vowel choir
                               +-> Canvas creature + text reading
 ```
 
@@ -29,12 +44,17 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | --- | --- | --- | --- |
 | `INPUT_SEED` | `hashPhrase()` | `src/oracle.lol` | unsigned 32-bit integer |
 | LOLCODE output | `runLolcode()` | `parseScore()` | one known `key=integer` per line; all required keys exactly once |
-| Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with twelve note choices plus musical, body, eye-anatomy, palette, bounded-flux, kinetic-core, and naming grammar indices |
+| Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with twelve note choices plus musical, beat-cadence, bass-groove, harmony-organ, chime-carillon, chant-choir, body, eye-anatomy, palette, bounded-flux, kinetic-core, and naming grammar indices |
+| Malbolge beat | `composeBeat()` | `src/app.mjs` | frozen 12-step ternary sequence (`kick`, `snare`, `hat` in `0..2`, `trits`) produced by executing `src/beat.mal` on a 59,049-word ternary tape |
+| Brainfuck bass | `composeBass()` | `src/app.mjs` | frozen 12-cell bass sequence (`cell`, `gate`, `interval`, `register`, `slide`, `accent`, `label`) produced by executing `src/bass.bf` on a 256-cell byte tape |
+| Befunge harmony | `composeHarmony()` | `src/app.mjs` | frozen 12-step polyphonic organ sequence (`raw`, `gate`, `mirror`, `chord`, `degreeIndex`, `strumMs`, `label`) produced by executing `src/harmony.bfg` on an 80×25 2D torus |
+| Piet/FRACTRAN chimes | `composeChimes()` | `src/app.mjs` | frozen 12-step Just Intonation chime and codel pad sequence (`gate`, `codelCode`, `hueIndex`, `lightnessIndex`, `fraction`, `exponents`, `ratioLabel`, `ratioValue`, `label`) produced by executing `src/pad.piet` and `src/chimes.frac` |
+| Shakespeare choir | `composeChant()` | `src/app.mjs` | frozen 12-scene formant vowel choir sequence (`gate`, `act`, `scene`, `speaker`, `addressee`, `personaShort`, `voiceType`, `vowelCode`, `vowelIpa`, `f1`, `f2`, `f3`, `interval`, `label`) produced by executing `src/chant.spl` |
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
 | Melody motif | `melodyFor()` | audio transport | exactly twelve frozen semitone offsets selected and rotated by validated score fields |
 | Master volume | range input | active transport output gain | session-local `0..100` value mapped through a bounded perceptual curve; changes ramp over 18 ms |
-| Vitrine gesture | pointer events on `#vision` | Canvas renderer and active audio transport | transient normalized coordinates, hold, tap, and drag velocity modulate shape morphing, gaze, pitch bend, filter/mix intensity, and synthesized percussion without mutating the score |
+| Vitrine gesture | pointer events on `#vision` | Canvas renderer and active audio transport | transient normalized coordinates, hold, tap, and drag velocity modulate shape morphing, gaze, harmonic phase shift, filter/mix intensity, and synthesized percussion without mutating the score |
 
 ## Invariants
 
@@ -91,5 +111,5 @@ Only technical errors reach the console. Phrase text is not intentionally logged
 
 ## Claims vs. code
 
-- “LOLCODE 1.2” names the syntax profile of the spell. The interpreter implements only the explicitly documented subset.
-- Cross-browser sensory quality remains unverified until P4-01.
+- “LOLCODE 1.2”, “Malbolge 1998”, “Brainfuck 1993”, “Befunge-93”, “Piet 2001”, “FRACTRAN 1987”, and “Shakespeare Programming Language 2001” name the syntax and virtual-machine profiles of the bundled spells. Each interpreter implements the documented subset and fails closed on unsupported instructions.
+- Assistive-technology verification remains tracked under P4-02.

@@ -77,6 +77,17 @@ Never force-push or rewrite shared history.
 | `styles.css` | Responsive visual system |
 | `src/oracle.lol` | Canonical LOLCODE score generator |
 | `src/lolcode.mjs` | Purpose-built LOLCODE interpreter |
+| `src/beat.mal` | Canonical Malbolge 1998 ternary beat generator |
+| `src/malbolge.mjs` | Malbolge virtual machine and 12-step ternary cadence engine |
+| `src/bass.bf` | Canonical Brainfuck 1993 walking bass tape generator |
+| `src/brainfuck.mjs` | Brainfuck tape interpreter and 12-cell bassline engine |
+| `src/harmony.bfg` | Canonical Befunge-93 2D torus mirror chord organ |
+| `src/befunge.mjs` | Befunge-93 2D torus interpreter and 12-step chord organ engine |
+| `src/pad.piet` | Canonical Piet 2001 25×5 clockwise codel chorus canvas |
+| `src/chimes.frac` | Canonical FRACTRAN 1987 prime-ratio overtone chime program |
+| `src/fractran.mjs` | Piet codel and FRACTRAN prime-exponent interpreters and 12-step chime engine |
+| `src/chant.spl` | Canonical Shakespeare Programming Language 2001 3-Act tragedy and formant choir script |
+| `src/shakespeare.mjs` | Shakespeare Programming Language interpreter and 12-scene formant vowel choir engine |
 | `src/score.mjs` | Phrase hashing, score validation, and naming |
 | `src/app.mjs` | Browser controls, Canvas creature, and Web Audio instrument |
 | `tests/` | Dependency-free Node tests |

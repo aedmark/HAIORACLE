@@ -6,8 +6,8 @@ Automated checks prove determinism, boundary validation, the required LOLCODE su
 
 | Suite | File | Proves | Does not prove | Needs |
 | --- | --- | --- | --- | --- |
-| Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/body/eye/scale/kinetic/melody diversity, exact twelve-note arpeggio and chromatic motifs, negative interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
-| Static structure | `tests/static.test.mjs` | required assets, basic labels, centered apparition-stage and serif-broadsheet markers, continuous scheduler and master-volume markers, bounded silhouette and clipped-core markers, vitrine tap/hold/drag interaction and percussion markers, no audio-driven visual resizing, scoped body glow, no remote runtime references | computed accessibility tree, scheduler timing, perceived loudness, or visual quality | Node 20 or newer |
+| Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/body/eye/scale/kinetic/melody/beat diversity, exact twelve-note arpeggio and chromatic motifs, Malbolge `crazy`/`rotr` ternary VM and `src/beat.mal` execution, negative LOLCODE and Malbolge interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
+| Static structure | `tests/static.test.mjs` | required assets (`src/oracle.lol`, `src/beat.mal`), basic labels, centered apparition-stage and serif-broadsheet markers, continuous scheduler and master-volume markers, bounded silhouette and clipped-core markers, vitrine tap/hold/drag interaction and percussion markers, Malbolge 12-step beat matrix and percussion scheduler markers, no audio-driven visual resizing, scoped body glow, no remote runtime references | computed accessibility tree, scheduler timing, perceived loudness, or visual quality | Node 20 or newer |
 | Documentation | `tools/check_docs.py` | no placeholders, broken local links, or unknown roadmap and decision references | factual accuracy of every claim | Python 3 |
 
 The fast set and full automated set are currently identical:

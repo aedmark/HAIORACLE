@@ -122,6 +122,32 @@ This append-only record holds choices that a future session might otherwise re-l
 
 **Consequences:** The immutable LOLCODE score still defines the creature's identity and resting behavior, while direct manipulation turns the vitrine into an expressive performance instrument. Reduced-motion mode suppresses the extra phase spin and elastic tug while keeping audio modulation and percussion active.
 
+## D-013 A Malbolge 1998 virtual machine drives the twelve-step ternary beat automaton  (2026-10-18, status: accepted)
+
+**Context:** Maintainer direction called for a "hat trick" esoteric beat generator built in Malbolge alongside the LOLCODE score engine and interactive parlor vitrine.
+
+**Decision:** Add LOLCODE-owned `beat_mode` (`[0, 7]`) and `beat_density` (`[35, 100]`) fields so `src/oracle.lol` remains the causal root of creature identity, and feed the resulting seed stream into a spec-compliant 1998 Malbolge virtual machine (`src/malbolge.mjs`) executing `src/beat.mal`. The VM initializes a $3^{10}$ (59,049-word) ternary tape using the canonical `crazy` recurrence, validates instruction opcodes at load time, applies post-instruction `XLAT2` encryption, and emits 12 deterministic output bytes in 50 instructions. Each step decomposes into a 3-trit ternary drum state (`kick`, `snare`, `hat` in `{0, 1, 2}`) shaped by one of eight cadence masks (`AUTOMATON MARCH`, `SEANCE WALTZ`, `PENDULUM GALOP`, `OSSUARY POLYRHYTHM`, `TELEGRAM CLATTER`, `BELL-TOWER TOLL`, `ECTOPLASM SHUFFLE`, `INFERNAL HABANERA`). Expose a Plate II 12-step ternary matrix (`#beat-engine`) in the cabinet with live step cycling, a pulse engage/silence toggle, and a `RE-INCANT BEAT` mutation trigger.
+
+**Alternatives:** Faking Malbolge with a random table would violate the esoteric language premise. Letting Malbolge run unbounded loops without a step budget would risk hanging the browser UI thread.
+
+**Consequences:** Pre-release score validation gains two fields (`beat_mode`, `beat_density`) and the page fetches both `src/oracle.lol` and `src/beat.mal` from the same origin. Every phrase deterministically summons both its melody and its 12-step ternary percussion cadence, while interactive step buttons and mutations remain session-local.
+
+## D-014 Each esoteric bandmate maps its native machine model to a distinct musical role across the six-language parlor ensemble  (2026-10-18, status: accepted)
+
+**Context:** Maintainer direction called for speccing out and implementing a complete multi-language esoteric jam band—pairing LOLCODE and Malbolge with Brainfuck, Befunge-93, Piet/FRACTRAN, and Shakespeare Programming Language—along with an ensemble bandstand console.
+
+**Decision:** Assign each esoteric language the musical role that matches its underlying computational mechanics, with `src/oracle.lol` remaining the causal bandleader that seeds every player:
+1. **LOLCODE 1.2 (`src/oracle.lol`)** — Bandleader, 12-note lead motif, and Plate I interactive apparition vitrine.
+2. **Malbolge 1998 (`src/beat.mal`)** — $3^{10}$ ternary percussion automaton (Plate II, P5-08).
+3. **Brainfuck 1993 (`src/bass.bf`, `src/brainfuck.mjs`)** — 256-cell byte tape interpreter with bracket validation and step-budget protection driving a 12-cell walking sub-bass and resonant acid-organ ostinato across eight groove archetypes (`WALKING CELLAR` through `SEANCE DUB SUB`) in Plate III (`#bass-engine`, P5-09).
+4. **Befunge-93 (`src/harmony.bfg`, `src/befunge.mjs`)** — 80×25 2D torus playfield interpreter with directional arrows (`> < ^ v`), `#` bridges, and four diagonal mirrors (`\ / / \`) executing in 93 steps to voice polyphonic 3-note triads (`I..VI`, `/` ascending or `\` descending strum) across eight organ archetypes (`CATHEDRAL REED` through `PHANTOM CALLIOPE`) in Plate IV (`#harmony-engine`, P5-10).
+5. **Piet & FRACTRAN (`src/pad.piet`, `src/chimes.frac`, `src/fractran.mjs`)** — 25×5 clockwise Piet 2001 codel canvas executing `in -> push -> add -> out` transitions across all 18 chromatic codels (`[LND][RYGCBM]`) in 49 steps paired with a 1987 John Conway FRACTRAN BigInt prime-factor machine ($2^a 3^b 5^c 7^d 11^e 13^f$) executing 20 rational multipliers to voice 7-limit Just Intonation overtone bells (`1/1`, `9/8`, `6/5`, `5/4`, `4/3`, `7/5`, `3/2`, `8/5`, `5/3`, `7/4`, `15/8`, `2/1`) and codel-filtered spectral chorus pads across eight archetypes (`TONNETZ CATHEDRAL` through `VESPER VIOLET CHIMES`) in Plate V (`#chime-engine`, P5-11).
+6. **Shakespeare Programming Language (`src/chant.spl`, `src/shakespeare.mjs`)** — 2001 Elizabethan play interpreter executing a 3-Act, 12-Scene tragedy (`The Oracular Tragedy of the Parlor Glass.`) with four dramatis personae (`Hamlet` Tenor, `Ophelia` Soprano, `Prospero` Basso, `Hecate` Alto), stage entrances/exits, stack pushes/pops (`Remember me`, `Recall`), and poetic valence arithmetic (`Thou art as ... as the sum of ...`) in 40 cues to schedule 3-formant ($F_1, F_2, F_3$) parallel bandpass vowel choir voices (`/ɑ/`, `/ɛ/`, `/i/`, `/o/`, `/u/`, `/æ/`) across eight archetypes (`ELIZABETHAN MADRIGAL` through `PROSPERO EPILOGUE`) in Plate VI (`#chant-engine`, P5-12), coordinated by the Parlor Bandstand Six-Language Ensemble Console (`#bandstand-engine`, P5-13).
+
+**Alternatives:** Using one generic sequencer with cosmetic language labels would miss the point of esoteric computation. Approximating FRACTRAN ratios with 12-TET semitones or faking vowel formants with a single lowpass filter would lose pure Just Intonation harmonic ratios and distinct vocal-tract vowels.
+
+**Consequences:** Pre-release score validation gains `bass_mode` (`[0, 7]`), `bass_glide` (`[20, 100]`), `harmony_mode` (`[0, 7]`), `harmony_strum` (`[15, 100]`), `chime_mode` (`[0, 7]`), `chime_shimmer` (`[20, 100]`), `chant_mode` (`[0, 7]`), and `chant_formant` (`[25, 100]`), and the browser fetches `src/bass.bf`, `src/harmony.bfg`, `src/pad.piet`, `src/chimes.frac`, and `src/chant.spl` alongside `src/oracle.lol` and `src/beat.mal`. Every creature now commands a full six-language esoteric chamber ensemble with global engage, solo-lead, and synchronized multi-language mutation controls.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

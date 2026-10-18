@@ -1,5 +1,10 @@
+import { HARMONY_NAMES, composeHarmony, cycleHarmonyCell } from "./befunge.mjs";
+import { BASS_NAMES, composeBass, cycleBassCell } from "./brainfuck.mjs";
+import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
+import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
 import { composeScore, WAVEFORMS } from "./score.mjs";
+import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 
 const RHYTHMS = Object.freeze([
   [1, 1, 1, 1],
@@ -39,12 +44,65 @@ const elements = {
   wave: document.querySelector("#score-wave"),
   formValue: document.querySelector("#score-form"),
   melody: document.querySelector("#score-melody"),
+  beatName: document.querySelector("#score-beat"),
+  beatTelemetry: document.querySelector("#beat-telemetry"),
+  beatToggle: document.querySelector("#beat-toggle"),
+  beatMutate: document.querySelector("#beat-mutate"),
+  beatGrid: document.querySelector("#beat-grid"),
+  bassName: document.querySelector("#score-bass"),
+  bassTelemetry: document.querySelector("#bass-telemetry"),
+  bassToggle: document.querySelector("#bass-toggle"),
+  bassMutate: document.querySelector("#bass-mutate"),
+  bassGrid: document.querySelector("#bass-grid"),
+  harmonyName: document.querySelector("#score-harmony"),
+  harmonyTelemetry: document.querySelector("#harmony-telemetry"),
+  harmonyToggle: document.querySelector("#harmony-toggle"),
+  harmonyMutate: document.querySelector("#harmony-mutate"),
+  harmonyGrid: document.querySelector("#harmony-grid"),
+  chimeName: document.querySelector("#score-chime"),
+  chimeTelemetry: document.querySelector("#chime-telemetry"),
+  chimeToggle: document.querySelector("#chime-toggle"),
+  chimeMutate: document.querySelector("#chime-mutate"),
+  chimeGrid: document.querySelector("#chime-grid"),
+  chantName: document.querySelector("#score-chant"),
+  chantTelemetry: document.querySelector("#chant-telemetry"),
+  chantToggle: document.querySelector("#chant-toggle"),
+  chantMutate: document.querySelector("#chant-mutate"),
+  chantGrid: document.querySelector("#chant-grid"),
+  bandstandStatus: document.querySelector("#bandstand-status"),
+  bandstandTelemetry: document.querySelector("#bandstand-telemetry"),
+  bandstandEngageAll: document.querySelector("#bandstand-engage-all"),
+  bandstandSoloLead: document.querySelector("#bandstand-solo-lead"),
+  bandstandMutateAll: document.querySelector("#bandstand-mutate-all"),
   status: document.querySelector("#status"),
 };
 
 let oracleSource = "";
+let beatSource = "";
+let bassSource = "";
+let harmonySource = "";
+let pietSource = "";
+let fractranSource = "";
+let chantSource = "";
 let currentScore = null;
+let currentBeat = null;
+let currentBass = null;
+let currentHarmony = null;
+let currentChimes = null;
+let currentChant = null;
+let beatEnabled = true;
+let bassEnabled = true;
+let harmonyEnabled = true;
+let chimeEnabled = true;
+let chantEnabled = true;
+let beatMutation = 0;
+let bassMutation = 0;
+let harmonyMutation = 0;
+let chimeMutation = 0;
+let chantMutation = 0;
+let activeBeatStep = -1;
 let audioContext = null;
+let noiseBuffer = null;
 let currentTransport = null;
 let muted = false;
 let masterVolume = Number(elements.volume.value);
@@ -1004,6 +1062,706 @@ function scheduleNote(context, transport, score, step, at, duration) {
   }
 }
 
+function ensureNoiseBuffer(context) {
+  if (noiseBuffer && noiseBuffer.sampleRate === context.sampleRate) return noiseBuffer;
+  const length = Math.floor(context.sampleRate * 0.25);
+  const buffer = context.createBuffer(1, length, context.sampleRate);
+  const channel = buffer.getChannelData(0);
+  const random = mulberry32(0x4d414c42);
+  for (let i = 0; i < length; i += 1) {
+    channel[i] = random() * 2 - 1;
+  }
+  noiseBuffer = buffer;
+  return buffer;
+}
+
+function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration) {
+  if (!beatEnabled || !currentBeat || !transport.beatBus) return;
+  const step = currentBeat.steps[stepIndex % currentBeat.steps.length];
+  if (!step) return;
+
+  const holdLift = 1 + interaction.hold * 0.18;
+
+  if (step.kick > 0) {
+    const kickOsc = context.createOscillator();
+    const kickGain = context.createGain();
+    const startFreq = midiToFrequency(score.root - 5);
+    const endFreq = Math.max(34, midiToFrequency(score.root - 24));
+    const peak = (step.kick === 2 ? 0.24 : 0.13) * holdLift;
+    const decay = Math.min(0.2, Math.max(0.11, stepDuration * 0.68));
+    kickOsc.type = "sine";
+    kickOsc.frequency.setValueAtTime(startFreq, at);
+    kickOsc.frequency.exponentialRampToValueAtTime(endFreq, at + decay);
+    kickGain.gain.setValueAtTime(0.0001, at);
+    kickGain.gain.exponentialRampToValueAtTime(peak, at + 0.008);
+    kickGain.gain.exponentialRampToValueAtTime(0.0001, at + decay + 0.02);
+    kickOsc.connect(kickGain).connect(transport.beatBus);
+    kickOsc.start(at);
+    kickOsc.stop(at + decay + 0.04);
+  }
+
+  if (step.snare > 0) {
+    const noise = context.createBufferSource();
+    const snareFilter = context.createBiquadFilter();
+    const snareGain = context.createGain();
+    noise.buffer = ensureNoiseBuffer(context);
+    snareFilter.type = "bandpass";
+    snareFilter.frequency.setValueAtTime(1180 + (stepIndex % 3) * 160, at);
+    snareFilter.Q.setValueAtTime(2.6, at);
+    const peak = (step.snare === 2 ? 0.14 : 0.065) * holdLift;
+    const decay = step.snare === 2 ? 0.11 : 0.065;
+    snareGain.gain.setValueAtTime(0.0001, at);
+    snareGain.gain.exponentialRampToValueAtTime(peak, at + 0.005);
+    snareGain.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+    noise.connect(snareFilter).connect(snareGain).connect(transport.beatBus);
+    noise.start(at);
+    noise.stop(at + decay + 0.02);
+
+    const bodyOsc = context.createOscillator();
+    const bodyGain = context.createGain();
+    bodyOsc.type = "triangle";
+    bodyOsc.frequency.setValueAtTime(midiToFrequency(score.root - 7), at);
+    bodyOsc.frequency.exponentialRampToValueAtTime(midiToFrequency(score.root - 14), at + 0.055);
+    bodyGain.gain.setValueAtTime(0.0001, at);
+    bodyGain.gain.exponentialRampToValueAtTime(peak * 0.55, at + 0.005);
+    bodyGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.06);
+    bodyOsc.connect(bodyGain).connect(transport.beatBus);
+    bodyOsc.start(at);
+    bodyOsc.stop(at + 0.075);
+  }
+
+  if (step.hat > 0) {
+    const baseHatFreq = midiToFrequency(score.root + 19);
+    const ratios = step.hat === 2 ? [1, 1.5] : [1];
+    for (const [idx, ratio] of ratios.entries()) {
+      const hatOsc = context.createOscillator();
+      const hatGain = context.createGain();
+      hatOsc.type = idx === 0 ? "triangle" : "sine";
+      hatOsc.frequency.setValueAtTime(baseHatFreq * ratio, at);
+      const decay = step.hat === 2 ? 0.13 : 0.048;
+      const peak = (step.hat === 2 ? 0.068 : 0.036) * (idx === 0 ? 1 : 0.6) * holdLift;
+      hatGain.gain.setValueAtTime(0.0001, at);
+      hatGain.gain.exponentialRampToValueAtTime(peak, at + 0.004);
+      hatGain.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+      hatOsc.connect(hatGain).connect(transport.beatBus);
+      hatOsc.start(at);
+      hatOsc.stop(at + decay + 0.02);
+    }
+  }
+}
+
+function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration) {
+  if (!bassEnabled || !currentBass || !transport.bassBus) return;
+  const step = currentBass.steps[stepIndex % currentBass.steps.length];
+  if (!step || step.gate === 0) return;
+
+  const nextStep = currentBass.steps[(stepIndex + 1) % currentBass.steps.length];
+  const baseMidi = Math.max(28, score.root - (step.register > 0 ? 12 : 24) + step.interval);
+  const nextMidi = Math.max(28, score.root - ((nextStep?.register || 0) > 0 ? 12 : 24) + (nextStep?.interval || 0));
+  const freq = midiToFrequency(baseMidi);
+  const glideFreq = midiToFrequency(nextMidi);
+
+  const duration = Math.max(0.08, stepDuration * (step.gate === 2 ? 0.88 : 0.46));
+  const holdBoost = 1 + interaction.hold * 0.16;
+  const peak = (step.accent ? 0.22 : 0.15) * holdBoost;
+
+  const subOsc = context.createOscillator();
+  const upperOsc = context.createOscillator();
+  const upperGain = context.createGain();
+  const bassFilter = context.createBiquadFilter();
+  const amp = context.createGain();
+
+  subOsc.type = "sine";
+  upperOsc.type = score.bassMode % 2 === 1 ? "sawtooth" : "triangle";
+  subOsc.frequency.setValueAtTime(freq, at);
+  upperOsc.frequency.setValueAtTime(freq * 2, at);
+
+  if (step.slide && nextStep && nextStep.gate > 0) {
+    const glideStart = at + duration * 0.45;
+    subOsc.frequency.setValueAtTime(freq, glideStart);
+    subOsc.frequency.exponentialRampToValueAtTime(glideFreq, at + duration);
+    upperOsc.frequency.setValueAtTime(freq * 2, glideStart);
+    upperOsc.frequency.exponentialRampToValueAtTime(glideFreq * 2, at + duration);
+  }
+
+  upperGain.gain.value = step.accent ? 0.42 : 0.26;
+  bassFilter.type = "lowpass";
+  const startCutoff = Math.min(1800, freq * (step.accent ? 6.5 : 3.8) + (score.bassGlide || 55) * 4);
+  const endCutoff = Math.max(90, freq * 1.6);
+  bassFilter.frequency.setValueAtTime(startCutoff, at);
+  bassFilter.frequency.exponentialRampToValueAtTime(endCutoff, at + duration);
+  bassFilter.Q.value = step.accent ? 4.2 : 2.2;
+
+  amp.gain.setValueAtTime(0.0001, at);
+  amp.gain.exponentialRampToValueAtTime(peak, at + 0.012);
+  amp.gain.exponentialRampToValueAtTime(0.0001, at + duration + 0.025);
+
+  subOsc.connect(bassFilter);
+  upperOsc.connect(upperGain).connect(bassFilter);
+  bassFilter.connect(amp).connect(transport.bassBus);
+
+  subOsc.start(at);
+  upperOsc.start(at);
+  subOsc.stop(at + duration + 0.04);
+  upperOsc.stop(at + duration + 0.04);
+}
+
+function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDuration) {
+  if (!harmonyEnabled || !currentHarmony || !transport.harmonyBus) return;
+  const step = currentHarmony.steps[stepIndex % currentHarmony.steps.length];
+  if (!step || step.gate === 0) return;
+
+  const isSustained = step.gate === 2;
+  const duration = Math.max(0.14, stepDuration * (isSustained ? 1.25 : 0.62));
+  const strumSec = (step.strumMs || 24) / 1000;
+  const holdBoost = 1 + interaction.hold * 0.14;
+  const waveforms = [
+    ["triangle", "sine", "triangle"],
+    ["triangle", "sawtooth", "sine"],
+    ["sine", "triangle", "sine"],
+    ["sine", "sine", "triangle"],
+  ][score.harmonyMode % 4];
+
+  for (const [voiceIndex, interval] of step.chord.entries()) {
+    const noteStart = at + voiceIndex * strumSec;
+    const midi = Math.min(84, score.root + interval);
+    const freq = midiToFrequency(midi);
+    const osc = context.createOscillator();
+    const voiceGain = context.createGain();
+
+    osc.type = waveforms[voiceIndex % waveforms.length];
+    osc.frequency.setValueAtTime(freq, noteStart);
+    osc.detune.setValueAtTime((voiceIndex - 1) * 3.2 * (step.mirror === "/" ? 1 : -1), noteStart);
+
+    const peak = (isSustained ? 0.068 : 0.055) * (1 - voiceIndex * 0.14) * holdBoost;
+    const attack = isSustained ? 0.038 : 0.012;
+    voiceGain.gain.setValueAtTime(0.0001, noteStart);
+    voiceGain.gain.exponentialRampToValueAtTime(peak, noteStart + attack);
+    voiceGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + duration);
+
+    osc.connect(voiceGain).connect(transport.harmonyBus);
+    osc.start(noteStart);
+    osc.stop(noteStart + duration + 0.04);
+  }
+}
+
+function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuration) {
+  if (!chimeEnabled || !currentChimes || !transport.chimeBus) return;
+  const step = currentChimes.steps[stepIndex % currentChimes.steps.length];
+  if (!step || step.gate === 0) return;
+
+  const isAccented = step.gate === 2;
+  const rootMidi = Math.min(74, score.root + 12);
+  const rootFreq = midiToFrequency(rootMidi);
+  const bellFreq = rootFreq * step.ratioValue;
+  const holdBoost = 1 + interaction.hold * 0.16;
+
+  // 1. FRACTRAN Just Intonation overtone chime bell
+  const bellOsc = context.createOscillator();
+  const bellGain = context.createGain();
+  bellOsc.type = "sine";
+  bellOsc.frequency.setValueAtTime(bellFreq, at);
+  const bellDuration = Math.max(0.22, stepDuration * (isAccented ? 1.55 : 0.95));
+  const bellPeak = (isAccented ? 0.062 : 0.042) * holdBoost;
+  bellGain.gain.setValueAtTime(0.0001, at);
+  bellGain.gain.exponentialRampToValueAtTime(bellPeak, at + 0.007);
+  bellGain.gain.exponentialRampToValueAtTime(0.0001, at + bellDuration);
+  bellOsc.connect(bellGain).connect(transport.chimeBus);
+  bellOsc.start(at);
+  bellOsc.stop(at + bellDuration + 0.04);
+
+  if (isAccented) {
+    const overtoneOsc = context.createOscillator();
+    const overtoneGain = context.createGain();
+    const overtoneMult = step.exponents.e3 % 2 === 0 ? 2 : 2.5;
+    overtoneOsc.type = "sine";
+    overtoneOsc.frequency.setValueAtTime(Math.min(4200, bellFreq * overtoneMult), at);
+    overtoneGain.gain.setValueAtTime(0.0001, at);
+    overtoneGain.gain.exponentialRampToValueAtTime(bellPeak * 0.36, at + 0.005);
+    overtoneGain.gain.exponentialRampToValueAtTime(0.0001, at + bellDuration * 0.65);
+    overtoneOsc.connect(overtoneGain).connect(transport.chimeBus);
+    overtoneOsc.start(at);
+    overtoneOsc.stop(at + bellDuration * 0.65 + 0.03);
+  }
+
+  // 2. Piet Codel Synesthetic Spectral Pad
+  const registerMult = [1.0, 0.5, 0.5][step.lightnessIndex % 3];
+  const padFreq = bellFreq * registerMult;
+  const detuneCents = (step.hueIndex + 1) * (1.8 + (step.shimmer || 50) * 0.055);
+  const padDuration = Math.max(0.26, stepDuration * (isAccented ? 1.4 : 0.9));
+  const padFilter = context.createBiquadFilter();
+  padFilter.type = step.lightnessIndex === 0 ? "bandpass" : "lowpass";
+  padFilter.frequency.setValueAtTime(
+    560 + step.hueIndex * 240 + (2 - step.lightnessIndex) * 340,
+    at,
+  );
+  padFilter.Q.setValueAtTime(1.8 + (step.shimmer || 50) * 0.025, at);
+
+  const padGain = context.createGain();
+  const padPeak = (isAccented ? 0.044 : 0.031) * holdBoost;
+  padGain.gain.setValueAtTime(0.0001, at);
+  padGain.gain.exponentialRampToValueAtTime(padPeak, at + 0.055);
+  padGain.gain.exponentialRampToValueAtTime(0.0001, at + padDuration);
+
+  for (const sign of [-1, 1]) {
+    const padOsc = context.createOscillator();
+    padOsc.type = step.lightnessIndex === 2 ? "triangle" : "sine";
+    padOsc.frequency.setValueAtTime(padFreq, at);
+    padOsc.detune.setValueAtTime(sign * detuneCents, at);
+    padOsc.connect(padFilter);
+    padOsc.start(at);
+    padOsc.stop(at + padDuration + 0.04);
+  }
+  padFilter.connect(padGain).connect(transport.chimeBus);
+}
+
+function scheduleChantStep(context, transport, score, stepIndex, at, stepDuration) {
+  if (!chantEnabled || !currentChant || !transport.chantBus) return;
+  const step = currentChant.steps[stepIndex % currentChant.steps.length];
+  if (!step || step.gate === 0) return;
+
+  const isSoliloquy = step.gate === 2;
+  const duration = Math.max(0.18, stepDuration * (isSoliloquy ? 1.32 : 0.85));
+  const midi = Math.max(38, Math.min(76, score.root + step.registerOffset + step.interval));
+  const baseFreq = midiToFrequency(midi);
+  const holdBoost = 1 + interaction.hold * 0.16;
+
+  // Glottal source with vibrato LFO
+  const glottalMix = context.createGain();
+  glottalMix.gain.setValueAtTime(1, at);
+
+  const oscA = context.createOscillator();
+  const oscB = context.createOscillator();
+  oscA.type = "sawtooth";
+  oscB.type = "triangle";
+  oscA.frequency.setValueAtTime(baseFreq, at);
+  oscB.frequency.setValueAtTime(baseFreq * 1.003, at);
+
+  const lfo = context.createOscillator();
+  const lfoGain = context.createGain();
+  lfo.type = "sine";
+  lfo.frequency.setValueAtTime(step.vibratoHz || 5.4, at);
+  lfoGain.gain.setValueAtTime(isSoliloquy ? 4.2 : 2.6, at);
+  lfo.connect(lfoGain);
+  lfoGain.connect(oscA.frequency);
+  lfoGain.connect(oscB.frequency);
+
+  oscA.connect(glottalMix);
+  oscB.connect(glottalMix);
+
+  // Parallel 3-formant vocal tract bandpass bank (F1, F2, F3)
+  const voiceAmp = context.createGain();
+  const peak = (isSoliloquy ? 0.075 : 0.052) * holdBoost;
+  voiceAmp.gain.setValueAtTime(0.0001, at);
+  voiceAmp.gain.exponentialRampToValueAtTime(peak, at + 0.032);
+  voiceAmp.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+
+  const formants = [
+    { freq: step.f1, q: 6.5 + (step.formantResonance || 55) * 0.05, weight: 1.0 },
+    { freq: step.f2, q: 8.5 + (step.formantResonance || 55) * 0.06, weight: 0.68 },
+    { freq: step.f3, q: 10.0 + (step.formantResonance || 55) * 0.07, weight: 0.35 },
+  ];
+
+  for (const f of formants) {
+    const bp = context.createBiquadFilter();
+    const fGain = context.createGain();
+    bp.type = "bandpass";
+    bp.frequency.setValueAtTime(f.freq, at);
+    bp.Q.setValueAtTime(f.q, at);
+    fGain.gain.setValueAtTime(f.weight, at);
+    glottalMix.connect(bp).connect(fGain).connect(voiceAmp);
+  }
+
+  voiceAmp.connect(transport.chantBus);
+  oscA.start(at);
+  oscB.start(at);
+  lfo.start(at);
+  oscA.stop(at + duration + 0.04);
+  oscB.stop(at + duration + 0.04);
+  lfo.stop(at + duration + 0.04);
+}
+
+function highlightBeatStep(stepIndex) {
+  const normalized = ((stepIndex % 12) + 12) % 12;
+  activeBeatStep = normalized;
+  if (elements.beatGrid) {
+    for (const button of elements.beatGrid.querySelectorAll(".beat-step")) {
+      const idx = Number(button.dataset.step);
+      button.classList.toggle("is-current", idx === normalized);
+    }
+  }
+  if (elements.bassGrid) {
+    for (const button of elements.bassGrid.querySelectorAll(".bass-step")) {
+      const idx = Number(button.dataset.step);
+      button.classList.toggle("is-current", idx === normalized);
+    }
+  }
+  if (elements.harmonyGrid) {
+    for (const button of elements.harmonyGrid.querySelectorAll(".harmony-step")) {
+      const idx = Number(button.dataset.step);
+      button.classList.toggle("is-current", idx === normalized);
+    }
+  }
+  if (elements.chimeGrid) {
+    for (const button of elements.chimeGrid.querySelectorAll(".chime-step")) {
+      const idx = Number(button.dataset.step);
+      button.classList.toggle("is-current", idx === normalized);
+    }
+  }
+  if (elements.chantGrid) {
+    for (const button of elements.chantGrid.querySelectorAll(".chant-step")) {
+      const idx = Number(button.dataset.step);
+      button.classList.toggle("is-current", idx === normalized);
+    }
+  }
+}
+
+function updateBeatGrid() {
+  if (!elements.beatGrid) return;
+  const steps = currentBeat?.steps || [];
+  for (const button of elements.beatGrid.querySelectorAll(".beat-step")) {
+    const idx = Number(button.dataset.step);
+    const step = steps[idx] || { kick: 0, snare: 0, hat: 0, trits: "000" };
+    const kickPip = button.querySelector(".pip-kick");
+    const snarePip = button.querySelector(".pip-snare");
+    const hatPip = button.querySelector(".pip-hat");
+    const tritsEl = button.querySelector(".step-trits");
+    if (kickPip) kickPip.dataset.level = String(step.kick);
+    if (snarePip) snarePip.dataset.level = String(step.snare);
+    if (hatPip) hatPip.dataset.level = String(step.hat);
+    if (tritsEl) tritsEl.textContent = step.trits;
+    button.setAttribute(
+      "aria-label",
+      `Step ${idx + 1}: ternary ${step.trits}, kick ${step.kick}, snare ${step.snare}, chime ${step.hat}`,
+    );
+  }
+}
+
+function renderBeatGrid() {
+  if (!elements.beatGrid) return;
+  elements.beatGrid.innerHTML = "";
+  for (let index = 0; index < 12; index += 1) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "beat-step";
+    button.dataset.step = String(index);
+    button.innerHTML = `
+      <span class="step-index">${String(index + 1).padStart(2, "0")}</span>
+      <span class="step-pips" aria-hidden="true">
+        <span class="voice-pip pip-kick" data-level="0"></span>
+        <span class="voice-pip pip-snare" data-level="0"></span>
+        <span class="voice-pip pip-hat" data-level="0"></span>
+      </span>
+      <span class="step-trits">000</span>
+    `;
+    button.addEventListener("click", () => {
+      if (!currentBeat) return;
+      const nextSteps = [...currentBeat.steps];
+      nextSteps[index] = cycleBeatStep(nextSteps[index]);
+      currentBeat = Object.freeze({
+        ...currentBeat,
+        steps: Object.freeze(nextSteps),
+      });
+      updateBeatGrid();
+      if (audioContext && currentTransport && currentScore && !muted) {
+        scheduleBeatStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.18);
+      }
+    });
+    elements.beatGrid.append(button);
+  }
+}
+
+function updateBassGrid() {
+  if (!elements.bassGrid) return;
+  const steps = currentBass?.steps || [];
+  for (const button of elements.bassGrid.querySelectorAll(".bass-step")) {
+    const idx = Number(button.dataset.step);
+    const step = steps[idx] || { cell: 0, gate: 0, register: 0, slide: 0, accent: 0, label: "---" };
+    const gatePip = button.querySelector(".pip-gate");
+    const regPip = button.querySelector(".pip-reg");
+    const slidePip = button.querySelector(".pip-slide");
+    const labelEl = button.querySelector(".step-trits");
+    const byteEl = button.querySelector(".cell-byte");
+    button.dataset.gate = String(step.gate);
+    button.dataset.accent = String(step.accent);
+    if (gatePip) gatePip.dataset.level = String(step.gate);
+    if (regPip) regPip.dataset.level = String(step.register ? 2 : 0);
+    if (slidePip) slidePip.dataset.level = String(step.slide ? 2 : (step.accent ? 1 : 0));
+    if (labelEl) labelEl.textContent = step.label;
+    if (byteEl) byteEl.textContent = `[${String(step.cell).padStart(3, "0")}]`;
+    button.setAttribute(
+      "aria-label",
+      `Tape cell ${idx}: ${step.label}, byte ${step.cell}`,
+    );
+  }
+}
+
+function renderBassGrid() {
+  if (!elements.bassGrid) return;
+  elements.bassGrid.innerHTML = "";
+  for (let index = 0; index < 12; index += 1) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "beat-step bass-step";
+    button.dataset.step = String(index);
+    button.innerHTML = `
+      <span class="step-index">@${String(index).padStart(2, "0")}</span>
+      <span class="step-pips" aria-hidden="true">
+        <span class="voice-pip pip-gate" data-level="0"></span>
+        <span class="voice-pip pip-reg" data-level="0"></span>
+        <span class="voice-pip pip-hat pip-slide" data-level="0"></span>
+      </span>
+      <span class="step-trits">---</span>
+      <span class="cell-byte">[000]</span>
+    `;
+    button.addEventListener("click", () => {
+      if (!currentBass || !currentScore) return;
+      const nextSteps = [...currentBass.steps];
+      nextSteps[index] = cycleBassCell(nextSteps[index], melodyFor(currentScore));
+      currentBass = Object.freeze({
+        ...currentBass,
+        steps: Object.freeze(nextSteps),
+      });
+      updateBassGrid();
+      if (audioContext && currentTransport && !muted) {
+        scheduleBassStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.24);
+      }
+    });
+    elements.bassGrid.append(button);
+  }
+}
+
+function updateHarmonyGrid() {
+  if (!elements.harmonyGrid) return;
+  const steps = currentHarmony?.steps || [];
+  for (const button of elements.harmonyGrid.querySelectorAll(".harmony-step")) {
+    const idx = Number(button.dataset.step);
+    const step = steps[idx] || { raw: 0, gate: 0, mirror: "/", label: "REST" };
+    const idxEl = button.querySelector(".step-index");
+    const rootPip = button.querySelector(".pip-root");
+    const thirdPip = button.querySelector(".pip-third");
+    const fifthPip = button.querySelector(".pip-fifth");
+    const labelEl = button.querySelector(".step-trits");
+    const byteEl = button.querySelector(".cell-byte");
+    button.dataset.gate = String(step.gate);
+    if (idxEl) idxEl.textContent = `${String(idx + 1).padStart(2, "0")}${step.mirror}`;
+    if (rootPip) rootPip.dataset.level = String(step.gate);
+    if (thirdPip) thirdPip.dataset.level = String(step.gate > 0 ? (step.mirror === "/" ? 2 : 1) : 0);
+    if (fifthPip) fifthPip.dataset.level = String(step.gate === 2 ? 2 : (step.gate === 1 ? 1 : 0));
+    if (labelEl) labelEl.textContent = step.label;
+    if (byteEl) byteEl.textContent = `#${String(step.raw).padStart(3, "0")}`;
+    button.setAttribute(
+      "aria-label",
+      `Mirror node ${idx + 1} (${step.mirror}): ${step.label}, stack ${step.raw}`,
+    );
+  }
+}
+
+function renderHarmonyGrid() {
+  if (!elements.harmonyGrid) return;
+  elements.harmonyGrid.innerHTML = "";
+  for (let index = 0; index < 12; index += 1) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "beat-step harmony-step";
+    button.dataset.step = String(index);
+    button.innerHTML = `
+      <span class="step-index">${String(index + 1).padStart(2, "0")}/</span>
+      <span class="step-pips" aria-hidden="true">
+        <span class="voice-pip pip-root" data-level="0"></span>
+        <span class="voice-pip pip-third" data-level="0"></span>
+        <span class="voice-pip pip-hat pip-fifth" data-level="0"></span>
+      </span>
+      <span class="step-trits">REST</span>
+      <span class="cell-byte">#000</span>
+    `;
+    button.addEventListener("click", () => {
+      if (!currentHarmony || !currentScore) return;
+      const nextSteps = [...currentHarmony.steps];
+      nextSteps[index] = cycleHarmonyCell(nextSteps[index], currentScore);
+      currentHarmony = Object.freeze({
+        ...currentHarmony,
+        steps: Object.freeze(nextSteps),
+      });
+      updateHarmonyGrid();
+      if (audioContext && currentTransport && !muted) {
+        scheduleHarmonyStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.28);
+      }
+    });
+    elements.harmonyGrid.append(button);
+  }
+}
+
+const CODEL_SWATCHES = Object.freeze([
+  ["#f38c8c", "#f3e28c", "#98eb98", "#8cebf3", "#98a9f3", "#eb98f3"],
+  ["#cf4848", "#cfb83e", "#46b858", "#3eb8cf", "#4d66cf", "#b846cf"],
+  ["#7d2222", "#7d6b1a", "#216e2d", "#1c6e7d", "#26367d", "#6e217d"],
+]);
+
+function updateChimeGrid() {
+  if (!elements.chimeGrid) return;
+  const steps = currentChimes?.steps || [];
+  for (const button of elements.chimeGrid.querySelectorAll(".chime-step")) {
+    const idx = Number(button.dataset.step);
+    const step = steps[idx] || {
+      gate: 0,
+      codelCode: "LC",
+      hueIndex: 3,
+      lightnessIndex: 0,
+      fraction: "35/6",
+      exponents: { e2: 1, e3: 1, e5: 0, e7: 0 },
+      label: "REST",
+    };
+    const idxEl = button.querySelector(".step-index");
+    const p2Pip = button.querySelector(".pip-p2");
+    const p3Pip = button.querySelector(".pip-p3");
+    const p57Pip = button.querySelector(".pip-p57");
+    const labelEl = button.querySelector(".step-trits");
+    const byteEl = button.querySelector(".cell-byte");
+    button.dataset.gate = String(step.gate);
+    const swatch = CODEL_SWATCHES[step.lightnessIndex % 3]?.[step.hueIndex % 6] || "#8cebf3";
+    button.style.setProperty("--codel-color", swatch);
+    if (idxEl) idxEl.textContent = `${String(idx + 1).padStart(2, "0")}·${step.codelCode}`;
+    if (p2Pip) p2Pip.dataset.level = String(step.gate === 0 ? 0 : Math.min(2, step.exponents.e2));
+    if (p3Pip) p3Pip.dataset.level = String(step.gate === 0 ? 0 : Math.min(2, step.exponents.e3));
+    if (p57Pip) p57Pip.dataset.level = String(step.gate === 0 ? 0 : Math.min(2, step.exponents.e5 + step.exponents.e7));
+    if (labelEl) labelEl.textContent = step.label;
+    if (byteEl) byteEl.textContent = step.fraction;
+    button.setAttribute(
+      "aria-label",
+      `Codel ${idx + 1} (${step.codelCode}): ratio ${step.label}, fraction ${step.fraction}`,
+    );
+  }
+}
+
+function renderChimeGrid() {
+  if (!elements.chimeGrid) return;
+  elements.chimeGrid.innerHTML = "";
+  for (let index = 0; index < 12; index += 1) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "beat-step chime-step";
+    button.dataset.step = String(index);
+    button.innerHTML = `
+      <span class="step-index">${String(index + 1).padStart(2, "0")}·LC</span>
+      <span class="step-pips" aria-hidden="true">
+        <span class="voice-pip pip-p2" data-level="0"></span>
+        <span class="voice-pip pip-p3" data-level="0"></span>
+        <span class="voice-pip pip-hat pip-p57" data-level="0"></span>
+      </span>
+      <span class="step-trits">1/1 LC</span>
+      <span class="cell-byte">35/6</span>
+    `;
+    button.addEventListener("click", () => {
+      if (!currentChimes || !currentScore) return;
+      const nextSteps = [...currentChimes.steps];
+      nextSteps[index] = cycleChimeCell(nextSteps[index]);
+      currentChimes = Object.freeze({
+        ...currentChimes,
+        steps: Object.freeze(nextSteps),
+      });
+      updateChimeGrid();
+      if (audioContext && currentTransport && !muted) {
+        scheduleChimeStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.3);
+      }
+    });
+    elements.chimeGrid.append(button);
+  }
+}
+
+function updateChantGrid() {
+  if (!elements.chantGrid) return;
+  const steps = currentChant?.steps || [];
+  for (const button of elements.chantGrid.querySelectorAll(".chant-step")) {
+    const idx = Number(button.dataset.step);
+    const step = steps[idx] || {
+      gate: 0,
+      scene: `SCENE ${idx + 1}`,
+      personaShort: "HAM",
+      vowelIpa: "/ɑ/",
+      f1: 730,
+      f2: 1090,
+      label: "SILENT",
+    };
+    const idxEl = button.querySelector(".step-index");
+    const f1Pip = button.querySelector(".pip-f1");
+    const f2Pip = button.querySelector(".pip-f2");
+    const f3Pip = button.querySelector(".pip-f3");
+    const labelEl = button.querySelector(".step-trits");
+    const byteEl = button.querySelector(".cell-byte");
+    button.dataset.gate = String(step.gate);
+    if (idxEl) idxEl.textContent = step.scene.replace("SCENE ", "SC·");
+    if (f1Pip) f1Pip.dataset.level = String(step.gate === 0 ? 0 : (step.f1 > 500 ? 2 : 1));
+    if (f2Pip) f2Pip.dataset.level = String(step.gate === 0 ? 0 : (step.f2 > 1500 ? 2 : 1));
+    if (f3Pip) f3Pip.dataset.level = String(step.gate === 2 ? 2 : (step.gate === 1 ? 1 : 0));
+    if (labelEl) labelEl.textContent = step.label;
+    if (byteEl) byteEl.textContent = step.vowelIpa;
+    button.setAttribute(
+      "aria-label",
+      `${step.scene} (${step.personaShort}): ${step.label} ${step.vowelIpa}`,
+    );
+  }
+}
+
+function renderChantGrid() {
+  if (!elements.chantGrid) return;
+  elements.chantGrid.innerHTML = "";
+  for (let index = 0; index < 12; index += 1) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "beat-step chant-step";
+    button.dataset.step = String(index);
+    button.innerHTML = `
+      <span class="step-index">SC·${index + 1}</span>
+      <span class="step-pips" aria-hidden="true">
+        <span class="voice-pip pip-f1" data-level="0"></span>
+        <span class="voice-pip pip-f2" data-level="0"></span>
+        <span class="voice-pip pip-hat pip-f3" data-level="0"></span>
+      </span>
+      <span class="step-trits">HAM·AH</span>
+      <span class="cell-byte">/ɑ/</span>
+    `;
+    button.addEventListener("click", () => {
+      if (!currentChant || !currentScore) return;
+      const nextSteps = [...currentChant.steps];
+      nextSteps[index] = cycleChantCell(nextSteps[index], currentScore);
+      currentChant = Object.freeze({
+        ...currentChant,
+        steps: Object.freeze(nextSteps),
+      });
+      updateChantGrid();
+      if (audioContext && currentTransport && !muted) {
+        scheduleChantStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.32);
+      }
+    });
+    elements.chantGrid.append(button);
+  }
+}
+
+function updateBandstandStatus() {
+  if (!elements.bandstandStatus) return;
+  const activeCount =
+    1 +
+    (beatEnabled ? 1 : 0) +
+    (bassEnabled ? 1 : 0) +
+    (harmonyEnabled ? 1 : 0) +
+    (chimeEnabled ? 1 : 0) +
+    (chantEnabled ? 1 : 0);
+  if (activeCount === 6) {
+    elements.bandstandStatus.textContent = "ALL SIX ESOTERIC PLAYERS ENGAGED";
+  } else if (activeCount === 1) {
+    elements.bandstandStatus.textContent = "SOLO LOLCODE BANDLEADER · ACCOMPANIMENT SILENCED";
+  } else {
+    elements.bandstandStatus.textContent = `${activeCount} OF 6 ESOTERIC PLAYERS ENGAGED`;
+  }
+}
+
+renderBeatGrid();
+renderBassGrid();
+renderHarmonyGrid();
+renderChimeGrid();
+renderChantGrid();
+
 async function playScore(score) {
   stopCurrentSound();
   vision.setScore(score);
@@ -1016,6 +1774,11 @@ async function playScore(score) {
   const now = context.currentTime + 0.045;
   const unit = 60 / score.pulse / 2;
   const mix = context.createGain();
+  const beatBus = context.createGain();
+  const bassBus = context.createGain();
+  const harmonyBus = context.createGain();
+  const chimeBus = context.createGain();
+  const chantBus = context.createGain();
   const filter = context.createBiquadFilter();
   const compressor = context.createDynamicsCompressor();
   const delay = context.createDelay(1.5);
@@ -1025,6 +1788,11 @@ async function playScore(score) {
   const droneGains = [];
   const transport = {
     mix,
+    beatBus,
+    bassBus,
+    harmonyBus,
+    chimeBus,
+    chantBus,
     filter,
     delay,
     feedback,
@@ -1040,6 +1808,11 @@ async function playScore(score) {
 
   mix.gain.setValueAtTime(0.0001, now);
   mix.gain.exponentialRampToValueAtTime(0.28, now + 0.16);
+  beatBus.gain.setValueAtTime(beatEnabled ? 0.82 : 0.0001, now);
+  bassBus.gain.setValueAtTime(bassEnabled ? 0.84 : 0.0001, now);
+  harmonyBus.gain.setValueAtTime(harmonyEnabled ? 0.78 : 0.0001, now);
+  chimeBus.gain.setValueAtTime(chimeEnabled ? 0.8 : 0.0001, now);
+  chantBus.gain.setValueAtTime(chantEnabled ? 0.82 : 0.0001, now);
   filter.type = ["lowpass", "bandpass", "lowpass", "highpass", "lowpass", "bandpass"][score.voice];
   filter.frequency.value = 620 + score.bloom * 24 + score.hueShift * 2;
   filter.Q.value = 2.5 + score.edge / 16;
@@ -1051,6 +1824,13 @@ async function playScore(score) {
   output.gain.value = masterGainFor(masterVolume);
 
   mix.connect(filter);
+  harmonyBus.connect(filter);
+  chimeBus.connect(delay);
+  chimeBus.connect(compressor);
+  chantBus.connect(delay);
+  chantBus.connect(compressor);
+  beatBus.connect(compressor);
+  bassBus.connect(compressor);
   filter.connect(compressor).connect(output).connect(context.destination);
   filter.connect(delay);
   delay.connect(feedback).connect(delay);
@@ -1078,11 +1858,21 @@ async function playScore(score) {
     updateAudioInteraction();
     const rhythm = RHYTHMS[score.rhythm];
     while (transport.nextNoteTime < context.currentTime + 0.28) {
-      const lengthMultiplier = rhythm[transport.step % rhythm.length];
+      const currentStep = transport.step;
+      const lengthMultiplier = rhythm[currentStep % rhythm.length];
       const stepDuration = unit * lengthMultiplier;
       const gateRatio = Math.min(0.94, score.gate / 100 + interaction.hold * 0.12);
       const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
-      scheduleNote(context, transport, score, transport.step, transport.nextNoteTime, soundingDuration);
+      scheduleNote(context, transport, score, currentStep, transport.nextNoteTime, soundingDuration);
+      scheduleBeatStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
+      scheduleBassStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
+      scheduleHarmonyStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
+      scheduleChimeStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
+      scheduleChantStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
+      const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
+      window.setTimeout(() => {
+        if (currentTransport === transport) highlightBeatStep(currentStep);
+      }, delayMs);
       transport.nextNoteTime += stepDuration;
       transport.step += 1;
     }
@@ -1095,6 +1885,68 @@ async function playScore(score) {
 
 function showScore(score) {
   currentScore = score;
+  beatMutation = 0;
+  bassMutation = 0;
+  harmonyMutation = 0;
+  chimeMutation = 0;
+  chantMutation = 0;
+  if (beatSource) {
+    currentBeat = composeBeat(beatSource, score, beatMutation);
+    if (elements.beatName) elements.beatName.textContent = currentBeat.modeName;
+    if (elements.beatTelemetry) {
+      elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · DENSITY ${score.beatDensity}%`;
+    }
+    if (elements.beatMutate) elements.beatMutate.disabled = false;
+    updateBeatGrid();
+  } else if (elements.beatName) {
+    elements.beatName.textContent = BEAT_NAMES[score.beatMode];
+  }
+  if (bassSource) {
+    currentBass = composeBass(bassSource, score, bassMutation);
+    if (elements.bassName) elements.bassName.textContent = currentBass.modeName;
+    if (elements.bassTelemetry) {
+      elements.bassTelemetry.textContent = `256-CELL TAPE · ${currentBass.stepsExecuted} OPS · GLIDE ${score.bassGlide}%`;
+    }
+    if (elements.bassMutate) elements.bassMutate.disabled = false;
+    updateBassGrid();
+  } else if (elements.bassName) {
+    elements.bassName.textContent = BASS_NAMES[score.bassMode];
+  }
+  if (harmonySource) {
+    currentHarmony = composeHarmony(harmonySource, score, harmonyMutation);
+    if (elements.harmonyName) elements.harmonyName.textContent = currentHarmony.modeName;
+    if (elements.harmonyTelemetry) {
+      elements.harmonyTelemetry.textContent = `2D TORUS · ${currentHarmony.stepsExecuted} OPS · ${currentHarmony.mirrorsHit} MIRRORS`;
+    }
+    if (elements.harmonyMutate) elements.harmonyMutate.disabled = false;
+    updateHarmonyGrid();
+  } else if (elements.harmonyName) {
+    elements.harmonyName.textContent = HARMONY_NAMES[score.harmonyMode];
+  }
+  if (pietSource && fractranSource) {
+    currentChimes = composeChimes(pietSource, fractranSource, score, chimeMutation);
+    if (elements.chimeName) elements.chimeName.textContent = currentChimes.modeName;
+    if (elements.chimeTelemetry) {
+      elements.chimeTelemetry.textContent = `${currentChimes.pietStepsExecuted} CODELS · ${currentChimes.fractranStepsExecuted} FRACTRAN RATIOS · SHIMMER ${score.chimeShimmer}%`;
+    }
+    if (elements.chimeMutate) elements.chimeMutate.disabled = false;
+    updateChimeGrid();
+  } else if (elements.chimeName) {
+    elements.chimeName.textContent = CHIME_NAMES[score.chimeMode];
+  }
+  if (chantSource) {
+    currentChant = composeChant(chantSource, score, chantMutation);
+    if (elements.chantName) elements.chantName.textContent = currentChant.modeName;
+    if (elements.chantTelemetry) {
+      elements.chantTelemetry.textContent = `3 ACTS · ${currentChant.statementsExecuted} CUES · FORMANT ${score.chantFormant}%`;
+    }
+    if (elements.chantMutate) elements.chantMutate.disabled = false;
+    updateChantGrid();
+  } else if (elements.chantName) {
+    elements.chantName.textContent = CHANT_NAMES[score.chantMode];
+  }
+  if (elements.bandstandMutateAll) elements.bandstandMutateAll.disabled = false;
+  updateBandstandStatus();
   elements.name.textContent = score.name;
   elements.pulse.textContent = String(score.pulse);
   elements.wave.textContent = WAVEFORMS[score.wave];
@@ -1206,6 +2058,173 @@ elements.canvas.addEventListener("pointerup", endVitrineInteraction);
 elements.canvas.addEventListener("pointercancel", endVitrineInteraction);
 elements.canvas.addEventListener("lostpointercapture", endVitrineInteraction);
 
+function setBandPlayersEnabled(nextState) {
+  beatEnabled = nextState;
+  bassEnabled = nextState;
+  harmonyEnabled = nextState;
+  chimeEnabled = nextState;
+  chantEnabled = nextState;
+  if (elements.beatToggle) {
+    elements.beatToggle.setAttribute("aria-pressed", String(beatEnabled));
+    elements.beatToggle.textContent = beatEnabled ? "PULSE: ENGAGED" : "PULSE: SILENCED";
+  }
+  if (elements.bassToggle) {
+    elements.bassToggle.setAttribute("aria-pressed", String(bassEnabled));
+    elements.bassToggle.textContent = bassEnabled ? "BASS: ENGAGED" : "BASS: SILENCED";
+  }
+  if (elements.harmonyToggle) {
+    elements.harmonyToggle.setAttribute("aria-pressed", String(harmonyEnabled));
+    elements.harmonyToggle.textContent = harmonyEnabled ? "ORGAN: ENGAGED" : "ORGAN: SILENCED";
+  }
+  if (elements.chimeToggle) {
+    elements.chimeToggle.setAttribute("aria-pressed", String(chimeEnabled));
+    elements.chimeToggle.textContent = chimeEnabled ? "CHIMES: ENGAGED" : "CHIMES: SILENCED";
+  }
+  if (elements.chantToggle) {
+    elements.chantToggle.setAttribute("aria-pressed", String(chantEnabled));
+    elements.chantToggle.textContent = chantEnabled ? "CHOIR: ENGAGED" : "CHOIR: SILENCED";
+  }
+  if (audioContext && currentTransport) {
+    const now = audioContext.currentTime;
+    currentTransport.beatBus?.gain.setTargetAtTime(beatEnabled ? 0.82 : 0.0001, now, 0.025);
+    currentTransport.bassBus?.gain.setTargetAtTime(bassEnabled ? 0.84 : 0.0001, now, 0.025);
+    currentTransport.harmonyBus?.gain.setTargetAtTime(harmonyEnabled ? 0.78 : 0.0001, now, 0.025);
+    currentTransport.chimeBus?.gain.setTargetAtTime(chimeEnabled ? 0.8 : 0.0001, now, 0.025);
+    currentTransport.chantBus?.gain.setTargetAtTime(chantEnabled ? 0.82 : 0.0001, now, 0.025);
+  }
+  updateBandstandStatus();
+}
+
+elements.beatToggle?.addEventListener("click", () => {
+  beatEnabled = !beatEnabled;
+  elements.beatToggle.setAttribute("aria-pressed", String(beatEnabled));
+  elements.beatToggle.textContent = beatEnabled ? "PULSE: ENGAGED" : "PULSE: SILENCED";
+  if (audioContext && currentTransport?.beatBus) {
+    const now = audioContext.currentTime;
+    currentTransport.beatBus.gain.cancelScheduledValues(now);
+    currentTransport.beatBus.gain.setTargetAtTime(beatEnabled ? 0.82 : 0.0001, now, 0.025);
+  }
+  updateBandstandStatus();
+});
+
+elements.beatMutate?.addEventListener("click", () => {
+  if (!currentScore || !beatSource) return;
+  beatMutation += 1;
+  currentBeat = composeBeat(beatSource, currentScore, beatMutation);
+  if (elements.beatTelemetry) {
+    elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · MUTATION #${beatMutation}`;
+  }
+  updateBeatGrid();
+});
+
+elements.bassToggle?.addEventListener("click", () => {
+  bassEnabled = !bassEnabled;
+  elements.bassToggle.setAttribute("aria-pressed", String(bassEnabled));
+  elements.bassToggle.textContent = bassEnabled ? "BASS: ENGAGED" : "BASS: SILENCED";
+  if (audioContext && currentTransport?.bassBus) {
+    const now = audioContext.currentTime;
+    currentTransport.bassBus.gain.cancelScheduledValues(now);
+    currentTransport.bassBus.gain.setTargetAtTime(bassEnabled ? 0.84 : 0.0001, now, 0.025);
+  }
+  updateBandstandStatus();
+});
+
+elements.bassMutate?.addEventListener("click", () => {
+  if (!currentScore || !bassSource) return;
+  bassMutation += 1;
+  currentBass = composeBass(bassSource, currentScore, bassMutation);
+  if (elements.bassTelemetry) {
+    elements.bassTelemetry.textContent = `256-CELL TAPE · ${currentBass.stepsExecuted} OPS · SHIFT #${bassMutation}`;
+  }
+  updateBassGrid();
+});
+
+elements.harmonyToggle?.addEventListener("click", () => {
+  harmonyEnabled = !harmonyEnabled;
+  elements.harmonyToggle.setAttribute("aria-pressed", String(harmonyEnabled));
+  elements.harmonyToggle.textContent = harmonyEnabled ? "ORGAN: ENGAGED" : "ORGAN: SILENCED";
+  if (audioContext && currentTransport?.harmonyBus) {
+    const now = audioContext.currentTime;
+    currentTransport.harmonyBus.gain.cancelScheduledValues(now);
+    currentTransport.harmonyBus.gain.setTargetAtTime(harmonyEnabled ? 0.78 : 0.0001, now, 0.025);
+  }
+  updateBandstandStatus();
+});
+
+elements.harmonyMutate?.addEventListener("click", () => {
+  if (!currentScore || !harmonySource) return;
+  harmonyMutation += 1;
+  currentHarmony = composeHarmony(harmonySource, currentScore, harmonyMutation);
+  if (elements.harmonyTelemetry) {
+    elements.harmonyTelemetry.textContent = `2D TORUS · ${currentHarmony.stepsExecuted} OPS · DEFLECTION #${harmonyMutation}`;
+  }
+  updateHarmonyGrid();
+});
+
+elements.chimeToggle?.addEventListener("click", () => {
+  chimeEnabled = !chimeEnabled;
+  elements.chimeToggle.setAttribute("aria-pressed", String(chimeEnabled));
+  elements.chimeToggle.textContent = chimeEnabled ? "CHIMES: ENGAGED" : "CHIMES: SILENCED";
+  if (audioContext && currentTransport?.chimeBus) {
+    const now = audioContext.currentTime;
+    currentTransport.chimeBus.gain.cancelScheduledValues(now);
+    currentTransport.chimeBus.gain.setTargetAtTime(chimeEnabled ? 0.8 : 0.0001, now, 0.025);
+  }
+  updateBandstandStatus();
+});
+
+elements.chimeMutate?.addEventListener("click", () => {
+  if (!currentScore || !pietSource || !fractranSource) return;
+  chimeMutation += 1;
+  currentChimes = composeChimes(pietSource, fractranSource, currentScore, chimeMutation);
+  if (elements.chimeTelemetry) {
+    elements.chimeTelemetry.textContent = `${currentChimes.pietStepsExecuted} CODELS · ${currentChimes.fractranStepsExecuted} RATIOS · REFRACTION #${chimeMutation}`;
+  }
+  updateChimeGrid();
+});
+
+elements.chantToggle?.addEventListener("click", () => {
+  chantEnabled = !chantEnabled;
+  elements.chantToggle.setAttribute("aria-pressed", String(chantEnabled));
+  elements.chantToggle.textContent = chantEnabled ? "CHOIR: ENGAGED" : "CHOIR: SILENCED";
+  if (audioContext && currentTransport?.chantBus) {
+    const now = audioContext.currentTime;
+    currentTransport.chantBus.gain.cancelScheduledValues(now);
+    currentTransport.chantBus.gain.setTargetAtTime(chantEnabled ? 0.82 : 0.0001, now, 0.025);
+  }
+  updateBandstandStatus();
+});
+
+elements.chantMutate?.addEventListener("click", () => {
+  if (!currentScore || !chantSource) return;
+  chantMutation += 1;
+  currentChant = composeChant(chantSource, currentScore, chantMutation);
+  if (elements.chantTelemetry) {
+    elements.chantTelemetry.textContent = `3 ACTS · ${currentChant.statementsExecuted} CUES · RECAST #${chantMutation}`;
+  }
+  updateChantGrid();
+});
+
+elements.bandstandEngageAll?.addEventListener("click", () => {
+  setBandPlayersEnabled(true);
+});
+
+elements.bandstandSoloLead?.addEventListener("click", () => {
+  setBandPlayersEnabled(false);
+});
+
+elements.bandstandMutateAll?.addEventListener("click", () => {
+  if (!currentScore) return;
+  elements.beatMutate?.click();
+  elements.bassMutate?.click();
+  elements.harmonyMutate?.click();
+  elements.chimeMutate?.click();
+  elements.chantMutate?.click();
+  if (elements.bandstandTelemetry) {
+    elements.bandstandTelemetry.textContent = `ENSEMBLE JAM MUTATION #${beatMutation} APPLIED ACROSS ALL PLATES`;
+  }
+});
+
 elements.form.addEventListener("submit", (event) => {
   event.preventDefault();
   summon(elements.phrase.value);
@@ -1238,9 +2257,31 @@ elements.volume.addEventListener("input", (event) => {
 });
 
 try {
-  const response = await fetch("src/oracle.lol");
-  if (!response.ok) throw new Error(`Oracle source returned ${response.status}`);
-  oracleSource = await response.text();
+  const [oracleResponse, beatResponse, bassResponse, harmonyResponse, pietResponse, fractranResponse, chantResponse] = await Promise.all([
+    fetch("src/oracle.lol"),
+    fetch("src/beat.mal"),
+    fetch("src/bass.bf"),
+    fetch("src/harmony.bfg"),
+    fetch("src/pad.piet"),
+    fetch("src/chimes.frac"),
+    fetch("src/chant.spl"),
+  ]);
+  if (!oracleResponse.ok) throw new Error(`Oracle source returned ${oracleResponse.status}`);
+  if (!beatResponse.ok) throw new Error(`Malbolge source returned ${beatResponse.status}`);
+  if (!bassResponse.ok) throw new Error(`Brainfuck source returned ${bassResponse.status}`);
+  if (!harmonyResponse.ok) throw new Error(`Befunge source returned ${harmonyResponse.status}`);
+  if (!pietResponse.ok) throw new Error(`Piet source returned ${pietResponse.status}`);
+  if (!fractranResponse.ok) throw new Error(`FRACTRAN source returned ${fractranResponse.status}`);
+  if (!chantResponse.ok) throw new Error(`Shakespeare source returned ${chantResponse.status}`);
+  [oracleSource, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource] = await Promise.all([
+    oracleResponse.text(),
+    beatResponse.text(),
+    bassResponse.text(),
+    harmonyResponse.text(),
+    pietResponse.text(),
+    fractranResponse.text(),
+    chantResponse.text(),
+  ]);
   elements.status.textContent = "AWAITING INPUT";
 } catch (error) {
   elements.status.textContent = "SERVE THIS DIRECTORY OVER HTTP";

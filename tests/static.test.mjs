@@ -9,10 +9,21 @@ test("the static entry points exist", async () => {
     "index.html",
     "styles.css",
     "src/app.mjs",
+    "src/befunge.mjs",
+    "src/brainfuck.mjs",
+    "src/fractran.mjs",
     "src/lolcode.mjs",
+    "src/malbolge.mjs",
     "src/music.mjs",
     "src/score.mjs",
+    "src/shakespeare.mjs",
     "src/oracle.lol",
+    "src/beat.mal",
+    "src/bass.bf",
+    "src/harmony.bfg",
+    "src/pad.piet",
+    "src/chimes.frac",
+    "src/chant.spl",
   ].map((path) => access(new URL(path, root))));
 });
 
@@ -25,6 +36,29 @@ test("the page exposes one labeled text input and its core controls", async () =
   assert.match(html, /id="master-volume" type="range" min="0" max="100" value="82"/);
   assert.match(html, /id="volume-value"/);
   assert.match(html, /id="score-melody"/);
+  assert.match(html, /id="score-beat"/);
+  assert.match(html, /id="beat-grid"/);
+  assert.match(html, /id="beat-toggle"/);
+  assert.match(html, /id="beat-mutate"/);
+  assert.match(html, /id="score-bass"/);
+  assert.match(html, /id="bass-grid"/);
+  assert.match(html, /id="bass-toggle"/);
+  assert.match(html, /id="bass-mutate"/);
+  assert.match(html, /id="score-harmony"/);
+  assert.match(html, /id="harmony-grid"/);
+  assert.match(html, /id="harmony-toggle"/);
+  assert.match(html, /id="harmony-mutate"/);
+  assert.match(html, /id="score-chime"/);
+  assert.match(html, /id="chime-grid"/);
+  assert.match(html, /id="chime-toggle"/);
+  assert.match(html, /id="chime-mutate"/);
+  assert.match(html, /id="score-chant"/);
+  assert.match(html, /id="chant-grid"/);
+  assert.match(html, /id="chant-toggle"/);
+  assert.match(html, /id="chant-mutate"/);
+  assert.match(html, /id="bandstand-engage-all"/);
+  assert.match(html, /id="bandstand-solo-lead"/);
+  assert.match(html, /id="bandstand-mutate-all"/);
   assert.match(html, /id="replay"/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /RESTART THE MELODY/);
@@ -98,14 +132,62 @@ test("tapping, holding, and dragging the vitrine modulate shape morphing, moveme
   assert.match(app, /const morphMix = Math\.min\(1, interaction\.hold/);
 });
 
+test("all five esoteric accompaniment plates and the parlor bandstand render 12-step matrices and schedule voices", async () => {
+  const [html, styles, app] = await Promise.all([
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("styles.css", root), "utf8"),
+    readFile(new URL("src/app.mjs", root), "utf8"),
+  ]);
+  assert.match(html, /PLATE II · MALBOLGE TERNARY BEAT GENERATOR/);
+  assert.match(html, /PLATE III · BRAINFUCK TAPE BASSLINE/);
+  assert.match(html, /PLATE IV · BEFUNGE-93 2D MIRROR CHORD ORGAN/);
+  assert.match(html, /PLATE V · PIET &amp; FRACTRAN SPECTRAL CHIMES/);
+  assert.match(html, /PLATE VI · SHAKESPEARE FORMANT VOWEL CHOIR/);
+  assert.match(html, /PARLOR BANDSTAND · SIX-LANGUAGE ENSEMBLE CONSOLE/);
+  assert.match(html, /href="src\/beat\.mal"/);
+  assert.match(html, /href="src\/bass\.bf"/);
+  assert.match(html, /href="src\/harmony\.bfg"/);
+  assert.match(html, /href="src\/pad\.piet"/);
+  assert.match(html, /href="src\/chimes\.frac"/);
+  assert.match(html, /href="src\/chant\.spl"/);
+  assert.match(styles, /\.beat-grid/);
+  assert.match(styles, /\.beat-step\.is-current/);
+  assert.match(styles, /\.bass-step/);
+  assert.match(styles, /\.harmony-step/);
+  assert.match(styles, /\.chime-step/);
+  assert.match(styles, /\.chant-step/);
+  assert.match(styles, /\.bandstand-engine/);
+  assert.match(app, /function scheduleBeatStep\(/);
+  assert.match(app, /function scheduleBassStep\(/);
+  assert.match(app, /function scheduleHarmonyStep\(/);
+  assert.match(app, /function scheduleChimeStep\(/);
+  assert.match(app, /function scheduleChantStep\(/);
+  assert.match(app, /function renderBeatGrid\(\)/);
+  assert.match(app, /function renderBassGrid\(\)/);
+  assert.match(app, /function renderHarmonyGrid\(\)/);
+  assert.match(app, /function renderChimeGrid\(\)/);
+  assert.match(app, /function renderChantGrid\(\)/);
+  assert.match(app, /fetch\("src\/beat\.mal"\)/);
+  assert.match(app, /fetch\("src\/bass\.bf"\)/);
+  assert.match(app, /fetch\("src\/harmony\.bfg"\)/);
+  assert.match(app, /fetch\("src\/pad\.piet"\)/);
+  assert.match(app, /fetch\("src\/chimes\.frac"\)/);
+  assert.match(app, /fetch\("src\/chant\.spl"\)/);
+});
+
 test("the application has no remote runtime assets", async () => {
   const files = await Promise.all([
     "index.html",
     "styles.css",
     "src/app.mjs",
+    "src/befunge.mjs",
+    "src/brainfuck.mjs",
+    "src/fractran.mjs",
     "src/lolcode.mjs",
+    "src/malbolge.mjs",
     "src/music.mjs",
     "src/score.mjs",
+    "src/shakespeare.mjs",
   ].map((path) => readFile(new URL(path, root), "utf8")));
   assert.equal(files.some((contents) => /https?:\/\//i.test(contents)), false);
   assert.equal(files.some((contents) => /node_modules|from\s+["'](?!\.\/)/i.test(contents)), false);
