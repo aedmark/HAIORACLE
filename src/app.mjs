@@ -4,7 +4,7 @@ import { conductEnsemble } from "./conductor.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
-import { FUNGAL_NAMES, WAVEFORMS, composeScore } from "./score.mjs";
+import { composeScore, WAVEFORMS } from "./score.mjs";
 import { buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 
