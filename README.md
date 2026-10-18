@@ -18,7 +18,7 @@ python3 -m http.server 8000
 
 Open [http://localhost:8000](http://localhost:8000), enter a phrase, and choose **SUMMON**. Sound requires the button press because browsers block unsolicited audio.
 
-The composition loops until you summon another creature, mute it, or close the page. **RESTART THE MELODY** returns the current creature to the first note, **COPY OMEN LINK** seals the phrase into a client-only `#omen=...` URL fragment for sharing without server logs, and **ENGRAVE PNG PLATE** downloads a 1200×1520 Victorian specimen broadsheet PNG with the creature portrait, name, confided phrase, seed, and six-language ensemble ledger. The master-volume slider starts at a stronger listening level and can move continuously from silence to a compressor-protected boost, while the **TEMPO** slider (`36..208` BPM, initialized to the creature's native pulse) adjusts the live ensemble pace in real time. Tapping, holding, or dragging directly across the apparition vitrine disturbs the specimen—striking synthesized glass and membrane percussion, bending pitch and filter intensity, and morphing and tugging its geometry until you let go.
+The composition loops until you summon another creature, mute it, or close the page. **RESTART THE MELODY** returns the current creature to the first note, **COPY OMEN LINK** seals the phrase into a client-only `#omen=...` URL fragment for sharing without server logs, and **ENGRAVE PNG PLATE** downloads a 1200×1520 Victorian specimen broadsheet PNG with the creature portrait, name, confided phrase, seed, and six-language ensemble ledger. The master-volume slider starts at a stronger listening level and can move continuously from silence to a compressor-protected boost, while the **TEMPO** slider (`36..208` BPM, initialized to the creature's native pulse) adjusts the live ensemble pace in real time. Tapping, holding, or dragging directly across the apparition vitrine disturbs the specimen—striking synthesized glass and membrane percussion, bending pitch and filter intensity, and morphing and tugging its geometry until you let go. A comprehensive standalone technical manual answering What, How, and Why for every component is available at [`manual.html`](manual.html).
 
 Opening `index.html` directly through a `file:` URL is unsupported. The browser must fetch the separate LOLCODE spell from the same HTTP origin.
 
@@ -27,9 +27,10 @@ Opening `index.html` directly through a `file:` URL is unsupported. The browser 
 ```bash
 node --test tests/*.test.mjs
 python3 tools/check_docs.py
+python3 tools/manual.py check docs/manual.json
 ```
 
-Both checks use standard-library tools and install nothing.
+All checks use standard-library tools and install nothing. Rebuild the manual anytime with `python3 tools/manual.py build docs/manual.json --output manual.html`.
 
 ## Technical promise
 

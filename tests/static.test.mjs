@@ -26,6 +26,9 @@ test("the static entry points exist", async () => {
     "src/pad.piet",
     "src/chimes.frac",
     "src/chant.spl",
+    "manual.html",
+    "docs/manual.json",
+    "tools/manual.py",
   ].map((path) => access(new URL(path, root))));
 });
 
@@ -33,6 +36,7 @@ test("the page exposes one labeled text input and its core controls", async () =
   const html = await readFile(new URL("index.html", root), "utf8");
   assert.match(html, /<label for="phrase">/);
   assert.match(html, /id="phrase"/);
+  assert.match(html, /href="manual\.html"/);
   assert.match(html, /id="sound-toggle"/);
   assert.match(html, /<label for="master-volume">MASTER VOLUME<\/label>/);
   assert.match(html, /id="master-volume" type="range" min="0" max="100" value="82"/);

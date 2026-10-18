@@ -24,3 +24,4 @@
 - Respect reduced-motion preferences while keeping the visual reading available.
 - Copy a privacy-preserving `#omen=...` link (`COPY OMEN LINK`) or engrave a 1200×1520 Victorian broadsheet PNG (`ENGRAVE PNG PLATE`) containing the creature portrait, specimen name, confided phrase, hexadecimal seed, and six-language ensemble ledger.
 - Inspect the canonical LOLCODE spell, Malbolge beat tape, Brainfuck bass tape, Befunge torus playfield, Piet codel canvas, FRACTRAN prime fractions, and Shakespeare tragedy directly from the application.
+- Explore a comprehensive, standalone 3x technical manual (`manual.html` generated from `docs/manual.json` via `tools/manual.py`) documenting What, How, and Why for all twenty core components, visual grammars, esoteric engines, and harmonic conduction layers.

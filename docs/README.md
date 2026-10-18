@@ -17,6 +17,8 @@ to it instead of copying it.
 | `SECURITY.md` | Users and developers | Sensitive assets, trust boundaries, reporting, secure defaults | Full operational incident history |
 | `CONTRIBUTING.md` | Contributors | Setup, change, review, and submission workflow | Agent-only instructions |
 | `CHANGELOG.md` | Users | Released and unreleased user-visible changes | Commit-by-commit history |
+| `manual.json` | Developers, agents, and readers | Machine-readable 3x manual source (What/How/Why) | Rendered HTML presentation |
+| `../manual.html` | Users, developers, and researchers | Explorable standalone 3x technical manual | Authoritative manual JSON source |
 
 ## Update triggers
 

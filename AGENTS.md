@@ -92,10 +92,13 @@ Never force-push or rewrite shared history.
 | `src/score.mjs` | Phrase hashing, score validation, and naming |
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |
 | `src/app.mjs` | Browser controls, Canvas creature, and Web Audio instrument |
+| `manual.html` | Standalone explorable 3x technical manual |
+| `docs/manual.json` | 3x documentation scheme manual source of truth |
 | `tests/` | Dependency-free Node tests |
 | `ROADMAP.md` | Planned work with stable IDs |
 | `docs/` | Architecture, decisions, tests, risks, and current state |
 | `tools/check_docs.py` | Documentation consistency checker |
+| `tools/manual.py` | 3x documentation manual validator and builder |
 
 ## Engineering conventions
 
@@ -119,5 +122,5 @@ Never force-push or rewrite shared history.
 - Setup: none.
 - Run: `python3 -m http.server 8000`.
 - Fast checks: `node --test tests/*.test.mjs`.
-- Full checks: `node --test tests/*.test.mjs && python3 tools/check_docs.py`.
+- Full checks: `node --test tests/*.test.mjs && python3 tools/check_docs.py && python3 tools/manual.py check docs/manual.json`.
 - Detailed guidance: `docs/TESTING.md`.

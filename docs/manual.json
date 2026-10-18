@@ -1,0 +1,617 @@
+{
+  "$schema": "https://example.invalid/3x-documentation-scheme/manual.schema.json",
+  "project": {
+    "name": "HAI, ORACLE!",
+    "short_name": "HAI, ORACLE!",
+    "version": "0.1.0",
+    "repository": "https://github.com/aedmark/HAIORACLE"
+  },
+  "manual": {
+    "title": "{{project.name}} Manual",
+    "subtitle": "Deterministic Esoteric Parlor Orchestration & Apparition Vitrine",
+    "description": "Comprehensive 3x technical manual documenting what each component does, how its execution and audio/visual mechanisms operate, and why it is designed under strict zero-dependency and esoteric computation invariants.",
+    "badges": [
+      "Version {{project.version}}",
+      "Zero-Dependency",
+      "Client-Only",
+      "LOLCODE 1.2",
+      "Malbolge 1998",
+      "Brainfuck 1993",
+      "Befunge-93",
+      "Piet 2001",
+      "FRACTRAN 1987",
+      "Shakespeare SPL",
+      "Euler-Tonnetz"
+    ],
+    "footer": "{{project.name}} {{project.version}} · Built with the 3x Documentation Scheme"
+  },
+  "theme": {
+    "accent": "#b89249",
+    "accent_secondary": "#6b1f28",
+    "icon": "✠"
+  },
+  "sections": [
+    {
+      "id": "architecture-foundations",
+      "title": "Foundations & Architectural Boundaries",
+      "description": "Core deterministic seed generation, interpreter boundaries, score validation, and zero-dependency guarantees.",
+      "entries": [
+        {
+          "id": "deterministic-hashing",
+          "title": "Phrase Normalization & Deterministic Seed Hashing",
+          "summary": "Transforms arbitrary human text input into an immutable unsigned 32-bit seed.",
+          "tags": ["foundations", "determinism", "security"],
+          "what": "Accepts user text up to 72 characters, trims surrounding whitespace, collapses internal whitespace sequences into single ASCII spaces, converts text to lowercase, and hashes the normalized string into an unsigned 32-bit integer. Rejects empty phrases or whitespace-only inputs at the boundary.",
+          "how": {
+            "lead": "The normalization and hashing pipeline follows a strict pure functional path in `src/score.mjs`:",
+            "points": [
+              "`normalizePhrase()` applies Unicode normalization, lowercasing, and regex space collapsing `s.trim().toLowerCase().replace(/\\s+/g, ' ')`.",
+              "`hashPhrase()` executes a 32-bit FNV-1a non-cryptographic dispersion algorithm using offset basis `0x811c9dc5` and prime `0x01000193`.",
+              "Bitwise operations (`Math.imul` and `>>> 0`) guarantee that the resulting integer remains unsigned and bit-identical across JavaScript engines on all platforms."
+            ]
+          },
+          "why": "A creature's identity depends on exact determinism: confiding identical words must invariably summon the identical specimen. Using FNV-1a on normalized text avoids cross-browser string hashing discrepancies while forgiving accidental double spaces and letter case differences without altering semantics (ADR D-003).",
+          "evidence": [
+            {"label": "Hashing implementation", "target": "src/score.mjs"},
+            {"label": "Determinism unit tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-003", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["score-boundary", "lolcode-runtime", "client-url-sharing"]
+        },
+        {
+          "id": "lolcode-runtime",
+          "title": "LOLCODE 1.2 Interpreted Score Engine",
+          "summary": "Executes the generative score spell inside a purpose-built in-browser LOLCODE interpreter.",
+          "tags": ["interpreter", "lolcode", "generative"],
+          "what": "Executes `src/oracle.lol` locally in JavaScript. The spell acts as the causal bandleader of the universe: it seeds every visual property, anatomical feature, musical mode, and accompaniment parameter across all six languages, emitting `key=integer` pairs.",
+          "how": {
+            "lead": "The interpreter in `src/lolcode.mjs` implements an honest, spec-compliant subset of LOLCODE 1.2:",
+            "points": [
+              "Parses `HAI 1.2` through `KTHXBYE` and manages a dynamic symbol table with lexical scoping.",
+              "Executes variable declaration (`I HAS A`), assignment (`R`), math operations (`SUM OF`, `DIFF OF`, `PRODUKT OF`, `QUOSHUNT OF`, `MOD OF`), Boolean logic (`BOTH OF`, `EITHER OF`, `NOT`), condition blocks (`O RLY? / YA RLY / NO WAI / OIC`), switches (`WTF? / OMG / OMGWTF`), loops (`IM IN YR / IM OUTTA YR`), and printing (`VISIBLE`).",
+              "Injects the normalized phrase seed as an initial global variable `INPUT_SEED`.",
+              "Fails closed with exact line numbers and statement context whenever unsupported syntax or uninitialized variables are encountered."
+            ]
+          },
+          "why": "Rather than generating parameters through arbitrary JavaScript math, every creature's soul originates in LOLCODE. Purpose-building the interpreter avoids bundling heavy third-party runtimes, preserves the zero-dependency contract, and guarantees that errors are debuggable with precise line numbers (ADR D-002).",
+          "evidence": [
+            {"label": "LOLCODE runtime source", "target": "src/lolcode.mjs"},
+            {"label": "Canonical score spell", "target": "src/oracle.lol"},
+            {"label": "Syntax error regression tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-002", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["score-boundary", "deterministic-hashing", "zero-dependency-model"]
+        },
+        {
+          "id": "score-boundary",
+          "title": "Immutable Generative Score Grammar & Allowlist Validation",
+          "summary": "Validates every output parameter against strict allowable keys and numeric bounds before rendering.",
+          "tags": ["validation", "score", "security"],
+          "what": "Parses raw text emitted by `src/oracle.lol` into an immutable, frozen score object. Ensures that every required field is present exactly once and within valid range bounds, rejecting unknown keys, malformed integers, or missing properties.",
+          "how": {
+            "lead": "`parseScore()` in `src/score.mjs` enforces an exhaustive schema check on the spell's key-value lines:",
+            "points": [
+              "Splits stdout into lines, verifies `key=value` format, and rejects duplicates or unauthorized field names.",
+              "Validates numerical ranges for visual traits (hue 0..359, size 36..100, shape 0..9, symmetry 2..15, bloom 0..100, edge 0..100, motion 0..100, eyes 1..9, irisStyle 0..7, pupilShape 0..7, irisHue 0..359, eyeLayout 0..5, kineticMode 0..7, kineticSpeed 20..100, kineticDepth 20..100, kineticTilt 0..7, fluxMode 0..7).",
+              "Validates numerical ranges for lead audio (pulse 42..167, waveform 0..3, voice 0..5, rhythm 0..5, melodyMode 0..11, melodyTurn 0..11, root 36..60, scale 0..7, gate 40..95) and accompaniment engines (beatMode 0..7, beatDensity 35..100, bassMode 0..7, bassGlide 20..100, harmonyMode 0..7, harmonyStrum 15..100, chimeMode 0..7, chimeShimmer 20..100, chantMode 0..7, chantFormant 25..100).",
+              "Composes an evocative multi-tier ceremonial name using seed-driven vocabulary matrices (`THE <ADJECTIVE> <VESSEL> OF <DOMAIN>`).",
+              "Returns a deeply frozen `Object.freeze()` score structure."
+            ]
+          },
+          "why": "Treating interpreter output as an untrusted boundary prevents corrupted, NaN, or out-of-range values from reaching Web Audio or Canvas. Audio nodes can produce speaker damage or ear injury if fed infinite or NaN frequencies; strict validation guarantees safe audio synthesis and predictable visual framing (ADR D-004).",
+          "evidence": [
+            {"label": "Score parser and validator", "target": "src/score.mjs"},
+            {"label": "Validation test assertions", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-004", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["lolcode-runtime", "lookahead-scheduler", "silhouette-flux"]
+        },
+        {
+          "id": "zero-dependency-model",
+          "title": "Zero-Dependency & Client-Only Privacy Boundary",
+          "summary": "Maintains an unyielding guarantee that all computation, rendering, and synthesis occur locally on-device.",
+          "tags": ["privacy", "offline", "zero-dependency"],
+          "what": "Executes entirely in modern evergreen web browsers using native HTML5, CSS3, Canvas 2D, and Web Audio APIs. Transmits zero telemetry, analytics, cookies, local storage entries, or network requests after initial static file fetch.",
+          "how": {
+            "lead": "The zero-dependency discipline is enforced both architecturally and by automated CI tests:",
+            "points": [
+              "`tests/static.test.mjs` scans all authored source files, asserting that no `http://` or `https://` URLs, external CDN imports, or `node_modules` references exist.",
+              "All six esoteric programs (`src/oracle.lol`, `src/beat.mal`, `src/bass.bf`, `src/harmony.bfg`, `src/pad.piet`, `src/chimes.frac`, `src/chant.spl`) are bundled as plain static text files served from the same HTTP origin.",
+              "No server-side processing, database, or cloud infrastructure is involved."
+            ]
+          },
+          "why": "Privacy, speed, and durability are non-negotiable architectural pillars. Relying on remote servers or third-party CDNs introduces tracking risks, network latency, bit rot, and external failure points. A static zero-dependency toy remains functional indefinitely (ADR D-001).",
+          "evidence": [
+            {"label": "Static asset scanner test", "target": "tests/static.test.mjs"},
+            {"label": "Architecture Record D-001", "target": "docs/DECISIONS.md"},
+            {"label": "Security documentation", "target": "docs/SECURITY.md"}
+          ],
+          "related": ["client-url-sharing", "parlor-cabinet-styling", "broadsheet-png-export"]
+        },
+        {
+          "id": "parlor-cabinet-styling",
+          "title": "Esoteric Victorian Parlor Cabinet & Broadsheet Styling",
+          "summary": "Immerses the user in a 19th-century macabre spiritualist chamber and specimen broadsheet.",
+          "tags": ["ui", "design", "css", "typography"],
+          "what": "Frames the oracle not as a generic digital app or flat modern widget, but as a centered antique spiritualist cabinet featuring an arched bell-jar apparition vitrine, engraved book-serif typography, telegraph monospace, foxed vellum textures, ebonized wood, and tarnished brass rules.",
+          "how": {
+            "lead": "The visual system in `styles.css` builds rich textures entirely through CSS without external image binaries:",
+            "points": [
+              "Employs a high-contrast palette of oxblood (`#6b1f28`), tarnished brass (`#b89249`), bright brass (`#d9b86c`), foxed vellum (`#f4ede2`), and ebonized wood (`#120e0c`).",
+              "Uses system book serifs (`Palatino Linotype`, `Book Antiqua`, `Iowan Old Style`, `Georgia`) and telegraph monospace (`Courier New`, `Courier`), avoiding external web font downloads.",
+              "Renders ornamental spandrels, astrolabe rings, and eye crests via inline SVGs embedded directly in the markup.",
+              "Provides responsive reflow across desktop, tablet, and mobile with accessible touch targets, high contrast, and `prefers-reduced-motion` overrides."
+            ]
+          },
+          "why": "Art direction moved decisively away from generic futuristic dark modes or pastel storybooks to a bespoke, eccentric Victorian macabre parlor aesthetic. Using layered CSS gradients and system fonts delivers tactile richness without sacrificing performance or violating zero-dependency boundaries (ADR D-011).",
+          "evidence": [
+            {"label": "Interface stylesheet", "target": "styles.css"},
+            {"label": "Cabinet markup shell", "target": "index.html"},
+            {"label": "Design system tests", "target": "tests/static.test.mjs"},
+            {"label": "Architecture Record D-011", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["interactive-vitrine", "broadsheet-png-export", "silhouette-flux"]
+        }
+      ]
+    },
+    {
+      "id": "visual-apparition-vitrine",
+      "title": "Visual Anatomy & Kinetic Apparition (Plate I)",
+      "description": "Procedural biological forms, dynamic silhouette deformation, rotating 4D tesseract cores, and interactive vitrine gestures.",
+      "entries": [
+        {
+          "id": "silhouette-flux",
+          "title": "Clamped Kinetic Silhouette & Deforming Boundary Flux",
+          "summary": "Renders organic, undulating perimeter boundaries clamped strictly within a visible envelope.",
+          "tags": ["graphics", "canvas", "geometry"],
+          "what": "Computes a continuous closed boundary path for the creature using one of ten base shape archetypes (oval, bell, spindle, tesseract, clover, crescent, lantern, diamond, amphora, scarab) deformed by one of eight seed-selected flux grammars (breathing ripple, traveling peristalsis, nodal pulsation, standing wave, cardioid heartbeat, chaotic flux, twist wave, crystalline facet).",
+          "how": {
+            "lead": "`traceBody()` in `src/app.mjs` executes procedural polar coordinate mathematics:",
+            "points": [
+              "Evaluates `points` radial vertices around $2\\pi$ radians.",
+              "Computes base radius $r(\\theta)$ from the creature's shape harmonics and symmetry index.",
+              "Applies time-varying flux offsets $\\Delta r(\\theta, t)$ driven by `elapsed` seconds, flux mode frequency, and interactive touch deformation.",
+              "Strictly clamps the normalized radius envelope to $[0.38, 1.08]$ to prevent visual clipping or stage escape.",
+              "Applies an isolated radial glow on the body fill pass, then clears `shadowBlur` before kinetic linework to maintain 60 FPS performance."
+            ]
+          },
+          "why": "Early prototypes suffered from jittery pulse-dominated blobs that repeatedly broke past canvas boundaries or lagged due to unconstrained shadow blur. Clamping the deformation mathematically and clearing the body glow ensures fluid, organic movement within the bell jar (ADRs D-007, D-008).",
+          "evidence": [
+            {"label": "Body trace algorithm", "target": "src/app.mjs"},
+            {"label": "Boundary containment tests", "target": "tests/static.test.mjs"},
+            {"label": "Architecture Records D-007, D-008", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["kinetic-cores", "anatomical-eyes", "interactive-vitrine"]
+        },
+        {
+          "id": "kinetic-cores",
+          "title": "Bounded Internal Kinetic Systems & 4D Projected Tesseract",
+          "summary": "Animates independent mathematical motion systems clipped within the deforming creature boundary.",
+          "tags": ["graphics", "4d-projection", "mathematics"],
+          "what": "Renders one of eight sophisticated kinetic systems moving inside the creature's body: a four-dimensional rotating hypercube (tesseract), orbiting astrolabe rings, concentric hypocycloid gears, phyllotaxis spiral florets, Lissajous harmonograph knots, double pendulum chaos traces, nested chiral polyhedra, or a self-weaving crystal network.",
+          "how": {
+            "lead": "`drawKineticCore()` in `src/app.mjs` clips rendering to the active `traceBody()` path:",
+            "points": [
+              "For `drawTesseract()`, defines 16 four-dimensional vertices $(\\pm 1, \\pm 1, \\pm 1, \\pm 1)$ and 32 connecting edges.",
+              "Applies continuous 4D rotation matrices in the $XW$ and $YZ$ planes parameterized by `elapsed * speed`.",
+              "Performs two-stage 4D-to-3D-to-2D perspective projection onto the 2D Canvas.",
+              "Styles lines with palette-derived semitransparent stroke gradients and dynamic thickness based on touch velocity."
+            ]
+          },
+          "why": "Static creatures felt flat and lifeless. Projecting true multidimensional mathematical structures into the clipped interior creates an authentic sense of an ethereal, impossible specimen trapped under glass (ADR D-007).",
+          "evidence": [
+            {"label": "Kinetic core renderers", "target": "src/app.mjs"},
+            {"label": "Kinetic mode test suite", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-007", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["silhouette-flux", "anatomical-eyes", "interactive-vitrine"]
+        },
+        {
+          "id": "anatomical-eyes",
+          "title": "Generative Eye Anatomy, Sclera Silhouettes, & Gaze Tracking",
+          "summary": "Composes multi-part ocular anatomy with interactive gaze tracking and distinct iris geometries.",
+          "tags": ["graphics", "anatomy", "interactivity"],
+          "what": "Generates 1 to 9 distinct eyes possessing unique sclera silhouettes (almond, circle, oval, teardrop, hex, crescent, cat-eye, slit), iris styles (solid, radial, dual-ring, starburst, vortex, eclipse, fractal, nebula), pupil shapes (round, vertical slit, horizontal slit, goat bar, keyhole, diamond, cross, crescent), and autonomous gaze shifts.",
+          "how": {
+            "lead": "`drawEye()` in `src/app.mjs` positions eyes according to seed-driven spatial layouts:",
+            "points": [
+              "Places eyes using single-cyclops, bilateral, vertical column, triangular trinity, orbital ring, or scattered cluster arrangements.",
+              "Tracks mouse/pointer position when hovering near the vitrine, smoothly interpolating pupil gaze towards the pointer with bounded deflection.",
+              "Dilates pupil aperture during vitrine tap and hold gestures.",
+              "Applies deterministic iris hue shifts and specular highlights."
+            ]
+          },
+          "why": "Repeated, identical stamped eyes made creatures look like mechanical clip art. Giving eyes varied biological silhouettes, layered optical depths, and responsive gaze tracking gives each manifestation a watchful, unsettling personality (ADR D-006).",
+          "evidence": [
+            {"label": "Eye rendering function", "target": "src/app.mjs"},
+            {"label": "Eye variation batch test", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-006", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["silhouette-flux", "interactive-vitrine", "score-boundary"]
+        },
+        {
+          "id": "interactive-vitrine",
+          "title": "Expressive Touch/Pointer Gestures & Harmonic Field Modulation",
+          "summary": "Transforms the apparition vitrine into a live expressive performance instrument.",
+          "tags": ["audio", "canvas", "gestures", "performance"],
+          "what": "Allows the user to tap, hold, and drag directly across the glass vitrine (`#vision`). Gestures trigger synthesized membrane and glass percussion, elastic silhouette deformation, filter sweeps, echo swell, and polar harmonic phase shifting without mutating the underlying deterministic score.",
+          "how": {
+            "lead": "Pointer events (`pointerdown`, `pointermove`, `pointerup`) feed an active session state `interaction`:",
+            "points": [
+              "Tapping triggers synthesized multi-partial glass strike plucks and expands shockwave ripples on the vitrine.",
+              "Holding swells filter cutoff/resonance, dry/wet mix, echo feedback, and morphs the silhouette toward a secondary shape family.",
+              "Dragging maps $(x, y)$ coordinates into polar $(r, \\theta)$ via `harmonicField()`, crossfading the creature's motif through a consonant $(\\cos\\alpha, \\sin\\alpha)$ harmonic phase shift and three-partial drone choir (`-12`, `-5`, `+7`).",
+              "Releasing the pointer smoothly decays all offsets back to resting values via exponential smoothing."
+            ]
+          },
+          "why": "A passive generative visualizer grows stale quickly. Letting users directly disturb the apparition turns the parlor vitrine into a musical instrument while preserving the core premise: releasing the glass allows the creature to return to its pure, immutable identity (ADR D-012).",
+          "evidence": [
+            {"label": "Pointer interaction logic", "target": "src/app.mjs"},
+            {"label": "Vitrine interaction tests", "target": "tests/static.test.mjs"},
+            {"label": "Architecture Record D-012", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["silhouette-flux", "lookahead-scheduler", "anatomical-eyes"]
+        }
+      ]
+    },
+    {
+      "id": "generative-melody-transport",
+      "title": "Generative Music & Lead Melody",
+      "description": "Web Audio look-ahead synthesis, repeating motif grammars, and live master volume and tempo controls.",
+      "entries": [
+        {
+          "id": "lookahead-scheduler",
+          "title": "Look-Ahead Web Audio Transport & Master Volume",
+          "summary": "Schedules multi-voice polyphony smoothly using a precision look-ahead clock.",
+          "tags": ["audio", "webaudio", "scheduler"],
+          "what": "Executes continuous Web Audio playback using a 90 ms interval timer that schedules audio events 280 ms into the future. Routes all synthesizers through per-voice gain nodes, a shared resonant biquad filter, tempo-synced feedback delay, dynamics compressor, and master volume control.",
+          "how": {
+            "lead": "`playScore()` and `scheduleAhead()` in `src/app.mjs` coordinate the audio pipeline:",
+            "points": [
+              "Maintains high-precision Web Audio `context.currentTime` scheduling, preventing timing jitter caused by main-thread UI operations.",
+              "Computes rhythmic step durations `unit = 60 / pulse / 2` mapped against score rhythm multipliers.",
+              "Manages voice stacks, multi-harmonic drones, resonant envelope filters, and ping-pong feedback delays.",
+              "`masterGainFor()` applies a perceptual power curve `(vol / 82)^1.6` with 18 ms ramp smoothing, protected from digital clipping by a pre-output dynamics compressor."
+            ]
+          },
+          "why": "Early implementations used fixed-duration playback with `setTimeout`, which drifted, clipped, and stopped abruptly. A continuous look-ahead scheduler with compressor protection enables seamless infinite looping and reliable real-time mixing (ADRs D-005, D-009).",
+          "evidence": [
+            {"label": "Web Audio transport implementation", "target": "src/app.mjs"},
+            {"label": "Scheduler and volume tests", "target": "tests/static.test.mjs"},
+            {"label": "Architecture Records D-005, D-009", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["repeating-motifs", "live-tempo-control", "bandstand-console"]
+        },
+        {
+          "id": "repeating-motifs",
+          "title": "Twelve Repeating Motif Families",
+          "summary": "Maps generative seeds into recognizable, musically coherent 12-note loops.",
+          "tags": ["audio", "music-theory", "scales"],
+          "what": "Generates exactly twelve semitone offsets selected from twelve distinct motif families: Major Arpeggio, Minor Arpeggio, Diminished Arpeggio, Augmented Arpeggio, Minor 7th Arpeggio, Ascending Chromatic, Descending Chromatic, Interleaved Chromatic, Circle of Fifths, Whole Tone Stride, Glass Ladder, and Seeded Scale Walk.",
+          "how": {
+            "lead": "`melodyFor()` in `src/music.mjs` computes the melodic array:",
+            "points": [
+              "Applies the selected melodic mode and root key offset.",
+              "Rotates the 12-note array by `melodyTurn` modulo 12 to provide variety in phrase starting points.",
+              "Caches the resulting sequence on the active transport.",
+              "Maps notes to audio frequencies via `midiToFrequency(note) = 440 * 2^((note - 69) / 12)`."
+            ]
+          },
+          "why": "Purely random note selection sounds like formless computer noise. Human ear recognition requires structured motifs, arpeggios, and stepwise motion. Providing twelve distinct families ensures recognizable thematic identity across creatures (ADR D-010).",
+          "evidence": [
+            {"label": "Melodic vocabulary engine", "target": "src/music.mjs"},
+            {"label": "Exact motif sequence tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-010", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["lookahead-scheduler", "live-tempo-control", "tonnetz-spine"]
+        },
+        {
+          "id": "live-tempo-control",
+          "title": "Real-Time Ensemble Tempo Modulation",
+          "summary": "Enables interactive speed adjustment across all six instruments without loop interruption.",
+          "tags": ["audio", "tempo", "controls"],
+          "what": "Provides an accessible range slider (`#tempo-bpm`, 36 to 208 BPM) with a live numeric readout. Initialized on summon to the creature's native LOLCODE pulse, adjusting the slider immediately paces upcoming subdivisions across all six esoteric accompaniment engines without audio clicks, while double-clicking restores native speed.",
+          "how": {
+            "lead": "`setTempoBpm()` and the look-ahead scheduler in `src/app.mjs` synchronize tempo changes:",
+            "points": [
+              "`setTempoBpm()` clamps the input to $[36, 208]$ BPM and updates `#tempo-value` and `#score-pulse`.",
+              "`scheduleAhead()` dynamically evaluates `livePulse = activeTempoBpm || score.pulse` on every scheduling cycle.",
+              "Calculates `unit = 60 / livePulse / 2` and assigns step durations `stepDuration = unit * lengthMultiplier` to all active instruments.",
+              "Delay line time is bounded to 1.45s to avoid buffer overruns while maintaining smooth acoustic resonance."
+            ]
+          },
+          "why": "Different listeners prefer leisurely ambient contemplation (e.g. 50 BPM) or energetic driving pulses (e.g. 140 BPM). Allowing dynamic tempo adjustment while defaulting to the creature's deterministic score gives the user expressive control while preserving specimen identity (ADRs D-005, D-009).",
+          "evidence": [
+            {"label": "Tempo slider handler", "target": "src/app.mjs"},
+            {"label": "Tempo markup and controls", "target": "index.html"},
+            {"label": "Static tempo test assertions", "target": "tests/static.test.mjs"}
+          ],
+          "related": ["lookahead-scheduler", "repeating-motifs", "bandstand-console"]
+        }
+      ]
+    },
+    {
+      "id": "esoteric-chamber-ensemble",
+      "title": "The Five Esoteric Accompaniment Plates (Plates II–VI)",
+      "description": "Authentic virtual machine execution across Malbolge, Brainfuck, Befunge-93, Piet, FRACTRAN, and Shakespeare Programming Language.",
+      "entries": [
+        {
+          "id": "malbolge-percussion",
+          "title": "Plate II: Malbolge 1998 59,049-Word Ternary Beat Automaton",
+          "summary": "Executes authentic Malbolge code on a ternary tape to generate 12-step drum patterns.",
+          "tags": ["esolang", "malbolge", "percussion"],
+          "what": "Executes `src/beat.mal` inside a spec-compliant 1998 Malbolge virtual machine (`src/malbolge.mjs`). Decomposes 12 output bytes into a 12-step 3-trit matrix controlling a synthesized bellows kick, clockwork snare, and escapement chime across eight cadence families, with interactive step cycling and mutation controls.",
+          "how": {
+            "lead": "The virtual machine implements Ben Olmstead's 1998 Malbolge specification:",
+            "points": [
+              "Initializes a $3^{10} = 59,049$-word ternary memory tape.",
+              "Executes ternary crazy operation `crazy(a, b)` and ternary right rotation `rotr(val)`.",
+              "Applies load-time opcode validation `(c + [c]) % 94` and runtime `XLAT2` post-instruction encryption.",
+              "Limits execution to a 50-instruction budget to protect browser responsiveness.",
+              "Web Audio synthesizes kick (pitch-ramped sine), snare (highpass noise burst), and chime (resonant twin sines)."
+            ]
+          },
+          "why": "Malbolge is renowned as one of the most notoriously difficult programming languages in history. Writing a genuine deterministic Malbolge program that generates rhythmic trits gives the parlor percussion an authentic esoteric pedigree rather than pseudo-random approximation (ADR D-013).",
+          "evidence": [
+            {"label": "Malbolge VM implementation", "target": "src/malbolge.mjs"},
+            {"label": "Canonical Malbolge source", "target": "src/beat.mal"},
+            {"label": "VM execution unit tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-013", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["brainfuck-bassline", "bandstand-console", "euclidean-rhythm-hockets"]
+        },
+        {
+          "id": "brainfuck-bassline",
+          "title": "Plate III: Brainfuck 1993 256-Cell Walking Tape Bassline",
+          "summary": "Drives a 12-cell walking sub-bass and acid-organ ostinato from an executed Brainfuck tape.",
+          "tags": ["esolang", "brainfuck", "bass"],
+          "what": "Executes `src/bass.bf` inside a 1993 Urban Müller Brainfuck interpreter (`src/brainfuck.mjs`). Uses pointer movement, cell addition/subtraction, and `[->+<]` transfer loops across 256 byte cells to generate a 12-cell bass ostinato across eight groove archetypes, featuring portamento slide, cell cycling, and tape-shift controls.",
+          "how": {
+            "lead": "`runBrainfuck()` in `src/brainfuck.mjs` executes the 8-command language:",
+            "points": [
+              "Pre-validates matching bracket pairs `[` and `]` at load time, reporting exact line/column offsets on failure.",
+              "Executes `>`, `<`, `+`, `-`, `.`, `,`, `[`, and `]` on a `Uint8Array(256)` memory tape with a 4,096-step budget.",
+              "Maps tape values into pitch intervals, octave registers, slide flags, and accent levels.",
+              "Synthesizes bass tones via a sub-sine oscillator mixed with a portamento-gliding sawtooth routed through a resonant lowpass filter."
+            ]
+          },
+          "why": "Brainfuck's single-tape linear memory layout is the ideal computational counterpart to an acoustic walking bassline. Transfer loops naturally create rhythmic bass stepping and scalar walking patterns (ADR D-014).",
+          "evidence": [
+            {"label": "Brainfuck interpreter", "target": "src/brainfuck.mjs"},
+            {"label": "Canonical Brainfuck program", "target": "src/bass.bf"},
+            {"label": "Bracket and tape tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-014", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["malbolge-percussion", "befunge-organ", "bandstand-console"]
+        },
+        {
+          "id": "befunge-organ",
+          "title": "Plate IV: Befunge-93 2D Torus Mirror Chord Organ",
+          "summary": "Voices polyphonic 3-note organ triads from a 2D boustrophedon toroidal playfield.",
+          "tags": ["esolang", "befunge", "harmony"],
+          "what": "Executes `src/harmony.bfg` inside an 80×25 2D torus Befunge-93 interpreter (`src/befunge.mjs`). Employs directional arrows (`> < ^ v`), `#` bridges, arithmetic, and diagonal mirrors (`\\ / / \\`) to voice polyphonic 3-note reed-organ and glass-harp triads across eight organ archetypes, with live mirror cycling and deflection controls.",
+          "how": {
+            "lead": "`runBefunge()` implements Chris Pressey's 1993 2D grid specifications:",
+            "points": [
+              "Navigates a 2D character grid wrapping toroidally across rows and columns.",
+              "Maintains a LIFO operand stack for math, duplicates, swaps, and conditional branching (`_`, `|`).",
+              "Outputs pitch classes and strum velocities; `/` triggers ascending harp arpeggios while `\\` triggers descending rolls.",
+              "Synthesizes 3-voice polyphony through twin triangle and pulse organ oscillators with slight chorus detune."
+            ]
+          },
+          "why": "Befunge's two-dimensional playfield and reflective mirrors model physical acoustic reflections and counterpoint. The path of the instruction pointer through 2D space naturally maps to harmonic inversions and strum directions (ADR D-014).",
+          "evidence": [
+            {"label": "Befunge interpreter", "target": "src/befunge.mjs"},
+            {"label": "Canonical Befunge grid", "target": "src/harmony.bfg"},
+            {"label": "Torus execution tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-014", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["piet-fractran-chimes", "tonnetz-spine", "bandstand-console"]
+        },
+        {
+          "id": "piet-fractran-chimes",
+          "title": "Plate V: Piet Codel Canvas & FRACTRAN Prime-Ratio Spectral Chimes",
+          "summary": "Drives 7-limit Just Intonation bells and spectral chorus pads from 2D codels and prime fractions.",
+          "tags": ["esolang", "piet", "fractran", "just-intonation"],
+          "what": "Executes a 49-step 25×5 clockwise Piet 2001 codel canvas (`src/pad.piet`) across all 18 chromatic codels paired with a 12-step 1987 John Conway FRACTRAN prime-ratio program (`src/chimes.frac`) over $2^a 3^b 5^c 7^d 11^e 13^f$. Voices pure 5-limit and 7-limit Just Intonation overtone bells and synesthetic codel-filtered chorus pads across eight archetypes.",
+          "how": {
+            "lead": "`src/fractran.mjs` executes both esolangs deterministically:",
+            "points": [
+              "Piet interpreter tracks Direction Pointer (DP) and Codel Chooser (CC) transitions between 6 hues and 3 lightness levels, computing hue and lightness delta commands (`push`, `add`, `roll`, `out`).",
+              "FRACTRAN engine multiplies BigInt state $N$ by a sequence of fractions $P_i / Q_i$, finding the first fraction producing an integer and factoring exponents via prime factorization.",
+              "Prime exponents ($2, 3, 5, 7$) select pure Just Intonation frequency ratios (`1/1`, `9/8`, `6/5`, `5/4`, `4/3`, `7/5`, `3/2`, `8/5`, `5/3`, `7/4`, `15/8`, `2/1`).",
+              "Chimes are synthesized as pure non-dispersive sine partials with exponential bell decay."
+            ]
+          },
+          "why": "Combining Piet's geometric visual codels with FRACTRAN's pure arithmetic prime ratios directly links visual color to acoustic overtones. Evaluating rational fractions eliminates 12-TET tuning dissonance and produces crystal-clear Just Intonation chimes (ADR D-014).",
+          "evidence": [
+            {"label": "Piet & FRACTRAN interpreter", "target": "src/fractran.mjs"},
+            {"label": "Piet codel program", "target": "src/pad.piet"},
+            {"label": "FRACTRAN fractions", "target": "src/chimes.frac"},
+            {"label": "Codel and prime tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-014", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["euler-consonance-sieve", "befunge-organ", "bandstand-console"]
+        },
+        {
+          "id": "shakespeare-choir",
+          "title": "Plate VI: Shakespeare Programming Language 3-Act Formant Vowel Choir",
+          "summary": "Schedules a 3-formant vowel choir from an authentic Elizabethan tragedy script.",
+          "tags": ["esolang", "shakespeare-spl", "formant-synthesis"],
+          "what": "Executes `src/chant.spl` (`The Oracular Tragedy of the Parlor Glass.`), a 3-Act, 12-Scene Elizabethan drama with four dramatis personae (Hamlet Tenor, Ophelia Soprano, Prospero Basso, Hecate Alto) inside an SPL interpreter (`src/shakespeare.mjs`). Drives a 3-formant ($F_1, F_2, F_3$) parallel bandpass vowel choir across six distinct vowels (`/ɑ/`, `/ɛ/`, `/i/`, `/o/`, `/u/`, `/æ/`), with live scene cycling and recast mutation.",
+          "how": {
+            "lead": "`runShakespeare()` interprets the 2001 Jon Åslund and Karl Hasselström specification:",
+            "points": [
+              "Parses character declarations, dramatic entrances/exits (`[Enter Hamlet and Ophelia]`, `[Exeunt]`), and dialogues.",
+              "Computes positive and negative poetic valences from noun/adjective combinations (`a noble, charming prince`, `a vile, cursed toad`).",
+              "Manages stack pushes and pops via `Remember me` and `Recall` statements.",
+              "Formant vowel synthesis routes a sawtooth excitation source through three parallel second-order resonant bandpass filters configured with human vocal tract resonances."
+            ]
+          },
+          "why": "The Elizabethan tragic voice provides theatrical gravitas to the parlor seance. Formant synthesis gives the choir unmistakable human phonetic presence without relying on prerecorded audio samples (ADR D-014).",
+          "evidence": [
+            {"label": "Shakespeare SPL interpreter", "target": "src/shakespeare.mjs"},
+            {"label": "Theatrical tragedy script", "target": "src/chant.spl"},
+            {"label": "SPL execution tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-014", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["bandstand-console", "euler-consonance-sieve", "tonnetz-spine"]
+        },
+        {
+          "id": "bandstand-console",
+          "title": "Parlor Bandstand Six-Language Jam Console",
+          "summary": "Coordinates live ensemble mixing, soloing, and synchronized multi-player mutations.",
+          "tags": ["ui", "audio", "console", "mixing"],
+          "what": "Provides an ensemble mixing console (`#bandstand-engine`) coordinating all six esoteric instruments (LOLCODE 1.2, Malbolge 1998, Brainfuck 1993, Befunge-93, Piet 2001 / FRACTRAN 1987, Shakespeare 2001). Offers `FULL ENSEMBLE` engage, `SOLO ORACLE LEAD`, and synchronized `MUTATE ALL PLAYERS` jam controls.",
+          "how": {
+            "lead": "`src/app.mjs` manages individual bus gains and group mutations:",
+            "points": [
+              "Maintains separate Web Audio gain busses (`beatBus`, `bassBus`, `harmonyBus`, `chimeBus`, `chantBus`) with 25 ms smooth gain transitions to prevent audio clicks.",
+              "`FULL ENSEMBLE` engages all six engines simultaneously with balanced default mix gains.",
+              "`SOLO ORACLE LEAD` ramps accompaniment busses to zero while keeping visual step matrices active.",
+              "`MUTATE ALL PLAYERS` fires simultaneous re-incantation steps across all five accompaniment plates and triggers the harmonic conductor."
+            ]
+          },
+          "why": "Allowing six esoteric languages to run simultaneously is exciting, but listeners need the ability to isolate individual players, hear the solo bandleader, or mutate the entire band in sync without reloading the page (ADR D-014).",
+          "evidence": [
+            {"label": "Bandstand UI and bus handlers", "target": "src/app.mjs"},
+            {"label": "Bandstand markup", "target": "index.html"},
+            {"label": "Ensemble structural tests", "target": "tests/static.test.mjs"},
+            {"label": "Architecture Record D-014", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["tonnetz-spine", "lookahead-scheduler", "live-tempo-control"]
+        }
+      ]
+    },
+    {
+      "id": "harmonic-rhythmic-conduction",
+      "title": "Harmonic & Rhythmic Synchronization (src/conductor.mjs)",
+      "description": "Pure mathematical harmonization uniting six chaotic esoteric engines into consonant chamber music.",
+      "entries": [
+        {
+          "id": "tonnetz-spine",
+          "title": "Neo-Riemannian Tonnetz Triadic Progression",
+          "summary": "Organizes the 12-step bar into four parsimonious triadic regions sharing common tones.",
+          "tags": ["music-theory", "tonnetz", "harmony"],
+          "what": "Generates a 4-region, 12-step harmonic spine using Hugo Riemann's Neo-Riemannian *Tonnetz* operations: Parallel (**P**), Leading-Tone (**L**), and Relative (**R**) involutions. Each step transition preserves exactly two common pitch classes and moves the remaining voice by 1 or 2 semitones.",
+          "how": {
+            "lead": "`buildTonnetzSpine()` and `applyTonnetzOperation()` in `src/conductor.mjs` construct the chord progression:",
+            "points": [
+              "Calculates the tonic triad root and quality (`major` or `minor`) from score melody mode and scale.",
+              "Executes geometric involutions: **P** toggles major/minor; **L** swaps the root for a leading tone; **R** shifts to the relative major/minor.",
+              "Generates 4 harmonic regions of 3 steps each (steps 0..2, 3..5, 6..8, 9..11).",
+              "Supplies the active triad (root, third, fifth, seventh, ninth) to guide all instrument voicing."
+            ]
+          },
+          "why": "Independent virtual machines generating raw numbers simultaneously produce dissonant tone clusters. Neo-Riemannian voice leading creates rich, cinematic chord progressions that sound mysterious and coherent while allowing esoteric programs to retain their native rhythms (ADR D-016).",
+          "evidence": [
+            {"label": "Tonnetz engine", "target": "src/conductor.mjs"},
+            {"label": "Tonnetz mathematical unit tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-016", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["euler-consonance-sieve", "befunge-organ", "brainfuck-bassline"]
+        },
+        {
+          "id": "euler-consonance-sieve",
+          "title": "Leonhard Euler's 1739 Gradus Suavitatis Consonance Sieve",
+          "summary": "Quantifies interval consonance mathematically to snap melodies and basslines onto consonant chord tones.",
+          "tags": ["mathematics", "euler", "consonance", "acoustics"],
+          "what": "Computes Leonhard Euler's 1739 *Gradus Suavitatis* (degree of agreeableness) $G(n) = 1 + \\sum e_i (p_i - 1)$ over frequency ratios. Snaps strong-beat LOLCODE lead notes, Brainfuck bass roots/fifths, Befunge-93 chord inversions, and Shakespeare formant choir lines onto the most consonant available pitch classes.",
+          "how": {
+            "lead": "`eulerGradus()` and `projectConsonantPitch()` in `src/conductor.mjs` evaluate harmonic tension:",
+            "points": [
+              "Calculates prime factorizations of interval fractions $p/q$, evaluating prime penalties for factors 2, 3, and 5.",
+              "Unison (1:1) yields degree 1; Octave (2:1) yields degree 2; Perfect Fifth (3:2) yields degree 4; Perfect Fourth (4:3) yields degree 5; Major Third (5:4) yields degree 7; Tritone (45:32) yields degree 14.",
+              "`projectConsonantPitch()` finds the candidate note minimizing pitch distance and Euler Gradus score relative to the active Tonnetz triad.",
+              "Strong beats (0, 3, 6, 9) require strict triad chord tones, while weak subdivisions permit consonant color extensions (9th, 4th, 6th, 7th)."
+            ]
+          },
+          "why": "Hard-coding scale presets destroys the authenticity of esoteric VM execution, but unguided output is discordant noise. Euler's 1739 formula provides an objective, historic mathematical sieve that sculpts raw VM output into pure consonant intervals without discarding program logic (ADR D-016).",
+          "evidence": [
+            {"label": "Euler Gradus implementation", "target": "src/conductor.mjs"},
+            {"label": "Euler Gradus mathematical tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-016", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["tonnetz-spine", "euclidean-rhythm-hockets", "piet-fractran-chimes"]
+        },
+        {
+          "id": "euclidean-rhythm-hockets",
+          "title": "E. Bjorklund's Euclidean Rhythm Hocketing",
+          "summary": "Interlocks lead, chimes, choir, and percussion into complementary rhythmic pockets.",
+          "tags": ["algorithms", "bjorklund", "rhythm", "euclidean"],
+          "what": "Applies E. Bjorklund's 2003 Euclidean algorithm $E(k, n)$ to distribute $k$ pulses across $n=12$ steps as evenly as possible. Creates interlocking hockets between the LOLCODE lead, Malbolge kick, Piet/FRACTRAN chimes, and Shakespeare vowel choir so voices breathe in complementary pockets.",
+          "how": {
+            "lead": "`bjorklund()` in `src/conductor.mjs` generates cyclic binary timing masks:",
+            "points": [
+              "Computes Bresenham-like recursive pulse distributions $E(7, 12)$ for lead melody and $E(5, 12)$ for spectral chimes.",
+              "Rotates masks based on score turn fields to vary downbeat syncopation.",
+              "Locks Brainfuck bass downbeats to Malbolge kick pulses on step 0 of each 3-step harmonic region.",
+              "Suppresses chime and choir triggers when lead notes occupy the subdivision, creating acoustic space for each voice to ring clearly."
+            ]
+          },
+          "why": "When six instruments trigger on every 16th-note subdivision simultaneously, the sonic result is a wall of rhythm mud. Euclidean hockets distribute pulses with maximal mathematical spacing, creating infectious polyrhythmic grooves where each instrument has room to be heard (ADR D-016).",
+          "evidence": [
+            {"label": "Bjorklund algorithm implementation", "target": "src/conductor.mjs"},
+            {"label": "Euclidean pulse unit tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-016", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["malbolge-percussion", "euler-consonance-sieve", "bandstand-console"]
+        }
+      ]
+    },
+    {
+      "id": "sharing-and-export",
+      "title": "Specimen Sharing & High-Resolution Broadsheets",
+      "description": "Privacy-preserving URL fragment sharing and 1200×1520 engraved Victorian broadsheet PNG export.",
+      "entries": [
+        {
+          "id": "client-url-sharing",
+          "title": "Client-Only #omen=... URL Fragment Sharing",
+          "summary": "Shares exact specimen links via URL hash fragments without transmitting phrases to servers.",
+          "tags": ["sharing", "privacy", "urls", "security"],
+          "what": "Encodes the confidant's phrase into the browser location hash (`#omen=<encoded_phrase>`). Enables one-click link copying (`COPY OMEN LINK`), live address bar synchronization, and instant specimen restoration on link visit or `hashchange` without transmitting data over HTTP request headers.",
+          "how": {
+            "lead": "`src/share.mjs` handles hash encoding and restoration:",
+            "points": [
+              "`encodeOmenHash()` percent-encodes normalized phrases into `#omen=...` format.",
+              "`decodeOmenHash()` extracts and decodes phrases, ignoring foreign hash targets.",
+              "`showScore()` synchronizes browser address bar state via `history.replaceState(null, '', nextHash)`.",
+              "When opened from a shared link, the application restores the score immediately while holding audio in suspension until the user clicks Summon, Replay, or Unmute, respecting browser autoplay policies."
+            ]
+          },
+          "why": "Traditional web apps use `?query` parameters, which transmit sensitive user input in plain text to web servers, CDN access logs, and HTTP `Referer` headers. RFC 3986 URL fragments (`#`) are processed exclusively on the client, guaranteeing 100% privacy for confidences (ADR D-015).",
+          "evidence": [
+            {"label": "Share URL helper functions", "target": "src/share.mjs"},
+            {"label": "Hash round-trip tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-015", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["broadsheet-png-export", "zero-dependency-model", "deterministic-hashing"]
+        },
+        {
+          "id": "broadsheet-png-export",
+          "title": "1200×1520 Engraved Broadsheet Specimen PNG Export",
+          "summary": "Renders an archival Victorian specimen plate combining live portrait capture, phrase, and ensemble telemetry.",
+          "tags": ["export", "png", "canvas", "broadsheet"],
+          "what": "Composites an archival 1200×1520 pixel engraved Victorian specimen broadsheet on an offscreen `<canvas>` (`ENGRAVE PNG PLATE`). Downloads the image as `hai-oracle-<name>-<seed>.png`, featuring the live apparition portrait, specimen name, confided phrase, hexadecimal seed, and six-language ensemble telemetry ledger.",
+          "how": {
+            "lead": "`renderSpecimenBroadsheetCanvas()` in `src/app.mjs` builds the plate from vector primitives:",
+            "points": [
+              "Fills aged parchment background with double oxblood and brass framing rules and corner rosettes.",
+              "Draws typographical masthead, specimen name, and wrapped quotation of the confided phrase.",
+              "Captures the live apparition vitrine from `#vision` into an arched bell-jar illustration frame with astrolabe corner spandrels.",
+              "Inscribes full ensemble telemetry: hexadecimal seed, LOLCODE score attributes, and executed instruction counts across Plates II through VI.",
+              "`exportSpecimenPng()` triggers an immediate browser file download via a temporary data anchor."
+            ]
+          },
+          "why": "Users love collecting and saving their discoveries. Rather than downloading a generic square icon, generating a high-resolution 1200×1520 Victorian natural history broadsheet turns every summoned creature into a framed work of art suitable for printing or archival collection (ADR D-015).",
+          "evidence": [
+            {"label": "Broadsheet canvas renderer", "target": "src/app.mjs"},
+            {"label": "Filename generator and tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-015", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["client-url-sharing", "parlor-cabinet-styling", "zero-dependency-model"]
+        }
+      ]
+    }
+  ]
+}
