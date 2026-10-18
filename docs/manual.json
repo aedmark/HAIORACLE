@@ -581,6 +581,53 @@
             {"label": "Architecture Record D-016", "target": "docs/DECISIONS.md"}
           ],
           "related": ["malbolge-percussion", "euler-consonance-sieve", "bandstand-console"]
+        },
+        {
+          "id": "kapellmeister-genre-console",
+          "title": "Kapellmeister Music-Theory & Genre Rulebook Console",
+          "summary": "Enables real-time switching between six music-theory rulebooks with live harmonic readouts.",
+          "tags": ["music-theory", "genres", "counterpoint", "blues", "jazz", "tonnetz"],
+          "what": "Allows the user to select and manipulate the harmonic rulebook governing the six-language esoteric ensemble (`#kapellmeister-engine`). Offers six distinct rulebooks: Victorian Neo-Riemannian Tonnetz, 12-Bar Delta & Parlor Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Modal Drone, and Raw Esoteric Chaos. Displays active Step (01..12), Chord Name (e.g. C Maj, F7, Cmaj9), Harmonic Vector, and Euler Consonance score in real time alongside an interactive SVG Tonnetz compass.",
+          "how": {
+            "lead": "`src/conductor.mjs` and `src/app.mjs` implement genre progression engines and harmonic telemetry:",
+            "points": [
+              "Dispatches chord progressions via `buildGenreSpine()`: `buildBluesSpine()` (I7-IV7-V7), `buildJazzSpine()` (Imaj9-vi9-ii9-♭II7alt), `buildCounterpointSpine()` (prepared suspensions and Picardy third), `buildModalDroneSpine()` (root/fifth drone), and `buildRawChaosSpine()` (unfiltered VM output).",
+              "`projectConsonantPitch()` adapts to genre rules: blue-note sieve for blues, guide-tone approach for jazz, and stepwise conjunct motion for counterpoint.",
+              "The Euler consonance strictness slider modulates the maximum permissible Gradus threshold from strict (G ≤ 5) to permissive (G ≤ 14).",
+              "`highlightBeatStep()` updates the live readout on each 16th-note step and highlights the active region on the SVG Tonnetz compass."
+            ]
+          },
+          "why": "Different listeners enjoy different musical aesthetics—from tight contrapuntal elegance to smoky blues to raw, unfiltered avant-garde noise. Exposing the Kapellmeister console puts harmonic mastery directly in the user's hands without destroying the genuine execution of the underlying esoteric programs (ADR D-019).",
+          "evidence": [
+            {"label": "Kapellmeister conductor engine", "target": "src/conductor.mjs"},
+            {"label": "Kapellmeister unit tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Console UI and handlers", "target": "src/app.mjs"},
+            {"label": "Architecture Record D-019", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["tonnetz-spine", "euler-consonance-sieve", "antique-parlor-acoustics", "bandstand-console"]
+        },
+        {
+          "id": "antique-parlor-acoustics",
+          "title": "Antique Parlor Room Acoustic Space & Phonograph Ambience",
+          "summary": "Synthesizes authentic 1890s Edison cylinder crackle, wood-and-velvet chamber convolution reverb, and clockwork escapement ticking.",
+          "tags": ["audio", "acoustics", "reverb", "convolver", "crackle", "phonograph"],
+          "what": "Embeds the synthetic chamber ensemble into an authentic 1890s Victorian parlor acoustic environment (`#parlor-acoustics-engine`). Combines procedural wax-cylinder surface crackle and horn bandpass resonance, a 1.6-second wood-and-velvet chamber convolution reverb, and brass grandfather clock escapement ticks on quarter-beats, captured faithfully in live Web Audio and offline 16-bit WAV loop exports.",
+          "how": {
+            "lead": "`src/app.mjs` procedurally generates the acoustic space using Web Audio API nodes:",
+            "points": [
+              "`ensureWaxCrackleBuffer()` generates a 3.0s stereo buffer synthesizing acoustic recording horn resonance (350–3200 Hz bandpass), Poisson-distributed dust pops, and 78 RPM turntable groove rumble.",
+              "`ensureParlorImpulseResponse()` generates a 1.6s stereo impulse response modeling discrete early reflections (12–98 ms) and high-frequency velvet drape absorption for a Web Audio `ConvolverNode`.",
+              "`scheduleClockworkTick()` synthesizes mechanical brass escapement clicks on quarter-beats (steps 0, 3, 6, 9) with high 'tick' (2600 Hz) and lower 'tock' (1800 Hz) transients.",
+              "`exportSpecimenWav()` incorporates the identical crackle, chamber convolution, and clockwork escapement ticks into rendered 16-bit PCM WAV loops."
+            ]
+          },
+          "why": "Pure mathematical synthesis sounds dry, clinical, and artificial without physical acoustic grounding. Wrapping the esoteric instruments in an authentic 1890s Edison cylinder parlor chamber binds disparate synthesizers into a believable acoustic space with zero external audio assets (ADR D-019).",
+          "evidence": [
+            {"label": "Parlor acoustic generators", "target": "src/app.mjs"},
+            {"label": "Static acoustic tests", "target": "tests/static.test.mjs"},
+            {"label": "Architecture Record D-019", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["kapellmeister-genre-console", "deterministic-wav-export", "tonnetz-spine"]
         }
       ]
     },

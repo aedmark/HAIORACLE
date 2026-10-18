@@ -199,6 +199,29 @@ This append-only record holds choices that a future session might otherwise re-l
 
 **Consequences:** Confidants can save both a museum-grade 1200×1520 broadsheet PNG and an uncompressed 16-bit 44.1 kHz WAV recording rendered in under 60 milliseconds on-device. The vitrine bell jar gains tactile physical grounding, atmospheric glass condensation, and delicate bio-acoustic responsiveness.
 
+## D-019 Kapellmeister Music-Theory & Genre Rule Console and Antique Parlor Room Acoustic Space  (2026-10-18, status: accepted)
+
+**Context:** Listeners and confidants requested the ability to manipulate harmonic and contrapuntal rules beyond the default Victorian Tonnetz progression—enabling genres like authentic 12-bar delta blues, smoky late-night parlor jazz, strict Palestrina renaissance counterpoint, mystic modal drone, and raw unfettered VM chaos. In addition, the six disparate synthesizers needed an authentic acoustic environment—a cohesive 1890s Victorian parlor room with Edison wax-cylinder phonograph surface noise, room resonance, and clockwork escapement ticking—to bind the algorithmic voices into a believable physical chamber.
+
+**Decision:**
+1. **Kapellmeister Genre Rulebooks & Sieve (`src/conductor.mjs`, `#kapellmeister-engine`)** — Expose six selectable music-theory rulebooks:
+   - `VICTORIAN NEO-RIEMANNIAN TONNETZ`: Parsimonious triadic $P, L, R$ progression with Euler $G \le 8$ consonance sieve.
+   - `12-BAR DELTA & PARLOR BLUES`: Authentic $I7 \to IV7 \to V7$ 12-bar blues matrix with walking shuffle bass shuttle ($[0, 4, 7, 9, 10, 9, 7, 4]$), crunchy dominant 7th voicings, and blue-note ($\flat 5$) sieve.
+   - `SMOKY PARLOR JAZZ & EXTENDED TONNETZ`: Extended ii-V-I progressions with rootless 3rd/7th/9th guide tones, chromatic approach tones, and swung overtones.
+   - `PALESTRINA MODAL COUNTERPOINT`: 16th-century sacred polyphony rules with prepared 4-3 and 7-6 suspensions resolving downward by step, strict Euler $G \le 5$ consonance, and Picardy third cadence.
+   - `MYSTIC BYZANTINE & HIMALAYAN DRONE`: Hypnotic root and fifth drone pedal with Phrygian dominant and Lydian mystic modal inflections.
+   - `RAW ESOTERIC CHAOS (UNFETTERED VMS)`: Bypasses the harmonic sieve entirely, outputting raw, unquantized mathematical byte sequences from all six virtual machines.
+2. **Real-Time Harmonic Dashboard & Compass** — Displays active Step ($1\text{--}12$), active Chord Name (e.g., `C Maj`, `F7`, `Cmaj9`), Harmonic Vector, and live Euler *Gradus Suavitatis* score ($G$). An interactive SVG Tonnetz Compass illustrates the current harmonic region with an animated golden triangle.
+3. **Antique Parlor Room Acoustic Space (`ensureWaxCrackleBuffer()`, `ensureParlorImpulseResponse()`, `scheduleClockworkTick()`)** — Dependency-free Web Audio acoustic chamber:
+   - *Wax-Cylinder Surface Noise*: Procedural 3.0s stereo buffer synthesizing acoustic horn bandpass room noise ($350\text{--}3200\,\text{Hz}$), Poisson-distributed dust clicks and surface pops, and subtle 78 RPM turntable groove rumble.
+   - *Victorian Chamber Reverb*: Procedural 1.6s stereo impulse response buffer loaded into a `ConvolverNode`, modeling wood-paneled walls, plaster ceilings, and velvet drapes.
+   - *Clockwork Escapement Ticking*: Mechanical brass mantel clock ticks synthesized on quarter-beats ($t = 0, 3, 6, 9$).
+4. **Offline WAV Loop Integration** — Both real-time playback and offline 16-bit WAV rendering (`#export-wav`) respect the selected Kapellmeister genre and render the parlor room acoustics.
+
+**Alternatives:** Using pre-recorded vinyl/crackle audio files would violate the zero-dependency boundary (D-001). Hardcoding genre presets without user control would prevent listeners from exploring the spectrum from strict counterpoint to raw esoteric chaos.
+
+**Consequences:** Confidants can sculpt the musicality and coherence of their summoned omen in real time, from smooth chamber jazz to raw avant-garde chaos, grounded in an authentic 1890s acoustic space.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

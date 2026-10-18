@@ -1032,6 +1032,197 @@ input[type="text"]:focus {
     linear-gradient(180deg, #1b1410 0%, #120d0b 100%);
 }
 
+.kapellmeister-engine {
+  padding-bottom: 1.1rem;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(184, 146, 73, 0.12), transparent 70%),
+    linear-gradient(180deg, #1d1511 0%, #130e0b 100%);
+  border-top: 1px solid #4a3822;
+}
+
+.kapellmeister-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.kapellmeister-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kapellmeister-label {
+  font-family: var(--mono-ledger);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--brass-bright);
+}
+
+.kapellmeister-select {
+  padding: 0.45rem 0.85rem;
+  border: 1.5px solid var(--brass);
+  background: #17110e;
+  color: var(--parchment-light);
+  font-family: var(--serif-display);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: 2px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.kapellmeister-select:focus {
+  outline: 0;
+  border-color: var(--brass-bright);
+  box-shadow: 0 0 6px rgba(218, 181, 107, 0.45);
+}
+
+.kapellmeister-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+  padding: 0.85rem clamp(1.1rem, 3vw, 2.8rem) 0.5rem;
+}
+
+.kapellmeister-readout {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 0.65rem 0.95rem;
+  border: 1.5px solid #5a4325;
+  background: #15100d;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+}
+
+.readout-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.readout-label {
+  font-family: var(--mono-ledger);
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--brass-bright);
+  text-transform: uppercase;
+}
+
+.readout-value {
+  margin-top: 0.2rem;
+  font-family: var(--serif-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #faf3e6;
+  letter-spacing: 0.04em;
+}
+
+.kapellmeister-controls {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.kapellmeister-compass {
+  border: 1.5px solid #4a3822;
+  background: #110d0b;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  padding: 0.25rem 0.5rem;
+}
+
+.tonnetz-compass-svg {
+  width: 100%;
+  height: 60px;
+  display: block;
+}
+
+.tonnetz-tri {
+  fill: #1d1611;
+  stroke: #72552a;
+  stroke-width: 1.5;
+  transition: fill 140ms ease, stroke 140ms ease;
+}
+
+.tonnetz-node-circle {
+  fill: #17110e;
+  stroke: #8d6b32;
+  stroke-width: 1.5;
+  transition: fill 140ms ease, stroke 140ms ease;
+}
+
+.tonnetz-node-text {
+  font-family: var(--mono-ledger);
+  font-size: 11px;
+  font-weight: 700;
+  fill: #cbb490;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.compass-region.is-active .tonnetz-tri {
+  fill: rgba(184, 146, 73, 0.28);
+  stroke: var(--brass-bright);
+  filter: drop-shadow(0 0 4px rgba(218, 181, 107, 0.45));
+}
+
+.compass-region.is-active .tonnetz-node-circle {
+  fill: var(--oxblood-bright);
+  stroke: var(--brass-bright);
+}
+
+.compass-region.is-active .tonnetz-node-text {
+  fill: #faf3e6;
+  font-weight: 900;
+}
+
+.parlor-acoustics-engine {
+  padding-bottom: 1.1rem;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(139, 46, 56, 0.12), transparent 70%),
+    linear-gradient(180deg, #18120f 0%, #110d0b 100%);
+  border-top: 1px solid #4a3822;
+}
+
+.acoustics-body {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.65rem clamp(1.1rem, 3vw, 2.8rem) 0.5rem;
+}
+
+.acoustics-indicators {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 0.45rem;
+}
+
+.acoustics-chip {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #523e25;
+  background: #16110e;
+  color: #a89478;
+  font-family: var(--mono-ledger);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  transition: all 150ms ease;
+}
+
+.acoustics-chip.is-active {
+  border-color: var(--brass-bright);
+  color: var(--brass-bright);
+  background: rgba(184, 146, 73, 0.15);
+  box-shadow: 0 0 6px rgba(184, 146, 73, 0.28);
+}
+
+
 footer {
   display: grid;
   grid-template-columns: 1fr auto 1fr;

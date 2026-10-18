@@ -1,6 +1,6 @@
 import { HARMONY_NAMES, composeHarmony, cycleHarmonyCell } from "./befunge.mjs";
 import { BASS_NAMES, composeBass, cycleBassCell } from "./brainfuck.mjs";
-import { conductEnsemble } from "./conductor.mjs";
+import { GENRE_NAMES, GENRE_RULEBOOKS, chordLabelFor, conductEnsemble, semitoneGradus } from "./conductor.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
@@ -82,6 +82,30 @@ const elements = {
   bandstandEngageAll: document.querySelector("#bandstand-engage-all"),
   bandstandSoloLead: document.querySelector("#bandstand-solo-lead"),
   bandstandMutateAll: document.querySelector("#bandstand-mutate-all"),
+  kapellmeisterEngine: document.querySelector("#kapellmeister-engine"),
+  kapellmeisterGenreTitle: document.querySelector("#kapellmeister-genre-title"),
+  kapellmeisterGenre: document.querySelector("#kapellmeister-genre"),
+  kapellmeisterStrictness: document.querySelector("#kapellmeister-strictness"),
+  kapellmeisterStrictnessVal: document.querySelector("#kapellmeister-strictness-val"),
+  harmonicStep: document.querySelector("#harmonic-step"),
+  harmonicChord: document.querySelector("#harmonic-chord"),
+  harmonicVector: document.querySelector("#harmonic-vector"),
+  harmonicEuler: document.querySelector("#harmonic-euler"),
+  compassReg0: document.querySelector("#compass-reg-0"),
+  compassReg1: document.querySelector("#compass-reg-1"),
+  compassReg2: document.querySelector("#compass-reg-2"),
+  compassReg3: document.querySelector("#compass-reg-3"),
+  nodeText0: document.querySelector("#node-text-0"),
+  nodeText1: document.querySelector("#node-text-1"),
+  nodeText2: document.querySelector("#node-text-2"),
+  nodeText3: document.querySelector("#node-text-3"),
+  parlorAcousticsToggle: document.querySelector("#parlor-acoustics-toggle"),
+  parlorAcousticsLevel: document.querySelector("#parlor-acoustics-level"),
+  acousticsLevelVal: document.querySelector("#acoustics-level-val"),
+  acousticsStatus: document.querySelector("#acoustics-status"),
+  chipCrackle: document.querySelector("#chip-crackle"),
+  chipReverb: document.querySelector("#chip-reverb"),
+  chipTick: document.querySelector("#chip-tick"),
   status: document.querySelector("#status"),
 };
 
@@ -115,6 +139,12 @@ let currentTransport = null;
 let muted = false;
 let masterVolume = Number(elements.volume.value);
 let activeTempoBpm = Number(elements.tempo?.value || 108);
+let activeGenre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ;
+let activeStrictness = 8;
+let currentConductedSpine = null;
+let parlorAcousticsEnabled = true;
+let parlorAcousticsLevel = 0.55;
+
 
 const interaction = {
   active: false,
@@ -2086,6 +2116,113 @@ function ensureNoiseBuffer(context) {
   return buffer;
 }
 
+let cachedWaxCrackleBuffer = null;
+let cachedParlorImpulseBuffer = null;
+
+function ensureWaxCrackleBuffer(context, durationSeconds = 3.0) {
+  if (cachedWaxCrackleBuffer && cachedWaxCrackleBuffer.sampleRate === context.sampleRate) {
+    return cachedWaxCrackleBuffer;
+  }
+  const frames = Math.ceil(context.sampleRate * durationSeconds);
+  const buffer = context.createBuffer(2, frames, context.sampleRate);
+  const left = buffer.getChannelData(0);
+  const right = buffer.getChannelData(1);
+
+  let b0L = 0, b1L = 0;
+  let b0R = 0, b1R = 0;
+
+  for (let i = 0; i < frames; i += 1) {
+    const t = i / context.sampleRate;
+    const rumble = Math.sin(t * 1.3 * Math.PI * 2) * 0.003 + Math.sin(t * 78 * Math.PI * 2) * 0.001;
+    const whiteL = Math.random() * 2 - 1;
+    const whiteR = Math.random() * 2 - 1;
+    b0L = 0.96 * b0L + whiteL * 0.04;
+    b1L = 0.88 * b1L + (whiteL - b0L) * 0.12;
+    b0R = 0.96 * b0R + whiteR * 0.04;
+    b1R = 0.88 * b1R + (whiteR - b0R) * 0.12;
+    const hornL = (b0L - b1L) * 0.024;
+    const hornR = (b0R - b1R) * 0.024;
+
+    let popL = 0;
+    let popR = 0;
+    if (Math.random() < 14 / context.sampleRate) {
+      const clickAmp = (Math.random() * 0.08 + 0.02) * (Math.random() < 0.5 ? 1 : -1);
+      popL = clickAmp;
+      popR = clickAmp * (0.6 + Math.random() * 0.4);
+    }
+
+    left[i] = hornL + rumble + popL;
+    right[i] = hornR + rumble + popR;
+  }
+  cachedWaxCrackleBuffer = buffer;
+  return buffer;
+}
+
+function ensureParlorImpulseResponse(context, durationSeconds = 1.6) {
+  if (cachedParlorImpulseBuffer && cachedParlorImpulseBuffer.sampleRate === context.sampleRate) {
+    return cachedParlorImpulseBuffer;
+  }
+  const frames = Math.ceil(context.sampleRate * durationSeconds);
+  const buffer = context.createBuffer(2, frames, context.sampleRate);
+  const left = buffer.getChannelData(0);
+  const right = buffer.getChannelData(1);
+
+  const reflections = [
+    { t: 0.012, gL: 0.35, gR: 0.22 },
+    { t: 0.024, gL: 0.28, gR: 0.32 },
+    { t: 0.038, gL: 0.22, gR: 0.18 },
+    { t: 0.055, gL: 0.17, gR: 0.23 },
+    { t: 0.076, gL: 0.12, gR: 0.15 },
+    { t: 0.098, gL: 0.09, gR: 0.11 },
+  ];
+
+  for (const ref of reflections) {
+    const idx = Math.min(frames - 1, Math.floor(ref.t * context.sampleRate));
+    left[idx] += ref.gL;
+    right[idx] += ref.gR;
+  }
+
+  let prevL = 0;
+  let prevR = 0;
+  for (let i = 0; i < frames; i += 1) {
+    const t = i / context.sampleRate;
+    const decay = Math.exp(-2.8 * t);
+    const whiteL = (Math.random() * 2 - 1) * decay * 0.25;
+    const whiteR = (Math.random() * 2 - 1) * decay * 0.25;
+    prevL = prevL * 0.35 + whiteL * 0.65;
+    prevR = prevR * 0.35 + whiteR * 0.65;
+    left[i] += prevL;
+    right[i] += prevR;
+  }
+  cachedParlorImpulseBuffer = buffer;
+  return buffer;
+}
+
+function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55) {
+  if (stepIndex % 3 !== 0) return;
+  const isHighTick = stepIndex === 0 || stepIndex === 6;
+  const osc = context.createOscillator();
+  const gain = context.createGain();
+  const filter = context.createBiquadFilter();
+
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(isHighTick ? 2600 : 1800, at);
+  osc.frequency.exponentialRampToValueAtTime(isHighTick ? 1200 : 700, at + 0.015);
+
+  filter.type = "bandpass";
+  filter.frequency.value = isHighTick ? 2400 : 1600;
+  filter.Q.value = 4.5;
+
+  const amp = (isHighTick ? 0.038 : 0.032) * Math.max(0, Math.min(1, level));
+  gain.gain.setValueAtTime(amp, at);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.022);
+
+  osc.connect(filter).connect(gain).connect(destination);
+  osc.start(at);
+  osc.stop(at + 0.025);
+}
+
+
 function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration) {
   if (!beatEnabled || !currentBeat || !transport.beatBus) return;
   const step = currentBeat.steps[stepIndex % currentBeat.steps.length];
@@ -2503,6 +2640,35 @@ function highlightBeatStep(stepIndex) {
       button.classList.toggle("is-current", idx === normalized);
     }
   }
+
+  if (elements.harmonicStep) {
+    elements.harmonicStep.textContent = `${String(normalized + 1).padStart(2, "0")} / 12`;
+  }
+  if (currentConductedSpine && currentConductedSpine[normalized]) {
+    const chord = currentConductedSpine[normalized];
+    if (elements.harmonicChord) {
+      elements.harmonicChord.textContent = chordLabelFor(chord, currentScore ? currentScore.root : 60);
+    }
+    if (elements.harmonicVector) {
+      elements.harmonicVector.textContent = chord.op || "—";
+    }
+    if (elements.harmonicEuler) {
+      if (chord.quality === "raw") {
+        elements.harmonicEuler.textContent = "RAW VM";
+      } else {
+        const melOffset = currentConductedMelody ? currentConductedMelody[normalized] : 0;
+        const bassOffset = currentBass?.steps?.[normalized]?.interval ?? 0;
+        const g = semitoneGradus(melOffset - bassOffset);
+        const flavor = g <= 5 ? "Sweet" : g <= 8 ? "Balanced" : "Dissonant";
+        elements.harmonicEuler.textContent = `G = ${g} (${flavor})`;
+      }
+    }
+    const regionIdx = Math.floor(normalized / 3) % 4;
+    const compassNodes = [elements.compassReg0, elements.compassReg1, elements.compassReg2, elements.compassReg3];
+    compassNodes.forEach((node, idx) => {
+      if (node) node.classList.toggle("is-active", idx === regionIdx);
+    });
+  }
 }
 
 function updateBeatGrid() {
@@ -2895,6 +3061,9 @@ async function playScore(score) {
     timer: 0,
     nextNoteTime: now,
     step: 0,
+    parlorReverbSend: null,
+    parlorCrackleGain: null,
+    parlorCrackleSource: null,
   };
   currentTransport = transport;
 
@@ -2930,6 +3099,40 @@ async function playScore(score) {
   filter.connect(delay);
   delay.connect(feedback).connect(delay);
   delay.connect(compressor);
+
+  // Antique Parlor Acoustics Space: Chamber Convolution Reverb & Horn Surface Crackle
+  const parlorReverbSend = context.createGain();
+  const parlorConvolver = context.createConvolver();
+  try {
+    parlorConvolver.buffer = ensureParlorImpulseResponse(context, 1.6);
+  } catch {
+    // Ignore buffer creation errors
+  }
+  parlorReverbSend.gain.setValueAtTime(parlorAcousticsEnabled ? 0.28 * parlorAcousticsLevel : 0.0001, now);
+  parlorReverbSend.connect(parlorConvolver).connect(output);
+
+  filter.connect(parlorReverbSend);
+  harmonyBus.connect(parlorReverbSend);
+  chimeBus.connect(parlorReverbSend);
+  chantBus.connect(parlorReverbSend);
+
+  let parlorCrackleSource = null;
+  let parlorCrackleGain = null;
+  try {
+    parlorCrackleSource = context.createBufferSource();
+    parlorCrackleSource.buffer = ensureWaxCrackleBuffer(context, 3.0);
+    parlorCrackleSource.loop = true;
+    parlorCrackleGain = context.createGain();
+    parlorCrackleGain.gain.setValueAtTime(parlorAcousticsEnabled ? 0.075 * parlorAcousticsLevel : 0.0001, now);
+    parlorCrackleSource.connect(parlorCrackleGain).connect(output);
+    parlorCrackleSource.start(now);
+  } catch {
+    // Ignore buffer source errors
+  }
+
+  transport.parlorReverbSend = parlorReverbSend;
+  transport.parlorCrackleGain = parlorCrackleGain;
+  transport.parlorCrackleSource = parlorCrackleSource;
 
   const droneIntervals = [-12, -5, 7];
   const initialDroneGains = [0.085, score.voice === 5 ? 0.035 : 0.018, 0.0001];
@@ -2967,6 +3170,9 @@ async function playScore(score) {
       scheduleChimeStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleChantStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleFungalBioStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
+      if (parlorAcousticsEnabled) {
+        scheduleClockworkTick(context, output, transport.nextNoteTime, currentStep, parlorAcousticsLevel);
+      }
       const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
       window.setTimeout(() => {
         if (currentTransport === transport) highlightBeatStep(currentStep);
@@ -2983,6 +3189,27 @@ async function playScore(score) {
 
 let currentConductedMelody = null;
 
+function updateKapellmeisterUI() {
+  if (elements.kapellmeisterGenreTitle) {
+    elements.kapellmeisterGenreTitle.textContent = GENRE_NAMES[activeGenre] || activeGenre;
+  }
+  if (elements.kapellmeisterTelemetry) {
+    const chord0 = currentConductedSpine?.[0];
+    const tonicName = currentScore ? chordLabelFor(chord0, currentScore.root) : "C Maj";
+    elements.kapellmeisterTelemetry.textContent = `RULEBOOK: ${activeGenre.toUpperCase().replace(/_/g, " ")} · TONIC: ${tonicName} · STRICTNESS: G ≤ ${activeStrictness}`;
+  }
+  if (currentConductedSpine) {
+    const nodeIds = [elements.nodeText0, elements.nodeText1, elements.nodeText2, elements.nodeText3];
+    const steps = [0, 3, 6, 9];
+    steps.forEach((stepIdx, i) => {
+      const el = nodeIds[i];
+      if (el && currentConductedSpine[stepIdx]) {
+        el.textContent = currentConductedSpine[stepIdx].op || "I";
+      }
+    });
+  }
+}
+
 function applyEnsembleConductor() {
   if (!currentScore) return;
   const conducted = conductEnsemble({
@@ -2994,7 +3221,10 @@ function applyEnsembleConductor() {
     chimes: currentChimes,
     chant: currentChant,
     mutation: harmonyMutation + bassMutation + chimeMutation + chantMutation,
+    genre: activeGenre,
+    consonanceStrictness: activeStrictness,
   });
+  currentConductedSpine = conducted.spine;
   currentConductedMelody = conducted.melody;
   if (conducted.bass) currentBass = conducted.bass;
   if (conducted.harmony) currentHarmony = conducted.harmony;
@@ -3003,6 +3233,7 @@ function applyEnsembleConductor() {
   if (currentTransport) {
     currentTransport.melody = currentConductedMelody;
   }
+  updateKapellmeisterUI();
 }
 
 function showScore(score) {
@@ -3487,6 +3718,35 @@ async function exportSpecimenWav() {
     delay.connect(feedback).connect(delay);
     delay.connect(compressor);
 
+    if (parlorAcousticsEnabled) {
+      const parlorReverbSend = offlineCtx.createGain();
+      const parlorConvolver = offlineCtx.createConvolver();
+      try {
+        parlorConvolver.buffer = ensureParlorImpulseResponse(offlineCtx, 1.6);
+      } catch {
+        // Ignore buffer creation errors
+      }
+      parlorReverbSend.gain.setValueAtTime(0.28 * parlorAcousticsLevel, 0);
+      parlorReverbSend.connect(parlorConvolver).connect(output);
+
+      filter.connect(parlorReverbSend);
+      harmonyBus.connect(parlorReverbSend);
+      chimeBus.connect(parlorReverbSend);
+      chantBus.connect(parlorReverbSend);
+
+      try {
+        const crackle = offlineCtx.createBufferSource();
+        crackle.buffer = ensureWaxCrackleBuffer(offlineCtx, totalDuration);
+        const crackleGain = offlineCtx.createGain();
+        crackleGain.gain.setValueAtTime(0.075 * parlorAcousticsLevel, 0);
+        crackle.connect(crackleGain).connect(output);
+        crackle.start(0);
+        crackle.stop(totalDuration);
+      } catch {
+        // Ignore buffer errors
+      }
+    }
+
     // Continuous ambient drones
     const droneIntervals = [-12, -5, 7];
     const initialDroneGains = [0.085, score.voice === 5 ? 0.035 : 0.018, 0.0001];
@@ -3531,6 +3791,9 @@ async function exportSpecimenWav() {
       scheduleChimeStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
       scheduleChantStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
       scheduleFungalBioStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
+      if (parlorAcousticsEnabled) {
+        scheduleClockworkTick(offlineCtx, output, stepTime, step, parlorAcousticsLevel);
+      }
 
       stepTime += stepDuration;
     }
@@ -3832,6 +4095,78 @@ elements.bandstandMutateAll?.addEventListener("click", () => {
     elements.bandstandTelemetry.textContent = `ENSEMBLE JAM MUTATION #${beatMutation} APPLIED ACROSS ALL PLATES`;
   }
 });
+
+function updateAcousticsStatus() {
+  if (!elements.acousticsStatus) return;
+  if (!parlorAcousticsEnabled) {
+    elements.acousticsStatus.textContent = "PARLOR ACOUSTICS MUTED · DRY ISOLATION";
+    elements.chipCrackle?.classList.remove("is-active");
+    elements.chipReverb?.classList.remove("is-active");
+    elements.chipTick?.classList.remove("is-active");
+  } else {
+    elements.acousticsStatus.textContent = "CHAMBER REVERBERATION & SURFACE CRACKLE ACTIVE";
+    elements.chipCrackle?.classList.add("is-active");
+    elements.chipReverb?.classList.add("is-active");
+    elements.chipTick?.classList.add("is-active");
+  }
+}
+
+elements.parlorAcousticsToggle?.addEventListener("click", () => {
+  parlorAcousticsEnabled = !parlorAcousticsEnabled;
+  elements.parlorAcousticsToggle.setAttribute("aria-pressed", String(parlorAcousticsEnabled));
+  elements.parlorAcousticsToggle.textContent = parlorAcousticsEnabled ? "ACOUSTICS: ENGAGED" : "ACOUSTICS: SILENCED";
+  if (audioContext && currentTransport) {
+    const now = audioContext.currentTime;
+    currentTransport.parlorReverbSend?.gain.setTargetAtTime(
+      parlorAcousticsEnabled ? 0.28 * parlorAcousticsLevel : 0.0001,
+      now,
+      0.025,
+    );
+    currentTransport.parlorCrackleGain?.gain.setTargetAtTime(
+      parlorAcousticsEnabled ? 0.075 * parlorAcousticsLevel : 0.0001,
+      now,
+      0.025,
+    );
+  }
+  updateAcousticsStatus();
+});
+
+elements.parlorAcousticsLevel?.addEventListener("input", (e) => {
+  parlorAcousticsLevel = Number(e.target.value) / 100;
+  if (elements.acousticsLevelVal) {
+    elements.acousticsLevelVal.textContent = `${Math.round(parlorAcousticsLevel * 100)}%`;
+  }
+  if (audioContext && currentTransport && parlorAcousticsEnabled) {
+    const now = audioContext.currentTime;
+    currentTransport.parlorReverbSend?.gain.setTargetAtTime(0.28 * parlorAcousticsLevel, now, 0.025);
+    currentTransport.parlorCrackleGain?.gain.setTargetAtTime(0.075 * parlorAcousticsLevel, now, 0.025);
+  }
+});
+
+elements.kapellmeisterGenre?.addEventListener("change", (e) => {
+  activeGenre = e.target.value;
+  applyEnsembleConductor();
+  updateBeatGrid();
+  updateBassGrid();
+  updateHarmonyGrid();
+  updateChimeGrid();
+  updateChantGrid();
+});
+
+elements.kapellmeisterStrictness?.addEventListener("input", (e) => {
+  activeStrictness = Number(e.target.value);
+  if (elements.kapellmeisterStrictnessVal) {
+    const flavor = activeStrictness <= 5 ? "Strict" : activeStrictness <= 9 ? "Balanced" : "Permissive";
+    elements.kapellmeisterStrictnessVal.textContent = `G ≤ ${activeStrictness} (${flavor})`;
+  }
+  applyEnsembleConductor();
+  updateBeatGrid();
+  updateBassGrid();
+  updateHarmonyGrid();
+  updateChimeGrid();
+  updateChantGrid();
+});
+
 
 elements.form.addEventListener("submit", (event) => {
   event.preventDefault();

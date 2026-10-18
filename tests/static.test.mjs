@@ -243,3 +243,29 @@ test("the application has no remote runtime assets", async () => {
   assert.equal(files.some((contents) => /https?:\/\//i.test(contents)), false);
   assert.equal(files.some((contents) => /node_modules|from\s+["'](?!\.\/)/i.test(contents)), false);
 });
+
+test("the Kapellmeister console and antique parlor acoustics controls are wired up", async () => {
+  const [html, styles, app] = await Promise.all([
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("styles.css", root), "utf8"),
+    readFile(new URL("src/app.mjs", root), "utf8"),
+  ]);
+  assert.match(html, /id="kapellmeister-engine"/);
+  assert.match(html, /id="kapellmeister-genre"/);
+  assert.match(html, /id="kapellmeister-strictness"/);
+  assert.match(html, /id="harmonic-step"/);
+  assert.match(html, /id="harmonic-chord"/);
+  assert.match(html, /id="harmonic-vector"/);
+  assert.match(html, /id="harmonic-euler"/);
+  assert.match(html, /class="tonnetz-compass-svg"/);
+  assert.match(html, /id="parlor-acoustics-engine"/);
+  assert.match(html, /id="parlor-acoustics-toggle"/);
+  assert.match(html, /id="parlor-acoustics-level"/);
+  assert.match(styles, /\.kapellmeister-engine/);
+  assert.match(styles, /\.parlor-acoustics-engine/);
+  assert.match(app, /function ensureWaxCrackleBuffer\(/);
+  assert.match(app, /function ensureParlorImpulseResponse\(/);
+  assert.match(app, /function scheduleClockworkTick\(/);
+  assert.match(app, /function updateKapellmeisterUI\(/);
+});
+

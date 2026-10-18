@@ -241,6 +241,83 @@
       <div class="beat-grid chant-grid" id="chant-grid" role="group" aria-label="Shakespeare 12-scene formant vowel choir matrix"></div>
     </section>
 
+    <section class="beat-engine kapellmeister-engine" id="kapellmeister-engine" aria-labelledby="kapellmeister-heading">
+      <div class="beat-header">
+        <div class="beat-identity">
+          <p class="reading-label">KAPELLMEISTER CONSOLE · MUSIC-THEORY &amp; GENRE RULEBOOKS</p>
+          <div class="beat-title-row">
+            <h3 id="kapellmeister-heading"><span id="kapellmeister-genre-title">VICTORIAN NEO-RIEMANNIAN TONNETZ</span></h3>
+            <span class="beat-telemetry" id="kapellmeister-telemetry">EULER GRADUS SUAVITATIS · PARSIMONIOUS TONNETZ PROGRESSION</span>
+          </div>
+        </div>
+        <div class="beat-actions kapellmeister-actions">
+          <div class="kapellmeister-select-wrap">
+            <label for="kapellmeister-genre" class="kapellmeister-label">RULEBOOK</label>
+            <select id="kapellmeister-genre" class="kapellmeister-select" aria-label="Select Kapellmeister music-theory genre rulebook">
+              <option value="victorian_tonnetz" selected>VICTORIAN NEO-RIEMANNIAN TONNETZ</option>
+              <option value="blues_twelve_bar">12-BAR DELTA &amp; PARLOR BLUES</option>
+              <option value="smoky_jazz">SMOKY PARLOR JAZZ &amp; EXTENDED TONNETZ</option>
+              <option value="renaissance_counterpoint">PALESTRINA MODAL COUNTERPOINT</option>
+              <option value="modal_drone">MYSTIC BYZANTINE &amp; HIMALAYAN DRONE</option>
+              <option value="raw_chaos">RAW ESOTERIC CHAOS (UNFETTERED VMS)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="kapellmeister-body">
+        <div class="kapellmeister-readout" aria-live="polite">
+          <div class="readout-cell">
+            <span class="readout-label">STEP</span>
+            <span class="readout-value" id="harmonic-step">01 / 12</span>
+          </div>
+          <div class="readout-cell">
+            <span class="readout-label">ACTIVE CHORD</span>
+            <span class="readout-value" id="harmonic-chord">C Maj</span>
+          </div>
+          <div class="readout-cell">
+            <span class="readout-label">HARMONIC VECTOR</span>
+            <span class="readout-value" id="harmonic-vector">I (Tonic)</span>
+          </div>
+          <div class="readout-cell">
+            <span class="readout-label">EULER CONSONANCE</span>
+            <span class="readout-value" id="harmonic-euler">G = 4 (Sweet)</span>
+          </div>
+        </div>
+        <div class="kapellmeister-controls">
+          <div class="volume-heading">
+            <label for="kapellmeister-strictness">CONSONANCE SIEVE (EULER GRADUS)</label>
+            <output id="kapellmeister-strictness-val" for="kapellmeister-strictness">G ≤ 8 (Balanced)</output>
+          </div>
+          <input id="kapellmeister-strictness" type="range" min="3" max="14" value="8" step="1" title="Adjust Euler Gradus Suavitatis consonance threshold">
+        </div>
+        <div class="kapellmeister-compass" id="kapellmeister-compass" aria-hidden="true">
+          <svg viewBox="0 0 460 70" preserveAspectRatio="xMidYMid meet" class="tonnetz-compass-svg">
+            <line x1="30" y1="35" x2="430" y2="35" stroke="#8d6b32" stroke-width="1.5" stroke-dasharray="4,6" />
+            <g class="compass-region is-active" id="compass-reg-0" transform="translate(60, 35)">
+              <polygon points="0,-22 18,12 -18,12" class="tonnetz-tri" />
+              <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
+              <text x="0" y="4" class="tonnetz-node-text" id="node-text-0">I</text>
+            </g>
+            <g class="compass-region" id="compass-reg-1" transform="translate(170, 35)">
+              <polygon points="0,22 18,-12 -18,-12" class="tonnetz-tri" />
+              <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
+              <text x="0" y="4" class="tonnetz-node-text" id="node-text-1">R</text>
+            </g>
+            <g class="compass-region" id="compass-reg-2" transform="translate(280, 35)">
+              <polygon points="0,-22 18,12 -18,12" class="tonnetz-tri" />
+              <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
+              <text x="0" y="4" class="tonnetz-node-text" id="node-text-2">L</text>
+            </g>
+            <g class="compass-region" id="compass-reg-3" transform="translate(390, 35)">
+              <polygon points="0,22 18,-12 -18,-12" class="tonnetz-tri" />
+              <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
+              <text x="0" y="4" class="tonnetz-node-text" id="node-text-3">P</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
     <section class="beat-engine bandstand-engine" id="bandstand-engine" aria-labelledby="bandstand-heading">
       <div class="beat-header">
         <div class="beat-identity">
@@ -260,6 +337,35 @@
           <button class="beat-button" id="bandstand-mutate-all" type="button" disabled>
             MUTATE ALL PLAYERS <span aria-hidden="true">✦</span>
           </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="beat-engine parlor-acoustics-engine" id="parlor-acoustics-engine" aria-labelledby="acoustics-heading">
+      <div class="beat-header">
+        <div class="beat-identity">
+          <p class="reading-label">ANTIQUE PARLOR ACOUSTICS · 1890s WAX CYLINDER &amp; CHAMBER</p>
+          <div class="beat-title-row">
+            <h3 id="acoustics-heading"><span id="acoustics-status">CHAMBER REVERBERATION &amp; SURFACE CRACKLE ACTIVE</span></h3>
+            <span class="beat-telemetry" id="acoustics-telemetry">EDISON CYLINDER HORN · CONVOLUTION CHAMBER · CLOCKWORK TICK</span>
+          </div>
+        </div>
+        <div class="beat-actions">
+          <button class="beat-button" id="parlor-acoustics-toggle" type="button" aria-pressed="true">
+            ACOUSTICS: ENGAGED
+          </button>
+        </div>
+      </div>
+      <div class="acoustics-body">
+        <div class="volume-heading">
+          <label for="parlor-acoustics-level">PARLOR AMBIENCE LEVEL</label>
+          <output id="acoustics-level-val" for="parlor-acoustics-level">55%</output>
+        </div>
+        <input id="parlor-acoustics-level" type="range" min="0" max="100" value="55" step="1" title="Adjust antique parlor surface crackle and room reverberation">
+        <div class="acoustics-indicators">
+          <span class="acoustics-chip chip-crackle is-active" id="chip-crackle" title="Wax cylinder surface noise and horn bandpass">WAX CRACKLE</span>
+          <span class="acoustics-chip chip-reverb is-active" id="chip-reverb" title="1890s Victorian wood-paneled chamber convolution reverb">CHAMBER REVERB</span>
+          <span class="acoustics-chip chip-tick is-active" id="chip-tick" title="Brass grandfather clock escapement tick on quarter-beats">CLOCKWORK ESCAPEMENT</span>
         </div>
       </div>
     </section>

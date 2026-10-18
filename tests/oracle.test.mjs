@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { HARMONY_NAMES, composeHarmony, cycleHarmonyCell, runBefunge } from "../src/befunge.mjs";
 import { BASS_NAMES, composeBass, cycleBassCell, runBrainfuck } from "../src/brainfuck.mjs";
-import { applyTonnetzOperation, bjorklund, buildTonnetzSpine, buildTriad, conductEnsemble, eulerGradus, semitoneGradus } from "../src/conductor.mjs";
+import { GENRE_NAMES, GENRE_RULEBOOKS, applyTonnetzOperation, bjorklund, buildTonnetzSpine, buildTriad, chordLabelFor, conductEnsemble, eulerGradus, semitoneGradus } from "../src/conductor.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell, runFractran, runPiet } from "../src/fractran.mjs";
 import { runLolcode } from "../src/lolcode.mjs";
 import { BEAT_NAMES, composeBeat, crazy, cycleBeatStep, rotr, runMalbolge } from "../src/malbolge.mjs";
@@ -395,3 +395,73 @@ test("Euler Gradus Suavitatis, Neo-Riemannian Tonnetz, and Euclidean conductor h
     assert.ok(triad.pitchClasses.includes(((step.interval % 12) + 12) % 12));
   });
 });
+
+test("the Kapellmeister music-theory console executes genre rulebooks across Tonnetz, Blues, Jazz, Counterpoint, Drone, and Raw Chaos", () => {
+  const score = composeScore(source, "the moon owes me five dollars");
+  const melody = melodyFor(score);
+  const beat = composeBeat(beatSource, score, 0);
+  const bass = composeBass(bassSource, score, 0);
+  const harmony = composeHarmony(harmonySource, score, 0);
+  const chimes = composeChimes(pietSource, fractranSource, score, 0);
+  const chant = composeChant(chantSource, score, 0);
+
+  // 1. All six genre rulebook keys and human-readable names exist
+  assert.equal(Object.keys(GENRE_RULEBOOKS).length, 6);
+  for (const [key, rulebook] of Object.entries(GENRE_RULEBOOKS)) {
+    assert.ok(GENRE_NAMES[rulebook], `Expected display name for genre ${rulebook}`);
+  }
+
+  // 2. 12-Bar Blues rulebook: I7 (steps 0-3), IV7 (steps 4-5), I7 (steps 6-7), V7 (step 8), IV7 (step 9), I7 (step 10), V7 Turnaround (step 11)
+  const blues = conductEnsemble({
+    score, melody, beat, bass, harmony, chimes, chant,
+    genre: GENRE_RULEBOOKS.BLUES_TWELVE_BAR,
+  });
+  assert.equal(blues.genre, "blues_twelve_bar");
+  assert.equal(blues.spine[0].op, "I7");
+  assert.equal(blues.spine[4].op, "IV7");
+  assert.equal(blues.spine[8].op, "V7");
+  assert.equal(blues.spine[11].op, "V7 (Turn)");
+  assert.equal(chordLabelFor(blues.spine[0], 60), "C7");
+  assert.equal(chordLabelFor(blues.spine[4], 60), "F7");
+  assert.equal(chordLabelFor(blues.spine[8], 60), "G7");
+
+  // 3. Smoky Jazz rulebook: Imaj9, vi9, ii9, subV7
+  const jazz = conductEnsemble({
+    score, melody, beat, bass, harmony, chimes, chant,
+    genre: GENRE_RULEBOOKS.SMOKY_JAZZ,
+  });
+  assert.equal(jazz.genre, "smoky_jazz");
+  assert.equal(jazz.spine[0].op, "Imaj9");
+  assert.equal(jazz.spine[3].op, "vi9");
+  assert.equal(jazz.spine[6].op, "ii9");
+  assert.equal(jazz.spine[9].op, "♭II7alt");
+  assert.equal(chordLabelFor(jazz.spine[0], 60), "Cmaj9");
+
+  // 4. Renaissance Counterpoint rulebook: Picardy third on step 11
+  const counterpoint = conductEnsemble({
+    score, melody, beat, bass, harmony, chimes, chant,
+    genre: GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT,
+  });
+  assert.equal(counterpoint.genre, "renaissance_counterpoint");
+  assert.equal(counterpoint.spine[11].quality, "major");
+
+  // 5. Modal Drone rulebook: root and fifth pedal
+  const drone = conductEnsemble({
+    score, melody, beat, bass, harmony, chimes, chant,
+    genre: GENRE_RULEBOOKS.MODAL_DRONE,
+  });
+  assert.equal(drone.genre, "modal_drone");
+  assert.ok(drone.spine[0].op.includes("Drone"));
+
+  // 6. Raw Chaos rulebook: zero filtering, exact native VM output preserved
+  const chaos = conductEnsemble({
+    score, melody, beat, bass, harmony, chimes, chant,
+    genre: GENRE_RULEBOOKS.RAW_CHAOS,
+  });
+  assert.equal(chaos.genre, "raw_chaos");
+  assert.deepEqual(chaos.melody, melody);
+  assert.deepEqual(chaos.bass, bass);
+  assert.deepEqual(chaos.harmony, harmony);
+  assert.equal(chordLabelFor(chaos.spine[0], 60), "RAW VM OUTPUT");
+});
+

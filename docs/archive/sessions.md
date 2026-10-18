@@ -64,4 +64,27 @@ Active handoff state and the latest ten sessions live in [../HANDOFF.md](../HAND
 
 **Next session should start with:** P4-01.
 
+### Session 4: 2026-10-17: impossible geometry with boundaries
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Replace pulse-dominated blobs with complex self-contained forms that have their own kinetic movement.
+
+**Done:** P5-03
+
+**Changed:** Added five deterministic kinetic score fields, eight silhouette-flux grammars, and eight internal motion systems. The tesseract renderer rotates in four dimensions before two-stage perspective projection; every system is clipped to the currently deforming body. Reduced the shared beat pulse so it no longer dominates motion.
+
+**Decisions:** D-007
+
+**Verified:** Twelve Node checks passed, including 256-phrase categorical coverage and structural boundary containment; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Subjective motion quality, frame rate, clipping, and legibility in real browsers.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** P4-01.
+
+
 
