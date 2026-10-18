@@ -158,6 +158,19 @@ This append-only record holds choices that a future session might otherwise re-l
 
 **Consequences:** Because RFC 3986 URL fragments never leave the browser in HTTP requests, links are shareable while preserving complete client-side privacy. PNG broadsheet plates are generated deterministically on-device with zero external libraries.
 
+## D-016 An Euler-Tonnetz and Euclidean harmonic conductor harmonizes all six esoteric VMs  (2026-10-18, status: accepted)
+
+**Context:** When six independent esoteric virtual machines (`src/oracle.lol`, `src/beat.mal`, `src/bass.bf`, `src/harmony.bfg`, `src/pad.piet` + `src/chimes.frac`, and `src/chant.spl`) emit pitches, prime ratios, and rhythmic gates simultaneously without a shared harmonic spine, many seeds collide in minor-second clusters, unrelated triads, and 7-limit wolf intervals.
+
+**Decision:** Introduce a pure mathematical ensemble conductor (`src/conductor.mjs`, P5-14) that post-processes the genuine outputs of all six interpreters before they reach the Web Audio scheduler:
+1. **Neo-Riemannian *Tonnetz* Spine (`P`, `L`, `R`)** — Divide the 12-step bar into 4 harmonic regions of 3 steps each, driven by deterministic sequences of Parallel (`P`), Leading-Tone (`L`), and Relative (`R`) triadic involutions so adjacent chords always share two common tones and move the remaining voice by 1 or 2 semitones.
+2. **Leonhard Euler's 1739 *Gradus Suavitatis* Consonance Sieve** — Compute $G(n) = 1 + \sum e_i(p_i - 1)$ over interval ratios (`eulerGradus()`, `semitoneGradus()`, `projectConsonantPitch()`) to snap strong-beat LOLCODE melody notes onto active triad tones while allowing low-Gradus passing tones (`9th`, `4th`, `6th`, `7th`) on weak subdivisions, and lock Brainfuck bass cells to the active triad root/fifth, Befunge-93 3-voice organ inversions to the active triad, Piet/FRACTRAN chimes to pure 5-limit overtones (`1/1`, `6/5`, `5/4`, `3/2`, `2/1`) of the active chord root, and Shakespeare choir personas to sustained triad voices (`Prospero` root, `Hamlet` fifth, `Hecate` third, `Ophelia` upper third).
+3. **E. Bjorklund's Euclidean Rhythm Hocket ($E(k, 12)$)** — Use complementary Euclidean masks (`bjorklund(7, 12)` vs. `bjorklund(5, 12)`) and Malbolge kick-downbeat locking so bass, lead, chimes, and choir breathe in interlocking pockets instead of crowding every 16th-note subdivision.
+
+**Alternatives:** Replacing the esoteric VMs with hard-coded presets would violate the esoteric computation premise. Leaving all six engines unconducted produced frequent harmonic mud. Granular user-selectable music-theory and genre rulebooks (Palestrina counterpoint, Jazz extended Tonnetz, Blues, etc.) are tracked separately as milestone P5-15.
+
+**Consequences:** Every esoteric interpreter still executes its real program and shapes rhythm, register, inversion, codel timbre, and dramatic persona, while the ensemble plays in locked consonance and rhythmic sync.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

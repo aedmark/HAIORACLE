@@ -11,6 +11,7 @@ test("the static entry points exist", async () => {
     "src/app.mjs",
     "src/befunge.mjs",
     "src/brainfuck.mjs",
+    "src/conductor.mjs",
     "src/fractran.mjs",
     "src/lolcode.mjs",
     "src/malbolge.mjs",
@@ -162,6 +163,7 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.match(styles, /\.chime-step/);
   assert.match(styles, /\.chant-step/);
   assert.match(styles, /\.bandstand-engine/);
+  assert.match(app, /function applyEnsembleConductor\(\)/);
   assert.match(app, /function scheduleBeatStep\(/);
   assert.match(app, /function scheduleBassStep\(/);
   assert.match(app, /function scheduleHarmonyStep\(/);
@@ -190,6 +192,7 @@ test("the application has no remote runtime assets", async () => {
     "src/app.mjs",
     "src/befunge.mjs",
     "src/brainfuck.mjs",
+    "src/conductor.mjs",
     "src/fractran.mjs",
     "src/lolcode.mjs",
     "src/malbolge.mjs",

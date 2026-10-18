@@ -25,6 +25,7 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Codel & fraction spells | `src/pad.piet`, `src/chimes.frac` | 2001 Piet codel canvas & 1987 FRACTRAN fractions | Piet and FRACTRAN VM output |
 | Shakespeare runtime | `src/shakespeare.mjs` | `runShakespeare()`, `composeChant()` | `src/chant.spl`, validated score, browser host |
 | Dramatic choir spell | `src/chant.spl` | 2001 Shakespeare Programming Language play | Shakespeare VM output |
+| Harmonic conductor | `src/conductor.mjs` | `conductEnsemble()`, `eulerGradus()`, `buildTonnetzSpine()`, `bjorklund()` | all 6 esoteric engines, `src/app.mjs` |
 | Verification | `tests/` | Node test runner | pure modules and static assets |
 
 ## Interfaces and data flow
@@ -32,12 +33,12 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 ```text
 phrase -> normalize and FNV-1a hash -> INPUT_SEED
       -> LOLCODE spell -> key=value lines -> strict score validation
-      -> shared immutable score -> twelve-note motif -> Web Audio composition
-                              +-> Malbolge VM (src/beat.mal) -> 12-step ternary beat matrix
-                              +-> Brainfuck VM (src/bass.bf) -> 12-cell walking bass tape
-                              +-> Befunge-93 VM (src/harmony.bfg) -> 12-cell 2D mirror chord organ
-                              +-> Piet & FRACTRAN VMs (src/pad.piet, src/chimes.frac) -> 12-step prime-ratio chimes & codel chorus
-                              +-> Shakespeare VM (src/chant.spl) -> 12-scene formant vowel choir
+      -> shared immutable score -> twelve-note motif -> Euler-Tonnetz & Euclidean Conductor -> Web Audio composition
+                              +-> Malbolge VM (src/beat.mal) -> 12-step ternary beat matrix -^
+                              +-> Brainfuck VM (src/bass.bf) -> 12-cell walking bass tape ---^
+                              +-> Befunge-93 VM (src/harmony.bfg) -> 12-cell 2D mirror chord organ -^
+                              +-> Piet & FRACTRAN VMs (src/pad.piet, src/chimes.frac) -> 12-step prime-ratio chimes -^
+                              +-> Shakespeare VM (src/chant.spl) -> 12-scene formant vowel choir -^
                               +-> Canvas creature + text reading
 ```
 
@@ -46,11 +47,12 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | `INPUT_SEED` | `hashPhrase()` | `src/oracle.lol` | unsigned 32-bit integer |
 | LOLCODE output | `runLolcode()` | `parseScore()` | one known `key=integer` per line; all required keys exactly once |
 | Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with twelve note choices plus musical, beat-cadence, bass-groove, harmony-organ, chime-carillon, chant-choir, body, eye-anatomy, palette, bounded-flux, kinetic-core, and naming grammar indices |
-| Malbolge beat | `composeBeat()` | `src/app.mjs` | frozen 12-step ternary sequence (`kick`, `snare`, `hat` in `0..2`, `trits`) produced by executing `src/beat.mal` on a 59,049-word ternary tape |
-| Brainfuck bass | `composeBass()` | `src/app.mjs` | frozen 12-cell bass sequence (`cell`, `gate`, `interval`, `register`, `slide`, `accent`, `label`) produced by executing `src/bass.bf` on a 256-cell byte tape |
-| Befunge harmony | `composeHarmony()` | `src/app.mjs` | frozen 12-step polyphonic organ sequence (`raw`, `gate`, `mirror`, `chord`, `degreeIndex`, `strumMs`, `label`) produced by executing `src/harmony.bfg` on an 80×25 2D torus |
-| Piet/FRACTRAN chimes | `composeChimes()` | `src/app.mjs` | frozen 12-step Just Intonation chime and codel pad sequence (`gate`, `codelCode`, `hueIndex`, `lightnessIndex`, `fraction`, `exponents`, `ratioLabel`, `ratioValue`, `label`) produced by executing `src/pad.piet` and `src/chimes.frac` |
-| Shakespeare choir | `composeChant()` | `src/app.mjs` | frozen 12-scene formant vowel choir sequence (`gate`, `act`, `scene`, `speaker`, `addressee`, `personaShort`, `voiceType`, `vowelCode`, `vowelIpa`, `f1`, `f2`, `f3`, `interval`, `label`) produced by executing `src/chant.spl` |
+| Malbolge beat | `composeBeat()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-step ternary sequence (`kick`, `snare`, `hat` in `0..2`, `trits`) produced by executing `src/beat.mal` on a 59,049-word ternary tape |
+| Brainfuck bass | `composeBass()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-cell bass sequence (`cell`, `gate`, `interval`, `register`, `slide`, `accent`, `label`) produced by executing `src/bass.bf` on a 256-cell byte tape |
+| Befunge harmony | `composeHarmony()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-step polyphonic organ sequence (`raw`, `gate`, `mirror`, `chord`, `degreeIndex`, `strumMs`, `label`) produced by executing `src/harmony.bfg` on an 80×25 2D torus |
+| Piet/FRACTRAN chimes | `composeChimes()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-step Just Intonation chime and codel pad sequence (`gate`, `codelCode`, `hueIndex`, `lightnessIndex`, `fraction`, `exponents`, `ratioLabel`, `ratioValue`, `label`) produced by executing `src/pad.piet` and `src/chimes.frac` |
+| Shakespeare choir | `composeChant()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-scene formant vowel choir sequence (`gate`, `act`, `scene`, `speaker`, `addressee`, `personaShort`, `voiceType`, `vowelCode`, `vowelIpa`, `f1`, `f2`, `f3`, `interval`, `label`) produced by executing `src/chant.spl` |
+| Ensemble conductor | `conductEnsemble()` | `src/app.mjs` | harmonizes the 12-step lead motif, bass tape, Befunge triads, Piet/FRACTRAN overtone ratios, and Shakespeare choir onto a 4-region Neo-Riemannian *Tonnetz* progression (`P`, `L`, `R`), Euler *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean hocket $E(k, 12)$ |
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
 | Melody motif | `melodyFor()` | audio transport | exactly twelve frozen semitone offsets selected and rotated by validated score fields |

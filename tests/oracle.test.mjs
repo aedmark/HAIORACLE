@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { HARMONY_NAMES, composeHarmony, cycleHarmonyCell, runBefunge } from "../src/befunge.mjs";
 import { BASS_NAMES, composeBass, cycleBassCell, runBrainfuck } from "../src/brainfuck.mjs";
+import { applyTonnetzOperation, bjorklund, buildTonnetzSpine, buildTriad, conductEnsemble, eulerGradus, semitoneGradus } from "../src/conductor.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell, runFractran, runPiet } from "../src/fractran.mjs";
 import { runLolcode } from "../src/lolcode.mjs";
 import { BEAT_NAMES, composeBeat, crazy, cycleBeatStep, rotr, runMalbolge } from "../src/malbolge.mjs";
@@ -283,4 +284,85 @@ test("shareable URL fragments round-trip phrases locally and generate determinis
   const filename = specimenFilenameFor(score);
   assert.match(filename, /^hai-oracle-[a-z0-9-]+-[0-9a-f]{8}\.png$/);
   assert.throws(() => encodeOmenHash("   "), /empty omen phrase/);
+});
+
+test("Euler Gradus Suavitatis, Neo-Riemannian Tonnetz, and Euclidean conductor harmonize the six-language ensemble", () => {
+  // Unison (1:1) = 1, Octave (2:1) = 2, Fifth (3:2) = 4, Fourth (4:3) = 5, Major 3rd (5:4) = 7, Tritone (45:32) = 14
+  assert.equal(eulerGradus(1, 1), 1);
+  assert.equal(eulerGradus(2, 1), 2);
+  assert.equal(eulerGradus(3, 2), 4);
+  assert.equal(eulerGradus(4, 3), 5);
+  assert.equal(eulerGradus(5, 4), 7);
+  assert.ok(semitoneGradus(7) < semitoneGradus(6));
+  assert.ok(semitoneGradus(4) < semitoneGradus(1));
+
+  // Neo-Riemannian P, L, R operations are involutions and preserve 2 of 3 pitch classes
+  const cMajor = buildTriad(0, "major");
+  const cMinor = applyTonnetzOperation(cMajor, "P");
+  const eMinor = applyTonnetzOperation(cMajor, "L");
+  const aMinor = applyTonnetzOperation(cMajor, "R");
+  assert.equal(cMinor.root, 0);
+  assert.equal(cMinor.quality, "minor");
+  assert.deepEqual(cMinor.pitchClasses, [0, 3, 7]);
+  assert.equal(eMinor.root, 4);
+  assert.equal(eMinor.quality, "minor");
+  assert.deepEqual(eMinor.pitchClasses, [4, 7, 11]);
+  assert.equal(aMinor.root, 9);
+  assert.equal(aMinor.quality, "minor");
+  assert.deepEqual(aMinor.pitchClasses, [9, 0, 4]);
+  assert.deepEqual(applyTonnetzOperation(cMinor, "P").pitchClasses, cMajor.pitchClasses);
+  assert.deepEqual(applyTonnetzOperation(eMinor, "L").pitchClasses, cMajor.pitchClasses);
+  assert.deepEqual(applyTonnetzOperation(aMinor, "R").pitchClasses, cMajor.pitchClasses);
+
+  // Euclidean rhythm E(5, 12) has 5 pulses across 12 steps
+  const e512 = bjorklund(5, 12, 0);
+  assert.equal(e512.length, 12);
+  assert.equal(e512.reduce((sum, hit) => sum + hit, 0), 5);
+
+  const score = composeScore(source, "the moon owes me five dollars");
+  const melody = melodyFor(score);
+  const beat = composeBeat(beatSource, score, 0);
+  const bass = composeBass(bassSource, score, 0);
+  const harmony = composeHarmony(harmonySource, score, 0);
+  const chimes = composeChimes(pietSource, fractranSource, score, 0);
+  const chant = composeChant(chantSource, score, 0);
+
+  const spine = buildTonnetzSpine(score, 0);
+  assert.equal(spine.length, 12);
+
+  const conducted = conductEnsemble({
+    score,
+    melody,
+    beat,
+    bass,
+    harmony,
+    chimes,
+    chant,
+    mutation: 0,
+  });
+
+  assert.equal(conducted.spine.length, 12);
+  assert.equal(conducted.melody.length, 12);
+
+  // Strong beats (0, 3, 6, 9) of the lead melody, and all bass, harmony, and chant steps lock to the active Tonnetz triad
+  conducted.bass.steps.forEach((step, index) => {
+    const triad = conducted.spine[index];
+    const pc = ((step.interval % 12) + 12) % 12;
+    assert.ok(
+      triad.pitchClasses.includes(pc),
+      `Expected bass step ${index} pitch class ${pc} to belong to triad ${triad.pitchClasses.join(",")}`,
+    );
+  });
+
+  conducted.harmony.steps.forEach((step, index) => {
+    const triad = conducted.spine[index];
+    step.chord.forEach((note) => {
+      assert.ok(triad.pitchClasses.includes(((note % 12) + 12) % 12));
+    });
+  });
+
+  conducted.chant.steps.forEach((step, index) => {
+    const triad = conducted.spine[index];
+    assert.ok(triad.pitchClasses.includes(((step.interval % 12) + 12) % 12));
+  });
 });

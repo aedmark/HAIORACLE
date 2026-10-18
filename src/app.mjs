@@ -1,5 +1,6 @@
 import { HARMONY_NAMES, composeHarmony, cycleHarmonyCell } from "./befunge.mjs";
 import { BASS_NAMES, composeBass, cycleBassCell } from "./brainfuck.mjs";
+import { conductEnsemble } from "./conductor.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
@@ -1052,10 +1053,10 @@ function scheduleNote(context, transport, score, step, at, duration) {
     for (const [voiceIndex, voice] of voiceStack(score, step).entries()) {
       const oscillator = context.createOscillator();
       oscillator.type = voiceIndex === 0
-        ? score.waveform
-        : ["triangle", "sine", "sawtooth", "square"][(score.wave + voiceIndex + score.voice) % 4];
+        ? (score.waveform === "sawtooth" ? "triangle" : score.waveform)
+        : ["triangle", "sine", "triangle", "sine"][(score.wave + voiceIndex + score.voice) % 4];
       oscillator.frequency.value = midiToFrequency(layer.note + voice.interval);
-      oscillator.detune.value = voice.detune + layer.detuneOffset + (step % 3 - 1) * score.twist * 0.55;
+      oscillator.detune.value = voice.detune * 0.45 + layer.detuneOffset + (step % 3 - 1) * score.twist * 0.14;
       const level = context.createGain();
       level.gain.value = voice.gain * layer.weight;
       oscillator.connect(level).connect(envelope);
@@ -1166,7 +1167,7 @@ function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration
 
   const duration = Math.max(0.08, stepDuration * (step.gate === 2 ? 0.88 : 0.46));
   const holdBoost = 1 + interaction.hold * 0.16;
-  const peak = (step.accent ? 0.22 : 0.15) * holdBoost;
+  const peak = (step.accent ? 0.21 : 0.145) * holdBoost;
 
   const subOsc = context.createOscillator();
   const upperOsc = context.createOscillator();
@@ -1175,7 +1176,7 @@ function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration
   const amp = context.createGain();
 
   subOsc.type = "sine";
-  upperOsc.type = score.bassMode % 2 === 1 ? "sawtooth" : "triangle";
+  upperOsc.type = "triangle";
   subOsc.frequency.setValueAtTime(freq, at);
   upperOsc.frequency.setValueAtTime(freq * 2, at);
 
@@ -1187,13 +1188,13 @@ function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration
     upperOsc.frequency.exponentialRampToValueAtTime(glideFreq * 2, at + duration);
   }
 
-  upperGain.gain.value = step.accent ? 0.42 : 0.26;
+  upperGain.gain.value = step.accent ? 0.34 : 0.22;
   bassFilter.type = "lowpass";
-  const startCutoff = Math.min(1800, freq * (step.accent ? 6.5 : 3.8) + (score.bassGlide || 55) * 4);
-  const endCutoff = Math.max(90, freq * 1.6);
+  const startCutoff = Math.min(1250, freq * (step.accent ? 5.2 : 3.4) + (score.bassGlide || 55) * 3);
+  const endCutoff = Math.max(85, freq * 1.5);
   bassFilter.frequency.setValueAtTime(startCutoff, at);
   bassFilter.frequency.exponentialRampToValueAtTime(endCutoff, at + duration);
-  bassFilter.Q.value = step.accent ? 4.2 : 2.2;
+  bassFilter.Q.value = step.accent ? 2.8 : 1.6;
 
   amp.gain.setValueAtTime(0.0001, at);
   amp.gain.exponentialRampToValueAtTime(peak, at + 0.012);
@@ -1215,29 +1216,29 @@ function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDurat
   if (!step || step.gate === 0) return;
 
   const isSustained = step.gate === 2;
-  const duration = Math.max(0.14, stepDuration * (isSustained ? 1.25 : 0.62));
+  const duration = Math.max(0.18, stepDuration * (isSustained ? 1.45 : 0.78));
   const strumSec = (step.strumMs || 24) / 1000;
   const holdBoost = 1 + interaction.hold * 0.14;
   const waveforms = [
     ["triangle", "sine", "triangle"],
-    ["triangle", "sawtooth", "sine"],
     ["sine", "triangle", "sine"],
+    ["triangle", "sine", "sine"],
     ["sine", "sine", "triangle"],
   ][score.harmonyMode % 4];
 
   for (const [voiceIndex, interval] of step.chord.entries()) {
     const noteStart = at + voiceIndex * strumSec;
-    const midi = Math.min(84, score.root + interval);
+    const midi = Math.min(79, score.root + interval);
     const freq = midiToFrequency(midi);
     const osc = context.createOscillator();
     const voiceGain = context.createGain();
 
     osc.type = waveforms[voiceIndex % waveforms.length];
     osc.frequency.setValueAtTime(freq, noteStart);
-    osc.detune.setValueAtTime((voiceIndex - 1) * 3.2 * (step.mirror === "/" ? 1 : -1), noteStart);
+    osc.detune.setValueAtTime((voiceIndex - 1) * 1.8 * (step.mirror === "/" ? 1 : -1), noteStart);
 
-    const peak = (isSustained ? 0.068 : 0.055) * (1 - voiceIndex * 0.14) * holdBoost;
-    const attack = isSustained ? 0.038 : 0.012;
+    const peak = (isSustained ? 0.056 : 0.044) * (1 - voiceIndex * 0.14) * holdBoost;
+    const attack = isSustained ? 0.045 : 0.018;
     voiceGain.gain.setValueAtTime(0.0001, noteStart);
     voiceGain.gain.exponentialRampToValueAtTime(peak, noteStart + attack);
     voiceGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + duration);
@@ -1254,20 +1255,20 @@ function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuratio
   if (!step || step.gate === 0) return;
 
   const isAccented = step.gate === 2;
-  const rootMidi = Math.min(74, score.root + 12);
+  const rootMidi = Math.min(72, score.root + 12);
   const rootFreq = midiToFrequency(rootMidi);
   const bellFreq = rootFreq * step.ratioValue;
   const holdBoost = 1 + interaction.hold * 0.16;
 
-  // 1. FRACTRAN Just Intonation overtone chime bell
+  // 1. FRACTRAN Just Intonation overtone chime bell locked to active Tonnetz chord
   const bellOsc = context.createOscillator();
   const bellGain = context.createGain();
   bellOsc.type = "sine";
   bellOsc.frequency.setValueAtTime(bellFreq, at);
-  const bellDuration = Math.max(0.22, stepDuration * (isAccented ? 1.55 : 0.95));
-  const bellPeak = (isAccented ? 0.062 : 0.042) * holdBoost;
+  const bellDuration = Math.max(0.24, stepDuration * (isAccented ? 1.6 : 1.0));
+  const bellPeak = (isAccented ? 0.054 : 0.036) * holdBoost;
   bellGain.gain.setValueAtTime(0.0001, at);
-  bellGain.gain.exponentialRampToValueAtTime(bellPeak, at + 0.007);
+  bellGain.gain.exponentialRampToValueAtTime(bellPeak, at + 0.008);
   bellGain.gain.exponentialRampToValueAtTime(0.0001, at + bellDuration);
   bellOsc.connect(bellGain).connect(transport.chimeBus);
   bellOsc.start(at);
@@ -1276,11 +1277,11 @@ function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuratio
   if (isAccented) {
     const overtoneOsc = context.createOscillator();
     const overtoneGain = context.createGain();
-    const overtoneMult = step.exponents.e3 % 2 === 0 ? 2 : 2.5;
+    const overtoneMult = step.exponents.e3 % 2 === 0 ? 2 : 1.5;
     overtoneOsc.type = "sine";
-    overtoneOsc.frequency.setValueAtTime(Math.min(4200, bellFreq * overtoneMult), at);
+    overtoneOsc.frequency.setValueAtTime(Math.min(3600, bellFreq * overtoneMult), at);
     overtoneGain.gain.setValueAtTime(0.0001, at);
-    overtoneGain.gain.exponentialRampToValueAtTime(bellPeak * 0.36, at + 0.005);
+    overtoneGain.gain.exponentialRampToValueAtTime(bellPeak * 0.3, at + 0.006);
     overtoneGain.gain.exponentialRampToValueAtTime(0.0001, at + bellDuration * 0.65);
     overtoneOsc.connect(overtoneGain).connect(transport.chimeBus);
     overtoneOsc.start(at);
@@ -1290,25 +1291,25 @@ function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuratio
   // 2. Piet Codel Synesthetic Spectral Pad
   const registerMult = [1.0, 0.5, 0.5][step.lightnessIndex % 3];
   const padFreq = bellFreq * registerMult;
-  const detuneCents = (step.hueIndex + 1) * (1.8 + (step.shimmer || 50) * 0.055);
-  const padDuration = Math.max(0.26, stepDuration * (isAccented ? 1.4 : 0.9));
+  const detuneCents = (step.hueIndex + 1) * 1.4;
+  const padDuration = Math.max(0.28, stepDuration * (isAccented ? 1.45 : 0.95));
   const padFilter = context.createBiquadFilter();
-  padFilter.type = step.lightnessIndex === 0 ? "bandpass" : "lowpass";
+  padFilter.type = "lowpass";
   padFilter.frequency.setValueAtTime(
-    560 + step.hueIndex * 240 + (2 - step.lightnessIndex) * 340,
+    580 + step.hueIndex * 180 + (2 - step.lightnessIndex) * 260,
     at,
   );
-  padFilter.Q.setValueAtTime(1.8 + (step.shimmer || 50) * 0.025, at);
+  padFilter.Q.setValueAtTime(1.4, at);
 
   const padGain = context.createGain();
-  const padPeak = (isAccented ? 0.044 : 0.031) * holdBoost;
+  const padPeak = (isAccented ? 0.036 : 0.025) * holdBoost;
   padGain.gain.setValueAtTime(0.0001, at);
-  padGain.gain.exponentialRampToValueAtTime(padPeak, at + 0.055);
+  padGain.gain.exponentialRampToValueAtTime(padPeak, at + 0.06);
   padGain.gain.exponentialRampToValueAtTime(0.0001, at + padDuration);
 
   for (const sign of [-1, 1]) {
     const padOsc = context.createOscillator();
-    padOsc.type = step.lightnessIndex === 2 ? "triangle" : "sine";
+    padOsc.type = "sine";
     padOsc.frequency.setValueAtTime(padFreq, at);
     padOsc.detune.setValueAtTime(sign * detuneCents, at);
     padOsc.connect(padFilter);
@@ -1324,45 +1325,47 @@ function scheduleChantStep(context, transport, score, stepIndex, at, stepDuratio
   if (!step || step.gate === 0) return;
 
   const isSoliloquy = step.gate === 2;
-  const duration = Math.max(0.18, stepDuration * (isSoliloquy ? 1.32 : 0.85));
-  const midi = Math.max(38, Math.min(76, score.root + step.registerOffset + step.interval));
+  const duration = Math.max(0.24, stepDuration * (isSoliloquy ? 1.65 : 1.15));
+  const midi = Math.max(40, Math.min(74, score.root + step.registerOffset + step.interval));
   const baseFreq = midiToFrequency(midi);
-  const holdBoost = 1 + interaction.hold * 0.16;
+  const holdBoost = 1 + interaction.hold * 0.14;
 
-  // Glottal source with vibrato LFO
+  // Glottal source with gentle triangle-dominant blend and smooth vibrato
   const glottalMix = context.createGain();
   glottalMix.gain.setValueAtTime(1, at);
 
   const oscA = context.createOscillator();
   const oscB = context.createOscillator();
-  oscA.type = "sawtooth";
-  oscB.type = "triangle";
+  const oscBGain = context.createGain();
+  oscA.type = "triangle";
+  oscB.type = "sawtooth";
+  oscBGain.gain.setValueAtTime(0.38, at);
   oscA.frequency.setValueAtTime(baseFreq, at);
-  oscB.frequency.setValueAtTime(baseFreq * 1.003, at);
+  oscB.frequency.setValueAtTime(baseFreq * 1.0015, at);
 
   const lfo = context.createOscillator();
   const lfoGain = context.createGain();
   lfo.type = "sine";
-  lfo.frequency.setValueAtTime(step.vibratoHz || 5.4, at);
-  lfoGain.gain.setValueAtTime(isSoliloquy ? 4.2 : 2.6, at);
+  lfo.frequency.setValueAtTime(step.vibratoHz || 5.1, at);
+  lfoGain.gain.setValueAtTime(isSoliloquy ? 2.4 : 1.6, at);
   lfo.connect(lfoGain);
   lfoGain.connect(oscA.frequency);
   lfoGain.connect(oscB.frequency);
 
   oscA.connect(glottalMix);
-  oscB.connect(glottalMix);
+  oscB.connect(oscBGain).connect(glottalMix);
 
   // Parallel 3-formant vocal tract bandpass bank (F1, F2, F3)
   const voiceAmp = context.createGain();
-  const peak = (isSoliloquy ? 0.075 : 0.052) * holdBoost;
+  const peak = (isSoliloquy ? 0.068 : 0.048) * holdBoost;
   voiceAmp.gain.setValueAtTime(0.0001, at);
-  voiceAmp.gain.exponentialRampToValueAtTime(peak, at + 0.032);
+  voiceAmp.gain.exponentialRampToValueAtTime(peak, at + 0.055);
   voiceAmp.gain.exponentialRampToValueAtTime(0.0001, at + duration);
 
   const formants = [
-    { freq: step.f1, q: 6.5 + (step.formantResonance || 55) * 0.05, weight: 1.0 },
-    { freq: step.f2, q: 8.5 + (step.formantResonance || 55) * 0.06, weight: 0.68 },
-    { freq: step.f3, q: 10.0 + (step.formantResonance || 55) * 0.07, weight: 0.35 },
+    { freq: step.f1, q: 4.5 + (step.formantResonance || 55) * 0.025, weight: 1.0 },
+    { freq: step.f2, q: 5.8 + (step.formantResonance || 55) * 0.03, weight: 0.62 },
+    { freq: step.f3, q: 7.0 + (step.formantResonance || 55) * 0.035, weight: 0.28 },
   ];
 
   for (const f of formants) {
@@ -1802,7 +1805,7 @@ async function playScore(score) {
     output,
     drones,
     droneGains,
-    melody: melodyFor(score),
+    melody: currentConductedMelody || melodyFor(score),
     timer: 0,
     nextNoteTime: now,
     step: 0,
@@ -1816,9 +1819,9 @@ async function playScore(score) {
   harmonyBus.gain.setValueAtTime(harmonyEnabled ? 0.78 : 0.0001, now);
   chimeBus.gain.setValueAtTime(chimeEnabled ? 0.8 : 0.0001, now);
   chantBus.gain.setValueAtTime(chantEnabled ? 0.82 : 0.0001, now);
-  filter.type = ["lowpass", "bandpass", "lowpass", "highpass", "lowpass", "bandpass"][score.voice];
-  filter.frequency.value = 620 + score.bloom * 24 + score.hueShift * 2;
-  filter.Q.value = 2.5 + score.edge / 16;
+  filter.type = ["lowpass", "bandpass", "lowpass", "lowpass", "lowpass", "bandpass"][score.voice];
+  filter.frequency.value = 720 + score.bloom * 20 + score.hueShift * 1.6;
+  filter.Q.value = 1.6 + score.edge / 28;
   compressor.threshold.value = -18;
   compressor.knee.value = 18;
   compressor.ratio.value = 5;
@@ -1886,6 +1889,30 @@ async function playScore(score) {
   elements.status.textContent = "OMEN LOOPING";
 }
 
+let currentConductedMelody = null;
+
+function applyEnsembleConductor() {
+  if (!currentScore) return;
+  const conducted = conductEnsemble({
+    score: currentScore,
+    melody: melodyFor(currentScore),
+    beat: currentBeat,
+    bass: currentBass,
+    harmony: currentHarmony,
+    chimes: currentChimes,
+    chant: currentChant,
+    mutation: harmonyMutation + bassMutation + chimeMutation + chantMutation,
+  });
+  currentConductedMelody = conducted.melody;
+  if (conducted.bass) currentBass = conducted.bass;
+  if (conducted.harmony) currentHarmony = conducted.harmony;
+  if (conducted.chimes) currentChimes = conducted.chimes;
+  if (conducted.chant) currentChant = conducted.chant;
+  if (currentTransport) {
+    currentTransport.melody = currentConductedMelody;
+  }
+}
+
 function showScore(score) {
   currentScore = score;
   beatMutation = 0;
@@ -1900,7 +1927,6 @@ function showScore(score) {
       elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · DENSITY ${score.beatDensity}%`;
     }
     if (elements.beatMutate) elements.beatMutate.disabled = false;
-    updateBeatGrid();
   } else if (elements.beatName) {
     elements.beatName.textContent = BEAT_NAMES[score.beatMode];
   }
@@ -1911,7 +1937,6 @@ function showScore(score) {
       elements.bassTelemetry.textContent = `256-CELL TAPE · ${currentBass.stepsExecuted} OPS · GLIDE ${score.bassGlide}%`;
     }
     if (elements.bassMutate) elements.bassMutate.disabled = false;
-    updateBassGrid();
   } else if (elements.bassName) {
     elements.bassName.textContent = BASS_NAMES[score.bassMode];
   }
@@ -1922,7 +1947,6 @@ function showScore(score) {
       elements.harmonyTelemetry.textContent = `2D TORUS · ${currentHarmony.stepsExecuted} OPS · ${currentHarmony.mirrorsHit} MIRRORS`;
     }
     if (elements.harmonyMutate) elements.harmonyMutate.disabled = false;
-    updateHarmonyGrid();
   } else if (elements.harmonyName) {
     elements.harmonyName.textContent = HARMONY_NAMES[score.harmonyMode];
   }
@@ -1933,7 +1957,6 @@ function showScore(score) {
       elements.chimeTelemetry.textContent = `${currentChimes.pietStepsExecuted} CODELS · ${currentChimes.fractranStepsExecuted} FRACTRAN RATIOS · SHIMMER ${score.chimeShimmer}%`;
     }
     if (elements.chimeMutate) elements.chimeMutate.disabled = false;
-    updateChimeGrid();
   } else if (elements.chimeName) {
     elements.chimeName.textContent = CHIME_NAMES[score.chimeMode];
   }
@@ -1944,10 +1967,15 @@ function showScore(score) {
       elements.chantTelemetry.textContent = `3 ACTS · ${currentChant.statementsExecuted} CUES · FORMANT ${score.chantFormant}%`;
     }
     if (elements.chantMutate) elements.chantMutate.disabled = false;
-    updateChantGrid();
   } else if (elements.chantName) {
     elements.chantName.textContent = CHANT_NAMES[score.chantMode];
   }
+  applyEnsembleConductor();
+  updateBeatGrid();
+  updateBassGrid();
+  updateHarmonyGrid();
+  updateChimeGrid();
+  updateChantGrid();
   if (elements.bandstandMutateAll) elements.bandstandMutateAll.disabled = false;
   updateBandstandStatus();
   elements.name.textContent = score.name;
@@ -2429,10 +2457,12 @@ elements.beatMutate?.addEventListener("click", () => {
   if (!currentScore || !beatSource) return;
   beatMutation += 1;
   currentBeat = composeBeat(beatSource, currentScore, beatMutation);
+  applyEnsembleConductor();
   if (elements.beatTelemetry) {
     elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · MUTATION #${beatMutation}`;
   }
   updateBeatGrid();
+  updateBassGrid();
 });
 
 elements.bassToggle?.addEventListener("click", () => {
@@ -2451,6 +2481,7 @@ elements.bassMutate?.addEventListener("click", () => {
   if (!currentScore || !bassSource) return;
   bassMutation += 1;
   currentBass = composeBass(bassSource, currentScore, bassMutation);
+  applyEnsembleConductor();
   if (elements.bassTelemetry) {
     elements.bassTelemetry.textContent = `256-CELL TAPE · ${currentBass.stepsExecuted} OPS · SHIFT #${bassMutation}`;
   }
@@ -2473,10 +2504,14 @@ elements.harmonyMutate?.addEventListener("click", () => {
   if (!currentScore || !harmonySource) return;
   harmonyMutation += 1;
   currentHarmony = composeHarmony(harmonySource, currentScore, harmonyMutation);
+  applyEnsembleConductor();
   if (elements.harmonyTelemetry) {
     elements.harmonyTelemetry.textContent = `2D TORUS · ${currentHarmony.stepsExecuted} OPS · DEFLECTION #${harmonyMutation}`;
   }
   updateHarmonyGrid();
+  updateBassGrid();
+  updateChimeGrid();
+  updateChantGrid();
 });
 
 elements.chimeToggle?.addEventListener("click", () => {
@@ -2495,6 +2530,7 @@ elements.chimeMutate?.addEventListener("click", () => {
   if (!currentScore || !pietSource || !fractranSource) return;
   chimeMutation += 1;
   currentChimes = composeChimes(pietSource, fractranSource, currentScore, chimeMutation);
+  applyEnsembleConductor();
   if (elements.chimeTelemetry) {
     elements.chimeTelemetry.textContent = `${currentChimes.pietStepsExecuted} CODELS · ${currentChimes.fractranStepsExecuted} RATIOS · REFRACTION #${chimeMutation}`;
   }
@@ -2517,6 +2553,7 @@ elements.chantMutate?.addEventListener("click", () => {
   if (!currentScore || !chantSource) return;
   chantMutation += 1;
   currentChant = composeChant(chantSource, currentScore, chantMutation);
+  applyEnsembleConductor();
   if (elements.chantTelemetry) {
     elements.chantTelemetry.textContent = `3 ACTS · ${currentChant.statementsExecuted} CUES · RECAST #${chantMutation}`;
   }

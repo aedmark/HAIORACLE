@@ -88,6 +88,7 @@ Never force-push or rewrite shared history.
 | `src/fractran.mjs` | Piet codel and FRACTRAN prime-exponent interpreters and 12-step chime engine |
 | `src/chant.spl` | Canonical Shakespeare Programming Language 2001 3-Act tragedy and formant choir script |
 | `src/shakespeare.mjs` | Shakespeare Programming Language interpreter and 12-scene formant vowel choir engine |
+| `src/conductor.mjs` | Euler *Gradus Suavitatis*, Neo-Riemannian *Tonnetz*, and Euclidean rhythm ensemble conductor |
 | `src/score.mjs` | Phrase hashing, score validation, and naming |
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |
 | `src/app.mjs` | Browser controls, Canvas creature, and Web Audio instrument |
