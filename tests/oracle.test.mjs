@@ -8,6 +8,7 @@ import { runLolcode } from "../src/lolcode.mjs";
 import { BEAT_NAMES, composeBeat, crazy, cycleBeatStep, rotr, runMalbolge } from "../src/malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "../src/music.mjs";
 import { composeScore, hashPhrase, parseScore } from "../src/score.mjs";
+import { buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "../src/share.mjs";
 import { CHANT_NAMES, FORMANT_VOWELS, PERSONA_ROLES, composeChant, cycleChantCell, runShakespeare } from "../src/shakespeare.mjs";
 
 const [source, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource] = await Promise.all([
@@ -266,4 +267,20 @@ test("unsupported LOLCODE fails with a useful line number", () => {
     () => runLolcode("HAI 1.2\nHOW DUZ I WAT\nKTHXBYE"),
     /LOLCODE line 2: Unsupported statement/,
   );
+});
+
+test("shareable URL fragments round-trip phrases locally and generate deterministic PNG filenames", () => {
+  const hash = encodeOmenHash("  the moon owes me   five dollars ");
+  assert.equal(hash, "#omen=the%20moon%20owes%20me%20five%20dollars");
+  assert.equal(decodeOmenHash(hash), "the moon owes me five dollars");
+  assert.equal(decodeOmenHash(""), null);
+  assert.equal(decodeOmenHash("#other=1"), null);
+
+  const shareUrl = buildShareUrl("https://oracle.example.test/index.html#old", "the moon owes me five dollars");
+  assert.equal(shareUrl, "https://oracle.example.test/index.html#omen=the%20moon%20owes%20me%20five%20dollars");
+
+  const score = composeScore(source, "the moon owes me five dollars");
+  const filename = specimenFilenameFor(score);
+  assert.match(filename, /^hai-oracle-[a-z0-9-]+-[0-9a-f]{8}\.png$/);
+  assert.throws(() => encodeOmenHash("   "), /empty omen phrase/);
 });

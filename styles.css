@@ -719,15 +719,23 @@ input[type="text"]:focus {
   cursor: pointer;
 }
 
+.reading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
 .replay-button {
-  padding: 0.85rem 1.1rem;
+  padding: 0.72rem 0.95rem;
   border: 1px solid var(--brass);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6);
   color: var(--parchment-light);
   background: linear-gradient(180deg, rgba(184, 146, 73, 0.16), rgba(15, 11, 10, 0.8));
   font-family: var(--mono-ledger);
-  font-size: 0.6rem;
-  letter-spacing: 0.15em;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
   transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
 }
 
@@ -1086,7 +1094,7 @@ noscript {
     grid-row: 2;
   }
 
-  .replay-button {
+  .reading-actions {
     grid-column: 2;
     grid-row: 1;
   }
@@ -1184,7 +1192,7 @@ noscript {
   }
 
   .reading {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
   }
 
   .score-card {
@@ -1199,9 +1207,10 @@ noscript {
     width: min(16rem, 100%);
   }
 
-  .replay-button {
-    grid-column: 2;
-    grid-row: 1;
+  .reading-actions {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    justify-content: flex-start;
   }
 
   .beat-grid {

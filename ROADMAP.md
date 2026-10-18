@@ -21,8 +21,8 @@ Goal: summon one coherent audiovisual creature from one phrase.
 
 Goal: let a creature travel without adding accounts or remote storage.
 
-- [ ] P3-01 Encode the phrase in a shareable URL while preserving the deterministic privacy model. Origin: product workshop, 2026-10-17.
-- [ ] P3-02 Export a still image containing the creature name and originating phrase. Origin: prototype follow-up, 2026-10-17.
+- [x] P3-01 Encode the phrase in a shareable URL fragment (`#omen=...`) while preserving the deterministic privacy model (`src/share.mjs`, `#share-link`). Verified by automated round-trip and static tests on 2026-10-18.
+- [x] P3-02 Export a 1200×1520 engraved Victorian broadsheet PNG containing the creature portrait, specimen name, originating phrase, hexadecimal seed, and six-language ensemble ledger (`#export-png`, `renderSpecimenBroadsheetCanvas()`). Verified by structural tests on 2026-10-18.
 
 ## Phase 4: Quality
 

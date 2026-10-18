@@ -16,6 +16,7 @@ test("the static entry points exist", async () => {
     "src/malbolge.mjs",
     "src/music.mjs",
     "src/score.mjs",
+    "src/share.mjs",
     "src/shakespeare.mjs",
     "src/oracle.lol",
     "src/beat.mal",
@@ -60,8 +61,12 @@ test("the page exposes one labeled text input and its core controls", async () =
   assert.match(html, /id="bandstand-solo-lead"/);
   assert.match(html, /id="bandstand-mutate-all"/);
   assert.match(html, /id="replay"/);
+  assert.match(html, /id="share-link"/);
+  assert.match(html, /id="export-png"/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /RESTART THE MELODY/);
+  assert.match(html, /COPY OMEN LINK/);
+  assert.match(html, /ENGRAVE PNG PLATE/);
 });
 
 test("the interface uses the centered esoteric parlor cabinet design system", async () => {
@@ -167,6 +172,9 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.match(app, /function renderHarmonyGrid\(\)/);
   assert.match(app, /function renderChimeGrid\(\)/);
   assert.match(app, /function renderChantGrid\(\)/);
+  assert.match(app, /function renderSpecimenBroadsheetCanvas\(/);
+  assert.match(app, /function copyShareLink\(\)/);
+  assert.match(app, /function exportSpecimenPng\(\)/);
   assert.match(app, /fetch\("src\/beat\.mal"\)/);
   assert.match(app, /fetch\("src\/bass\.bf"\)/);
   assert.match(app, /fetch\("src\/harmony\.bfg"\)/);
@@ -187,6 +195,7 @@ test("the application has no remote runtime assets", async () => {
     "src/malbolge.mjs",
     "src/music.mjs",
     "src/score.mjs",
+    "src/share.mjs",
     "src/shakespeare.mjs",
   ].map((path) => readFile(new URL(path, root), "utf8")));
   assert.equal(files.some((contents) => /https?:\/\//i.test(contents)), false);

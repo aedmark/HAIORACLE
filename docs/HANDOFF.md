@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-18, session 11, on `main`: the full six-language esoteric jam band—LOLCODE lead, Malbolge ternary beat generator, Brainfuck walking tape bassline, Befunge-93 2D mirror chord organ, Piet/FRACTRAN spectral chimes, Shakespeare formant vowel choir, and the Parlor Bandstand ensemble console—is implemented, structurally verified, and confirmed by maintainer hands-on browser review (P4-01)._
+_Last updated: 2026-10-18, session 11, on `main`: the full six-language esoteric jam band, Parlor Bandstand ensemble console, privacy-preserving `#omen=...` shareable links (P3-01), and 1200×1520 engraved broadsheet PNG export (P3-02) are implemented, structurally verified, and confirmed by maintainer hands-on browser review (P4-01)._
 
-**Where things stand:** P1, P2, P4-01, and P5-01 through P5-13 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume. The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), and a Parlor Bandstand six-language ensemble console. Remaining open work covers assistive-technology checks (P4-02), optional URL/image sharing (P3), and public hosting (P6).
+**Where things stand:** P1, P2, P3-01, P3-02, P4-01, and P5-01 through P5-13 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume. The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing, and high-resolution broadsheet PNG plate engraving. Remaining open work covers assistive-technology checks (P4-02) and public hosting (P6-01).
 
 **Verified** (2026-10-18, initial repository, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **28/28 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **29/29 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 
 **What works**
@@ -37,6 +37,7 @@ _Last updated: 2026-10-18, session 11, on `main`: the full six-language esoteric
 - A 1993 Befunge-93 2D torus interpreter (`src/befunge.mjs`) executes `src/harmony.bfg` across an 80×25 boustrophedon mirror grid with `#` bridges and four diagonal mirrors (`\ / / \`) to generate a 12-cell polyphonic 3-voice chord organ (`#harmony-grid`) across eight organ archetypes, with `/` ascending and `\` descending harp-strum voicings, live mirror cycling, organ toggle, and mirror-flip controls (P5-10, D-014).
 - A 2001 Piet 2D codel interpreter and 1987 John Conway FRACTRAN prime-ratio machine (`src/fractran.mjs`) execute `src/pad.piet` (49 codel transitions across all 18 chromatic codels) and `src/chimes.frac` ($2^a 3^b 5^c 7^d$ rational multipliers) to drive 7-limit Just Intonation overtone bells and synesthetic codel-filtered chorus pads (`#chime-grid`) across eight carillon archetypes, with live codel/ratio cycling, chime toggle, and codel-refraction controls (P5-11, D-014).
 - A 2001 Shakespeare Programming Language interpreter (`src/shakespeare.mjs`) executes `src/chant.spl` (`The Oracular Tragedy of the Parlor Glass.`) across 3 Acts, 12 Scenes, and four dramatis personae (`Hamlet`, `Ophelia`, `Prospero`, `Hecate`) to drive a 3-formant ($F_1, F_2, F_3$) parallel bandpass vowel choir (`#chant-grid`) across eight dramatic archetypes, coordinated with the other five languages by the Parlor Bandstand ensemble console (`#bandstand-engine`, P5-12, P5-13, D-014).
+- Summoned creatures sync their phrase to `#omen=...` URL fragments without sending query parameters over HTTP, can be copied via `COPY OMEN LINK` (`#share-link`), and can be exported as a 1200×1520 engraved broadsheet PNG (`#export-png`) containing the live creature capture, specimen name, confided phrase, seed, and six-language ensemble ledger (P3-01, P3-02, D-015).
 - Full interactive and audiovisual functionality verified in live browser review (P4-01).
 - Runtime assets are local and dependency-free (D-001).
 
@@ -54,8 +55,7 @@ _Last updated: 2026-10-18, session 11, on `main`: the full six-language esoteric
 ## Next steps
 
 1. Complete P4-02 with keyboard, reduced-motion, contrast, and screen-reader checks.
-2. Implement P3-01 (shareable URL) or P3-02 (still image export) when ready.
-3. Choose public hosting and domain (Q-001 / P6-01).
+2. Choose public hosting and domain (Q-001 / P6-01).
 
 ## Open questions
 
@@ -67,23 +67,23 @@ _Last updated: 2026-10-18, session 11, on `main`: the full six-language esoteric
 
 **Contributor:** Antigravity with maintainer direction
 
-**Goal:** Add a Malbolge ternary beat generator (`P5-08`), spec out the full esoteric jam band (`P5-09` through `P5-13`), implement the Brainfuck walking tape bassline (`P5-09`), Befunge-93 2D mirror chord organ (`P5-10`), Piet/FRACTRAN spectral chimes (`P5-11`), Shakespeare formant vowel choir (`P5-12`), and Parlor Bandstand ensemble console (`P5-13`), and verify full functionality (`P4-01`).
+**Goal:** Add a Malbolge ternary beat generator (`P5-08`), spec out and implement the full six-language esoteric jam band (`P5-09` through `P5-13`), verify full browser functionality (`P4-01`), and add privacy-preserving `#omen=...` URL sharing (`P3-01`) and 1200×1520 broadsheet PNG plate export (`P3-02`).
 
-**Done:** P4-01, P5-08, P5-09, P5-10, P5-11, P5-12, P5-13
+**Done:** P3-01, P3-02, P4-01, P5-08, P5-09, P5-10, P5-11, P5-12, P5-13
 
-**Changed:** Added `src/malbolge.mjs` and `src/beat.mal` for the Plate II 12-step ternary percussion automaton, `src/brainfuck.mjs` and `src/bass.bf` for the Plate III 12-cell walking sub-bass and acid-organ sequencer, `src/befunge.mjs` and `src/harmony.bfg` for the Plate IV 12-step polyphonic 2D mirror chord organ, `src/fractran.mjs`, `src/pad.piet`, and `src/chimes.frac` for the Plate V 12-step Just Intonation prime-ratio chime and Piet codel chorus engine, and `src/shakespeare.mjs` and `src/chant.spl` for the Plate VI 12-scene 3-formant vowel choir. Extended `src/oracle.lol` and `src/score.mjs` with `beat_mode`, `beat_density`, `bass_mode`, `bass_glide`, `harmony_mode`, `harmony_strum`, `chime_mode`, `chime_shimmer`, `chant_mode`, and `chant_formant`. Added interactive 12-step matrices, synthesized drum, bass, 3-voice reed/harp organ, Just Intonation bell/codel-pad, and 3-formant vocal choir busses, live playheads, engage/silence toggles, mutation buttons, and the Parlor Bandstand Six-Language Ensemble Console in `index.html`, `styles.css`, and `src/app.mjs`.
+**Changed:** Added `src/malbolge.mjs` and `src/beat.mal` (Plate II), `src/brainfuck.mjs` and `src/bass.bf` (Plate III), `src/befunge.mjs` and `src/harmony.bfg` (Plate IV), `src/fractran.mjs`, `src/pad.piet`, and `src/chimes.frac` (Plate V), `src/shakespeare.mjs` and `src/chant.spl` (Plate VI), and `src/share.mjs` (`encodeOmenHash`, `decodeOmenHash`, `buildShareUrl`, `specimenFilenameFor`). Extended `src/oracle.lol` and `src/score.mjs` with causal fields for all six languages. Added interactive 12-step matrices, synthesized multi-language Web Audio busses, the Parlor Bandstand Six-Language Ensemble Console, `#share-link` URL fragment sync/copy, and `#export-png` 1200×1520 broadsheet PNG rendering in `index.html`, `styles.css`, and `src/app.mjs`.
 
-**Decisions:** D-013, D-014
+**Decisions:** D-013, D-014, D-015
 
-**Verified:** Twenty-eight Node checks passed, including Malbolge `crazy`/`rotr` invariants, `src/beat.mal`, `src/bass.bf`, `src/harmony.bfg`, `src/pad.piet`, `src/chimes.frac`, and `src/chant.spl` execution across all eight cadence, bass groove, chord organ, chime carillon, and Shakespeare choir families, negative Malbolge, Brainfuck, Befunge-93, Piet, FRACTRAN, and Shakespeare syntax checks, and UI/audio scheduler markers; maintainer verified full functionality in browser (P4-01); documentation checker reported 0 errors and 0 warnings across 14 documents.
+**Verified:** Twenty-nine Node checks passed, including all six esoteric language interpreters, shareable URL fragment round-tripping, deterministic PNG filename generation, and UI/audio scheduler markers; maintainer verified full functionality in browser (P4-01); documentation checker reported 0 errors and 0 warnings across 14 documents.
 
 **Not verified:** Assistive-technology and screen-reader testing remains P4-02 work.
 
 **Problems:** None at handoff update time.
 
-**Left undone:** P3, P4-02, and P6 roadmap items.
+**Left undone:** P4-02 and P6-01 roadmap items.
 
-**Next session should start with:** P4-02 or P3-01/P3-02 when ready.
+**Next session should start with:** P4-02 or P6-01 when ready.
 
 ### Session 10: 2026-10-17: the parlor vitrine opens and answers the glass
 

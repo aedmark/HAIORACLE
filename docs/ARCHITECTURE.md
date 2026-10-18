@@ -9,8 +9,9 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Area | Where | Entry point | Talks to |
 | --- | --- | --- | --- |
 | Page shell | `index.html`, `styles.css` | document load | browser host |
-| Browser host | `src/app.mjs` | form submission | score compiler, Canvas, Web Audio |
+| Browser host | `src/app.mjs` | form submission | score compiler, Canvas, Web Audio, share/PNG export |
 | Phrase and score boundary | `src/score.mjs` | `composeScore()` | interpreter |
+| Share and PNG boundary | `src/share.mjs` | `encodeOmenHash()`, `decodeOmenHash()`, `specimenFilenameFor()` | browser URL fragment and PNG download |
 | Melody grammar | `src/music.mjs` | `melodyFor()` | validated score, browser host |
 | LOLCODE runtime | `src/lolcode.mjs` | `runLolcode()` | spell source only |
 | Composition | `src/oracle.lol` | `HAI 1.2` program | interpreter output |

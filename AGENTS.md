@@ -89,6 +89,7 @@ Never force-push or rewrite shared history.
 | `src/chant.spl` | Canonical Shakespeare Programming Language 2001 3-Act tragedy and formant choir script |
 | `src/shakespeare.mjs` | Shakespeare Programming Language interpreter and 12-scene formant vowel choir engine |
 | `src/score.mjs` | Phrase hashing, score validation, and naming |
+| `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |
 | `src/app.mjs` | Browser controls, Canvas creature, and Web Audio instrument |
 | `tests/` | Dependency-free Node tests |
 | `ROADMAP.md` | Planned work with stable IDs |

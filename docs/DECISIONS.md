@@ -148,6 +148,16 @@ This append-only record holds choices that a future session might otherwise re-l
 
 **Consequences:** Pre-release score validation gains `bass_mode` (`[0, 7]`), `bass_glide` (`[20, 100]`), `harmony_mode` (`[0, 7]`), `harmony_strum` (`[15, 100]`), `chime_mode` (`[0, 7]`), `chime_shimmer` (`[20, 100]`), `chant_mode` (`[0, 7]`), and `chant_formant` (`[25, 100]`), and the browser fetches `src/bass.bf`, `src/harmony.bfg`, `src/pad.piet`, `src/chimes.frac`, and `src/chant.spl` alongside `src/oracle.lol` and `src/beat.mal`. Every creature now commands a full six-language esoteric chamber ensemble with global engage, solo-lead, and synchronized multi-language mutation controls.
 
+## D-015 Shareable links use client-only URL fragments (`#omen=...`) and PNG plates render on an offscreen Canvas  (2026-10-18, status: accepted)
+
+**Context:** P3-01 and P3-02 call for sharing a unique link to a summoned creature and exporting a still PNG containing the creature's name, portrait, and originating phrase without introducing accounts, servers, or remote telemetry.
+
+**Decision:** Encode the normalized phrase in the URL fragment (`#omen=<encodeURIComponent(phrase)>`) via `src/share.mjs`, synchronize the address bar with `history.replaceState` on summon, restore any `#omen=...` fragment on page load or `hashchange` (holding audio until a user gesture), and provide a `COPY OMEN LINK` control (`#share-link`). For still-image export (`#export-png`), composite a `1200 × 1520` Victorian specimen broadsheet onto an offscreen `<canvas>` (`renderSpecimenBroadsheetCanvas()`) containing the live `#vision` creature capture, specimen name, confided phrase, hexadecimal seed, and all six esoteric instrument plates, then download it as `hai-oracle-<name>-<seed>.png`.
+
+**Alternatives:** Using `?omen=...` query parameters would transmit user phrases in HTTP request logs and `Referer` headers to static hosting providers. Using third-party DOM-to-image libraries would violate the zero-dependency boundary (D-001).
+
+**Consequences:** Because RFC 3986 URL fragments never leave the browser in HTTP requests, links are shareable while preserving complete client-side privacy. PNG broadsheet plates are generated deterministically on-device with zero external libraries.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

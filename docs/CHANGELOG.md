@@ -21,4 +21,5 @@
 - Meet creatures with eight eye silhouettes, eight colored iris treatments, eight pupil geometries, six eye arrangements, varied sizes, and independent gaze behavior.
 - Watch eight bounded kinetic cores—including a rotating projected tesseract—move inside eight independently deforming silhouette grammars.
 - Respect reduced-motion preferences while keeping the visual reading available.
+- Copy a privacy-preserving `#omen=...` link (`COPY OMEN LINK`) or engrave a 1200×1520 Victorian broadsheet PNG (`ENGRAVE PNG PLATE`) containing the creature portrait, specimen name, confided phrase, hexadecimal seed, and six-language ensemble ledger.
 - Inspect the canonical LOLCODE spell, Malbolge beat tape, Brainfuck bass tape, Befunge torus playfield, Piet codel canvas, FRACTRAN prime fractions, and Shakespeare tragedy directly from the application.
