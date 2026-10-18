@@ -45,6 +45,7 @@ test("the page exposes one labeled text input and its core controls", async () =
   assert.match(html, /id="tempo-bpm" type="range" min="36" max="208" value="108"/);
   assert.match(html, /id="tempo-value"/);
   assert.match(html, /id="score-melody"/);
+  assert.match(html, /id="score-fungal"/);
   assert.match(html, /id="score-beat"/);
   assert.match(html, /id="beat-grid"/);
   assert.match(html, /id="beat-toggle"/);
@@ -144,6 +145,29 @@ test("tapping, holding, and dragging the vitrine modulate shape morphing, moveme
   assert.match(app, /function updateAudioInteraction\(\)/);
   assert.match(app, /interaction\.pitchBend/);
   assert.match(app, /const morphMix = Math\.min\(1, interaction\.hold/);
+});
+
+test("procedural mycelium and generative fruiting bodies grow within the vitrine", async () => {
+  const [html, app] = await Promise.all([
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("src/app.mjs", root), "utf8"),
+  ]);
+  assert.match(html, /id="score-fungal"/);
+  assert.match(app, /function buildMycelialNetwork/);
+  assert.match(app, /function buildFruitingBodies/);
+  assert.match(app, /function buildSporeSystem/);
+  assert.match(app, /function drawMycelium/);
+  assert.match(app, /function drawFruitingBodies/);
+  assert.match(app, /case 0: drawAgaricCap/);
+  assert.match(app, /case 1: drawBracketConk/);
+  assert.match(app, /case 2: drawCoralClavaria/);
+  assert.match(app, /case 3: drawBioluminescentBonnet/);
+  assert.match(app, /case 4: drawCupPeziza/);
+  assert.match(app, /case 5: drawMorelHoneycomb/);
+  assert.match(app, /case 6: drawGlobularPuffball/);
+  assert.match(app, /case 7: drawHyphalHydra/);
+  assert.match(app, /updateAndDrawSpores/);
+  assert.match(app, /burstSpores/);
 });
 
 test("all five esoteric accompaniment plates and the parlor bandstand render 12-step matrices and schedule voices", async () => {

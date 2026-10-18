@@ -45,6 +45,10 @@ const REQUIRED_RANGES = Object.freeze({
   kinetic_depth: [20, 100],
   kinetic_tilt: [0, 7],
   flux_mode: [0, 7],
+  fungal_form: [0, 7],
+  fungal_hyphae: [10, 100],
+  fungal_spores: [10, 100],
+  fungal_bloom: [10, 100],
   name_a: [0, 31],
   name_b: [0, 31],
   name_c: [0, 47],
@@ -92,6 +96,16 @@ const NAME_PARTS = Object.freeze({
 export const WAVEFORMS = Object.freeze(["SINE", "TRIANGLE", "SQUARE", "SAWTOOTH"]);
 export const SHAPE_NAMES = Object.freeze([
   "BLOOM", "STAR", "RIPPLE", "GEAR", "CRYSTAL", "AMOEBA", "RIBBON", "PORTAL", "CROWN", "JELLY",
+]);
+export const FUNGAL_NAMES = Object.freeze([
+  "AGARIC CAP",
+  "BRACKET CONK",
+  "CORAL CLAVARIA",
+  "BIOLUMINESCENT BONNET",
+  "CUP PEZIZA",
+  "MOREL HONEYCOMB",
+  "GLOBULAR PUFFBALL",
+  "HYPHAL HYDRA",
 ]);
 
 function creatureName(values) {
@@ -192,6 +206,11 @@ export function parseScore(lines, seed, phrase) {
     kineticDepth: values.kinetic_depth,
     kineticTilt: values.kinetic_tilt,
     fluxMode: values.flux_mode,
+    fungalForm: values.fungal_form,
+    fungalName: FUNGAL_NAMES[values.fungal_form],
+    fungalHyphae: values.fungal_hyphae,
+    fungalSpores: values.fungal_spores,
+    fungalBloom: values.fungal_bloom,
     steps: Object.freeze(steps),
     name: creatureName(values),
   });

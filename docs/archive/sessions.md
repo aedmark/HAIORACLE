@@ -23,3 +23,26 @@ Active handoff state and the latest ten sessions live in [../HANDOFF.md](../HAND
 **Left undone:** P3, P4, P5, and P6 roadmap items.
 
 **Next session should start with:** P4-01.
+
+### Session 2: 2026-10-17: the omen keeps humming
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Loop sound continuously and expand repeated musical, visual, and naming outcomes.
+
+**Done:** P5-01; expanded P2-02 behavior
+
+**Changed:** Added a continuous look-ahead audio scheduler, twelve-note phrases, eight scales, six rhythms and voice stacks, ten shape families, larger visual ranges, and six ceremonial name templates with larger vocabularies.
+
+**Decisions:** D-005 supersedes the fixed-duration part of D-004.
+
+**Verified:** Eleven Node checks passed; documentation checker and whitespace review passed.
+
+**Not verified:** Listening continuity, subjective mix, animation quality, and cross-browser behavior.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** P4-01.
+

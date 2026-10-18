@@ -171,6 +171,19 @@ This append-only record holds choices that a future session might otherwise re-l
 
 **Consequences:** Every esoteric interpreter still executes its real program and shapes rhythm, register, inversion, codel timbre, and dramatic persona, while the ensemble plays in locked consonance and rhythmic sync.
 
+## D-017 Procedural mycelial network and generative fungal fruiting bodies  (2026-10-18, status: accepted)
+
+**Context:** The parlor specimen vitrine needed an organic generative layer reflecting cryptogamic and mycological Victorian botany—allowing the creature to germinate branching hyphal networks (mycelium) and sprout generative fruiting bodies (mushrooms/sporophores) that grow over time and respond to vitrine gestures.
+
+**Decision:** Add LOLCODE-owned `fungal_form` (`[0, 7]`), `fungal_hyphae` (`[10, 100]`), `fungal_spores` (`[10, 100]`), and `fungal_bloom` (`[10, 100]`) so `src/oracle.lol` remains causal across visual and mycological identity. In Canvas:
+1. **Branching Mycelial Hyphae & Anastomosis** (`buildMycelialNetwork()`, `drawMycelium()`) — Render 7 to 18 primary root hyphae emerging from the creature's silhouette vertices, each branching into wandering 5 to 9 segment trunks and lateral sub-branchlets with anastomotic fusion loops and traveling bioluminescent nutrient waves ($\sin(s \cdot 10 - t \cdot 4.5)$). Hyphae elongate progressively over an initial 10-second germination envelope ($G(t)$).
+2. **Generative Fruiting Bodies (Sporophores)** (`buildFruitingBodies()`, `drawFruitingBodies()`) — Anchor 3 to 8 generative sporophores along the creature's perimeter and hyphal junctions across eight distinct botanical archetypes: `AGARIC CAP` (parabolic umbrella cap, fibrous stipe, radial lamellae, annulus veil ring), `BRACKET CONK` (concentric terraced polypore shelves with margin pores), `CORAL CLAVARIA` (dendritic bifurcating antler clubs with glowing forked tips), `BIOLUMINESCENT BONNET` (slender nodding Mycena bonnets with translucent striations and dewdrop jewels), `CUP PEZIZA` (fluted chalice goblets with glistening spore disc hymenia and crenulated margins), `MOREL HONEYCOMB` (conical honeycomb heads with reticulated polygonal alveoli), `GLOBULAR PUFFBALL` (warty spherical bulbs with apical ostiole pores actively venting spore mist), and `HYPHAL HYDRA` (multi-stalked lantern capsules with weeping capillitium tendrils).
+3. **Ballistospore Particle System** (`buildSporeSystem()`, `updateAndDrawSpores()`, `burstSpores()`) — Maintain 35 to 85 drifting spores shed from active caps, subjected to upward thermal updrafts in the bell jar, orbital convection, and drag wake currents. Tapping the vitrine shocks the mycelium and discharges high-velocity spore bursts, while holding accelerates vegetative growth and intensifies bioluminescence.
+
+**Alternatives:** Using static bitmap textures or pre-baked sprites would violate zero-dependency rendering and determinism. Allowing unconstrained hyphae would clip past vitrine borders. Applying global blur to hyphae would breach D-007 performance invariants.
+
+**Consequences:** Pre-release score validation gains four causal fungal fields. The specimen palpably lives and grows inside the bell jar from germination to blooming maturity, captured faithfully on still broadsheet exports and responding tactilely to glass disturbance.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

@@ -4,17 +4,17 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-18, session 11, on `main`: the full six-language esoteric jam band, Euler-Tonnetz & Euclidean harmonic conductor (P5-14), Parlor Bandstand ensemble console, privacy-preserving `#omen=...` shareable links (P3-01), and 1200×1520 engraved broadsheet PNG export (P3-02) are implemented, structurally verified, and confirmed by maintainer hands-on browser review (P4-01)._
+_Last updated: 2026-10-18, session 12, on `main`: procedural mycelial network growth, branching hyphae, anastomotic fusion loops, and eight generative sporophore fruiting body archetypes (P5-16, D-017) are implemented alongside the full six-language esoteric jam band, Euler-Tonnetz & Euclidean harmonic conductor (P5-14), Parlor Bandstand ensemble console, privacy-preserving `#omen=...` shareable links (P3-01), and 1200×1520 engraved broadsheet PNG export (P3-02)._
 
-**Where things stand:** P1, P2, P3-01, P3-02, P4-01, and P5-01 through P5-14 are implemented. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing, and high-resolution broadsheet PNG plate engraving. Remaining open work covers a granular Kapellmeister music-theory and genre rule console (P5-15), assistive-technology checks (P4-02), and public hosting (P6-01).
+**Where things stand:** P1, P2, P3-01, P3-02, P4-01, and P5-01 through P5-14, plus P5-16, are implemented. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a procedural branching mycelial network with eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra), drifting ballistospores with vitrine tap bursts, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing, and high-resolution broadsheet PNG plate engraving. Remaining open work covers a granular Kapellmeister music-theory and genre rule console (P5-15), assistive-technology checks (P4-02), and public hosting (P6-01).
 
 **Verified** (2026-10-18, initial repository, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **30/30 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **31/31 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 20 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 24 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -33,6 +33,7 @@ _Last updated: 2026-10-18, session 11, on `main`: the full six-language esoteric
 - Every phrase selects and rotates one of twelve named twelve-note motifs, including five arpeggio and three chromatic families, then repeats it exactly (P5-05, D-010).
 - The responsive page shell uses an engraved book-serif and telegraph-monospace stack, foxed parchment and tarnished brass parlor framing, inline SVG sigil and spandrel linework, and a centered bell-jar apparition vitrine without remote or proprietary assets (P5-06, D-011).
 - Tapping/clicking, holding, and holding-and-dragging inside the vitrine trigger synthesized glass and membrane percussion, drive a constant-power harmonic phase shift across the creature's motif and three-partial drone choir, and morph, tug, and accelerate the creature's silhouette, kinetic core, and gaze before decaying smoothly back to its deterministic score (P5-07, D-012).
+- A procedural mycelial network with branching hyphae, anastomotic fusion loops, traveling nutrient waves, and eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) grows over a 10-second life-cycle envelope, puffs glowing ballistospores on vitrine taps, and accelerates with touch (P5-16, D-017).
 - A spec-compliant 1998 Malbolge virtual machine (`src/malbolge.mjs`) executes `src/beat.mal` on a $3^{10}$ ternary tape to generate a 12-step ternary beat matrix (`#beat-grid`) across eight cadence families, with synthesized bellows kick, clockwork snare, and escapement chime voices plus live step cycling, pulse toggle, and mutation controls (P5-08, D-013).
 - A 1993 Brainfuck tape interpreter (`src/brainfuck.mjs`) executes `src/bass.bf` on a 256-cell byte tape with `[->+<]` transfer loops to generate a 12-cell walking sub-bass and resonant lowpass acid-organ ostinato (`#bass-grid`) across eight groove archetypes, with portamento glide, live cell stepping, bass toggle, and tape-shift controls (P5-09, D-014).
 - A 1993 Befunge-93 2D torus interpreter (`src/befunge.mjs`) executes `src/harmony.bfg` across an 80×25 boustrophedon mirror grid with `#` bridges and four diagonal mirrors (`\ / / \`) to generate a 12-cell polyphonic 3-voice chord organ (`#harmony-grid`) across eight organ archetypes, with `/` ascending and `\` descending harp-strum voicings, live mirror cycling, organ toggle, and mirror-flip controls (P5-10, D-014).
@@ -40,7 +41,7 @@ _Last updated: 2026-10-18, session 11, on `main`: the full six-language esoteric
 - A 2001 Shakespeare Programming Language interpreter (`src/shakespeare.mjs`) executes `src/chant.spl` (`The Oracular Tragedy of the Parlor Glass.`) across 3 Acts, 12 Scenes, and four dramatis personae (`Hamlet`, `Ophelia`, `Prospero`, `Hecate`) to drive a 3-formant ($F_1, F_2, F_3$) parallel bandpass vowel choir (`#chant-grid`) across eight dramatic archetypes, coordinated with the other five languages by the Parlor Bandstand ensemble console (`#bandstand-engine`, P5-12, P5-13, D-014).
 - An Euler-Tonnetz and Euclidean harmonic conductor (`src/conductor.mjs`) harmonizes all six esoteric bandmates across a 4-region Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) progression, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, pure 5-limit Just Intonation chime overtones, and Bjorklund Euclidean rhythm hocketing $E(k, 12)$ (P5-14, D-016).
 - Summoned creatures sync their phrase to `#omen=...` URL fragments without sending query parameters over HTTP, can be copied via `COPY OMEN LINK` (`#share-link`), and can be exported as a 1200×1520 engraved broadsheet PNG (`#export-png`) containing the live creature capture, specimen name, confided phrase, seed, and six-language ensemble ledger (P3-01, P3-02, D-015).
-- A comprehensive 3x technical manual (`docs/manual.json`, `manual.html`, `tools/manual.py`) documents What, How, and Why across all 20 major systems, interpreters, and algorithms with 0 warnings.
+- A comprehensive 3x technical manual (`docs/manual.json`, `manual.html`, `tools/manual.py`) documents What, How, and Why across all 24 major systems, interpreters, and algorithms with 0 warnings.
 - Full interactive and audiovisual functionality verified in live browser review (P4-01).
 - Runtime assets are local and dependency-free (D-001).
 
@@ -66,6 +67,28 @@ _Last updated: 2026-10-18, session 11, on `main`: the full six-language esoteric
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 12: 2026-10-18: the mycelium colonizes the parlor glass
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Introduce a procedural mycelial/fungal layer (P5-16, D-017) where the parlor specimen can "grow" branching mycelial networks (hyphae) and sprouting fungal fruiting bodies (sporophores) with ballistospore particle dispersion.
+
+**Done:** P5-16
+
+**Changed:** Added LOLCODE-owned `fungal_form`, `fungal_hyphae`, `fungal_spores`, and `fungal_bloom` score parameters to `src/oracle.lol` and validated in `src/score.mjs`. Implemented `buildMycelialNetwork()`, `buildFruitingBodies()`, `buildSporeSystem()`, `drawMycelium()`, `drawFruitingBodies()`, and `updateAndDrawSpores()` in `src/app.mjs`. Rendered eight distinct sporophore archetypes (`AGARIC CAP`, `BRACKET CONK`, `CORAL CLAVARIA`, `BIOLUMINESCENT BONNET`, `CUP PEZIZA`, `MOREL HONEYCOMB`, `GLOBULAR PUFFBALL`, `HYPHAL HYDRA`). Added spore burst on vitrine tap (`vision.burstSpores()`), mycelial growth acceleration on vitrine hold, `#score-fungal` catalog telemetry in `index.html` and `styles.css`, and broadsheet PNG plate metadata. Documented in `docs/manual.json` (entry 24) and rebuilt `manual.html`.
+
+**Decisions:** D-017
+
+**Verified:** Thirty-one Node checks passed, including all interpreter tests, conductor mathematics, and mycelial/fruiting body structural tests; documentation checker reported 0 errors and 0 warnings across 14 documents; 3x manual validator reported 6 sections, 24 entries, 0 warnings.
+
+**Not verified:** Dedicated assistive-technology and screen-reader testing remains P4-02 work.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P5-15, P4-02, and P6-01 roadmap items.
+
+**Next session should start with:** P5-15, P4-02, or P6-01 when ready.
 
 ### Session 11: 2026-10-18: the esoteric jam band takes the stage
 
@@ -265,26 +288,5 @@ _Last updated: 2026-10-18, session 11, on `main`: the full six-language esoteric
 
 **Next session should start with:** P4-01.
 
-### Session 2: 2026-10-17: the omen keeps humming
-
-**Contributor:** Codex with maintainer direction
-
-**Goal:** Loop sound continuously and expand repeated musical, visual, and naming outcomes.
-
-**Done:** P5-01; expanded P2-02 behavior
-
-**Changed:** Added a continuous look-ahead audio scheduler, twelve-note phrases, eight scales, six rhythms and voice stacks, ten shape families, larger visual ranges, and six ceremonial name templates with larger vocabularies.
-
-**Decisions:** D-005 supersedes the fixed-duration part of D-004.
-
-**Verified:** Eleven Node checks passed; documentation checker and whitespace review passed.
-
-**Not verified:** Listening continuity, subjective mix, animation quality, and cross-browser behavior.
-
-**Problems:** None at handoff update time.
-
-**Left undone:** P3, P4, and P6 roadmap items.
-
-**Next session should start with:** P4-01.
-
 Older sessions: [archive/sessions.md](archive/sessions.md).
+

@@ -251,6 +251,31 @@
             {"label": "Architecture Record D-012", "target": "docs/DECISIONS.md"}
           ],
           "related": ["silhouette-flux", "lookahead-scheduler", "anatomical-eyes"]
+        },
+        {
+          "id": "mycelial-fruiting-growth",
+          "title": "Procedural Mycelial Network, Anastomosis, & Generative Fruiting Bodies",
+          "summary": "Simulates organic mycelial colonization, hyphal branching, and eight distinct sporophore fruiting bodies.",
+          "tags": ["graphics", "canvas", "mycology", "procedural", "particles"],
+          "what": "Generates a living subterranean-like fungal network emerging from the creature's silhouette into the vitrine glass. Over a 10-second maturation cycle, primary hyphae elongate, fork into lateral branchlets, form anastomotic bridge loops, and throb with traveling bioluminescent nutrient waves, while 3 to 8 generative fruiting bodies (mushrooms/sporophores) sprout and mature across eight archetypes (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) and discharge drifting ballistospores.",
+          "how": {
+            "lead": "`buildMycelialNetwork()`, `buildFruitingBodies()`, and `drawMycelium()` in `src/app.mjs` execute procedural biological mathematics:",
+            "points": [
+              "Generates 7 to 18 primary root hyphae around the creature's perimeter, each stepping through 5 to 9 segments with angular wander and lateral branch bifurcation.",
+              "Forms anastomosis bridges between adjacent hyphal filaments within proximity thresholds, creating genuine mycelial mesh lattices.",
+              "Simulates traveling nutrient action potentials $\\sin(s \\cdot 10 - t \\cdot 4.5)$ along hyphal strands that intensify when holding the vitrine.",
+              "Renders eight generative sporophore anatomies with botanical detail: gilled umbrella caps with annulus rings, concentric terraced polypore brackets, dendritic coral clubs, translucent Mycena bells with dewdrop jewels, peziza chalice cups, reticulated morel honeycombs, puffball bulbs with spore craters, and lantern hydras.",
+              "Maintains a 35 to 85 particle ballistospore cloud with thermal buoyancy, orbital convection, drag wake deflection, and explosive spore bursts triggered on vitrine tap gestures."
+            ]
+          },
+          "why": "Transforms the creature from an isolated mathematical polygon into a living botanical specimen rooted inside its antique bell jar. The mycelial network grounds the creature visually, while progressive growth and touch-triggered spore bursts provide visceral, tactile biological feedback (ADR D-017).",
+          "evidence": [
+            {"label": "Mycelial and fruiting body generators", "target": "src/app.mjs"},
+            {"label": "Score grammar validation", "target": "src/score.mjs"},
+            {"label": "Mycelial growth tests", "target": "tests/static.test.mjs"},
+            {"label": "Architecture Record D-017", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["silhouette-flux", "interactive-vitrine", "kinetic-cores"]
         }
       ]
     },

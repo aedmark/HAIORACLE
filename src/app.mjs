@@ -4,7 +4,7 @@ import { conductEnsemble } from "./conductor.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
-import { composeScore, WAVEFORMS } from "./score.mjs";
+import { FUNGAL_NAMES, WAVEFORMS, composeScore } from "./score.mjs";
 import { buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 
@@ -50,6 +50,7 @@ const elements = {
   wave: document.querySelector("#score-wave"),
   formValue: document.querySelector("#score-form"),
   melody: document.querySelector("#score-melody"),
+  fungal: document.querySelector("#score-fungal"),
   beatName: document.querySelector("#score-beat"),
   beatTelemetry: document.querySelector("#beat-telemetry"),
   beatToggle: document.querySelector("#beat-toggle"),
@@ -708,6 +709,609 @@ function drawEye(ctx, score, eye, base, elapsed, colors) {
   ctx.restore();
 }
 
+function buildMycelialNetwork(score) {
+  const random = mulberry32(score.seed ^ 0x3f5c7a19);
+  const rootCount = Math.max(7, Math.min(18, Math.round(6 + score.fungalHyphae / 7.5)));
+  const branches = [];
+  const nodes = [];
+
+  for (let r = 0; r < rootCount; r += 1) {
+    const angle = ((r + (random() - 0.5) * 0.35) / rootCount) * Math.PI * 2;
+    const normRad = shapeRadius(score, angle, 0);
+    const startX = Math.cos(angle) * normRad * 0.94;
+    const startY = Math.sin(angle) * normRad * 0.94;
+    let heading = angle + (random() - 0.5) * 0.42;
+
+    const mainSteps = 5 + Math.floor(random() * 5);
+    const mainPoints = [{ x: startX, y: startY, dist: 0, depth: 0 }];
+    let cx = startX;
+    let cy = startY;
+    let totalDist = 0;
+
+    for (let s = 1; s <= mainSteps; s += 1) {
+      const stepLen = 0.12 + random() * 0.16;
+      heading += (random() - 0.5) * 0.46;
+      cx += Math.cos(heading) * stepLen;
+      cy += Math.sin(heading) * stepLen;
+      totalDist += stepLen;
+      const pt = { x: cx, y: cy, dist: totalDist, depth: 0 };
+      mainPoints.push(pt);
+      nodes.push({ x: cx, y: cy, angle: heading, dist: totalDist, mainBranch: r });
+
+      if (s >= 2 && random() < 0.52) {
+        const forkAngle = heading + (random() > 0.5 ? 1 : -1) * (0.42 + random() * 0.44);
+        const subSteps = 3 + Math.floor(random() * 3);
+        const subPoints = [{ x: cx, y: cy, dist: totalDist, depth: 1 }];
+        let scx = cx;
+        let scy = cy;
+        let subDist = totalDist;
+        let subHeading = forkAngle;
+
+        for (let ss = 1; ss <= subSteps; ss += 1) {
+          const subLen = 0.08 + random() * 0.12;
+          subHeading += (random() - 0.5) * 0.42;
+          scx += Math.cos(subHeading) * subLen;
+          scy += Math.sin(subHeading) * subLen;
+          subDist += subLen;
+          const subPt = { x: scx, y: scy, dist: subDist, depth: 1 };
+          subPoints.push(subPt);
+          nodes.push({ x: scx, y: scy, angle: subHeading, dist: subDist, mainBranch: r });
+        }
+        branches.push({ points: subPoints, maxDist: subDist, rootIndex: r });
+      }
+    }
+    branches.push({ points: mainPoints, maxDist: totalDist, rootIndex: r });
+  }
+
+  const bridges = [];
+  for (let i = 0; i < nodes.length; i += 3) {
+    for (let j = i + 1; j < nodes.length; j += 4) {
+      if (nodes[i].mainBranch !== nodes[j].mainBranch) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0.14 && dist < 0.32) {
+          bridges.push({
+            from: nodes[i],
+            to: nodes[j],
+            midX: (nodes[i].x + nodes[j].x) * 0.5 + (random() - 0.5) * 0.08,
+            midY: (nodes[i].y + nodes[j].y) * 0.5 + (random() - 0.5) * 0.08,
+            dist: Math.max(nodes[i].dist, nodes[j].dist),
+          });
+          break;
+        }
+      }
+    }
+  }
+
+  return { branches, nodes, bridges };
+}
+
+function buildFruitingBodies(score, mycelium) {
+  const random = mulberry32(score.seed ^ 0x6e91b4c3);
+  const bodyCount = 3 + (score.symmetry % 4) + Math.floor(score.fungalBloom / 28);
+  const fruitingBodies = [];
+
+  const candidates = mycelium.nodes.filter((node) => {
+    const r = Math.hypot(node.x, node.y);
+    return r >= 0.55 && r <= 1.45;
+  });
+
+  if (candidates.length === 0) {
+    for (let i = 0; i < bodyCount; i += 1) {
+      const a = (i / bodyCount) * Math.PI * 2;
+      const r = shapeRadius(score, a, 0);
+      candidates.push({ x: Math.cos(a) * r, y: Math.sin(a) * r, angle: a });
+    }
+  }
+
+  candidates.sort((a, b) => Math.atan2(a.y, a.x) - Math.atan2(b.y, b.x));
+  const step = Math.max(1, Math.floor(candidates.length / bodyCount));
+
+  for (let i = 0; i < bodyCount && i * step < candidates.length; i += 1) {
+    const node = candidates[i * step];
+    const outAngle = Math.atan2(node.y, node.x);
+    fruitingBodies.push({
+      id: i,
+      x: node.x,
+      y: node.y,
+      angle: outAngle,
+      tilt: (random() - 0.5) * 0.45,
+      curve: (random() - 0.5) * 0.35,
+      size: (0.16 + (score.fungalBloom / 100) * 0.22) * (0.8 + random() * 0.4),
+      archetype: score.fungalForm,
+      gills: 12 + Math.floor(random() * 16),
+      rings: 3 + Math.floor(random() * 4),
+      sproutDelay: 0.08 + (i / bodyCount) * 0.32,
+    });
+  }
+
+  return fruitingBodies;
+}
+
+function buildSporeSystem(score, fruitingBodies) {
+  const random = mulberry32(score.seed ^ 0x184d82f7);
+  const count = 36 + Math.floor(score.fungalSpores * 0.5);
+  return Array.from({ length: count }, (_, idx) => {
+    const fb = fruitingBodies[idx % (fruitingBodies.length || 1)] || { x: 0, y: 0, angle: 0 };
+    return {
+      x: fb.x + (random() - 0.5) * 0.15,
+      y: fb.y + (random() - 0.5) * 0.15,
+      vx: (random() - 0.5) * 0.2,
+      vy: -0.15 - random() * 0.25,
+      life: random(),
+      maxLife: 2.5 + random() * 3.5,
+      size: 0.9 + random() * (1.1 + score.fungalSpores / 70),
+      hueOffset: (random() - 0.5) * 45,
+      fbIndex: idx % (fruitingBodies.length || 1),
+    };
+  });
+}
+
+function drawMycelium(ctx, score, mycelium, base, growth, elapsed, colors) {
+  if (!mycelium || growth <= 0.01) return;
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  const pulseRate = 0.8 + score.kineticSpeed / 120;
+  const holdBoost = interaction.hold * 0.45;
+  const tapBoost = interaction.tap * 0.35;
+
+  for (let b = 0; b < mycelium.branches.length; b += 1) {
+    const branch = mycelium.branches[b];
+    const targetDist = growth * branch.maxDist * 1.15;
+    const pts = branch.points;
+    if (pts.length < 2 || targetDist < pts[0].dist) continue;
+
+    const isSub = pts[0].depth > 0;
+    const baseWidth = isSub ? 0.75 : 1.35;
+    ctx.lineWidth = baseWidth * (1 + holdBoost * 0.6);
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x * base, pts[0].y * base);
+
+    let activeTip = null;
+    for (let p = 1; p < pts.length; p += 1) {
+      if (pts[p].dist <= targetDist) {
+        ctx.lineTo(pts[p].x * base, pts[p].y * base);
+        if (p === pts.length - 1 || pts[p + 1].dist > targetDist) {
+          activeTip = pts[p];
+        }
+      } else {
+        const prev = pts[p - 1];
+        const span = pts[p].dist - prev.dist;
+        const frac = span > 0.0001 ? (targetDist - prev.dist) / span : 0;
+        const tipX = prev.x + (pts[p].x - prev.x) * frac;
+        const tipY = prev.y + (pts[p].y - prev.y) * frac;
+        ctx.lineTo(tipX * base, tipY * base);
+        activeTip = { x: tipX, y: tipY, dist: targetDist };
+        break;
+      }
+    }
+
+    const travelingPulse = Math.sin(branch.maxDist * 10 - elapsed * 4.5 * pulseRate + b) * 0.28 + 0.72;
+    const alpha = (isSub ? 0.42 : 0.65) * travelingPulse * (0.7 + holdBoost + tapBoost);
+    ctx.strokeStyle = `hsla(${colors[1]} ${score.saturation}% ${72 + holdBoost * 18}% / ${Math.min(0.95, alpha)})`;
+    ctx.stroke();
+
+    if (activeTip && (growth < 0.98 || holdBoost > 0.05)) {
+      ctx.fillStyle = `hsla(${colors[2]} 100% 86% / ${0.75 + holdBoost * 0.25})`;
+      ctx.beginPath();
+      ctx.arc(activeTip.x * base, activeTip.y * base, (baseWidth * 1.4 + holdBoost * 1.5), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  for (const bridge of mycelium.bridges) {
+    if (growth * 1.15 >= bridge.dist) {
+      const bridgeAlpha = 0.38 * (0.6 + holdBoost);
+      ctx.strokeStyle = `hsla(${colors[0]} ${score.saturation}% 74% / ${bridgeAlpha})`;
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(bridge.from.x * base, bridge.from.y * base);
+      ctx.quadraticCurveTo(bridge.midX * base, bridge.midY * base, bridge.to.x * base, bridge.to.y * base);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+}
+
+function drawAgaricCap(ctx, score, fb, maturity, elapsed, colors) {
+  const stipeLen = 50 * maturity;
+  const capW = 38 * maturity;
+  const capH = 22 * maturity;
+  const curve = fb.curve * 20;
+
+  ctx.strokeStyle = `hsla(${colors[1]} 45% 78% / 0.85)`;
+  ctx.lineWidth = Math.max(1.8, 4.2 * maturity);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(curve, stipeLen * 0.5, curve * 0.4, stipeLen);
+  ctx.stroke();
+
+  if (maturity > 0.45) {
+    ctx.strokeStyle = `hsla(${colors[2]} 85% 82% / 0.9)`;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.ellipse(curve * 0.7, stipeLen * 0.52, 6 * maturity, 2.5 * maturity, 0.2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.save();
+  ctx.translate(curve * 0.4, stipeLen);
+
+  if (maturity > 0.3) {
+    ctx.strokeStyle = `hsla(${colors[2]} 90% 75% / 0.55)`;
+    ctx.lineWidth = 0.9;
+    for (let g = 0; g < fb.gills; g += 1) {
+      const gx = (-capW * 0.5) + (g / (fb.gills - 1)) * capW;
+      const gy = Math.sin((g / (fb.gills - 1)) * Math.PI) * 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(gx, gy);
+      ctx.stroke();
+    }
+  }
+
+  const capGrad = ctx.createLinearGradient(0, -capH, 0, 4);
+  capGrad.addColorStop(0, `hsla(${colors[0]} ${score.saturation}% 52% / 0.92)`);
+  capGrad.addColorStop(0.7, `hsla(${colors[1]} ${score.saturation}% 65% / 0.85)`);
+  capGrad.addColorStop(1, `hsla(${colors[2]} 100% 80% / 0.95)`);
+  ctx.fillStyle = capGrad;
+  ctx.strokeStyle = `hsla(${colors[2]} 100% 88% / 0.9)`;
+  ctx.lineWidth = 1.2;
+
+  ctx.beginPath();
+  ctx.moveTo(-capW * 0.5, 2);
+  ctx.bezierCurveTo(-capW * 0.5, -capH, capW * 0.5, -capH, capW * 0.5, 2);
+  ctx.quadraticCurveTo(0, 5, -capW * 0.5, 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = `hsla(${colors[2]} 100% 90% / 0.92)`;
+  for (let d = -2; d <= 2; d += 1) {
+    ctx.beginPath();
+    ctx.arc(d * (capW * 0.2), 3, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawBracketConk(ctx, score, fb, maturity, elapsed, colors) {
+  const conkW = 44 * maturity;
+  const conkH = 26 * maturity;
+  const tiers = Math.max(3, fb.rings);
+
+  for (let t = tiers; t >= 1; t -= 1) {
+    const frac = t / tiers;
+    const tw = conkW * frac;
+    const th = conkH * frac;
+    const hueIdx = t % colors.length;
+
+    ctx.fillStyle = `hsla(${colors[hueIdx]} ${Math.max(30, score.saturation - t * 8)}% ${35 + t * 9}% / ${0.72 + t * 0.05})`;
+    ctx.strokeStyle = `hsla(${colors[2]} 100% ${76 + t * 4}% / 0.8)`;
+    ctx.lineWidth = 1.0;
+
+    ctx.beginPath();
+    ctx.moveTo(-tw * 0.5, 0);
+    ctx.bezierCurveTo(-tw * 0.55, th * 0.8, tw * 0.55, th * 0.8, tw * 0.5, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  if (maturity > 0.4) {
+    ctx.fillStyle = `hsla(${colors[2]} 90% 85% / 0.75)`;
+    for (let p = -4; p <= 4; p += 1) {
+      const px = p * (conkW * 0.1);
+      const py = conkH * 0.72 - Math.abs(p) * 1.5;
+      ctx.beginPath();
+      ctx.arc(px, py, 1.0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function drawCoralClavaria(ctx, score, fb, maturity, elapsed, colors) {
+  const height = 48 * maturity;
+  ctx.lineCap = "round";
+
+  function branch(x, y, len, angle, depth) {
+    if (depth > 3 || len < 4) return;
+    const endX = x + Math.cos(angle) * len;
+    const endY = y + Math.sin(angle) * len;
+
+    ctx.strokeStyle = `hsla(${colors[depth % colors.length]} ${score.saturation}% ${58 + depth * 10}% / ${0.7 + depth * 0.08})`;
+    ctx.lineWidth = Math.max(0.8, (4 - depth) * 1.1 * maturity);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    if (depth === 3) {
+      ctx.fillStyle = `hsla(${colors[2]} 100% 86% / 0.95)`;
+      ctx.beginPath();
+      ctx.arc(endX, endY, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      const spread = 0.32 + Math.sin(elapsed * 2 + depth) * 0.05;
+      branch(endX, endY, len * 0.72, angle - spread, depth + 1);
+      branch(endX, endY, len * 0.72, angle + spread, depth + 1);
+    }
+  }
+
+  branch(0, 0, height * 0.42, Math.PI * 0.5, 0);
+}
+
+function drawBioluminescentBonnet(ctx, score, fb, maturity, elapsed, colors) {
+  const stipeLen = 56 * maturity;
+  const bonnetW = 28 * maturity;
+  const bonnetH = 26 * maturity;
+  const sway = Math.sin(elapsed * 2.8 + fb.id) * 6;
+
+  ctx.strokeStyle = `hsla(${colors[1]} 60% 82% / 0.78)`;
+  ctx.lineWidth = Math.max(1.0, 2.4 * maturity);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(fb.curve * 28 + sway, stipeLen * 0.5, sway * 1.2, stipeLen);
+  ctx.stroke();
+
+  ctx.save();
+  ctx.translate(sway * 1.2, stipeLen);
+
+  const bellGrad = ctx.createRadialGradient(0, -bonnetH * 0.5, 2, 0, -bonnetH * 0.5, bonnetW);
+  bellGrad.addColorStop(0, `hsla(${colors[2]} 100% 82% / 0.95)`);
+  bellGrad.addColorStop(0.6, `hsla(${colors[1]} ${score.saturation}% 60% / 0.65)`);
+  bellGrad.addColorStop(1, `hsla(${colors[0]} ${score.saturation}% 45% / 0.35)`);
+
+  ctx.fillStyle = bellGrad;
+  ctx.strokeStyle = `hsla(${colors[2]} 100% 88% / 0.95)`;
+  ctx.lineWidth = 1.1;
+
+  ctx.beginPath();
+  ctx.moveTo(-bonnetW * 0.5, 0);
+  ctx.quadraticCurveTo(-bonnetW * 0.35, -bonnetH, 0, -bonnetH);
+  ctx.quadraticCurveTo(bonnetW * 0.35, -bonnetH, bonnetW * 0.5, 0);
+  ctx.quadraticCurveTo(0, 4, -bonnetW * 0.5, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = `hsla(${colors[2]} 100% 84% / 0.5)`;
+  ctx.lineWidth = 0.8;
+  for (let r = -3; r <= 3; r += 1) {
+    const rx = r * (bonnetW * 0.14);
+    ctx.beginPath();
+    ctx.moveTo(rx, 0);
+    ctx.quadraticCurveTo(rx * 0.4, -bonnetH * 0.8, 0, -bonnetH);
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = `hsla(${colors[2]} 100% 95% / 0.95)`;
+  ctx.beginPath();
+  ctx.arc(0, -bonnetH - 1, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawCupPeziza(ctx, score, fb, maturity, elapsed, colors) {
+  const cupW = 36 * maturity;
+  const cupH = 24 * maturity;
+
+  ctx.fillStyle = `hsla(${colors[1]} 50% 45% / 0.85)`;
+  ctx.beginPath();
+  ctx.moveTo(-4 * maturity, 0);
+  ctx.lineTo(4 * maturity, 0);
+  ctx.lineTo(6 * maturity, 8 * maturity);
+  ctx.lineTo(-6 * maturity, 8 * maturity);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.save();
+  ctx.translate(0, 8 * maturity);
+
+  ctx.fillStyle = `hsla(${colors[0]} ${score.saturation}% 42% / 0.9)`;
+  ctx.strokeStyle = `hsla(${colors[2]} 90% 78% / 0.85)`;
+  ctx.lineWidth = 1.2;
+
+  ctx.beginPath();
+  ctx.moveTo(-cupW * 0.5, 0);
+  ctx.bezierCurveTo(-cupW * 0.55, cupH, cupW * 0.55, cupH, cupW * 0.5, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  const discGrad = ctx.createRadialGradient(0, cupH * 0.35, 1, 0, cupH * 0.35, cupW * 0.45);
+  discGrad.addColorStop(0, `hsla(${colors[2]} 100% 78% / 0.95)`);
+  discGrad.addColorStop(0.7, `hsla(${colors[1]} ${score.saturation}% 55% / 0.8)`);
+  discGrad.addColorStop(1, `hsla(${colors[0]} ${score.saturation}% 35% / 0.7)`);
+  ctx.fillStyle = discGrad;
+
+  ctx.beginPath();
+  ctx.ellipse(0, 3, cupW * 0.48, cupH * 0.28, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = `hsla(${colors[2]} 100% 86% / 0.9)`;
+  ctx.lineWidth = 0.9;
+  ctx.stroke();
+
+  ctx.fillStyle = `hsla(${colors[2]} 100% 90% / 0.9)`;
+  for (let b = 0; b < 10; b += 1) {
+    const bAngle = (b / 10) * Math.PI * 2;
+    const bx = Math.cos(bAngle) * cupW * 0.48;
+    const by = 3 + Math.sin(bAngle) * cupH * 0.28;
+    ctx.beginPath();
+    ctx.arc(bx, by, 1.0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawMorelHoneycomb(ctx, score, fb, maturity, elapsed, colors) {
+  const headW = 30 * maturity;
+  const headH = 50 * maturity;
+  const stipeLen = 18 * maturity;
+
+  ctx.fillStyle = `hsla(${colors[1]} 30% 75% / 0.85)`;
+  ctx.strokeStyle = `hsla(${colors[1]} 40% 60% / 0.75)`;
+  ctx.lineWidth = 1.0;
+  ctx.beginPath();
+  ctx.rect(-headW * 0.28, 0, headW * 0.56, stipeLen);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.save();
+  ctx.translate(0, stipeLen);
+
+  ctx.fillStyle = `hsla(${colors[0]} ${score.saturation}% 25% / 0.95)`;
+  ctx.beginPath();
+  ctx.moveTo(-headW * 0.5, 0);
+  ctx.bezierCurveTo(-headW * 0.6, headH * 0.5, -headW * 0.2, headH, 0, headH);
+  ctx.bezierCurveTo(headW * 0.2, headH, headW * 0.6, headH * 0.5, headW * 0.5, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle = `hsla(${colors[2]} 90% 76% / 0.85)`;
+  ctx.lineWidth = 1.1;
+  const rows = 5;
+  const cols = 4;
+  for (let r = 0; r < rows; r += 1) {
+    const yFrac = r / rows;
+    const ry = yFrac * headH * 0.9 + 3;
+    const rw = headW * (1 - yFrac * 0.5);
+    for (let c = 0; c < cols; c += 1) {
+      const rx = (-rw * 0.5) + (c / (cols - 1)) * rw;
+      ctx.beginPath();
+      ctx.ellipse(rx, ry, rw * 0.16, headH * 0.08, (c % 2 ? 0.2 : -0.2), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawGlobularPuffball(ctx, score, fb, maturity, elapsed, colors) {
+  const rad = 24 * maturity;
+  const ostioleRad = 3.5 * maturity;
+
+  const bulbGrad = ctx.createRadialGradient(-rad * 0.25, rad * 0.3, 1, 0, rad * 0.5, rad * 1.1);
+  bulbGrad.addColorStop(0, `hsla(${colors[2]} 80% 86% / 0.95)`);
+  bulbGrad.addColorStop(0.5, `hsla(${colors[1]} ${score.saturation}% 62% / 0.85)`);
+  bulbGrad.addColorStop(1, `hsla(${colors[0]} ${score.saturation}% 38% / 0.9)`);
+
+  ctx.fillStyle = bulbGrad;
+  ctx.strokeStyle = `hsla(${colors[2]} 90% 82% / 0.8)`;
+  ctx.lineWidth = 1.2;
+
+  ctx.beginPath();
+  ctx.arc(0, rad, rad, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = `hsla(${colors[2]} 100% 92% / 0.85)`;
+  for (let w = 0; w < 12; w += 1) {
+    const wAngle = (w / 12) * Math.PI * 2 + fb.id;
+    const wx = Math.cos(wAngle) * rad * 0.75;
+    const wy = rad + Math.sin(wAngle) * rad * 0.75;
+    ctx.beginPath();
+    ctx.arc(wx, wy, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = `hsla(${colors[0]} 70% 12% / 0.95)`;
+  ctx.strokeStyle = `hsla(${colors[2]} 100% 88% / 0.95)`;
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.ellipse(0, rad * 2, ostioleRad, ostioleRad * 0.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  const puffPhase = (elapsed * 2.5 + fb.id) % 1;
+  const puffY = rad * 2 + puffPhase * 16 * maturity;
+  const puffAlpha = (1 - puffPhase) * 0.65;
+  ctx.fillStyle = `hsla(${colors[2]} 90% 85% / ${puffAlpha})`;
+  ctx.beginPath();
+  ctx.arc(0, puffY, 2 + puffPhase * 5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawHyphalHydra(ctx, score, fb, maturity, elapsed, colors) {
+  const stalkCount = 3 + (fb.id % 3);
+  const stalkLen = 42 * maturity;
+
+  for (let s = 0; s < stalkCount; s += 1) {
+    const sFrac = (s / (stalkCount - 1 || 1)) - 0.5;
+    const sAngle = Math.PI * 0.5 + sFrac * 0.85;
+    const sway = Math.sin(elapsed * 2.4 + s + fb.id) * 4;
+    const endX = Math.cos(sAngle) * stalkLen + sway;
+    const endY = Math.sin(sAngle) * stalkLen;
+
+    ctx.strokeStyle = `hsla(${colors[1]} 65% 75% / 0.8)`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(endX * 0.4, endY * 0.5 + sway, endX, endY);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(endX, endY);
+    ctx.fillStyle = `hsla(${colors[0]} ${score.saturation}% 48% / 0.92)`;
+    ctx.strokeStyle = `hsla(${colors[2]} 100% 84% / 0.9)`;
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 5 * maturity, 8 * maturity, sFrac * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = `hsla(${colors[2]} 100% 92% / 0.95)`;
+    ctx.fillRect(-1, -4 * maturity, 2, 8 * maturity);
+
+    ctx.strokeStyle = `hsla(${colors[2]} 90% 82% / 0.45)`;
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(0, 7 * maturity);
+    ctx.quadraticCurveTo(sway * 0.8, 14 * maturity, sway * 1.5, 20 * maturity);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawFruitingBodies(ctx, score, fruitingBodies, base, growth, elapsed, colors) {
+  if (!fruitingBodies || growth <= 0.05) return;
+
+  for (const fb of fruitingBodies) {
+    const maturity = Math.max(0, Math.min(1, (growth - fb.sproutDelay) / (1 - fb.sproutDelay)));
+    if (maturity <= 0.01) continue;
+
+    const currentScale = fb.size * (0.2 + 0.8 * maturity);
+    const anchorX = fb.x * base;
+    const anchorY = fb.y * base;
+    const breathing = Math.sin(elapsed * 2.2 + fb.id * 1.7) * (0.04 + interaction.hold * 0.06);
+    const currentAngle = fb.angle + fb.tilt + breathing;
+
+    ctx.save();
+    ctx.translate(anchorX, anchorY);
+    ctx.rotate(currentAngle);
+    ctx.scale(currentScale, currentScale);
+
+    switch (fb.archetype) {
+      case 0: drawAgaricCap(ctx, score, fb, maturity, elapsed, colors); break;
+      case 1: drawBracketConk(ctx, score, fb, maturity, elapsed, colors); break;
+      case 2: drawCoralClavaria(ctx, score, fb, maturity, elapsed, colors); break;
+      case 3: drawBioluminescentBonnet(ctx, score, fb, maturity, elapsed, colors); break;
+      case 4: drawCupPeziza(ctx, score, fb, maturity, elapsed, colors); break;
+      case 5: drawMorelHoneycomb(ctx, score, fb, maturity, elapsed, colors); break;
+      case 6: drawGlobularPuffball(ctx, score, fb, maturity, elapsed, colors); break;
+      case 7: drawHyphalHydra(ctx, score, fb, maturity, elapsed, colors); break;
+      default: drawAgaricCap(ctx, score, fb, maturity, elapsed, colors); break;
+    }
+    ctx.restore();
+  }
+}
+
 function stepInteraction(timestamp, reducedMotion) {
   const dt = interaction.lastFrameAt ? Math.min(0.06, (timestamp - interaction.lastFrameAt) / 1000) : 0.016;
   interaction.lastFrameAt = timestamp;
@@ -742,9 +1346,13 @@ class OracleVision {
       pupilShape: 1, irisHue: 164, irisShift: 72, eyeSize: 68, gaze: 1, eyeLayout: 0,
       shape: 0, size: 66, edge: 50, motion: 2, kineticMode: 0, kineticSpeed: 64,
       kineticDepth: 72, kineticTilt: 3, fluxMode: 1,
+      fungalForm: 0, fungalName: "AGARIC CAP", fungalHyphae: 64, fungalSpores: 55, fungalBloom: 60,
     };
     this.startedAt = performance.now();
     this.particles = [];
+    this.mycelium = null;
+    this.fruitingBodies = [];
+    this.spores = [];
     this.reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     this.resize = this.resize.bind(this);
     this.draw = this.draw.bind(this);
@@ -776,6 +1384,84 @@ class OracleVision {
       phase: random() * Math.PI * 2,
       drift: 0.15 + random() * 1.15,
     }));
+    this.mycelium = buildMycelialNetwork(score);
+    this.fruitingBodies = buildFruitingBodies(score, this.mycelium);
+    this.spores = buildSporeSystem(score, this.fruitingBodies);
+  }
+
+  burstSpores(strength = 1) {
+    if (!this.spores) return;
+    for (const sp of this.spores) {
+      const angle = Math.atan2(sp.y, sp.x);
+      sp.vx += Math.cos(angle) * (1.2 + Math.random() * 2.2) * strength;
+      sp.vy += Math.sin(angle) * (1.2 + Math.random() * 2.2) * strength;
+      sp.life = Math.min(1.0, sp.life + 0.35);
+    }
+  }
+
+  updateAndDrawSpores(ctx, score, base, elapsed, colors, timestamp) {
+    if (!this.spores || this.spores.length === 0) return;
+    const dt = 0.016;
+    const tapImpulse = interaction.tap * 4.2;
+    const holdBoost = interaction.hold * 0.5;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+
+    for (let i = 0; i < this.spores.length; i += 1) {
+      const sp = this.spores[i];
+      sp.life -= dt / sp.maxLife;
+
+      if (sp.life <= 0) {
+        const fb = this.fruitingBodies[sp.fbIndex % (this.fruitingBodies.length || 1)];
+        if (fb) {
+          const fbScale = fb.size * base;
+          sp.x = fb.x * base + (Math.random() - 0.5) * fbScale * 0.4;
+          sp.y = fb.y * base + (Math.random() - 0.5) * fbScale * 0.4;
+          const outAngle = fb.angle + fb.tilt;
+          sp.vx = Math.cos(outAngle) * (0.2 + Math.random() * 0.6);
+          sp.vy = Math.sin(outAngle) * (0.2 + Math.random() * 0.6) - 0.3;
+        } else {
+          sp.x = (Math.random() - 0.5) * base;
+          sp.y = (Math.random() - 0.5) * base;
+          sp.vx = (Math.random() - 0.5) * 0.4;
+          sp.vy = -0.3;
+        }
+        sp.life = 1.0;
+      }
+
+      if (!this.reducedMotion) {
+        sp.x += sp.vx;
+        sp.y += sp.vy;
+        sp.vy -= 0.04 * dt * 60;
+        sp.vx += Math.sin(elapsed * 1.8 + sp.y * 0.01) * 0.08 * dt * 60;
+
+        if (tapImpulse > 0.1) {
+          const rad = Math.hypot(sp.x, sp.y) || 1;
+          sp.vx += (sp.x / rad) * tapImpulse * 0.7;
+          sp.vy += (sp.y / rad) * tapImpulse * 0.7;
+        }
+
+        if (interaction.dragSpeed > 0.05) {
+          const ptrDistX = (interaction.smoothX * base) - sp.x;
+          const ptrDistY = (interaction.smoothY * base) - sp.y;
+          const ptrDist = Math.hypot(ptrDistX, ptrDistY);
+          if (ptrDist < base * 0.75 && ptrDist > 5) {
+            sp.vx += (ptrDistX / ptrDist) * interaction.dragSpeed * 0.5;
+            sp.vy += (ptrDistY / ptrDist) * interaction.dragSpeed * 0.5;
+          }
+        }
+      }
+
+      const sporeAlpha = sp.life * (0.35 + holdBoost * 0.45);
+      const sporeHue = wrapHue(colors[2] + sp.hueOffset);
+      ctx.fillStyle = `hsla(${sporeHue} 100% 82% / ${sporeAlpha})`;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, sp.size * (1 + interaction.tap * 0.4), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
   }
 
   draw(timestamp) {
@@ -786,6 +1472,8 @@ class OracleVision {
     const height = this.height;
     const elapsed = this.reducedMotion ? 1.25 : (timestamp - this.startedAt) / 1000;
     const colors = paletteFor(score);
+    const naturalGrowth = this.reducedMotion ? 1.0 : Math.min(1.0, elapsed / 10.0);
+    const growth = Math.min(1.0, naturalGrowth + interaction.hold * 0.35 + interaction.tap * 0.25);
 
     const glowFocusX = width * (0.5 + interaction.smoothX * 0.14);
     const glowFocusY = height * (0.48 + interaction.smoothY * 0.14);
@@ -826,6 +1514,9 @@ class OracleVision {
     const direction = score.kineticTilt % 2 ? 1 : -1;
     ctx.rotate(this.reducedMotion ? 0.16 : (elapsed * (0.004 + score.kineticSpeed / 12000) + interaction.morphPhase * 0.14) * direction);
     ctx.scale(aspectX, aspectY);
+
+    drawMycelium(ctx, score, this.mycelium, base, growth, elapsed, colors);
+    drawFruitingBodies(ctx, score, this.fruitingBodies, base, growth, elapsed, colors);
 
     ctx.save();
     ctx.shadowColor = `hsla(${colors[1]} 100% 70% / 0.58)`;
@@ -875,6 +1566,8 @@ class OracleVision {
     for (let eye = 0; eye < score.eyes; eye += 1) {
       drawEye(ctx, score, eye, base, elapsed, colors);
     }
+
+    this.updateAndDrawSpores(ctx, score, base, elapsed, colors, timestamp);
     ctx.restore();
 
     if (interaction.ripples.length > 0) {
@@ -1996,6 +2689,7 @@ function showScore(score) {
   elements.wave.textContent = WAVEFORMS[score.wave];
   elements.formValue.textContent = score.shapeName;
   elements.melody.textContent = MELODY_NAMES[score.melodyMode];
+  if (elements.fungal) elements.fungal.textContent = score.fungalName;
   elements.replay.disabled = false;
   if (elements.shareLink) elements.shareLink.disabled = false;
   if (elements.exportPng) elements.exportPng.disabled = false;
@@ -2196,7 +2890,7 @@ function renderSpecimenBroadsheetCanvas(score) {
     {
       plate: "PLATE I · LOLCODE 1.2 SCORE SPELL",
       title: `${MELODY_NAMES[score.melodyMode]} (${score.pulse} BPM)`,
-      detail: `WAVE: ${WAVEFORMS[score.wave]} · FORM: ${score.shapeName}`,
+      detail: `WAVE: ${WAVEFORMS[score.wave]} · FORM: ${score.shapeName} · MYCELIUM: ${score.fungalName}`,
     },
     {
       plate: "PLATE II · MALBOLGE 1998 TERNARY DRUMS",
@@ -2356,6 +3050,7 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
   interaction.dragTravel = Math.floor((((Math.atan2(coords.y, coords.x) + Math.PI) / (Math.PI * 2)) * 12)) % 12;
   interaction.pitchBend = -coords.y;
   interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: performance.now(), strength: 1 });
+  vision.burstSpores(1.2);
   stageContainer?.classList.add("is-interacting");
   try {
     elements.canvas.setPointerCapture(event.pointerId);

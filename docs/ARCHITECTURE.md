@@ -53,6 +53,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Piet/FRACTRAN chimes | `composeChimes()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-step Just Intonation chime and codel pad sequence (`gate`, `codelCode`, `hueIndex`, `lightnessIndex`, `fraction`, `exponents`, `ratioLabel`, `ratioValue`, `label`) produced by executing `src/pad.piet` and `src/chimes.frac` |
 | Shakespeare choir | `composeChant()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-scene formant vowel choir sequence (`gate`, `act`, `scene`, `speaker`, `addressee`, `personaShort`, `voiceType`, `vowelCode`, `vowelIpa`, `f1`, `f2`, `f3`, `interval`, `label`) produced by executing `src/chant.spl` |
 | Ensemble conductor | `conductEnsemble()` | `src/app.mjs` | harmonizes the 12-step lead motif, bass tape, Befunge triads, Piet/FRACTRAN overtone ratios, and Shakespeare choir onto a 4-region Neo-Riemannian *Tonnetz* progression (`P`, `L`, `R`), Euler *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean hocket $E(k, 12)$ |
+| Mycelial network | `buildMycelialNetwork()`, `buildFruitingBodies()` | Canvas renderer (`src/app.mjs`) | procedural branching hyphae, anastomotic fusion loops, eight generative sporophore archetypes, and drifting ballistospores growing over a 10-second envelope from creature perimeter into vitrine glass |
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
 | Melody motif | `melodyFor()` | audio transport | exactly twelve frozen semitone offsets selected and rotated by validated score fields |
@@ -76,6 +77,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - Eye silhouette, layout, size, gaze, iris, and pupil all originate in the validated spell output. Enforced by required score fields and the batch diversity test (D-006).
 - Every silhouette stays within a radius envelope of `0.38..1.08`, and every kinetic core is clipped to the current deforming body path. Enforced structurally in `tests/static.test.mjs` (D-007).
 - Kinetic family, speed, depth, tilt, and boundary-flux family originate in validated spell output. Enforced by required ranges and the 256-phrase coverage test (D-007).
+- Mycelial branching density, fruiting body archetype, and ballistospore emission originate in validated spell output (`fungal_form`, `fungal_hyphae`, `fungal_spores`, `fungal_bloom`). Enforced by required ranges and the phrase batch test (D-017).
 
 ## Boundaries
 

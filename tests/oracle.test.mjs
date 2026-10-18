@@ -8,7 +8,7 @@ import { CHIME_NAMES, composeChimes, cycleChimeCell, runFractran, runPiet } from
 import { runLolcode } from "../src/lolcode.mjs";
 import { BEAT_NAMES, composeBeat, crazy, cycleBeatStep, rotr, runMalbolge } from "../src/malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "../src/music.mjs";
-import { composeScore, hashPhrase, parseScore } from "../src/score.mjs";
+import { FUNGAL_NAMES, composeScore, hashPhrase, parseScore } from "../src/score.mjs";
 import { buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "../src/share.mjs";
 import { CHANT_NAMES, FORMANT_VOWELS, PERSONA_ROLES, composeChant, cycleChantCell, runShakespeare } from "../src/shakespeare.mjs";
 
@@ -54,6 +54,11 @@ test("the LOLCODE spell produces every required score field", () => {
   assert.ok(score.chimeShimmer >= 20 && score.chimeShimmer <= 100);
   assert.ok(score.chantMode >= 0 && score.chantMode <= 7);
   assert.ok(score.chantFormant >= 25 && score.chantFormant <= 100);
+  assert.ok(score.fungalForm >= 0 && score.fungalForm <= 7);
+  assert.ok(score.fungalHyphae >= 10 && score.fungalHyphae <= 100);
+  assert.ok(score.fungalSpores >= 10 && score.fungalSpores <= 100);
+  assert.ok(score.fungalBloom >= 10 && score.fungalBloom <= 100);
+  assert.ok(FUNGAL_NAMES.includes(score.fungalName));
   assert.equal(melodyFor(score).length, 12);
 });
 
@@ -87,6 +92,7 @@ test("a phrase batch exercises the expanded name, shape, sound, eye, and kinetic
   assert.equal(new Set(scores.map((score) => score.harmonyMode)).size, 8);
   assert.equal(new Set(scores.map((score) => score.chimeMode)).size, 8);
   assert.equal(new Set(scores.map((score) => score.chantMode)).size, 8);
+  assert.equal(new Set(scores.map((score) => score.fungalForm)).size, 8);
 });
 
 test("arpeggio and chromatic motifs are exact twelve-note loops", () => {
