@@ -5,7 +5,7 @@ import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
 import { composeScore, WAVEFORMS } from "./score.mjs";
-import { buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
+import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 
 const RHYTHMS = Object.freeze([
@@ -40,6 +40,7 @@ const elements = {
   replay: document.querySelector("#replay"),
   shareLink: document.querySelector("#share-link"),
   exportPng: document.querySelector("#export-png"),
+  exportWav: document.querySelector("#export-wav"),
   sound: document.querySelector("#sound-toggle"),
   volume: document.querySelector("#master-volume"),
   volumeValue: document.querySelector("#volume-value"),
@@ -932,25 +933,37 @@ function drawAgaricCap(ctx, score, fb, maturity, elapsed, colors) {
   ctx.quadraticCurveTo(curve, stipeLen * 0.5, curve * 0.4, stipeLen);
   ctx.stroke();
 
+  // Haeckel partial veil annulus skirt on stipe
   if (maturity > 0.45) {
     ctx.strokeStyle = `hsla(${colors[2]} 85% 82% / 0.9)`;
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.ellipse(curve * 0.7, stipeLen * 0.52, 6 * maturity, 2.5 * maturity, 0.2, 0, Math.PI * 2);
     ctx.stroke();
+
+    // Fine lace edging on veil
+    ctx.fillStyle = `hsla(${colors[2]} 95% 90% / 0.75)`;
+    for (let v = -2; v <= 2; v += 1) {
+      ctx.beginPath();
+      ctx.arc(curve * 0.7 + v * 2.2 * maturity, stipeLen * 0.52 + 2, 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   ctx.save();
   ctx.translate(curve * 0.4, stipeLen);
 
+  // Radiating lamellae (gills) with alternating secondary lamellulae
   if (maturity > 0.3) {
     ctx.strokeStyle = `hsla(${colors[2]} 90% 75% / 0.55)`;
-    ctx.lineWidth = 0.9;
-    for (let g = 0; g < fb.gills; g += 1) {
-      const gx = (-capW * 0.5) + (g / (fb.gills - 1)) * capW;
-      const gy = Math.sin((g / (fb.gills - 1)) * Math.PI) * 4;
+    ctx.lineWidth = 0.8;
+    const gillCount = Math.max(7, fb.gills * 2);
+    for (let g = 0; g < gillCount; g += 1) {
+      const gx = (-capW * 0.48) + (g / (gillCount - 1)) * (capW * 0.96);
+      const gy = Math.sin((g / (gillCount - 1)) * Math.PI) * 4;
+      const isSecondary = g % 2 === 1;
       ctx.beginPath();
-      ctx.moveTo(0, 0);
+      ctx.moveTo(isSecondary ? gx * 0.45 : 0, isSecondary ? -capH * 0.2 : 0);
       ctx.lineTo(gx, gy);
       ctx.stroke();
     }
@@ -972,12 +985,33 @@ function drawAgaricCap(ctx, score, fb, maturity, elapsed, colors) {
   ctx.fill();
   ctx.stroke();
 
+  // Marginal veil teeth
   ctx.fillStyle = `hsla(${colors[2]} 100% 90% / 0.92)`;
   for (let d = -2; d <= 2; d += 1) {
     ctx.beginPath();
     ctx.arc(d * (capW * 0.2), 3, 1.2, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  // Ernst Haeckel-style stippled universal veil scales (verrucae) across pileus
+  if (maturity > 0.45) {
+    ctx.fillStyle = `hsla(${colors[2]} 95% 88% / 0.8)`;
+    const scales = [
+      [0, -capH * 0.8, 1.6],
+      [-capW * 0.22, -capH * 0.6, 1.3],
+      [capW * 0.22, -capH * 0.6, 1.3],
+      [-capW * 0.35, -capH * 0.25, 1.1],
+      [capW * 0.35, -capH * 0.25, 1.1],
+      [-capW * 0.12, -capH * 0.35, 1.2],
+      [capW * 0.12, -capH * 0.35, 1.2],
+    ];
+    for (const [sx, sy, sr] of scales) {
+      ctx.beginPath();
+      ctx.arc(sx, sy, sr * maturity, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   ctx.restore();
 }
 
@@ -1002,15 +1036,26 @@ function drawBracketConk(ctx, score, fb, maturity, elapsed, colors) {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+
+    // Haeckel concentric annular sulcus lines (growth zones)
+    if (maturity > 0.35) {
+      ctx.strokeStyle = `hsla(${colors[2]} 85% 90% / 0.45)`;
+      ctx.lineWidth = 0.65;
+      ctx.beginPath();
+      ctx.moveTo(-tw * 0.4, th * 0.3);
+      ctx.quadraticCurveTo(0, th * 0.65, tw * 0.4, th * 0.3);
+      ctx.stroke();
+    }
   }
 
+  // Ventral pore hymenium micro-stippling
   if (maturity > 0.4) {
     ctx.fillStyle = `hsla(${colors[2]} 90% 85% / 0.75)`;
-    for (let p = -4; p <= 4; p += 1) {
-      const px = p * (conkW * 0.1);
-      const py = conkH * 0.72 - Math.abs(p) * 1.5;
+    for (let p = -5; p <= 5; p += 1) {
+      const px = p * (conkW * 0.08);
+      const py = conkH * 0.72 - Math.abs(p) * 1.4;
       ctx.beginPath();
-      ctx.arc(px, py, 1.0, 0, Math.PI * 2);
+      ctx.arc(px, py, 0.9, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1031,6 +1076,16 @@ function drawCoralClavaria(ctx, score, fb, maturity, elapsed, colors) {
     ctx.moveTo(x, y);
     ctx.lineTo(endX, endY);
     ctx.stroke();
+
+    // Haeckel longitudinal striations along antler trunk
+    if (depth <= 1 && maturity > 0.4) {
+      ctx.strokeStyle = `hsla(${colors[2]} 90% 88% / 0.4)`;
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(x + 1, y);
+      ctx.lineTo(endX + 1, endY);
+      ctx.stroke();
+    }
 
     if (depth === 3) {
       ctx.fillStyle = `hsla(${colors[2]} 100% 86% / 0.95)`;
@@ -1081,19 +1136,21 @@ function drawBioluminescentBonnet(ctx, score, fb, maturity, elapsed, colors) {
   ctx.fill();
   ctx.stroke();
 
-  ctx.strokeStyle = `hsla(${colors[2]} 100% 84% / 0.5)`;
-  ctx.lineWidth = 0.8;
-  for (let r = -3; r <= 3; r += 1) {
-    const rx = r * (bonnetW * 0.14);
+  // Haeckel pleated-striate radial ribs from disc to margin
+  ctx.strokeStyle = `hsla(${colors[2]} 100% 84% / 0.55)`;
+  ctx.lineWidth = 0.75;
+  for (let r = -4; r <= 4; r += 1) {
+    const rx = r * (bonnetW * 0.11);
     ctx.beginPath();
     ctx.moveTo(rx, 0);
-    ctx.quadraticCurveTo(rx * 0.4, -bonnetH * 0.8, 0, -bonnetH);
+    ctx.quadraticCurveTo(rx * 0.35, -bonnetH * 0.75, 0, -bonnetH);
     ctx.stroke();
   }
 
-  ctx.fillStyle = `hsla(${colors[2]} 100% 95% / 0.95)`;
+  // Apical papilla / dewdrop jewel
+  ctx.fillStyle = `hsla(${colors[2]} 100% 96% / 0.95)`;
   ctx.beginPath();
-  ctx.arc(0, -bonnetH - 1, 1.8, 0, Math.PI * 2);
+  ctx.arc(0, -bonnetH - 1.2, 1.8, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
@@ -1139,15 +1196,30 @@ function drawCupPeziza(ctx, score, fb, maturity, elapsed, colors) {
   ctx.lineWidth = 0.9;
   ctx.stroke();
 
+  // Haeckel fimbriate eyelash fringe around cup margin
   ctx.fillStyle = `hsla(${colors[2]} 100% 90% / 0.9)`;
-  for (let b = 0; b < 10; b += 1) {
-    const bAngle = (b / 10) * Math.PI * 2;
+  for (let b = 0; b < 14; b += 1) {
+    const bAngle = (b / 14) * Math.PI * 2;
     const bx = Math.cos(bAngle) * cupW * 0.48;
     const by = 3 + Math.sin(bAngle) * cupH * 0.28;
     ctx.beginPath();
-    ctx.arc(bx, by, 1.0, 0, Math.PI * 2);
+    ctx.arc(bx, by, 1.1, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  // Radial hymenial spore folds
+  if (maturity > 0.45) {
+    ctx.strokeStyle = `hsla(${colors[2]} 90% 82% / 0.45)`;
+    ctx.lineWidth = 0.7;
+    for (let f = 0; f < 8; f += 1) {
+      const fAngle = (f / 8) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 3);
+      ctx.lineTo(Math.cos(fAngle) * cupW * 0.4, 3 + Math.sin(fAngle) * cupH * 0.22);
+      ctx.stroke();
+    }
+  }
+
   ctx.restore();
 }
 
@@ -1188,6 +1260,17 @@ function drawMorelHoneycomb(ctx, score, fb, maturity, elapsed, colors) {
       ctx.beginPath();
       ctx.ellipse(rx, ry, rw * 0.16, headH * 0.08, (c % 2 ? 0.2 : -0.2), 0, Math.PI * 2);
       ctx.stroke();
+
+      // Haeckel inner scalariform chamber ridge
+      if (maturity > 0.4) {
+        ctx.strokeStyle = `hsla(${colors[2]} 85% 88% / 0.45)`;
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.ellipse(rx, ry, rw * 0.09, headH * 0.045, (c % 2 ? 0.2 : -0.2), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = `hsla(${colors[2]} 90% 76% / 0.85)`;
+        ctx.lineWidth = 1.1;
+      }
     }
   }
   ctx.restore();
@@ -1211,11 +1294,12 @@ function drawGlobularPuffball(ctx, score, fb, maturity, elapsed, colors) {
   ctx.fill();
   ctx.stroke();
 
+  // Haeckel pyramidal peridial scales / verrucae
   ctx.fillStyle = `hsla(${colors[2]} 100% 92% / 0.85)`;
-  for (let w = 0; w < 12; w += 1) {
-    const wAngle = (w / 12) * Math.PI * 2 + fb.id;
-    const wx = Math.cos(wAngle) * rad * 0.75;
-    const wy = rad + Math.sin(wAngle) * rad * 0.75;
+  for (let w = 0; w < 16; w += 1) {
+    const wAngle = (w / 16) * Math.PI * 2 + fb.id;
+    const wx = Math.cos(wAngle) * rad * 0.78;
+    const wy = rad + Math.sin(wAngle) * rad * 0.78;
     ctx.beginPath();
     ctx.arc(wx, wy, 1.2, 0, Math.PI * 2);
     ctx.fill();
@@ -1268,6 +1352,18 @@ function drawHyphalHydra(ctx, score, fb, maturity, elapsed, colors) {
 
     ctx.fillStyle = `hsla(${colors[2]} 100% 92% / 0.95)`;
     ctx.fillRect(-1, -4 * maturity, 2, 8 * maturity);
+
+    // Pendant aculei / spine rows
+    if (maturity > 0.4) {
+      ctx.strokeStyle = `hsla(${colors[2]} 90% 85% / 0.55)`;
+      ctx.lineWidth = 0.7;
+      for (let tooth = -2; tooth <= 2; tooth += 1) {
+        ctx.beginPath();
+        ctx.moveTo(tooth * 2, 8 * maturity);
+        ctx.lineTo(tooth * 2, 12 * maturity);
+        ctx.stroke();
+      }
+    }
 
     ctx.strokeStyle = `hsla(${colors[2]} 90% 82% / 0.45)`;
     ctx.lineWidth = 0.7;
@@ -1335,6 +1431,172 @@ function stepInteraction(timestamp, reducedMotion) {
   updateAudioInteraction();
 }
 
+function buildGlassCondensation(seed) {
+  const rng = mulberry32((seed ^ 0x91a55c01) >>> 0);
+  const drops = [];
+  // Left curved vitrine wall
+  for (let i = 0; i < 16; i += 1) {
+    drops.push({
+      normX: 0.035 + rng() * 0.08,
+      normY: 0.16 + rng() * 0.70,
+      size: 0.8 + rng() * 1.8,
+      alpha: 0.22 + rng() * 0.45,
+      phase: rng() * Math.PI * 2,
+    });
+  }
+  // Right curved vitrine wall
+  for (let i = 0; i < 16; i += 1) {
+    drops.push({
+      normX: 0.885 + rng() * 0.08,
+      normY: 0.16 + rng() * 0.70,
+      size: 0.8 + rng() * 1.8,
+      alpha: 0.22 + rng() * 0.45,
+      phase: rng() * Math.PI * 2,
+    });
+  }
+  // Upper curved bell jar dome
+  for (let i = 0; i < 14; i += 1) {
+    const t = (i + 0.5) / 14;
+    drops.push({
+      normX: 0.16 + t * 0.68 + (rng() - 0.5) * 0.04,
+      normY: 0.055 + Math.sin(t * Math.PI) * 0.11 + rng() * 0.04,
+      size: 0.7 + rng() * 1.5,
+      alpha: 0.2 + rng() * 0.42,
+      phase: rng() * Math.PI * 2,
+    });
+  }
+  return drops;
+}
+
+function drawVitrinePedestal(ctx, width, height, colors, score, elapsed) {
+  const pedestalY = height * 0.91;
+  const pedestalW = width * 0.84;
+  const pedestalX = (width - pedestalW) * 0.5;
+
+  ctx.save();
+
+  // 1. Turned-wood Plinth Base (Victorian specimen mount)
+  const woodGrad = ctx.createLinearGradient(0, pedestalY, 0, height);
+  woodGrad.addColorStop(0, "hsl(25 24% 16%)");
+  woodGrad.addColorStop(0.2, "hsl(25 28% 10%)");
+  woodGrad.addColorStop(0.7, "hsl(25 32% 6%)");
+  woodGrad.addColorStop(1, "hsl(20 30% 3%)");
+
+  // Bottom stepped tier
+  ctx.fillStyle = woodGrad;
+  ctx.beginPath();
+  if (typeof ctx.roundRect === "function") {
+    ctx.roundRect(pedestalX, pedestalY + 12, pedestalW, height - (pedestalY + 12), [4, 4, 0, 0]);
+  } else {
+    ctx.rect(pedestalX, pedestalY + 12, pedestalW, height - (pedestalY + 12));
+  }
+  ctx.fill();
+
+  // Middle stepped bevel
+  const midW = pedestalW * 0.92;
+  const midX = (width - midW) * 0.5;
+  ctx.beginPath();
+  if (typeof ctx.roundRect === "function") {
+    ctx.roundRect(midX, pedestalY + 4, midW, 10, [3, 3, 0, 0]);
+  } else {
+    ctx.rect(midX, pedestalY + 4, midW, 10);
+  }
+  ctx.fill();
+
+  // Polished brass channel ring where the vitrine bell jar rests
+  const brassW = pedestalW * 0.86;
+  const brassX = (width - brassW) * 0.5;
+  ctx.strokeStyle = "hsla(42 75% 62% / 0.78)";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(brassX, pedestalY + 4);
+  ctx.lineTo(brassX + brassW, pedestalY + 4);
+  ctx.stroke();
+
+  // Brass specular highlight
+  ctx.strokeStyle = "hsla(45 95% 88% / 0.65)";
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(brassX + brassW * 0.25, pedestalY + 3.5);
+  ctx.lineTo(brassX + brassW * 0.45, pedestalY + 3.5);
+  ctx.stroke();
+
+  // 2. Bed of fibrous peat, decaying driftwood, and living lichen substrate
+  const peatMounds = [
+    { x: width * 0.22, y: pedestalY + 3, rx: width * 0.14, ry: 9, hue: 85 },
+    { x: width * 0.48, y: pedestalY + 1, rx: width * 0.18, ry: 11, hue: 45 },
+    { x: width * 0.74, y: pedestalY + 2, rx: width * 0.15, ry: 10, hue: 75 },
+    { x: width * 0.35, y: pedestalY + 5, rx: width * 0.12, ry: 8, hue: 105 },
+    { x: width * 0.62, y: pedestalY + 4, rx: width * 0.13, ry: 8, hue: 65 },
+  ];
+
+  for (const m of peatMounds) {
+    const moundGrad = ctx.createRadialGradient(m.x, m.y - 2, 1, m.x, m.y, m.rx);
+    moundGrad.addColorStop(0, `hsla(${m.hue} 42% 16% / 0.92)`);
+    moundGrad.addColorStop(0.65, `hsla(${m.hue - 15} 35% 10% / 0.95)`);
+    moundGrad.addColorStop(1, "hsla(25 28% 6% / 0.98)");
+    ctx.fillStyle = moundGrad;
+    ctx.beginPath();
+    ctx.ellipse(m.x, m.y, m.rx, m.ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Lichen flakes and fibrous botanical rootlets
+  const seedRng = mulberry32((score.seed ^ 0x5b3a8e12) >>> 0);
+  ctx.fillStyle = `hsla(${colors[2]} 65% 72% / 0.42)`;
+  for (let i = 0; i < 24; i += 1) {
+    const lx = brassX + seedRng() * brassW;
+    const ly = pedestalY - 2 + seedRng() * 9;
+    ctx.beginPath();
+    ctx.arc(lx, ly, 0.8 + seedRng() * 1.1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Driftwood grain lines
+  ctx.strokeStyle = "hsla(30 25% 22% / 0.4)";
+  ctx.lineWidth = 0.8;
+  for (let d = 0; d < 5; d += 1) {
+    const dy = pedestalY + 16 + d * 3;
+    ctx.beginPath();
+    ctx.moveTo(pedestalX + 15, dy);
+    ctx.quadraticCurveTo(width * 0.5, dy + (d % 2 ? 1 : -1) * 2, pedestalX + pedestalW - 15, dy);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawGlassCondensation(ctx, width, height, colors, score, elapsed, drops) {
+  if (!drops || drops.length === 0) return;
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+
+  const bloomFactor = score.bloom / 100;
+  const tapJitter = interaction.tap * 1.5;
+
+  for (const drop of drops) {
+    const jitterX = Math.sin(elapsed * 24 + drop.phase) * tapJitter;
+    const jitterY = Math.cos(elapsed * 24 + drop.phase) * tapJitter;
+    const dx = drop.normX * width + jitterX;
+    const dy = drop.normY * height + jitterY;
+
+    const baseAlpha = drop.alpha * (0.65 + bloomFactor * 0.35 + interaction.hold * 0.15);
+    // Droplet glow
+    ctx.fillStyle = `hsla(${colors[2]} 85% 82% / ${baseAlpha})`;
+    ctx.beginPath();
+    ctx.arc(dx, dy, drop.size * (1 + interaction.tap * 0.3), 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tiny specular glint
+    ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.9, baseAlpha * 1.6)})`;
+    ctx.beginPath();
+    ctx.arc(dx - drop.size * 0.3, dy - drop.size * 0.3, drop.size * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
 class OracleVision {
   constructor(canvas) {
     this.canvas = canvas;
@@ -1353,6 +1615,7 @@ class OracleVision {
     this.mycelium = null;
     this.fruitingBodies = [];
     this.spores = [];
+    this.glassCondensation = [];
     this.reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     this.resize = this.resize.bind(this);
     this.draw = this.draw.bind(this);
@@ -1387,6 +1650,7 @@ class OracleVision {
     this.mycelium = buildMycelialNetwork(score);
     this.fruitingBodies = buildFruitingBodies(score, this.mycelium);
     this.spores = buildSporeSystem(score, this.fruitingBodies);
+    this.glassCondensation = buildGlassCondensation(score.seed);
   }
 
   burstSpores(strength = 1) {
@@ -1496,6 +1760,8 @@ class OracleVision {
     }
     ctx.restore();
 
+    drawVitrinePedestal(ctx, width, height, colors, score, elapsed);
+
     const orbitDistance = this.reducedMotion ? 0 : score.motion * Math.min(width, height) * 0.004;
     const tugX = this.reducedMotion ? 0 : interaction.smoothX * width * (0.075 + interaction.hold * 0.065);
     const tugY = this.reducedMotion ? 0 : interaction.smoothY * height * (0.075 + interaction.hold * 0.065);
@@ -1569,6 +1835,8 @@ class OracleVision {
 
     this.updateAndDrawSpores(ctx, score, base, elapsed, colors, timestamp);
     ctx.restore();
+
+    drawGlassCondensation(ctx, width, height, colors, score, elapsed, this.glassCondensation);
 
     if (interaction.ripples.length > 0) {
       ctx.save();
@@ -1696,6 +1964,42 @@ function triggerPercussion(kind, normX = 0, normY = 0, strength = 1) {
       harmonicOsc.stop(now + duration + 0.03);
     }
   }
+}
+
+function triggerSporePuff(strength = 1, atTime = null) {
+  if (!audioContext || !currentTransport || muted) return;
+  const context = audioContext;
+  const now = atTime ?? context.currentTime;
+  const bus = currentTransport.fungalBus || currentTransport.mix;
+
+  const noise = context.createBufferSource();
+  noise.buffer = ensureNoiseBuffer(context);
+  const filter = context.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.frequency.setValueAtTime(2250, now);
+  filter.Q.setValueAtTime(3.2, now);
+
+  const gain = context.createGain();
+  const peak = Math.min(0.09, 0.048 * strength);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(peak, now + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
+
+  const pip = context.createOscillator();
+  const pipGain = context.createGain();
+  pip.type = "sine";
+  pip.frequency.setValueAtTime(740, now);
+  pip.frequency.exponentialRampToValueAtTime(220, now + 0.038);
+  pipGain.gain.setValueAtTime(0.0001, now);
+  pipGain.gain.exponentialRampToValueAtTime(peak * 0.75, now + 0.004);
+  pipGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+
+  noise.connect(filter).connect(gain).connect(bus);
+  pip.connect(pipGain).connect(bus);
+  noise.start(now);
+  noise.stop(now + 0.055);
+  pip.start(now);
+  pip.stop(now + 0.055);
 }
 
 function stopCurrentSound() {
@@ -2088,6 +2392,82 @@ function scheduleChantStep(context, transport, score, stepIndex, at, stepDuratio
   oscA.stop(at + duration + 0.04);
   oscB.stop(at + duration + 0.04);
   lfo.stop(at + duration + 0.04);
+}
+
+function scheduleFungalBioStep(context, transport, score, stepIndex, at, stepDuration) {
+  if (!transport.fungalBus) return;
+  const bus = transport.fungalBus;
+  const holdBoost = 1 + interaction.hold * 0.2;
+
+  // 1. Mycelial Action Potentials: periodic trains of micro-voltage electrical clicks
+  if (stepIndex % 3 === (score.fungalForm % 3)) {
+    const pulseCount = 2 + (score.fungalHyphae % 3);
+    for (let p = 0; p < pulseCount; p += 1) {
+      const clickTime = at + p * 0.032 + (score.fungalSpores % 4) * 0.003;
+      const clickOsc = context.createOscillator();
+      const clickFilter = context.createBiquadFilter();
+      const clickGain = context.createGain();
+
+      clickOsc.type = "sine";
+      clickOsc.frequency.setValueAtTime(2800 + p * 620 + (score.fungalBloom % 5) * 80, clickTime);
+
+      clickFilter.type = "bandpass";
+      clickFilter.frequency.setValueAtTime(3600, clickTime);
+      clickFilter.Q.setValueAtTime(5.5, clickTime);
+
+      const peak = (0.022 + (score.fungalHyphae / 100) * 0.015) * holdBoost;
+      clickGain.gain.setValueAtTime(0.0001, clickTime);
+      clickGain.gain.exponentialRampToValueAtTime(peak, clickTime + 0.003);
+      clickGain.gain.exponentialRampToValueAtTime(0.0001, clickTime + 0.018);
+
+      clickOsc.connect(clickFilter).connect(clickGain).connect(bus);
+      clickOsc.start(clickTime);
+      clickOsc.stop(clickTime + 0.024);
+    }
+  }
+
+  // 2. Vitrine Droplet Chime / Guttation bead: delicate downward pitch sweep
+  if (stepIndex % 6 === ((score.fungalForm + 2) % 6)) {
+    const dropOsc = context.createOscillator();
+    const dropGain = context.createGain();
+    const startFreq = 1540 + (score.fungalBloom % 8) * 110;
+    const dropDuration = 0.085;
+    const dropTime = at + stepDuration * 0.28;
+
+    dropOsc.type = "sine";
+    dropOsc.frequency.setValueAtTime(startFreq, dropTime);
+    dropOsc.frequency.exponentialRampToValueAtTime(startFreq * 0.42, dropTime + dropDuration);
+
+    const dropPeak = (0.032 + (score.fungalBloom / 100) * 0.022) * holdBoost;
+    dropGain.gain.setValueAtTime(0.0001, dropTime);
+    dropGain.gain.exponentialRampToValueAtTime(dropPeak, dropTime + 0.006);
+    dropGain.gain.exponentialRampToValueAtTime(0.0001, dropTime + dropDuration);
+
+    dropOsc.connect(dropGain).connect(bus);
+    dropOsc.start(dropTime);
+    dropOsc.stop(dropTime + dropDuration + 0.03);
+  }
+
+  // 3. Ballistospore release puff: soft organic noise pop
+  if (stepIndex % 4 === 1 && score.fungalSpores > 30) {
+    const puffTime = at + stepDuration * 0.52;
+    const noise = context.createBufferSource();
+    noise.buffer = ensureNoiseBuffer(context);
+    const noiseFilter = context.createBiquadFilter();
+    noiseFilter.type = "bandpass";
+    noiseFilter.frequency.setValueAtTime(2100 + (score.fungalForm * 80), puffTime);
+    noiseFilter.Q.setValueAtTime(3.2, puffTime);
+
+    const noiseGain = context.createGain();
+    const puffPeak = (0.024 + (score.fungalSpores / 100) * 0.018) * holdBoost;
+    noiseGain.gain.setValueAtTime(0.0001, puffTime);
+    noiseGain.gain.exponentialRampToValueAtTime(puffPeak, puffTime + 0.005);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, puffTime + 0.045);
+
+    noise.connect(noiseFilter).connect(noiseGain).connect(bus);
+    noise.start(puffTime);
+    noise.stop(puffTime + 0.05);
+  }
 }
 
 function highlightBeatStep(stepIndex) {
@@ -2489,6 +2869,7 @@ async function playScore(score) {
   const harmonyBus = context.createGain();
   const chimeBus = context.createGain();
   const chantBus = context.createGain();
+  const fungalBus = context.createGain();
   const filter = context.createBiquadFilter();
   const compressor = context.createDynamicsCompressor();
   const delay = context.createDelay(1.5);
@@ -2503,6 +2884,7 @@ async function playScore(score) {
     harmonyBus,
     chimeBus,
     chantBus,
+    fungalBus,
     filter,
     delay,
     feedback,
@@ -2523,6 +2905,7 @@ async function playScore(score) {
   harmonyBus.gain.setValueAtTime(harmonyEnabled ? 0.78 : 0.0001, now);
   chimeBus.gain.setValueAtTime(chimeEnabled ? 0.8 : 0.0001, now);
   chantBus.gain.setValueAtTime(chantEnabled ? 0.82 : 0.0001, now);
+  fungalBus.gain.setValueAtTime(0.72, now);
   filter.type = ["lowpass", "bandpass", "lowpass", "lowpass", "lowpass", "bandpass"][score.voice];
   filter.frequency.value = 720 + score.bloom * 20 + score.hueShift * 1.6;
   filter.Q.value = 1.6 + score.edge / 28;
@@ -2541,6 +2924,8 @@ async function playScore(score) {
   chantBus.connect(compressor);
   beatBus.connect(compressor);
   bassBus.connect(compressor);
+  fungalBus.connect(delay);
+  fungalBus.connect(compressor);
   filter.connect(compressor).connect(output).connect(context.destination);
   filter.connect(delay);
   delay.connect(feedback).connect(delay);
@@ -2581,6 +2966,7 @@ async function playScore(score) {
       scheduleHarmonyStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleChimeStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleChantStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
+      scheduleFungalBioStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
       window.setTimeout(() => {
         if (currentTransport === transport) highlightBeatStep(currentStep);
@@ -2693,6 +3079,7 @@ function showScore(score) {
   elements.replay.disabled = false;
   if (elements.shareLink) elements.shareLink.disabled = false;
   if (elements.exportPng) elements.exportPng.disabled = false;
+  if (elements.exportWav) elements.exportWav.disabled = false;
   try {
     const nextHash = encodeOmenHash(score.phrase);
     if (window.location.hash !== nextHash) {
@@ -3024,6 +3411,162 @@ function exportSpecimenPng() {
   }
 }
 
+async function exportSpecimenWav() {
+  if (!currentScore) return;
+  const score = currentScore;
+  const OfflineAudioCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!OfflineAudioCtx) {
+    elements.status.textContent = "OFFLINE AUDIO NOT SUPPORTED";
+    return;
+  }
+
+  elements.status.textContent = "RECORDING WAV LOOP...";
+  if (elements.exportWav) {
+    elements.exportWav.disabled = true;
+    elements.exportWav.textContent = "RECORDING... ✦";
+  }
+
+  try {
+    const pulse = activeTempoBpm || score.pulse;
+    const unit = 60 / pulse / 2;
+    const rhythm = RHYTHMS[score.rhythm];
+    const stepsCount = 12;
+    let loopDuration = 0;
+    for (let step = 0; step < stepsCount; step += 1) {
+      loopDuration += unit * rhythm[step % rhythm.length];
+    }
+    const tailDuration = 1.35; // Natural decay of delay repeats and resonant reverbs
+    const totalDuration = loopDuration + tailDuration;
+    const sampleRate = 44100;
+    const totalFrames = Math.ceil(totalDuration * sampleRate);
+
+    const offlineCtx = new OfflineAudioCtx(2, totalFrames, sampleRate);
+    const mix = offlineCtx.createGain();
+    const beatBus = offlineCtx.createGain();
+    const bassBus = offlineCtx.createGain();
+    const harmonyBus = offlineCtx.createGain();
+    const chimeBus = offlineCtx.createGain();
+    const chantBus = offlineCtx.createGain();
+    const fungalBus = offlineCtx.createGain();
+    const filter = offlineCtx.createBiquadFilter();
+    const compressor = offlineCtx.createDynamicsCompressor();
+    const delay = offlineCtx.createDelay(1.5);
+    const feedback = offlineCtx.createGain();
+    const output = offlineCtx.createGain();
+
+    mix.gain.setValueAtTime(0.28, 0);
+    beatBus.gain.setValueAtTime(beatEnabled ? 0.82 : 0.0001, 0);
+    bassBus.gain.setValueAtTime(bassEnabled ? 0.84 : 0.0001, 0);
+    harmonyBus.gain.setValueAtTime(harmonyEnabled ? 0.78 : 0.0001, 0);
+    chimeBus.gain.setValueAtTime(chimeEnabled ? 0.8 : 0.0001, 0);
+    chantBus.gain.setValueAtTime(chantEnabled ? 0.82 : 0.0001, 0);
+    fungalBus.gain.setValueAtTime(0.72, 0);
+
+    filter.type = ["lowpass", "bandpass", "lowpass", "lowpass", "lowpass", "bandpass"][score.voice];
+    filter.frequency.value = 720 + score.bloom * 20 + score.hueShift * 1.6;
+    filter.Q.value = 1.6 + score.edge / 28;
+    compressor.threshold.value = -18;
+    compressor.knee.value = 18;
+    compressor.ratio.value = 5;
+    delay.delayTime.value = Math.min(1.45, unit * [1, 1.5, 0.75, 2, 1.25, 0.5][score.rhythm]);
+    feedback.gain.value = 0.14 + score.bloom / 650;
+    output.gain.value = masterGainFor(masterVolume);
+
+    mix.connect(filter);
+    harmonyBus.connect(filter);
+    chimeBus.connect(delay);
+    chimeBus.connect(compressor);
+    chantBus.connect(delay);
+    chantBus.connect(compressor);
+    beatBus.connect(compressor);
+    bassBus.connect(compressor);
+    fungalBus.connect(delay);
+    fungalBus.connect(compressor);
+    filter.connect(compressor).connect(output).connect(offlineCtx.destination);
+    filter.connect(delay);
+    delay.connect(feedback).connect(delay);
+    delay.connect(compressor);
+
+    // Continuous ambient drones
+    const droneIntervals = [-12, -5, 7];
+    const initialDroneGains = [0.085, score.voice === 5 ? 0.035 : 0.018, 0.0001];
+    for (const [index, interval] of droneIntervals.entries()) {
+      const drone = offlineCtx.createOscillator();
+      const droneGain = offlineCtx.createGain();
+      drone.type = index === 0
+        ? (score.waveform === "square" ? "triangle" : score.waveform)
+        : "sine";
+      drone.frequency.value = midiToFrequency(score.root + interval);
+      drone.detune.value = [-5, 4, -3][index];
+      droneGain.gain.value = initialDroneGains[index];
+      drone.connect(droneGain).connect(mix);
+      drone.start(0);
+      drone.stop(totalDuration);
+    }
+
+    const offlineTransport = {
+      mix,
+      beatBus,
+      bassBus,
+      harmonyBus,
+      chimeBus,
+      chantBus,
+      fungalBus,
+      melody: currentConductedMelody || melodyFor(score),
+      drones: [],
+      droneGains: [],
+    };
+
+    let stepTime = 0.04;
+    for (let step = 0; step < stepsCount; step += 1) {
+      const lengthMultiplier = rhythm[step % rhythm.length];
+      const stepDuration = unit * lengthMultiplier;
+      const gateRatio = Math.min(0.94, score.gate / 100);
+      const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
+
+      scheduleNote(offlineCtx, offlineTransport, score, step, stepTime, soundingDuration);
+      scheduleBeatStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
+      scheduleBassStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
+      scheduleHarmonyStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
+      scheduleChimeStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
+      scheduleChantStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
+      scheduleFungalBioStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
+
+      stepTime += stepDuration;
+    }
+
+    const renderedBuffer = await offlineCtx.startRendering();
+    const wavBlob = audioBufferToWavBlob(renderedBuffer);
+    const filename = specimenFilenameFor(score, "wav");
+
+    const url = URL.createObjectURL(wavBlob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+    elements.status.textContent = "SPECIMEN AUDIO RECORDED (WAV)";
+    if (elements.exportWav) {
+      elements.exportWav.textContent = "WAV RECORDED ✦";
+      window.setTimeout(() => {
+        if (elements.exportWav) {
+          elements.exportWav.disabled = false;
+          elements.exportWav.innerHTML = 'RECORD WAV LOOP <span aria-hidden="true">☊</span>';
+        }
+      }, 1800);
+    }
+  } catch (err) {
+    elements.status.textContent = "WAV EXPORT FAILED";
+    if (elements.exportWav) {
+      elements.exportWav.disabled = false;
+      elements.exportWav.innerHTML = 'RECORD WAV LOOP <span aria-hidden="true">☊</span>';
+    }
+  }
+}
+
 function vitrineCoordinates(event) {
   const rect = elements.canvas.getBoundingClientRect();
   const x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
@@ -3051,6 +3594,7 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
   interaction.pitchBend = -coords.y;
   interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: performance.now(), strength: 1 });
   vision.burstSpores(1.2);
+  triggerSporePuff(1.2);
   stageContainer?.classList.add("is-interacting");
   try {
     elements.canvas.setPointerCapture(event.pointerId);
@@ -3092,6 +3636,7 @@ elements.canvas.addEventListener("pointermove", (event) => {
     interaction.lastTickAt = now;
     interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: now, strength: 0.55 });
     triggerPercussion("ratchet", coords.x, coords.y, Math.min(0.85, 0.4 + interaction.dragSpeed * 0.45));
+    triggerSporePuff(0.65);
   }
 });
 
@@ -3309,6 +3854,10 @@ elements.shareLink?.addEventListener("click", () => {
 
 elements.exportPng?.addEventListener("click", () => {
   exportSpecimenPng();
+});
+
+elements.exportWav?.addEventListener("click", () => {
+  exportSpecimenWav();
 });
 
 window.addEventListener("hashchange", () => {

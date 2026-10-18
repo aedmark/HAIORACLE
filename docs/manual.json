@@ -254,28 +254,28 @@
         },
         {
           "id": "mycelial-fruiting-growth",
-          "title": "Procedural Mycelial Network, Anastomosis, & Generative Fruiting Bodies",
-          "summary": "Simulates organic mycelial colonization, hyphal branching, and eight distinct sporophore fruiting bodies.",
-          "tags": ["graphics", "canvas", "mycology", "procedural", "particles"],
-          "what": "Generates a living subterranean-like fungal network emerging from the creature's silhouette into the vitrine glass. Over a 10-second maturation cycle, primary hyphae elongate, fork into lateral branchlets, form anastomotic bridge loops, and throb with traveling bioluminescent nutrient waves, while 3 to 8 generative fruiting bodies (mushrooms/sporophores) sprout and mature across eight archetypes (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) and discharge drifting ballistospores.",
+          "title": "Procedural Mycelial Network, Botanical Staging, & Bio-Acoustic Sonification",
+          "summary": "Simulates living mycelial colonization, Victorian vitrine staging, Haeckel engravings, and bio-acoustic sonification.",
+          "tags": ["graphics", "canvas", "mycology", "procedural", "bio-acoustics", "staging"],
+          "what": "Simulates a living Victorian botanical specimen rooted in an antique turned-wood mahogany pedestal and fibrous peat substrate. Branching hyphal filaments colonize the vitrine and mature over a 10-second envelope, sprouting eight generative sporophore archetypes (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) etched with Ernst Haeckel lithographic anatomy. Condensation micro-droplets cling to the curved bell jar, while Web Audio synthesizes bio-electric action potentials, guttation droplet chimes, and tactile ballistospore puffs.",
           "how": {
-            "lead": "`buildMycelialNetwork()`, `buildFruitingBodies()`, and `drawMycelium()` in `src/app.mjs` execute procedural biological mathematics:",
+            "lead": "`buildMycelialNetwork()`, `drawVitrinePedestal()`, `drawGlassCondensation()`, and `scheduleFungalBioStep()` in `src/app.mjs` execute botanical synthesis:",
             "points": [
-              "Generates 7 to 18 primary root hyphae around the creature's perimeter, each stepping through 5 to 9 segments with angular wander and lateral branch bifurcation.",
-              "Forms anastomosis bridges between adjacent hyphal filaments within proximity thresholds, creating genuine mycelial mesh lattices.",
-              "Simulates traveling nutrient action potentials $\\sin(s \\cdot 10 - t \\cdot 4.5)$ along hyphal strands that intensify when holding the vitrine.",
-              "Renders eight generative sporophore anatomies with botanical detail: gilled umbrella caps with annulus rings, concentric terraced polypore brackets, dendritic coral clubs, translucent Mycena bells with dewdrop jewels, peziza chalice cups, reticulated morel honeycombs, puffball bulbs with spore craters, and lantern hydras.",
-              "Maintains a 35 to 85 particle ballistospore cloud with thermal buoyancy, orbital convection, drag wake deflection, and explosive spore bursts triggered on vitrine tap gestures."
+              "Renders an antique turned-wood mahogany specimen pedestal with polished brass channel ring and fibrous peat/driftwood substrate mounds grounding hyphal rootlets.",
+              "Generates 46 deterministic dew condensation micro-droplets clinging along the curved glass profile of the vitrine bell jar, vibrating on tap gestures and catching specimen bloom.",
+              "Etches eight sporophore archetypes with Ernst Haeckel-style lithographic details: radiating lamellae, stippled universal veil verrucae, growth sulci, fimbriate eyelash rims, scalariform alveoli, and aculei teeth.",
+              "Synthesizes bio-electric mycelial action-potential spike trains (2800–3800 Hz bandpass impulses) and guttation water droplet chimes synchronized with hyphal nutrient pulses.",
+              "Maintains a 35 to 85 particle ballistospore cloud discharging explosive percussive noise puffs and downward pitch chirps when the vitrine glass is disturbed."
             ]
           },
-          "why": "Transforms the creature from an isolated mathematical polygon into a living botanical specimen rooted inside its antique bell jar. The mycelial network grounds the creature visually, while progressive growth and touch-triggered spore bursts provide visceral, tactile biological feedback (ADR D-017).",
+          "why": "Transforms the apparition from a floating geometric shape into a preserved Victorian cryptogamic specimen firmly mounted inside physical glass. Grounding substrate, glass condensation, anatomical lithography, and bio-acoustic sonification produce a multisensory experience of living antique science (ADR D-017, ADR D-018).",
           "evidence": [
-            {"label": "Mycelial and fruiting body generators", "target": "src/app.mjs"},
+            {"label": "Mycelial and vitrine generators", "target": "src/app.mjs"},
             {"label": "Score grammar validation", "target": "src/score.mjs"},
-            {"label": "Mycelial growth tests", "target": "tests/static.test.mjs"},
-            {"label": "Architecture Record D-017", "target": "docs/DECISIONS.md"}
+            {"label": "Mycelial and staging tests", "target": "tests/static.test.mjs"},
+            {"label": "Architecture Records D-017 & D-018", "target": "docs/DECISIONS.md"}
           ],
-          "related": ["silhouette-flux", "interactive-vitrine", "kinetic-cores"]
+          "related": ["silhouette-flux", "interactive-vitrine", "deterministic-wav-export"]
         }
       ]
     },
@@ -634,7 +634,32 @@
             {"label": "Filename generator and tests", "target": "tests/oracle.test.mjs"},
             {"label": "Architecture Record D-015", "target": "docs/DECISIONS.md"}
           ],
-          "related": ["client-url-sharing", "parlor-cabinet-styling", "zero-dependency-model"]
+          "related": ["client-url-sharing", "deterministic-wav-export", "zero-dependency-model"]
+        },
+        {
+          "id": "deterministic-wav-export",
+          "title": "16-Bit Uncompressed Deterministic WAV Audio Export",
+          "summary": "Renders and exports a broadcast-quality 16-bit 44.1 kHz WAV recording of the chamber ensemble loop.",
+          "tags": ["export", "wav", "audio", "offline-audio-context", "pcm"],
+          "what": "Generates a deterministic, uncompressed 16-bit stereo 44.1 kHz PCM WAV recording of the complete 12-step esoteric chamber ensemble loop (`RECORD WAV LOOP`). Uses the browser-native `OfflineAudioContext` and a dependency-free pure JavaScript RIFF/WAVE encoder (`audioBufferToWavBlob()`) to synthesize and download `hai-oracle-<name>-<seed>.wav` in under 60 milliseconds on-device.",
+          "how": {
+            "lead": "`exportSpecimenWav()` in `src/app.mjs` and `audioBufferToWavBlob()` in `src/share.mjs` execute offline audio synthesis and PCM packaging:",
+            "points": [
+              "Calculates precise loop duration from active tempo BPM and score rhythm multipliers, adding a 1.35-second tail for delay and reverb decay.",
+              "Instantiates a 2-channel 44.1 kHz `OfflineAudioContext`, mirroring the real-time audio graph with compressor, resonant filter, modulated delay, and continuous drones.",
+              "Schedules all six conducted esoteric instruments (LOLCODE lead, Malbolge beat, Brainfuck bass, Befunge-93 organ, Piet/FRACTRAN chimes, Shakespeare choir) plus fungal bio-acoustics.",
+              "`audioBufferToWavBlob()` constructs a canonical 44-byte RIFF/WAVE header and writes interleaved clamped 16-bit signed integer samples.",
+              "Triggers immediate browser download via an ephemeral object URL anchor with automatic cleanup."
+            ]
+          },
+          "why": "Confidants wanted high-fidelity audio keepsakes of their summoned creatures. Offline Web Audio rendering guarantees bit-exact acoustic determinism without server roundtrips, network telemetry, or heavyweight external audio libraries (ADR D-018).",
+          "evidence": [
+            {"label": "WAV audio exporter", "target": "src/app.mjs"},
+            {"label": "Pure PCM WAV encoder", "target": "src/share.mjs"},
+            {"label": "Audio encoding unit tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-018", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["broadsheet-png-export", "client-url-sharing", "mycelial-fruiting-growth"]
         }
       ]
     }

@@ -9,7 +9,7 @@ import { runLolcode } from "../src/lolcode.mjs";
 import { BEAT_NAMES, composeBeat, crazy, cycleBeatStep, rotr, runMalbolge } from "../src/malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "../src/music.mjs";
 import { FUNGAL_NAMES, composeScore, hashPhrase, parseScore } from "../src/score.mjs";
-import { buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "../src/share.mjs";
+import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "../src/share.mjs";
 import { CHANT_NAMES, FORMANT_VOWELS, PERSONA_ROLES, composeChant, cycleChantCell, runShakespeare } from "../src/shakespeare.mjs";
 
 const [source, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource] = await Promise.all([
@@ -289,7 +289,30 @@ test("shareable URL fragments round-trip phrases locally and generate determinis
   const score = composeScore(source, "the moon owes me five dollars");
   const filename = specimenFilenameFor(score);
   assert.match(filename, /^hai-oracle-[a-z0-9-]+-[0-9a-f]{8}\.png$/);
+  const wavFilename = specimenFilenameFor(score, "wav");
+  assert.match(wavFilename, /^hai-oracle-[a-z0-9-]+-[0-9a-f]{8}\.wav$/);
+
+  // Test 16-bit stereo PCM WAV encoding
+  const sampleCount = 64;
+  const mockBuffer = {
+    numberOfChannels: 2,
+    sampleRate: 44100,
+    length: sampleCount,
+    getChannelData: (c) => {
+      const channel = new Float32Array(sampleCount);
+      for (let i = 0; i < sampleCount; i += 1) {
+        channel[i] = c === 0 ? Math.sin((i / sampleCount) * Math.PI * 2) : -0.5;
+      }
+      return channel;
+    },
+  };
+  const wavBlob = audioBufferToWavBlob(mockBuffer);
+  assert.equal(wavBlob.type, "audio/wav");
+  // 44-byte RIFF header + 64 samples * 2 channels * 2 bytes/sample = 44 + 256 = 300 bytes
+  assert.equal(wavBlob.size, 44 + sampleCount * 2 * 2);
+
   assert.throws(() => encodeOmenHash("   "), /empty omen phrase/);
+  assert.throws(() => audioBufferToWavBlob(null), /Cannot encode a null/);
 });
 
 test("Euler Gradus Suavitatis, Neo-Riemannian Tonnetz, and Euclidean conductor harmonize the six-language ensemble", () => {

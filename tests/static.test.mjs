@@ -72,10 +72,12 @@ test("the page exposes one labeled text input and its core controls", async () =
   assert.match(html, /id="replay"/);
   assert.match(html, /id="share-link"/);
   assert.match(html, /id="export-png"/);
+  assert.match(html, /id="export-wav"/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /RESTART THE MELODY/);
   assert.match(html, /COPY OMEN LINK/);
   assert.match(html, /ENGRAVE PNG PLATE/);
+  assert.match(html, /RECORD WAV LOOP/);
 });
 
 test("the interface uses the centered esoteric parlor cabinet design system", async () => {
@@ -168,6 +170,10 @@ test("procedural mycelium and generative fruiting bodies grow within the vitrine
   assert.match(app, /case 7: drawHyphalHydra/);
   assert.match(app, /updateAndDrawSpores/);
   assert.match(app, /burstSpores/);
+  assert.match(app, /drawVitrinePedestal/);
+  assert.match(app, /drawGlassCondensation/);
+  assert.match(app, /scheduleFungalBioStep/);
+  assert.match(app, /triggerSporePuff/);
 });
 
 test("all five esoteric accompaniment plates and the parlor bandstand render 12-step matrices and schedule voices", async () => {
@@ -209,6 +215,7 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.match(app, /function renderSpecimenBroadsheetCanvas\(/);
   assert.match(app, /function copyShareLink\(\)/);
   assert.match(app, /function exportSpecimenPng\(\)/);
+  assert.match(app, /function exportSpecimenWav\(\)/);
   assert.match(app, /fetch\("src\/beat\.mal"\)/);
   assert.match(app, /fetch\("src\/bass\.bf"\)/);
   assert.match(app, /fetch\("src\/harmony\.bfg"\)/);
