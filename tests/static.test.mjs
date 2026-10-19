@@ -147,6 +147,10 @@ test("tapping, holding, and dragging the vitrine modulate shape morphing, moveme
   assert.match(app, /function updateAudioInteraction\(\)/);
   assert.match(app, /interaction\.pitchBend/);
   assert.match(app, /const morphMix = Math\.min\(1, interaction\.hold/);
+  assert.match(app, /transport\.panner/);
+  assert.match(app, /interaction\.dragDistance/);
+  assert.match(app, /maxTugX = width \* 0\.32/);
+  assert.match(app, /pitchBendCents = interaction\.pitchBend/);
 });
 
 test("procedural mycelium and generative fruiting bodies grow within the vitrine", async () => {

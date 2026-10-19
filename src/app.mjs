@@ -157,6 +157,7 @@ const interaction = {
   tap: 0,
   dragSpeed: 0,
   dragTravel: 0,
+  dragDistance: 0,
   morphPhase: 0,
   pitchBend: 0,
   lastFrameAt: 0,
@@ -253,8 +254,8 @@ function shapeRadius(score, angle, elapsed) {
     radius = radius * (1 - morphMix) + morphed * morphMix;
     const pointerAngle = Math.atan2(interaction.smoothY, interaction.smoothX);
     const pointerReach = Math.min(1, Math.hypot(interaction.smoothX, interaction.smoothY));
-    const directionalPull = Math.cos(angle - pointerAngle) * pointerReach * (interaction.hold * 0.11 + interaction.dragSpeed * 0.09);
-    const harmonicPinch = Math.cos((angle - pointerAngle) * (2 + (score.symmetry % 4)) + interaction.morphPhase) * interaction.tap * 0.07;
+    const directionalPull = Math.cos(angle - pointerAngle) * pointerReach * (interaction.hold * 0.22 + interaction.dragSpeed * 0.18);
+    const harmonicPinch = Math.cos((angle - pointerAngle) * (2 + (score.symmetry % 4)) + interaction.morphPhase) * (interaction.tap * 0.08 + interaction.hold * 0.06);
     radius += directionalPull + harmonicPinch;
   }
   return Math.max(0.38, Math.min(1.08, radius + fluxOffset(score, angle, elapsed)));
@@ -650,11 +651,11 @@ function drawIris(ctx, score, eye, size, elapsed) {
   const hue = wrapHue(score.irisHue + eye * score.irisShift);
   const secondHue = wrapHue(hue + score.hueShift);
   const baseGazeAngle = score.gaze / 8 * Math.PI * 2 + Math.sin(elapsed * 0.32 + eye) * 0.16;
-  const attention = Math.min(1, interaction.hold * 0.85 + interaction.tap * 0.65);
+  const attention = Math.min(1, interaction.hold * 0.92 + interaction.tap * 0.75);
   const pointerAngle = Math.atan2(interaction.smoothY, interaction.smoothX);
-  const pointerReach = Math.min(1.35, 0.45 + Math.hypot(interaction.smoothX, interaction.smoothY));
-  const x = (Math.cos(baseGazeAngle) * (1 - attention) + Math.cos(pointerAngle) * pointerReach * attention) * size * 0.24;
-  const y = (Math.sin(baseGazeAngle) * (1 - attention) + Math.sin(pointerAngle) * pointerReach * attention) * size * 0.16;
+  const pointerReach = Math.min(1.5, 0.45 + Math.hypot(interaction.smoothX, interaction.smoothY));
+  const x = (Math.cos(baseGazeAngle) * (1 - attention) + Math.cos(pointerAngle) * pointerReach * attention) * size * 0.32;
+  const y = (Math.sin(baseGazeAngle) * (1 - attention) + Math.sin(pointerAngle) * pointerReach * attention) * size * 0.22;
   const radius = size * (0.48 + (eye % 3) * 0.055);
   const gradient = ctx.createRadialGradient(x - radius * 0.18, y - radius * 0.2, radius * 0.08, x, y, radius);
   gradient.addColorStop(0, `hsl(${secondHue} 100% 88%)`);
@@ -1769,8 +1770,8 @@ class OracleVision {
     const naturalGrowth = this.reducedMotion ? 1.0 : Math.min(1.0, elapsed / 10.0);
     const growth = Math.min(1.0, naturalGrowth + interaction.hold * 0.35 + interaction.tap * 0.25);
 
-    const glowFocusX = width * (0.5 + interaction.smoothX * 0.14);
-    const glowFocusY = height * (0.48 + interaction.smoothY * 0.14);
+    const glowFocusX = width * (0.5 + interaction.smoothX * 0.28);
+    const glowFocusY = height * (0.48 + interaction.smoothY * 0.24);
     const backdrop = ctx.createRadialGradient(glowFocusX, glowFocusY, 0, width * 0.5, height * 0.48, Math.max(width, height) * 0.78);
     backdrop.addColorStop(0, `hsl(${colors[0]} ${Math.max(30, score.saturation - 24)}% ${16 + interaction.hold * 7 + interaction.tap * 6}%)`);
     backdrop.addColorStop(0.48, `hsl(${colors[1]} ${Math.max(25, score.saturation - 35)}% ${8 + interaction.hold * 4}%)`);
@@ -1793,15 +1794,20 @@ class OracleVision {
     drawVitrinePedestal(ctx, width, height, colors, score, elapsed);
 
     const orbitDistance = this.reducedMotion ? 0 : score.motion * Math.min(width, height) * 0.004;
-    const tugX = this.reducedMotion ? 0 : interaction.smoothX * width * (0.075 + interaction.hold * 0.065);
-    const tugY = this.reducedMotion ? 0 : interaction.smoothY * height * (0.075 + interaction.hold * 0.065);
+    const maxTugX = width * 0.32;
+    const maxTugY = height * 0.24;
+    const tugX = this.reducedMotion ? 0 : interaction.smoothX * maxTugX * (0.65 + interaction.hold * 0.35);
+    const tugY = this.reducedMotion ? 0 : interaction.smoothY * maxTugY * (0.65 + interaction.hold * 0.35);
     const centerX = width * 0.5 + Math.cos(elapsed * 0.21) * orbitDistance + tugX;
     const centerY = height * 0.5 + Math.sin(elapsed * 0.27) * orbitDistance + tugY;
     const sizeFactor = 0.15 + score.size / 100 * (width < 760 ? 0.14 : 0.22);
     const base = Math.min(width, height) * sizeFactor;
     const points = Math.max(120, score.symmetry * 28);
-    const stretchX = 1 + (this.reducedMotion ? 0 : (interaction.smoothX * interaction.hold * 0.14 + interaction.tap * 0.05));
-    const stretchY = 1 + (this.reducedMotion ? 0 : (interaction.smoothY * interaction.hold * 0.14 - interaction.tap * 0.04));
+    const dragDist = Math.hypot(interaction.smoothX, interaction.smoothY);
+    const dragAngle = Math.atan2(interaction.smoothY, interaction.smoothX);
+    const stretchAmount = this.reducedMotion ? 0 : (dragDist * 0.16 + interaction.dragSpeed * 0.22) * interaction.hold;
+    const stretchX = 1 + (Math.cos(dragAngle) ** 2) * stretchAmount - (Math.sin(dragAngle) ** 2) * stretchAmount * 0.45 + (interaction.tap * 0.06);
+    const stretchY = 1 + (Math.sin(dragAngle) ** 2) * stretchAmount - (Math.cos(dragAngle) ** 2) * stretchAmount * 0.45 - (interaction.tap * 0.05);
     const aspectX = [1, 1, 1.08, 1, 0.9, 1.16, 1.25, 1, 0.92, 0.88][score.shape] * stretchX;
     const aspectY = [1, 1, 0.92, 1, 1.12, 0.88, 0.72, 1, 1.08, 1.25][score.shape] * stretchY;
 
@@ -1923,31 +1929,45 @@ function updateAudioInteraction() {
   const field = harmonicField();
 
   const baseCutoff = 620 + score.bloom * 24 + score.hueShift * 2;
-  const harmonicExponent = (interaction.pitchBend * 0.58 + Math.sin(field.angle) * 0.28) * Math.max(0.25, interaction.hold) + interaction.tap * 0.22;
-  const targetCutoff = Math.max(240, Math.min(4800, baseCutoff * (2 ** harmonicExponent)));
+  const harmonicExponent = (interaction.pitchBend * 0.72 + Math.sin(field.angle) * 0.35) * Math.max(0.3, interaction.hold) + interaction.tap * 0.25;
+  const targetCutoff = Math.max(220, Math.min(5200, baseCutoff * (2 ** harmonicExponent)));
   const baseQ = 2.5 + score.edge / 16;
-  const targetQ = Math.min(5.2, baseQ + field.radius * 1.35 + interaction.tap * 0.6);
-  const targetMix = 0.28 * (1 + interaction.hold * 0.16 + interaction.tap * 0.1);
+  const targetQ = Math.min(5.8, baseQ + field.radius * 1.6 + interaction.tap * 0.7);
+  const targetMix = 0.28 * (1 + interaction.hold * 0.2 + interaction.tap * 0.12);
   const baseFeedback = 0.14 + score.bloom / 650;
-  const targetFeedback = Math.min(0.46, baseFeedback + field.radius * 0.12);
+  const targetFeedback = Math.min(0.48, baseFeedback + field.radius * 0.14);
 
   transport.filter.frequency.setTargetAtTime(targetCutoff, now, 0.045);
   transport.filter.Q.setTargetAtTime(targetQ, now, 0.045);
   transport.mix.gain.setTargetAtTime(targetMix, now, 0.045);
   transport.feedback.gain.setTargetAtTime(targetFeedback, now, 0.05);
 
-  const subWeight = 0.085 * (1 + Math.max(0, -interaction.pitchBend) * 0.45 * interaction.hold);
-  const fifthWeight = 0.035 + field.radius * 0.055 * (0.5 - 0.5 * Math.cos(field.angle * 2));
-  const shimmerWeight = field.radius * 0.048 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5));
+  if (transport.panner) {
+    const targetPan = Math.max(-0.85, Math.min(0.85, interaction.smoothX * 0.88));
+    transport.panner.pan.setTargetAtTime(targetPan, now, 0.04);
+  }
+
+  // Real-time continuous drone choir pitch bend & harmonic beating
+  const pitchBendCents = interaction.pitchBend * 140 * interaction.hold;
+  const subWeight = 0.085 * (1 + Math.max(0, -interaction.pitchBend) * 0.55 * interaction.hold);
+  const fifthWeight = 0.035 + field.radius * 0.065 * (0.5 - 0.5 * Math.cos(field.angle * 2));
+  const shimmerWeight = field.radius * 0.058 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5));
   const targetDroneGains = [subWeight, fifthWeight, shimmerWeight];
 
   for (const [index, drone] of transport.drones.entries()) {
     const baseDetune = [-5, 4, -3][index] || 0;
-    const phaseBeating = Math.sin(field.angle + index * 2.094) * 3.5 * field.radius;
-    drone.detune.setTargetAtTime(baseDetune + phaseBeating, now, 0.05);
+    const phaseBeating = Math.sin(field.angle + index * 2.094) * (10 + 16 * field.radius);
+    drone.detune.setTargetAtTime(baseDetune + pitchBendCents + phaseBeating, now, 0.045);
     if (transport.droneGains?.[index]) {
-      transport.droneGains[index].gain.setTargetAtTime(targetDroneGains[index] ?? 0.03, now, 0.06);
+      transport.droneGains[index].gain.setTargetAtTime(targetDroneGains[index] ?? 0.03, now, 0.05);
     }
+  }
+
+  // Vitrine bell jar glass acoustic proximity resonance
+  if (transport.parlorReverbSend && parlorAcousticsEnabled) {
+    const glassProximity = Math.max(0, (field.radius - 0.5) / 0.5);
+    const glassBoost = 1 + glassProximity * 0.75;
+    transport.parlorReverbSend.gain.setTargetAtTime(0.28 * parlorAcousticsLevel * glassBoost, now, 0.05);
   }
 }
 
@@ -2068,17 +2088,17 @@ function voiceStack(score, step) {
 function scheduleNote(context, transport, score, step, at, duration) {
   const field = harmonicField();
   const primaryNote = score.root + transport.melody[step % transport.melody.length];
-  const consonantInterval = interaction.pitchBend > 0.32 ? 7 : (interaction.pitchBend < -0.32 ? -5 : 0);
+  const consonantInterval = interaction.pitchBend > 0.48 ? 12 : (interaction.pitchBend > 0.2 ? 7 : (interaction.pitchBend < -0.45 ? -12 : (interaction.pitchBend < -0.2 ? -5 : 0)));
   const shiftedNote = score.root + transport.melody[(step + field.phaseStep) % transport.melody.length] + consonantInterval;
   const envelope = context.createGain();
   const attack = Math.min(0.055, duration * (0.2 + field.radius * 0.06));
-  const peakGain = 0.3 * (1 + interaction.hold * 0.12);
+  const peakGain = 0.3 * (1 + interaction.hold * 0.16);
   envelope.gain.setValueAtTime(0.0001, at);
   envelope.gain.exponentialRampToValueAtTime(peakGain, at + Math.max(0.01, attack));
   envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
   envelope.connect(transport.mix);
 
-  const chorusPhaseCents = Math.sin(field.angle + step * 0.52) * 3.5 * field.radius;
+  const chorusPhaseCents = Math.sin(field.angle + step * 0.52) * (6 + 14 * field.radius);
   const layers = field.shiftedWeight > 0.04
     ? [
       { note: primaryNote, weight: field.primaryWeight, detuneOffset: -chorusPhaseCents },
@@ -2304,8 +2324,9 @@ function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration
   if (!step || step.gate === 0) return;
 
   const nextStep = currentBass.steps[(stepIndex + 1) % currentBass.steps.length];
-  const baseMidi = Math.max(28, score.root - (step.register > 0 ? 12 : 24) + step.interval);
-  const nextMidi = Math.max(28, score.root - ((nextStep?.register || 0) > 0 ? 12 : 24) + (nextStep?.interval || 0));
+  const octaveShift = interaction.pitchBend > 0.45 ? 12 : (interaction.pitchBend < -0.45 ? -12 : 0);
+  const baseMidi = Math.max(28, score.root - (step.register > 0 ? 12 : 24) + step.interval + octaveShift);
+  const nextMidi = Math.max(28, score.root - ((nextStep?.register || 0) > 0 ? 12 : 24) + (nextStep?.interval || 0) + octaveShift);
   const freq = midiToFrequency(baseMidi);
   const glideFreq = midiToFrequency(nextMidi);
 
@@ -2334,7 +2355,8 @@ function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration
 
   upperGain.gain.value = step.accent ? 0.34 : 0.22;
   bassFilter.type = "lowpass";
-  const startCutoff = Math.min(1250, freq * (step.accent ? 5.2 : 3.4) + (score.bassGlide || 55) * 3);
+  const cutoffMod = 1 + interaction.pitchBend * 0.35 + interaction.hold * 0.15;
+  const startCutoff = Math.min(1850, freq * (step.accent ? 5.2 : 3.4) * Math.max(0.5, cutoffMod) + (score.bassGlide || 55) * 3);
   const endCutoff = Math.max(85, freq * 1.5);
   bassFilter.frequency.setValueAtTime(startCutoff, at);
   bassFilter.frequency.exponentialRampToValueAtTime(endCutoff, at + duration);
@@ -2370,9 +2392,10 @@ function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDurat
     ["sine", "sine", "triangle"],
   ][score.harmonyMode % 4];
 
+  const harmonyShift = interaction.pitchBend > 0.35 ? 7 : (interaction.pitchBend < -0.35 ? -5 : 0);
   for (const [voiceIndex, interval] of step.chord.entries()) {
     const noteStart = at + voiceIndex * strumSec;
-    const midi = Math.min(79, score.root + interval);
+    const midi = Math.min(84, Math.max(36, score.root + interval + harmonyShift));
     const freq = midiToFrequency(midi);
     const osc = context.createOscillator();
     const voiceGain = context.createGain();
@@ -2399,7 +2422,8 @@ function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuratio
   if (!step || step.gate === 0) return;
 
   const isAccented = step.gate === 2;
-  const rootMidi = Math.min(72, score.root + 12);
+  const chimeOctave = interaction.pitchBend > 0.4 ? 12 : (interaction.pitchBend < -0.4 ? -12 : 0);
+  const rootMidi = Math.min(84, score.root + 12 + chimeOctave);
   const rootFreq = midiToFrequency(rootMidi);
   const bellFreq = rootFreq * step.ratioValue;
   const holdBoost = 1 + interaction.hold * 0.16;
@@ -2470,7 +2494,8 @@ function scheduleChantStep(context, transport, score, stepIndex, at, stepDuratio
 
   const isSoliloquy = step.gate === 2;
   const duration = Math.max(0.24, stepDuration * (isSoliloquy ? 1.65 : 1.15));
-  const midi = Math.max(40, Math.min(74, score.root + step.registerOffset + step.interval));
+  const chantShift = interaction.pitchBend > 0.35 ? 7 : (interaction.pitchBend < -0.35 ? -5 : 0);
+  const midi = Math.max(40, Math.min(82, score.root + step.registerOffset + step.interval + chantShift));
   const baseFreq = midiToFrequency(midi);
   const holdBoost = 1 + interaction.hold * 0.14;
 
@@ -2506,10 +2531,11 @@ function scheduleChantStep(context, transport, score, stepIndex, at, stepDuratio
   voiceAmp.gain.exponentialRampToValueAtTime(peak, at + 0.055);
   voiceAmp.gain.exponentialRampToValueAtTime(0.0001, at + duration);
 
+  const formantShift = 1 + interaction.pitchBend * 0.22 + interaction.hold * 0.08;
   const formants = [
-    { freq: step.f1, q: 4.5 + (step.formantResonance || 55) * 0.025, weight: 1.0 },
-    { freq: step.f2, q: 5.8 + (step.formantResonance || 55) * 0.03, weight: 0.62 },
-    { freq: step.f3, q: 7.0 + (step.formantResonance || 55) * 0.035, weight: 0.28 },
+    { freq: step.f1 * formantShift, q: 4.5 + (step.formantResonance || 55) * 0.025, weight: 1.0 },
+    { freq: step.f2 * formantShift, q: 5.8 + (step.formantResonance || 55) * 0.03, weight: 0.62 },
+    { freq: step.f3 * formantShift, q: 7.0 + (step.formantResonance || 55) * 0.035, weight: 0.28 },
   ];
 
   for (const f of formants) {
@@ -3037,6 +3063,7 @@ async function playScore(score) {
   const chantBus = context.createGain();
   const fungalBus = context.createGain();
   const filter = context.createBiquadFilter();
+  const panner = typeof context.createStereoPanner === "function" ? context.createStereoPanner() : null;
   const compressor = context.createDynamicsCompressor();
   const delay = context.createDelay(1.5);
   const feedback = context.createGain();
@@ -3052,6 +3079,7 @@ async function playScore(score) {
     chantBus,
     fungalBus,
     filter,
+    panner,
     delay,
     feedback,
     output,
@@ -3087,18 +3115,26 @@ async function playScore(score) {
 
   mix.connect(filter);
   harmonyBus.connect(filter);
-  chimeBus.connect(delay);
-  chimeBus.connect(compressor);
-  chantBus.connect(delay);
-  chantBus.connect(compressor);
+  chimeBus.connect(filter);
+  chantBus.connect(filter);
+  fungalBus.connect(filter);
   beatBus.connect(compressor);
   bassBus.connect(compressor);
-  fungalBus.connect(delay);
-  fungalBus.connect(compressor);
-  filter.connect(compressor).connect(output).connect(context.destination);
-  filter.connect(delay);
+
+  if (panner) {
+    panner.pan.setValueAtTime(0, now);
+    filter.connect(panner);
+    panner.connect(compressor);
+    panner.connect(delay);
+  } else {
+    filter.connect(compressor);
+    filter.connect(delay);
+  }
+
+  filter.connect(output);
   delay.connect(feedback).connect(delay);
   delay.connect(compressor);
+  compressor.connect(output).connect(context.destination);
 
   // Antique Parlor Acoustics Space: Chamber Convolution Reverb & Horn Surface Crackle
   const parlorReverbSend = context.createGain();
@@ -3854,6 +3890,7 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
   interaction.tap = 1;
   interaction.hold = Math.max(interaction.hold, 0.35);
   interaction.dragTravel = Math.floor((((Math.atan2(coords.y, coords.x) + Math.PI) / (Math.PI * 2)) * 12)) % 12;
+  interaction.dragDistance = 0;
   interaction.pitchBend = -coords.y;
   interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: performance.now(), strength: 1 });
   vision.burstSpores(1.2);
@@ -3890,16 +3927,22 @@ elements.canvas.addEventListener("pointermove", (event) => {
   interaction.y = coords.y;
   interaction.dragSpeed = Math.min(1, interaction.dragSpeed + delta * 2.8);
   interaction.pitchBend = -coords.y;
+  interaction.dragDistance = (interaction.dragDistance || 0) + delta;
   updateAudioInteraction();
 
   const now = performance.now();
   const sector = Math.floor((((Math.atan2(coords.y, coords.x) + Math.PI) / (Math.PI * 2)) * 12)) % 12;
-  if (sector !== interaction.dragTravel && now - interaction.lastTickAt > 140) {
+  const sectorChanged = sector !== interaction.dragTravel;
+  const distanceReached = interaction.dragDistance > 0.12;
+
+  if ((sectorChanged || distanceReached) && (now - interaction.lastTickAt > 110)) {
     interaction.dragTravel = sector;
+    interaction.dragDistance = 0;
     interaction.lastTickAt = now;
     interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: now, strength: 0.55 });
     triggerPercussion("ratchet", coords.x, coords.y, Math.min(0.85, 0.4 + interaction.dragSpeed * 0.45));
     triggerSporePuff(0.65);
+    vision.burstSpores(0.45);
   }
 });
 
