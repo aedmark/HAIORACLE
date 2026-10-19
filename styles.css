@@ -1202,6 +1202,8 @@ input[type="text"]:focus {
 }
 
 .acoustics-chip {
+  cursor: pointer;
+  user-select: none;
   padding: 0.35rem 0.75rem;
   border: 1px solid #523e25;
   background: #16110e;
@@ -1213,6 +1215,13 @@ input[type="text"]:focus {
   text-transform: uppercase;
   border-radius: 2px;
   transition: all 150ms ease;
+  line-height: normal;
+}
+
+.acoustics-chip:hover {
+  border-color: #8c6a3e;
+  color: #d8c2a4;
+  background: #1f1813;
 }
 
 .acoustics-chip.is-active {

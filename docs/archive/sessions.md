@@ -86,5 +86,24 @@ Active handoff state and the latest ten sessions live in [../HANDOFF.md](../HAND
 
 **Next session should start with:** P4-01.
 
+### Session 5: 2026-10-17: no more macroblock heartbeat
 
+**Contributor:** Codex with maintainer direction
 
+**Goal:** Remove the glitchy, compression-artifact quality from sound-synchronous body movement.
+
+**Done:** Incidental rendering fix; no roadmap item added.
+
+**Changed:** Replaced the six-percent, eighth-power beat spike with a continuously differentiable 1.2% peak-to-peak sinusoidal scale envelope. Independent boundary flux and kinetic-core movement are unchanged.
+
+**Decisions:** No new durable decision; this corrects the pulse treatment already defined by D-007.
+
+**Verified:** Thirteen Node checks passed, including a regression marker for the smooth envelope; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Subjective visual quality in a real browser remains P4-01.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** P4-01.

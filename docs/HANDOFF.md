@@ -4,9 +4,9 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-18, session 14, on `main`: the Kapellmeister music-theory and genre rule console (P5-15, D-019) and antique parlor room acoustic space (wax-cylinder surface noise, wood-and-velvet chamber convolution reverb, clockwork escapement ticking) are fully implemented, integrated with real-time Web Audio and offline 16-bit WAV loop export, and verified across all tests and 3x documentation._
+_Last updated: 2026-10-18, session 15, on `main`: the Antique Parlor Acoustics engine (P5-15, D-019) has been audited and completely overhauled with high-presence Edison wax cylinder / 78 RPM shellac surface noise (-15.5 dBFS peaks, -41 dBFS RMS, rotational thump, and Poisson dust pops), un-normalized Victorian wood-and-velvet chamber convolution reverb (0.42 send gain), mechanical brass clockwork escapement tick/tock/ratchet engine, and interactive layer toggle buttons (crackle, reverb, escapement) across both live Web Audio and offline 16-bit WAV export._
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-16 are implemented and verified. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a procedural branching mycelial network with eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) engraved with Ernst Haeckel anatomical lithography, an antique turned-wood mahogany pedestal, mossy peat/driftwood substrate bed, 46 dew condensation droplets clinging to the vitrine bell jar, bio-acoustic audio sonification (micro-voltage action potentials, guttation droplet chimes, and tactile ballistospore puffs), drifting ballistospores with vitrine tap bursts, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume and tempo controls. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The Kapellmeister music-theory and genre console (`#kapellmeister-engine`, P5-15, D-019) allows confidants to switch between six historical and theoretical rulebooks (Victorian Neo-Riemannian Tonnetz, 12-Bar Delta Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Drone, Raw Esoteric Chaos) with a live harmonic dashboard and animated SVG Tonnetz compass. An antique parlor room acoustic space (`#parlor-acoustics-engine`) immerses the ensemble in synthesized Edison wax-cylinder phonograph surface noise, a 1.6-second wood-and-velvet chamber convolution impulse response (`ConvolverNode`), and mechanical brass clockwork escapement ticks on quarter-beats. The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing (P3-01), 1200×1520 broadsheet PNG plate engraving (P3-02), and client-side uncompressed 16-bit 44.1 kHz WAV loop export (`#export-wav`, P3-03). Remaining open work covers assistive-technology checks (P4-02) and public hosting (P6-01).
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-16 are implemented and verified. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a procedural branching mycelial network with eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) engraved with Ernst Haeckel anatomical lithography, an antique turned-wood mahogany pedestal, mossy peat/driftwood substrate bed, 46 dew condensation droplets clinging to the vitrine bell jar, bio-acoustic audio sonification (micro-voltage action potentials, guttation droplet chimes, and tactile ballistospore puffs), drifting ballistospores with vitrine tap bursts, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume and tempo controls. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The Kapellmeister music-theory and genre console (`#kapellmeister-engine`, P5-15, D-019) allows confidants to switch between six historical and theoretical rulebooks (Victorian Neo-Riemannian Tonnetz, 12-Bar Delta Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Drone, Raw Esoteric Chaos) with a live harmonic dashboard and animated SVG Tonnetz compass. An antique parlor room acoustic space (`#parlor-acoustics-engine`) immerses the ensemble in tactile synthesized Edison wax-cylinder phonograph surface noise, a 1.6-second wood-and-velvet chamber convolution impulse response (`ConvolverNode`), and mechanical brass clockwork escapement ticks and ratchets, with individual layer toggle chips. The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing (P3-01), 1200×1520 broadsheet PNG plate engraving (P3-02), and client-side uncompressed 16-bit 44.1 kHz WAV loop export (`#export-wav`, P3-03). Remaining open work covers assistive-technology checks (P4-02) and public hosting (P6-01).
 
 **Verified** (2026-10-18, initial repository, local Linux environment)
 
@@ -68,6 +68,55 @@ _Last updated: 2026-10-18, session 14, on `main`: the Kapellmeister music-theory
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 15: 2026-10-18: antique parlor acoustics overhaul & interactive layer console
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Audit and overhaul the Antique Parlor Acoustics engine (`#parlor-acoustics-engine`, `P5-15`, `D-019`) so that Edison wax-cylinder phonograph surface noise, Victorian chamber convolution reverb, and mechanical clockwork escapement ticking are clearly audible, prominent, tactile, and independently controllable.
+
+**Done:** P5-15, D-019 parlor acoustics audit & overhaul
+
+**Changed:**
+1. **Wax-Cylinder Surface Noise Synthesis (`ensureWaxCrackleBuffer()`)**:
+   - Diagnosed root cause of inaudibility: previous bandpass filter had attenuated buffer output to $\sim -76.5\,\text{dBFS}$ RMS and $-47.6\,\text{dBFS}$ peak, completely below noise floor.
+   - Re-architected procedural stereo generator (4.0s seamless loop):
+     - Continuous acoustic horn friction hiss shaped with two-pole bandpass filtering ($500\text{--}3200\,\text{Hz}$).
+     - Sub-bass motor rumble ($33\,\text{Hz}$ and $66\,\text{Hz}$) with periodic rotational eccentricity thud and whoosh matching $78\,\text{RPM}$ shellac / wax cylinder rotation ($T \approx 0.769\,\text{s}$).
+     - High-density stylus micro-crackle: $\sim 190$ micro-pops per second with rapid asymmetric exponential decay.
+     - Distinct dust pops & shellac scratch transients: $\sim 28$ pops per second with damped resonant ringing ($1800\text{--}3800\,\text{Hz}$).
+     - Seamless 2400-sample boundary crossfade ensuring zero clicks on loop seam.
+   - Raised playback gain target to $0.38 \times \text{level}$ (up from $0.075$), bringing peak crackle to $-15.5\,\text{dBFS}$ and RMS to $-41.4\,\text{dBFS}$ at 55% level—crisp, rich, authentic vintage needle patina without clipping.
+2. **Victorian Chamber Convolution Reverb (`ensureParlorImpulseResponse()`)**:
+   - Diagnosed root cause: default Web Audio `ConvolverNode.normalize = true` calculated impulse energy integral and attenuated wet output by $>10\times$ (effective $-36\,\text{dB}$ below dry signal).
+   - Set `parlorConvolver.normalize = false;` across both live playback and offline WAV rendering.
+   - Synthesized 1.6-second wood-and-velvet chamber impulse response with eight prominent early reflections ($t = 8\dots 138\,\text{ms}$, gains up to $0.48$) and high-frequency damped diffuse decay tail ($e^{-2.2 t}$ with wall/velvet absorption filter).
+   - Raised send gain target to $0.42 \times \text{level}$ (up from $0.28$), producing an audible, rich, warm wooden parlor room acoustic bloom behind all harmonic voices.
+3. **Mechanical Clockwork Escapement Ticks (`scheduleClockworkTick()`)**:
+   - Diagnosed root cause: narrow bandpass filter ($Q = 4.5$) centered at $2400\,\text{Hz}$ with downward frequency sweep killed $80\%$ of oscillator energy, and tick amplitude ($0.038 \times \text{level}$) was inaudible under drum kicks.
+   - Implemented dual-mechanism escapement synthesizer:
+     - Quarter-beats ($t = 0, 3, 6, 9$): alternating crisp high "TICK" (steps 0, 6: $3200 \to 1400\,\text{Hz}$ strike transient + $520\,\text{Hz}$ wood casing knock, peak $0.20 \times \text{level}$) and deep low "TOCK" (steps 3, 9: $2100 \to 820\,\text{Hz}$ pallet release + $340\,\text{Hz}$ resonant grandfather clock cabinet thunk, peak $0.17 \times \text{level}$).
+     - Intervening steps: delicate highpass mechanical brass gear ratchet tick ($3800 \to 2200\,\text{Hz}$ at $0.048 \times \text{level}$), creating steady clockwork pulse in 12/8 meter.
+4. **Interactive Layer Toggle Controls**:
+   - Converted `#chip-crackle`, `#chip-reverb`, and `#chip-tick` from static labels into accessible interactive toggle buttons (`role="button"`, `aria-pressed`, hover styling).
+   - Added click event listeners allowing listeners to solo or toggle each acoustic layer individually (`parlorCrackleEnabled`, `parlorReverbEnabled`, `parlorTickEnabled`).
+   - Dynamic status updater displays exactly which layers are active (`WAX CRACKLE · CHAMBER REVERB · CLOCKWORK ACTIVE` vs `PARLOR ACOUSTICS MUTED · DRY ISOLATION`).
+5. **Offline WAV Loop Synchronization**:
+   - Updated `exportSpecimenWav()` to mirror exact boosted crackle, un-normalized convolution reverb, clockwork escapement, and layer gates in exported 16-bit WAV files.
+6. **Verification & Tests**:
+   - Added static assertions verifying interactive chip elements, `normalize = false`, and event listener wiring in `tests/static.test.mjs`.
+
+**Decisions:** D-019
+
+**Verified:** Thirty-three Node unit and static tests passed; `tools/check_docs.py` passed with 0 errors and 0 warnings across 14 documents; `tools/manual.py` check passed with 6 sections, 27 entries, 0 warnings.
+
+**Not verified:** Dedicated assistive-technology and screen-reader testing remains P4-02 work.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P4-02 and P6-01 roadmap items.
+
+**Next session should start with:** P4-02 or P6-01 when ready.
 
 ### Session 14: 2026-10-18: the kapellmeister console, antique parlor room acoustics & vitrine modulation audit
 
@@ -293,29 +342,4 @@ _Last updated: 2026-10-18, session 14, on `main`: the Kapellmeister music-theory
 
 **Next session should start with:** Re-record the same creature, then continue P4-01.
 
-### Session 5: 2026-10-17: no more macroblock heartbeat
-
-**Contributor:** Codex with maintainer direction
-
-**Goal:** Remove the glitchy, compression-artifact quality from sound-synchronous body movement.
-
-**Done:** Incidental rendering fix; no roadmap item added.
-
-**Changed:** Replaced the six-percent, eighth-power beat spike with a continuously differentiable 1.2% peak-to-peak sinusoidal scale envelope. Independent boundary flux and kinetic-core movement are unchanged.
-
-**Decisions:** No new durable decision; this corrects the pulse treatment already defined by D-007.
-
-**Verified:** Thirteen Node checks passed, including a regression marker for the smooth envelope; documentation checker reported 0 errors and 0 warnings.
-
-**Not verified:** Subjective visual quality in a real browser remains P4-01.
-
-**Problems:** None at handoff update time.
-
-**Left undone:** P3, P4, and P6 roadmap items.
-
-**Next session should start with:** P4-01.
-
 Older sessions: [archive/sessions.md](archive/sessions.md).
-
-
-

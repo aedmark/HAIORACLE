@@ -265,11 +265,18 @@ test("the Kapellmeister console and antique parlor acoustics controls are wired 
   assert.match(html, /id="parlor-acoustics-engine"/);
   assert.match(html, /id="parlor-acoustics-toggle"/);
   assert.match(html, /id="parlor-acoustics-level"/);
+  assert.match(html, /id="chip-crackle"/);
+  assert.match(html, /id="chip-reverb"/);
+  assert.match(html, /id="chip-tick"/);
   assert.match(styles, /\.kapellmeister-engine/);
   assert.match(styles, /\.parlor-acoustics-engine/);
   assert.match(app, /function ensureWaxCrackleBuffer\(/);
   assert.match(app, /function ensureParlorImpulseResponse\(/);
   assert.match(app, /function scheduleClockworkTick\(/);
   assert.match(app, /function updateKapellmeisterUI\(/);
+  assert.match(app, /parlorConvolver\.normalize\s*=\s*false/);
+  assert.match(app, /elements\.chipCrackle\?\.addEventListener/);
+  assert.match(app, /elements\.chipReverb\?\.addEventListener/);
+  assert.match(app, /elements\.chipTick\?\.addEventListener/);
 });
 

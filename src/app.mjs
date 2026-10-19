@@ -144,6 +144,9 @@ let activeStrictness = 8;
 let currentConductedSpine = null;
 let parlorAcousticsEnabled = true;
 let parlorAcousticsLevel = 0.55;
+let parlorCrackleEnabled = true;
+let parlorReverbEnabled = true;
+let parlorTickEnabled = true;
 
 
 const interaction = {
@@ -1964,10 +1967,10 @@ function updateAudioInteraction() {
   }
 
   // Vitrine bell jar glass acoustic proximity resonance
-  if (transport.parlorReverbSend && parlorAcousticsEnabled) {
+  if (transport.parlorReverbSend && parlorAcousticsEnabled && parlorReverbEnabled) {
     const glassProximity = Math.max(0, (field.radius - 0.5) / 0.5);
     const glassBoost = 1 + glassProximity * 0.75;
-    transport.parlorReverbSend.gain.setTargetAtTime(0.28 * parlorAcousticsLevel * glassBoost, now, 0.05);
+    transport.parlorReverbSend.gain.setTargetAtTime(0.42 * parlorAcousticsLevel * glassBoost, now, 0.05);
   }
 }
 
@@ -2139,7 +2142,7 @@ function ensureNoiseBuffer(context) {
 let cachedWaxCrackleBuffer = null;
 let cachedParlorImpulseBuffer = null;
 
-function ensureWaxCrackleBuffer(context, durationSeconds = 3.0) {
+function ensureWaxCrackleBuffer(context, durationSeconds = 4.0) {
   if (cachedWaxCrackleBuffer && cachedWaxCrackleBuffer.sampleRate === context.sampleRate) {
     return cachedWaxCrackleBuffer;
   }
@@ -2148,32 +2151,72 @@ function ensureWaxCrackleBuffer(context, durationSeconds = 3.0) {
   const left = buffer.getChannelData(0);
   const right = buffer.getChannelData(1);
 
-  let b0L = 0, b1L = 0;
-  let b0R = 0, b1R = 0;
+  let b0L = 0, b1L = 0, b2L = 0;
+  let b0R = 0, b1R = 0, b2R = 0;
+  const rotPeriod = 60 / 78;
 
   for (let i = 0; i < frames; i += 1) {
     const t = i / context.sampleRate;
-    const rumble = Math.sin(t * 1.3 * Math.PI * 2) * 0.003 + Math.sin(t * 78 * Math.PI * 2) * 0.001;
+    const rotPhase = (t % rotPeriod) / rotPeriod;
+    const rotThump = Math.exp(-Math.pow((rotPhase - 0.12) * 14, 2)) * 0.09;
+    const rumble = (Math.sin(t * 33 * Math.PI * 2) * 0.04 +
+                    Math.sin(t * 66 * Math.PI * 2) * 0.02 +
+                    Math.sin(t * 1.3 * Math.PI * 2) * 0.025) * (1 + rotThump * 0.6);
+
     const whiteL = Math.random() * 2 - 1;
     const whiteR = Math.random() * 2 - 1;
-    b0L = 0.96 * b0L + whiteL * 0.04;
-    b1L = 0.88 * b1L + (whiteL - b0L) * 0.12;
-    b0R = 0.96 * b0R + whiteR * 0.04;
-    b1R = 0.88 * b1R + (whiteR - b0R) * 0.12;
-    const hornL = (b0L - b1L) * 0.024;
-    const hornR = (b0R - b1R) * 0.024;
+    b0L = 0.85 * b0L + whiteL * 0.15;
+    b1L = 0.72 * b1L + (whiteL - b0L) * 0.28;
+    b2L = 0.55 * b2L + b1L * 0.45;
 
-    let popL = 0;
-    let popR = 0;
-    if (Math.random() < 14 / context.sampleRate) {
-      const clickAmp = (Math.random() * 0.08 + 0.02) * (Math.random() < 0.5 ? 1 : -1);
-      popL = clickAmp;
-      popR = clickAmp * (0.6 + Math.random() * 0.4);
-    }
+    b0R = 0.85 * b0R + whiteR * 0.15;
+    b1R = 0.72 * b1R + (whiteR - b0R) * 0.28;
+    b2R = 0.55 * b2R + b1R * 0.45;
 
-    left[i] = hornL + rumble + popL;
-    right[i] = hornR + rumble + popR;
+    const hornL = (b1L - b2L) * 0.28;
+    const hornR = (b1R - b2R) * 0.28;
+
+    left[i] = hornL + rumble * 0.55;
+    right[i] = hornR + rumble * 0.55;
   }
+
+  // Dense stylus micro-crackle: small asperities with fast exponential decay
+  for (let i = 0; i < frames; i += 1) {
+    if (Math.random() < 190 / context.sampleRate) {
+      const amp = (Math.random() * 0.22 + 0.06) * (Math.random() < 0.5 ? 1 : -1);
+      const decayLen = Math.floor(Math.random() * 10 + 4);
+      for (let k = 0; k < decayLen && i + k < frames; k += 1) {
+        const env = Math.exp(-k * 0.4);
+        left[i + k] += amp * env;
+        right[i + k] += amp * env * (0.7 + Math.random() * 0.6);
+      }
+    }
+  }
+
+  // Discrete dust pops & shellac scratches with damped ringing
+  for (let i = 0; i < frames; i += 1) {
+    if (Math.random() < 28 / context.sampleRate) {
+      const popAmp = (Math.random() * 0.48 + 0.28) * (Math.random() < 0.5 ? 1 : -1);
+      const popLen = Math.floor(Math.random() * 32 + 16);
+      const ringFreq = 1800 + Math.random() * 2000;
+      for (let k = 0; k < popLen && i + k < frames; k += 1) {
+        const tPop = k / context.sampleRate;
+        const env = Math.exp(-k * 0.16) * Math.cos(2 * Math.PI * ringFreq * tPop);
+        left[i + k] += popAmp * env;
+        right[i + k] += popAmp * env * (0.8 + Math.random() * 0.4);
+      }
+    }
+  }
+
+  // Seamless boundary crossfade to prevent seam click on loop
+  const fadeLen = Math.min(2400, Math.floor(frames / 8));
+  for (let j = 0; j < fadeLen; j += 1) {
+    const ramp = j / fadeLen;
+    const tailIdx = frames - fadeLen + j;
+    left[tailIdx] = left[tailIdx] * (1 - ramp) + left[j] * ramp;
+    right[tailIdx] = right[tailIdx] * (1 - ramp) + right[j] * ramp;
+  }
+
   cachedWaxCrackleBuffer = buffer;
   return buffer;
 }
@@ -2188,12 +2231,14 @@ function ensureParlorImpulseResponse(context, durationSeconds = 1.6) {
   const right = buffer.getChannelData(1);
 
   const reflections = [
-    { t: 0.012, gL: 0.35, gR: 0.22 },
-    { t: 0.024, gL: 0.28, gR: 0.32 },
-    { t: 0.038, gL: 0.22, gR: 0.18 },
-    { t: 0.055, gL: 0.17, gR: 0.23 },
-    { t: 0.076, gL: 0.12, gR: 0.15 },
-    { t: 0.098, gL: 0.09, gR: 0.11 },
+    { t: 0.008, gL: 0.48, gR: 0.32 },
+    { t: 0.016, gL: 0.38, gR: 0.44 },
+    { t: 0.027, gL: 0.32, gR: 0.26 },
+    { t: 0.041, gL: 0.26, gR: 0.30 },
+    { t: 0.058, gL: 0.22, gR: 0.18 },
+    { t: 0.079, gL: 0.17, gR: 0.21 },
+    { t: 0.105, gL: 0.13, gR: 0.15 },
+    { t: 0.138, gL: 0.10, gR: 0.11 },
   ];
 
   for (const ref of reflections) {
@@ -2206,11 +2251,12 @@ function ensureParlorImpulseResponse(context, durationSeconds = 1.6) {
   let prevR = 0;
   for (let i = 0; i < frames; i += 1) {
     const t = i / context.sampleRate;
-    const decay = Math.exp(-2.8 * t);
-    const whiteL = (Math.random() * 2 - 1) * decay * 0.25;
-    const whiteR = (Math.random() * 2 - 1) * decay * 0.25;
-    prevL = prevL * 0.35 + whiteL * 0.65;
-    prevR = prevR * 0.35 + whiteR * 0.65;
+    const decay = Math.exp(-2.2 * t);
+    const whiteL = (Math.random() * 2 - 1) * decay * 0.38;
+    const whiteR = (Math.random() * 2 - 1) * decay * 0.38;
+    const filterCoeff = 0.45 + 0.35 * Math.exp(-3.0 * t);
+    prevL = prevL * filterCoeff + whiteL * (1 - filterCoeff);
+    prevR = prevR * filterCoeff + whiteR * (1 - filterCoeff);
     left[i] += prevL;
     right[i] += prevR;
   }
@@ -2219,27 +2265,63 @@ function ensureParlorImpulseResponse(context, durationSeconds = 1.6) {
 }
 
 function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55) {
-  if (stepIndex % 3 !== 0) return;
+  if (!parlorAcousticsEnabled || !parlorTickEnabled || level <= 0) return;
+  const isQuarter = stepIndex % 3 === 0;
   const isHighTick = stepIndex === 0 || stepIndex === 6;
-  const osc = context.createOscillator();
-  const gain = context.createGain();
-  const filter = context.createBiquadFilter();
+  const effLevel = Math.max(0, Math.min(1, level));
 
-  osc.type = "triangle";
-  osc.frequency.setValueAtTime(isHighTick ? 2600 : 1800, at);
-  osc.frequency.exponentialRampToValueAtTime(isHighTick ? 1200 : 700, at + 0.015);
+  if (isQuarter) {
+    // 1. Escapement Pallet Strike Transient
+    const strikeOsc = context.createOscillator();
+    const strikeGain = context.createGain();
+    strikeOsc.type = isHighTick ? "triangle" : "sine";
+    const startFreq = isHighTick ? 3200 : 2100;
+    const endFreq = isHighTick ? 1400 : 820;
+    strikeOsc.frequency.setValueAtTime(startFreq, at);
+    strikeOsc.frequency.exponentialRampToValueAtTime(endFreq, at + 0.012);
 
-  filter.type = "bandpass";
-  filter.frequency.value = isHighTick ? 2400 : 1600;
-  filter.Q.value = 4.5;
+    const strikeAmp = (isHighTick ? 0.20 : 0.17) * effLevel;
+    strikeGain.gain.setValueAtTime(strikeAmp, at);
+    strikeGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.016);
 
-  const amp = (isHighTick ? 0.038 : 0.032) * Math.max(0, Math.min(1, level));
-  gain.gain.setValueAtTime(amp, at);
-  gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.022);
+    strikeOsc.connect(strikeGain).connect(destination);
+    strikeOsc.start(at);
+    strikeOsc.stop(at + 0.02);
 
-  osc.connect(filter).connect(gain).connect(destination);
-  osc.start(at);
-  osc.stop(at + 0.025);
+    // 2. Resonant Wood Clock Case Body Knock
+    const bodyOsc = context.createOscillator();
+    const bodyGain = context.createGain();
+    bodyOsc.type = "sine";
+    bodyOsc.frequency.setValueAtTime(isHighTick ? 520 : 340, at);
+
+    const bodyAmp = (isHighTick ? 0.13 : 0.15) * effLevel;
+    bodyGain.gain.setValueAtTime(bodyAmp, at);
+    bodyGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.036);
+
+    bodyOsc.connect(bodyGain).connect(destination);
+    bodyOsc.start(at);
+    bodyOsc.stop(at + 0.04);
+  } else {
+    // Intervening mechanical brass gear ratchet tick
+    const ratchetOsc = context.createOscillator();
+    const ratchetGain = context.createGain();
+    const ratchetFilter = context.createBiquadFilter();
+
+    ratchetOsc.type = "triangle";
+    ratchetOsc.frequency.setValueAtTime(3800, at);
+    ratchetOsc.frequency.exponentialRampToValueAtTime(2200, at + 0.007);
+
+    ratchetFilter.type = "highpass";
+    ratchetFilter.frequency.value = 2000;
+
+    const ratchetAmp = 0.048 * effLevel;
+    ratchetGain.gain.setValueAtTime(ratchetAmp, at);
+    ratchetGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.009);
+
+    ratchetOsc.connect(ratchetFilter).connect(ratchetGain).connect(destination);
+    ratchetOsc.start(at);
+    ratchetOsc.stop(at + 0.012);
+  }
 }
 
 
@@ -3140,26 +3222,34 @@ async function playScore(score) {
   const parlorReverbSend = context.createGain();
   const parlorConvolver = context.createConvolver();
   try {
+    parlorConvolver.normalize = false;
+  } catch {
+    // Ignore normalization error
+  }
+  try {
     parlorConvolver.buffer = ensureParlorImpulseResponse(context, 1.6);
   } catch {
     // Ignore buffer creation errors
   }
-  parlorReverbSend.gain.setValueAtTime(parlorAcousticsEnabled ? 0.28 * parlorAcousticsLevel : 0.0001, now);
+  parlorReverbSend.gain.setValueAtTime(
+    parlorAcousticsEnabled && parlorReverbEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+    now
+  );
   parlorReverbSend.connect(parlorConvolver).connect(output);
 
   filter.connect(parlorReverbSend);
-  harmonyBus.connect(parlorReverbSend);
-  chimeBus.connect(parlorReverbSend);
-  chantBus.connect(parlorReverbSend);
 
   let parlorCrackleSource = null;
   let parlorCrackleGain = null;
   try {
     parlorCrackleSource = context.createBufferSource();
-    parlorCrackleSource.buffer = ensureWaxCrackleBuffer(context, 3.0);
+    parlorCrackleSource.buffer = ensureWaxCrackleBuffer(context, 4.0);
     parlorCrackleSource.loop = true;
     parlorCrackleGain = context.createGain();
-    parlorCrackleGain.gain.setValueAtTime(parlorAcousticsEnabled ? 0.075 * parlorAcousticsLevel : 0.0001, now);
+    parlorCrackleGain.gain.setValueAtTime(
+      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.38 * parlorAcousticsLevel : 0.0001,
+      now
+    );
     parlorCrackleSource.connect(parlorCrackleGain).connect(output);
     parlorCrackleSource.start(now);
   } catch {
@@ -3206,7 +3296,7 @@ async function playScore(score) {
       scheduleChimeStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleChantStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleFungalBioStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
-      if (parlorAcousticsEnabled) {
+      if (parlorAcousticsEnabled && parlorTickEnabled) {
         scheduleClockworkTick(context, output, transport.nextNoteTime, currentStep, parlorAcousticsLevel);
       }
       const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
@@ -3758,28 +3848,36 @@ async function exportSpecimenWav() {
       const parlorReverbSend = offlineCtx.createGain();
       const parlorConvolver = offlineCtx.createConvolver();
       try {
+        parlorConvolver.normalize = false;
+      } catch {
+        // Ignore normalization error
+      }
+      try {
         parlorConvolver.buffer = ensureParlorImpulseResponse(offlineCtx, 1.6);
       } catch {
         // Ignore buffer creation errors
       }
-      parlorReverbSend.gain.setValueAtTime(0.28 * parlorAcousticsLevel, 0);
+      parlorReverbSend.gain.setValueAtTime(
+        parlorReverbEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+        0
+      );
       parlorReverbSend.connect(parlorConvolver).connect(output);
 
       filter.connect(parlorReverbSend);
-      harmonyBus.connect(parlorReverbSend);
-      chimeBus.connect(parlorReverbSend);
-      chantBus.connect(parlorReverbSend);
 
-      try {
-        const crackle = offlineCtx.createBufferSource();
-        crackle.buffer = ensureWaxCrackleBuffer(offlineCtx, totalDuration);
-        const crackleGain = offlineCtx.createGain();
-        crackleGain.gain.setValueAtTime(0.075 * parlorAcousticsLevel, 0);
-        crackle.connect(crackleGain).connect(output);
-        crackle.start(0);
-        crackle.stop(totalDuration);
-      } catch {
-        // Ignore buffer errors
+      if (parlorCrackleEnabled) {
+        try {
+          const crackle = offlineCtx.createBufferSource();
+          crackle.buffer = ensureWaxCrackleBuffer(offlineCtx, 4.0);
+          crackle.loop = true;
+          const crackleGain = offlineCtx.createGain();
+          crackleGain.gain.setValueAtTime(0.38 * parlorAcousticsLevel, 0);
+          crackle.connect(crackleGain).connect(output);
+          crackle.start(0);
+          crackle.stop(totalDuration);
+        } catch {
+          // Ignore buffer errors
+        }
       }
     }
 
@@ -3827,7 +3925,7 @@ async function exportSpecimenWav() {
       scheduleChimeStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
       scheduleChantStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
       scheduleFungalBioStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
-      if (parlorAcousticsEnabled) {
+      if (parlorAcousticsEnabled && parlorTickEnabled) {
         scheduleClockworkTick(offlineCtx, output, stepTime, step, parlorAcousticsLevel);
       }
 
@@ -4141,16 +4239,25 @@ elements.bandstandMutateAll?.addEventListener("click", () => {
 
 function updateAcousticsStatus() {
   if (!elements.acousticsStatus) return;
-  if (!parlorAcousticsEnabled) {
+  const crackleActive = parlorAcousticsEnabled && parlorCrackleEnabled;
+  const reverbActive = parlorAcousticsEnabled && parlorReverbEnabled;
+  const tickActive = parlorAcousticsEnabled && parlorTickEnabled;
+
+  elements.chipCrackle?.classList.toggle("is-active", crackleActive);
+  elements.chipCrackle?.setAttribute("aria-pressed", String(crackleActive));
+  elements.chipReverb?.classList.toggle("is-active", reverbActive);
+  elements.chipReverb?.setAttribute("aria-pressed", String(reverbActive));
+  elements.chipTick?.classList.toggle("is-active", tickActive);
+  elements.chipTick?.setAttribute("aria-pressed", String(tickActive));
+
+  if (!parlorAcousticsEnabled || (!crackleActive && !reverbActive && !tickActive)) {
     elements.acousticsStatus.textContent = "PARLOR ACOUSTICS MUTED · DRY ISOLATION";
-    elements.chipCrackle?.classList.remove("is-active");
-    elements.chipReverb?.classList.remove("is-active");
-    elements.chipTick?.classList.remove("is-active");
   } else {
-    elements.acousticsStatus.textContent = "CHAMBER REVERBERATION & SURFACE CRACKLE ACTIVE";
-    elements.chipCrackle?.classList.add("is-active");
-    elements.chipReverb?.classList.add("is-active");
-    elements.chipTick?.classList.add("is-active");
+    const activeLayers = [];
+    if (crackleActive) activeLayers.push("WAX CRACKLE");
+    if (reverbActive) activeLayers.push("CHAMBER REVERB");
+    if (tickActive) activeLayers.push("CLOCKWORK");
+    elements.acousticsStatus.textContent = `${activeLayers.join(" · ")} ACTIVE`;
   }
 }
 
@@ -4161,12 +4268,12 @@ elements.parlorAcousticsToggle?.addEventListener("click", () => {
   if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
     currentTransport.parlorReverbSend?.gain.setTargetAtTime(
-      parlorAcousticsEnabled ? 0.28 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorReverbEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
       now,
       0.025,
     );
     currentTransport.parlorCrackleGain?.gain.setTargetAtTime(
-      parlorAcousticsEnabled ? 0.075 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.38 * parlorAcousticsLevel : 0.0001,
       now,
       0.025,
     );
@@ -4179,11 +4286,50 @@ elements.parlorAcousticsLevel?.addEventListener("input", (e) => {
   if (elements.acousticsLevelVal) {
     elements.acousticsLevelVal.textContent = `${Math.round(parlorAcousticsLevel * 100)}%`;
   }
-  if (audioContext && currentTransport && parlorAcousticsEnabled) {
+  if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
-    currentTransport.parlorReverbSend?.gain.setTargetAtTime(0.28 * parlorAcousticsLevel, now, 0.025);
-    currentTransport.parlorCrackleGain?.gain.setTargetAtTime(0.075 * parlorAcousticsLevel, now, 0.025);
+    currentTransport.parlorReverbSend?.gain.setTargetAtTime(
+      parlorAcousticsEnabled && parlorReverbEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+      now,
+      0.025
+    );
+    currentTransport.parlorCrackleGain?.gain.setTargetAtTime(
+      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.38 * parlorAcousticsLevel : 0.0001,
+      now,
+      0.025
+    );
   }
+});
+
+elements.chipCrackle?.addEventListener("click", () => {
+  parlorCrackleEnabled = !parlorCrackleEnabled;
+  if (audioContext && currentTransport) {
+    const now = audioContext.currentTime;
+    currentTransport.parlorCrackleGain?.gain.setTargetAtTime(
+      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.38 * parlorAcousticsLevel : 0.0001,
+      now,
+      0.025
+    );
+  }
+  updateAcousticsStatus();
+});
+
+elements.chipReverb?.addEventListener("click", () => {
+  parlorReverbEnabled = !parlorReverbEnabled;
+  if (audioContext && currentTransport) {
+    const now = audioContext.currentTime;
+    currentTransport.parlorReverbSend?.gain.setTargetAtTime(
+      parlorAcousticsEnabled && parlorReverbEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+      now,
+      0.025
+    );
+  }
+  updateAcousticsStatus();
+});
+
+elements.chipTick?.addEventListener("click", () => {
+  parlorTickEnabled = !parlorTickEnabled;
+  updateAcousticsStatus();
 });
 
 elements.kapellmeisterGenre?.addEventListener("change", (e) => {
