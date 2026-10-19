@@ -8,6 +8,7 @@ import {
   GENRE_NAMES,
   GENRE_RULEBOOKS,
   buildFunChord,
+  buildFunProgression,
   chordLabelFor,
   conductEnsemble,
   semitoneGradus,
@@ -178,6 +179,12 @@ let funMachineChordQuality = "auto";
 let customProgression = Array(12).fill(null);
 let selectedSequencerStep = null;
 let funMachineDryGain = null;
+let activeHeldFunKey = null;
+let activeFunProgression = null;
+let funStandaloneTimer = null;
+let funStandaloneNextTime = 0;
+let funStandaloneStep = 0;
+let funStandaloneRemainingSteps = 0;
 
 
 const interaction = {
@@ -2092,6 +2099,10 @@ function triggerSporePuff(strength = 1, atTime = null) {
 }
 
 function stopCurrentSound() {
+  if (funStandaloneTimer) {
+    window.clearTimeout(funStandaloneTimer);
+    funStandaloneTimer = null;
+  }
   if (!currentTransport || !audioContext) return;
   const transport = currentTransport;
   currentTransport = null;
@@ -2806,9 +2817,12 @@ function scheduleFunMachineChord(context, destination, chord, at, duration) {
     const voiceGain = context.createGain();
     const peak = basePeak / Math.sqrt(chord.pitchClasses.length);
     const attack = 0.022;
+    const releaseTime = Math.min(0.08, soundingTime * 0.25);
+    const sustainLevel = peak * 0.85;
 
     voiceGain.gain.setValueAtTime(0.0001, noteStart);
     voiceGain.gain.linearRampToValueAtTime(peak, noteStart + attack);
+    voiceGain.gain.setValueAtTime(sustainLevel, noteStart + soundingTime - releaseTime);
     voiceGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + soundingTime);
 
     oscReed.connect(filter);
@@ -2856,11 +2870,14 @@ function scheduleFunMachineLeadNote(context, destination, semitone, at, duration
 
   const holdBoost = 1 + interaction.hold * 0.2;
   const peak = 0.28 * holdBoost;
-  const attack = 0.022;
+  const attack = 0.020;
   const soundingTime = Math.max(0.24, duration || 0.45);
+  const releaseTime = Math.min(0.08, soundingTime * 0.25);
+  const sustainLevel = peak * 0.85;
 
   voiceGain.gain.setValueAtTime(0.0001, startTime);
   voiceGain.gain.linearRampToValueAtTime(peak, startTime + attack);
+  voiceGain.gain.setValueAtTime(sustainLevel, startTime + soundingTime - releaseTime);
   voiceGain.gain.exponentialRampToValueAtTime(0.0001, startTime + soundingTime);
 
   oscLead.connect(filter);
@@ -3374,18 +3391,92 @@ function renderFunSequencerGrid() {
   }
 }
 
+function runFunStandaloneScheduler() {
+  if (funStandaloneTimer) {
+    window.clearTimeout(funStandaloneTimer);
+    funStandaloneTimer = null;
+  }
+  if (!audioContext || muted) return;
+  if (activeHeldFunKey === null && funStandaloneRemainingSteps <= 0) {
+    for (const k of elements.funKeyboard?.querySelectorAll(".fun-key.is-pressed") || []) {
+      k.classList.remove("is-pressed");
+    }
+    return;
+  }
+  if (!activeFunProgression) return;
+
+  const context = audioContext;
+  const now = context.currentTime;
+  const dest = getFunMachineDirectDestination(context);
+  const stepDuration = Math.max(0.22, (60 / activeTempoBpm) / 2);
+
+  while (funStandaloneNextTime < now + 0.35 && (activeHeldFunKey !== null || funStandaloneRemainingSteps > 0)) {
+    const stepIdx = funStandaloneStep % 12;
+    const stepItem = activeFunProgression.steps[stepIdx];
+    const playTime = Math.max(now + 0.015, funStandaloneNextTime);
+
+    if (funMachineMode === "auto_chord") {
+      scheduleFunMachineChord(context, dest, stepItem.chord, playTime, stepDuration * 0.94);
+      scheduleFunMachineLeadNote(context, dest, stepItem.melodyPitch, playTime, stepDuration * 0.94);
+    } else {
+      scheduleFunMachineLeadNote(context, dest, activeFunProgression.rootPc, playTime, stepDuration * 0.94);
+    }
+
+    const delayMs = Math.max(0, (playTime - now) * 1000);
+    const targetStep = stepIdx;
+    const keyInfo = FUN_KEY_MAP[activeFunProgression.rootPc];
+    const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${activeFunProgression.rootPc}`;
+    const holdText = activeHeldFunKey !== null ? "HELD" : "PLAYING";
+
+    window.setTimeout(() => {
+      flashSequencerStep(targetStep);
+      if (elements.funMachineTelemetry && activeFunProgression) {
+        if (funMachineMode === "auto_chord") {
+          elements.funMachineTelemetry.textContent = `${keyLabel} ${holdText} · ${activeFunProgression.summary} · STEP @${String(targetStep + 1).padStart(2, "0")} (${stepItem.chord.name} + ${stepItem.melodyNote})`;
+        } else {
+          elements.funMachineTelemetry.textContent = `${keyLabel} ${holdText} · SOLO LEAD NOTE (${keyInfo ? keyInfo.note : stepItem.chord.name})`;
+        }
+      }
+    }, delayMs);
+
+    funStandaloneNextTime = playTime + stepDuration;
+    funStandaloneStep += 1;
+    if (activeHeldFunKey === null) {
+      funStandaloneRemainingSteps -= 1;
+    }
+  }
+
+  funStandaloneTimer = window.setTimeout(runFunStandaloneScheduler, 50);
+}
+
 async function triggerFunKey(semitone, isKeyDown = true) {
+  if (semitone === null || semitone === undefined) return;
   const normSemi = ((Math.trunc(semitone) % 13) + 13) % 13;
   const keyBtn = elements.funKeyboard?.querySelector(`.fun-key[data-semitone="${normSemi}"]`);
 
   if (!isKeyDown) {
-    if (keyBtn) keyBtn.classList.remove("is-pressed");
+    if (activeHeldFunKey === normSemi) {
+      activeHeldFunKey = null;
+      if (keyBtn) keyBtn.classList.remove("is-pressed");
+      if (currentTransport && elements.funMachineTelemetry && activeFunProgression) {
+        const keyInfo = FUN_KEY_MAP[normSemi];
+        const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${normSemi}`;
+        elements.funMachineTelemetry.textContent = `${keyLabel} RELEASED · PROGRESSION ARMED`;
+      }
+    }
     return;
   }
 
+  if (activeHeldFunKey === normSemi) {
+    return; // Already held, ignore autorepeat
+  }
+
+  activeHeldFunKey = normSemi;
   if (keyBtn) {
+    for (const other of elements.funKeyboard?.querySelectorAll(".fun-key.is-pressed") || []) {
+      other.classList.remove("is-pressed");
+    }
     keyBtn.classList.add("is-pressed");
-    window.setTimeout(() => keyBtn.classList.remove("is-pressed"), 200);
   }
 
   if (muted) return;
@@ -3400,22 +3491,12 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   }
 
   const now = context.currentTime;
-  const dest = getFunMachineDirectDestination(context);
-
-  const chord = buildFunChord(
+  activeFunProgression = buildFunProgression(
     normSemi,
     funMachineChordQuality,
     activeGenre,
     currentScore ? currentScore.root : 0
   );
-
-  const keyPlayTime = Math.max(context.currentTime + 0.015, now + 0.015);
-
-  if (funMachineMode === "auto_chord") {
-    scheduleFunMachineChord(context, dest, chord, keyPlayTime, 0.45);
-  } else {
-    scheduleFunMachineLeadNote(context, dest, normSemi, keyPlayTime, 0.45);
-  }
 
   let targetStep = null;
   if (selectedSequencerStep !== null) {
@@ -3425,7 +3506,7 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   }
 
   if (targetStep !== null && targetStep >= 0 && targetStep < 12) {
-    customProgression[targetStep] = chord;
+    customProgression[targetStep] = activeFunProgression.steps[0].chord;
     applyEnsembleConductor();
     renderFunSequencerGrid();
     flashSequencerStep(targetStep);
@@ -3433,18 +3514,33 @@ async function triggerFunKey(semitone, isKeyDown = true) {
 
   if (currentTransport && !muted && currentScore) {
     const burstStep = targetStep !== null ? targetStep : (activeBeatStep >= 0 ? activeBeatStep : 0);
-    const burstAt = Math.max(context.currentTime + 0.018, keyPlayTime + 0.005);
+    const keyPlayTime = Math.max(context.currentTime + 0.015, now + 0.015);
+    const firstStepItem = activeFunProgression.steps[burstStep % 12];
+
+    if (funMachineMode === "auto_chord") {
+      scheduleFunMachineChord(context, currentTransport.funBus, firstStepItem.chord, keyPlayTime, 0.35);
+      scheduleFunMachineLeadNote(context, currentTransport.funBus, firstStepItem.melodyPitch, keyPlayTime, 0.35);
+    } else {
+      scheduleFunMachineLeadNote(context, currentTransport.funBus, normSemi, keyPlayTime, 0.35);
+    }
+
+    const burstAt = keyPlayTime + 0.005;
     scheduleBassStep(context, currentTransport, currentScore, burstStep, burstAt, 0.24);
     scheduleHarmonyStep(context, currentTransport, currentScore, burstStep, burstAt, 0.28);
     scheduleChimeStep(context, currentTransport, currentScore, burstStep, burstAt, 0.3);
     scheduleChantStep(context, currentTransport, currentScore, burstStep, burstAt, 0.32);
-  }
 
-  if (elements.funMachineTelemetry) {
-    const keyInfo = FUN_KEY_MAP[normSemi];
-    const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${normSemi}`;
-    const punchInfo = targetStep !== null ? ` · PUNCHED INTO STEP @${String(targetStep + 1).padStart(2, "0")}` : "";
-    elements.funMachineTelemetry.textContent = `${keyLabel} STRUCK · CHORD ${chord.name} ${chord.quality.toUpperCase()}${punchInfo}`;
+    if (elements.funMachineTelemetry) {
+      const keyInfo = FUN_KEY_MAP[normSemi];
+      const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${normSemi}`;
+      const punchInfo = targetStep !== null ? ` · PUNCHED INTO STEP @${String(targetStep + 1).padStart(2, "0")}` : "";
+      elements.funMachineTelemetry.textContent = `${keyLabel} HELD · ${activeFunProgression.summary}${punchInfo}`;
+    }
+  } else {
+    funStandaloneStep = 0;
+    funStandaloneNextTime = Math.max(context.currentTime + 0.015, now + 0.015);
+    funStandaloneRemainingSteps = 4;
+    runFunStandaloneScheduler();
   }
 }
 
@@ -3632,8 +3728,35 @@ async function playScore(score) {
       scheduleChimeStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleChantStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleFungalBioStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
-      if (customProgression[currentStep % 12]) {
-        scheduleFunMachineChord(context, transport.funBus, customProgression[currentStep % 12], transport.nextNoteTime, soundingDuration);
+      let chordToPlay = customProgression[currentStep % 12];
+      let melodyPitchToPlay = null;
+
+      if (activeHeldFunKey !== null && activeFunProgression) {
+        const stepItem = activeFunProgression.steps[currentStep % 12];
+        chordToPlay = stepItem.chord;
+        melodyPitchToPlay = stepItem.melodyPitch;
+        if (funMachineRec) {
+          customProgression[currentStep % 12] = chordToPlay;
+          applyEnsembleConductor();
+          renderFunSequencerGrid();
+        }
+        const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
+        const targetStep = currentStep % 12;
+        const keyInfo = FUN_KEY_MAP[activeHeldFunKey];
+        const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${activeHeldFunKey}`;
+        window.setTimeout(() => {
+          flashSequencerStep(targetStep);
+          if (elements.funMachineTelemetry && activeFunProgression) {
+            elements.funMachineTelemetry.textContent = `${keyLabel} HELD · ${activeFunProgression.summary} · STEP @${String(targetStep + 1).padStart(2, "0")} (${stepItem.chord.name} + ${stepItem.melodyNote})`;
+          }
+        }, delayMs);
+      }
+
+      if (chordToPlay && funMachineMode === "auto_chord") {
+        scheduleFunMachineChord(context, transport.funBus, chordToPlay, transport.nextNoteTime, soundingDuration);
+      }
+      if (melodyPitchToPlay !== null) {
+        scheduleFunMachineLeadNote(context, transport.funBus, melodyPitchToPlay, transport.nextNoteTime, soundingDuration);
       }
       if (parlorAcousticsEnabled && parlorTickEnabled) {
         scheduleClockworkTick(context, output, transport.nextNoteTime, currentStep, parlorAcousticsLevel);
@@ -4782,6 +4905,14 @@ for (const chip of document.querySelectorAll(".fun-chip")) {
       c.classList.toggle("is-active", active);
       c.setAttribute("aria-pressed", String(active));
     }
+    if (activeHeldFunKey !== null) {
+      activeFunProgression = buildFunProgression(
+        activeHeldFunKey,
+        funMachineChordQuality,
+        activeGenre,
+        currentScore ? currentScore.root : 0
+      );
+    }
     updateFunKeyboardChordLabels();
     if (elements.funMachineTelemetry) {
       elements.funMachineTelemetry.textContent = `CHORD QUALITY SET TO: ${chip.textContent.trim()}`;
@@ -4804,11 +4935,26 @@ if (elements.funKeyboard) {
     keyBtn.addEventListener("pointerup", () => {
       triggerFunKey(semitone, false);
     });
+    keyBtn.addEventListener("pointercancel", () => {
+      triggerFunKey(semitone, false);
+    });
     keyBtn.addEventListener("pointerleave", () => {
       triggerFunKey(semitone, false);
     });
   }
 }
+
+window.addEventListener("pointerup", () => {
+  if (activeHeldFunKey !== null) {
+    triggerFunKey(activeHeldFunKey, false);
+  }
+});
+
+window.addEventListener("blur", () => {
+  if (activeHeldFunKey !== null) {
+    triggerFunKey(activeHeldFunKey, false);
+  }
+});
 
 window.addEventListener("keydown", (event) => {
   if (

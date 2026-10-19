@@ -12,6 +12,7 @@ import {
   applyTonnetzOperation,
   bjorklund,
   buildFunChord,
+  buildFunProgression,
   buildTonnetzSpine,
   buildTriad,
   chordLabelFor,
@@ -561,5 +562,49 @@ test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays cus
   // Step 0 was not customized, so it retains its Tonnetz rulebook chord
   assert.notEqual(conducted.spine[0].op, "FUN·C");
   assert.ok(conducted.spine[0].name);
+
+  // 4. buildFunProgression generates complete 12-step chord progression melody
+  const bluesProg = buildFunProgression(0, "auto", GENRE_RULEBOOKS.BLUES_TWELVE_BAR);
+  assert.equal(bluesProg.rootPc, 0);
+  assert.equal(bluesProg.chords.length, 4);
+  assert.equal(bluesProg.steps.length, 12);
+  assert.equal(bluesProg.chords[0].name, "C");
+  assert.equal(bluesProg.chords[1].name, "F");
+  assert.equal(bluesProg.chords[2].name, "G");
+  assert.equal(bluesProg.chords[3].name, "C");
+  assert.equal(bluesProg.steps[0].isRegionStart, true);
+  assert.equal(bluesProg.steps[1].isRegionStart, false);
+  assert.equal(bluesProg.steps[3].isRegionStart, true);
+  assert.equal(bluesProg.steps[3].chord.name, "F");
+  assert.equal(bluesProg.steps[6].chord.name, "G");
+  assert.equal(bluesProg.steps[9].chord.name, "C");
+  assert.ok(bluesProg.steps[0].melodyPitch >= 0);
+  assert.ok(bluesProg.steps[0].melodyNote);
+  assert.match(bluesProg.summary, /C7 → F7 → G7 → C7/);
+
+  const majorProg = buildFunProgression(0, "major", GENRE_RULEBOOKS.VICTORIAN_TONNETZ);
+  assert.equal(majorProg.chords[0].name, "C");
+  assert.equal(majorProg.chords[1].name, "A");
+  assert.equal(majorProg.chords[1].quality, "minor");
+  assert.equal(majorProg.chords[2].name, "F");
+  assert.equal(majorProg.chords[3].name, "G");
+  assert.match(majorProg.summary, /C Maj → Am → F Maj → G Maj/);
+
+  const jazzProg = buildFunProgression(2, "auto", GENRE_RULEBOOKS.SMOKY_JAZZ);
+  assert.equal(jazzProg.chords[0].name, "D");
+  assert.equal(jazzProg.chords[0].quality, "maj9");
+  assert.equal(jazzProg.chords[1].name, "B");
+  assert.equal(jazzProg.chords[2].name, "E");
+  assert.equal(jazzProg.chords[3].name, "A");
+  assert.match(jazzProg.summary, /Dmaj9 → Bm9 → Em9 → A7alt/);
+
+  const minorProg = buildFunProgression(9, "auto", GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT);
+  assert.equal(minorProg.chords[0].name, "A");
+  assert.equal(minorProg.chords[0].quality, "minor");
+  assert.equal(minorProg.chords[1].name, "F");
+  assert.equal(minorProg.chords[2].name, "D");
+  assert.equal(minorProg.chords[3].name, "E");
+  assert.match(minorProg.summary, /Am → F Maj → Dm → E Maj/);
 });
+
 

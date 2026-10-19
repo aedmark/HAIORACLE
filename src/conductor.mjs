@@ -336,6 +336,114 @@ export function buildFunChord(rootSemitone, quality = "auto", genre = GENRE_RULE
   });
 }
 
+export function buildFunProgression(rootSemitone, quality = "auto", genre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ, tonicRoot = 0) {
+  const r = ((Math.trunc(rootSemitone) % 12) + 12) % 12;
+  const relFromTonic = ((r - (Math.trunc(tonicRoot) % 12)) % 12 + 12) % 12;
+
+  let chordDefs = [];
+  let summary = "";
+
+  if (quality === "dom7" || (quality === "auto" && genre === GENRE_RULEBOOKS.BLUES_TWELVE_BAR)) {
+    // 12-Bar Blues Riff Progression: I7 -> IV7 -> V7 -> I7 Turnaround
+    const sub = (r + 5) % 12;
+    const dom = (r + 7) % 12;
+    chordDefs = [
+      { root: r, quality: "dom7", melodyOffsets: [0, 4, 7] },
+      { root: sub, quality: "dom7", melodyOffsets: [5, 3, 5] },
+      { root: dom, quality: "dom7", melodyOffsets: [7, 6, 7] },
+      { root: r, quality: "dom7", melodyOffsets: [10, 7, 6] },
+    ];
+    summary = `${PITCH_NAMES[r]}7 → ${PITCH_NAMES[sub]}7 → ${PITCH_NAMES[dom]}7 → ${PITCH_NAMES[r]}7`;
+  } else if (quality === "maj9" || (quality === "auto" && genre === GENRE_RULEBOOKS.SMOKY_JAZZ)) {
+    // Smoky Jazz ii-V-I-VI turnaround: Imaj9 -> vi9 -> ii9 -> V7alt
+    const vi = (r + 9) % 12;
+    const ii = (r + 2) % 12;
+    const v = (r + 7) % 12;
+    chordDefs = [
+      { root: r, quality: "maj9", melodyOffsets: [14, 11, 7] },
+      { root: vi, quality: "min9", melodyOffsets: [11, 7, 3] },
+      { root: ii, quality: "min9", melodyOffsets: [4, 0, 5] },
+      { root: v, quality: "dom7alt", melodyOffsets: [8, 5, 0] },
+    ];
+    summary = `${PITCH_NAMES[r]}maj9 → ${PITCH_NAMES[vi]}m9 → ${PITCH_NAMES[ii]}m9 → ${PITCH_NAMES[v]}7alt`;
+  } else if (quality === "modal_open" || (quality === "auto" && genre === GENRE_RULEBOOKS.MODAL_DRONE)) {
+    // Mystic Modal Drone Progression: Open 5th -> Phrygian -> Lydian -> Harmonic 7th
+    chordDefs = [
+      { root: r, quality: "modal_open", melodyOffsets: [0, 7, 12] },
+      { root: r, quality: "phrygian", melodyOffsets: [1, 4, 7] },
+      { root: r, quality: "lydian", melodyOffsets: [6, 7, 11] },
+      { root: r, quality: "modal_open", melodyOffsets: [10, 7, 0] },
+    ];
+    summary = `${PITCH_NAMES[r]} Drone → Phryg → Lydian → 7th`;
+  } else if (quality === "minor" || (quality === "auto" && (genre === GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT || (![0, 5, 7].includes(relFromTonic) && genre === GENRE_RULEBOOKS.VICTORIAN_TONNETZ)))) {
+    // Minor Progression: i -> VI -> iv -> V
+    const vi = (r + 8) % 12;
+    const iv = (r + 5) % 12;
+    const v = (r + 7) % 12;
+    chordDefs = [
+      { root: r, quality: "minor", melodyOffsets: [0, 3, 7] },
+      { root: vi, quality: "major", melodyOffsets: [8, 12, 8] },
+      { root: iv, quality: "minor", melodyOffsets: [5, 8, 12] },
+      { root: v, quality: "major", melodyOffsets: [7, 11, 14] },
+    ];
+    summary = `${PITCH_NAMES[r]}m → ${PITCH_NAMES[vi]} Maj → ${PITCH_NAMES[iv]}m → ${PITCH_NAMES[v]} Maj`;
+  } else if (quality === "dim") {
+    // Symmetrical Diminished Circle
+    const d1 = (r + 3) % 12;
+    const d2 = (r + 6) % 12;
+    const d3 = (r + 9) % 12;
+    chordDefs = [
+      { root: r, quality: "dim", melodyOffsets: [0, 3, 6] },
+      { root: d1, quality: "dim", melodyOffsets: [3, 6, 9] },
+      { root: d2, quality: "dim", melodyOffsets: [6, 9, 12] },
+      { root: d3, quality: "dim", melodyOffsets: [9, 6, 3] },
+    ];
+    summary = `${PITCH_NAMES[r]}° → ${PITCH_NAMES[d1]}° → ${PITCH_NAMES[d2]}° → ${PITCH_NAMES[d3]}°`;
+  } else {
+    // Classic Victorian & Parlor Major Progression: I -> vi -> IV -> V (Baldwin Heart & Soul Vamp)
+    const vi = (r + 9) % 12;
+    const iv = (r + 5) % 12;
+    const v = (r + 7) % 12;
+    chordDefs = [
+      { root: r, quality: "major", melodyOffsets: [0, 4, 7] },
+      { root: vi, quality: "minor", melodyOffsets: [9, 12, 9] },
+      { root: iv, quality: "major", melodyOffsets: [5, 9, 12] },
+      { root: v, quality: "major", melodyOffsets: [7, 11, 14] },
+    ];
+    summary = `${PITCH_NAMES[r]} Maj → ${PITCH_NAMES[vi]}m → ${PITCH_NAMES[iv]} Maj → ${PITCH_NAMES[v]} Maj`;
+  }
+
+  const chords = chordDefs.map((def) => buildFunChord(def.root, def.quality, genre, tonicRoot));
+
+  const steps = [];
+  for (let i = 0; i < 12; i += 1) {
+    const regionIdx = Math.floor(i / 3) % 4;
+    const subIdx = i % 3;
+    const def = chordDefs[regionIdx];
+    const chord = chords[regionIdx];
+    const offset = def.melodyOffsets[subIdx];
+    const melodyPitch = r + offset;
+    const melodyNote = PITCH_NAMES[melodyPitch % 12];
+
+    steps.push(Object.freeze({
+      stepIndex: i,
+      regionIndex: regionIdx,
+      chord,
+      melodyPitch,
+      melodyNote,
+      isRegionStart: subIdx === 0,
+      stepLabel: `${chord.name} ${chord.quality === "major" ? "Maj" : chord.quality === "minor" ? "min" : chord.quality.toUpperCase()}`,
+    }));
+  }
+
+  return Object.freeze({
+    rootPc: r,
+    summary,
+    chords: Object.freeze(chords),
+    steps: Object.freeze(steps),
+  });
+}
+
 /**
  * E. Bjorklund's (2003) Euclidean Rhythm algorithm E(pulses, steps).
  */
