@@ -107,3 +107,25 @@ Active handoff state and the latest ten sessions live in [../HANDOFF.md](../HAND
 **Left undone:** P3, P4, and P6 roadmap items.
 
 **Next session should start with:** P4-01.
+
+### Session 6: 2026-10-17: let the geometry keep its footing
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Remove the beat-periodic jitter still visible after smoothing the scale envelope.
+
+**Done:** Incidental rendering correction; no roadmap item added.
+
+**Changed:** Removed audio-pulse-driven Canvas scaling completely. Boundary flux, internal kinetic systems, eye behavior, and slow orbital drift are unchanged.
+
+**Decisions:** D-008 supersedes the retained beat-scale portion of D-007.
+
+**Verified:** Reviewed the supplied 3.25-second, 757×648 H.264 screencast frame by frame; hard vertical update bands coincide with whole-creature beat changes. Thirteen Node checks passed, including a regression check that the visual draw path does not consume `score.pulse`; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** A follow-up capture of the corrected renderer and cross-browser sensory review remain P4-01.
+
+**Problems:** The first correction made the scale envelope mathematically smooth but did not prevent large synchronous repaints from reading as jitter.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** Re-record the same creature, then continue P4-01.

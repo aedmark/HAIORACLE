@@ -424,6 +424,8 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   assert.equal(chordLabelFor(blues.spine[0], 60), "C7");
   assert.equal(chordLabelFor(blues.spine[4], 60), "F7");
   assert.equal(chordLabelFor(blues.spine[8], 60), "G7");
+  assert.ok(blues.bass.steps[0].label.includes("E♭"), "Expected blues bass step 0 to be tonic root E♭");
+  assert.ok(blues.harmony.steps[0].label.includes("7"), "Expected blues harmony step 0 to be dominant 7th");
 
   // 3. Smoky Jazz rulebook: Imaj9, vi9, ii9, subV7
   const jazz = conductEnsemble({
@@ -436,6 +438,8 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   assert.equal(jazz.spine[6].op, "ii9");
   assert.equal(jazz.spine[9].op, "♭II7alt");
   assert.equal(chordLabelFor(jazz.spine[0], 60), "Cmaj9");
+  assert.ok(jazz.bass.steps[0].label.includes("E♭"), "Expected jazz bass step 0 to be tonic root E♭");
+  assert.ok(jazz.harmony.steps[0].label.includes("M9"), "Expected jazz harmony step 0 to be major 9th");
 
   // 4. Renaissance Counterpoint rulebook: Picardy third on step 11
   const counterpoint = conductEnsemble({
@@ -444,6 +448,7 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   });
   assert.equal(counterpoint.genre, "renaissance_counterpoint");
   assert.equal(counterpoint.spine[11].quality, "major");
+  assert.ok(counterpoint.chant.steps[0].label.includes("·"), "Expected counterpoint chant step to have persona and pitch label");
 
   // 5. Modal Drone rulebook: root and fifth pedal
   const drone = conductEnsemble({
@@ -452,6 +457,8 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   });
   assert.equal(drone.genre, "modal_drone");
   assert.ok(drone.spine[0].op.includes("Drone"));
+  assert.ok(drone.bass.steps[0].label.includes("E♭"), "Expected drone bass step 0 to be tonic root E♭");
+  assert.ok(drone.harmony.steps[0].label.includes("5"), "Expected drone harmony step 0 to be open fifth");
 
   // 6. Raw Chaos rulebook: zero filtering, exact native VM output preserved
   const chaos = conductEnsemble({

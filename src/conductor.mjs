@@ -147,6 +147,10 @@ export function semitoneGradus(semitones) {
   return eulerGradus(p, q);
 }
 
+export const SEMITONE_GRADUS = Object.freeze(
+  Array.from({ length: 12 }, (_, i) => semitoneGradus(i)),
+);
+
 /**
  * Neo-Riemannian Tonnetz P (Parallel), L (Leading-Tone), and R (Relative) operators.
  * Each transformation preserves exactly two of the three triad pitch classes.
@@ -377,7 +381,7 @@ export function buildGenreSpine(genre, score, mutation = 0) {
  * (low Euler Gradus Suavitatis) with the active Tonnetz or genre chord.
  */
 export function projectConsonantPitch(rawSemitone, chord, allowPassing = false, maxGradus = 8, genre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ) {
-  if (genre === GENRE_RULEBOOKS.RAW_CHAOS || chord.quality === "raw") {
+  if (genre === GENRE_RULEBOOKS.RAW_CHAOS || !chord || chord.quality === "raw") {
     return rawSemitone;
   }
 
@@ -385,15 +389,12 @@ export function projectConsonantPitch(rawSemitone, chord, allowPassing = false, 
   const pc = ((Math.trunc(rawSemitone) % 12) + 12) % 12;
 
   if (genre === GENRE_RULEBOOKS.BLUES_TWELVE_BAR) {
-    // 6-note blues scale relative to chord root: [0, 3, 5, 6, 7, 10]
-    const bluesPcs = [
-      chord.root,
-      (chord.root + 3) % 12,
-      (chord.root + 5) % 12,
-      (chord.root + 6) % 12, // The Blue Note (flat 5)
-      (chord.root + 7) % 12,
-      (chord.root + 10) % 12,
-    ];
+    // 6-note authentic delta blues scale relative to chord root:
+    // [root, b3 (3), 4 (5), b5 Blue Note (6), 5 (7), b7 (10)]
+    // If strictness <= 5, lock to strong blues chord tones; if > 5, fully express dirty blue notes!
+    const bluesPcs = maxGradus <= 5
+      ? [chord.root, (chord.root + 4) % 12, (chord.root + 7) % 12, (chord.root + 10) % 12]
+      : [chord.root, (chord.root + 3) % 12, (chord.root + 5) % 12, (chord.root + 6) % 12, (chord.root + 7) % 12, (chord.root + 10) % 12];
     let bestPc = bluesPcs[0];
     let minDiff = 999;
     for (const bpc of bluesPcs) {
@@ -406,31 +407,70 @@ export function projectConsonantPitch(rawSemitone, chord, allowPassing = false, 
     return octave + bestPc;
   }
 
-  if (chord.pitchClasses.includes(pc)) {
+  if (genre === GENRE_RULEBOOKS.SMOKY_JAZZ) {
+    // Smoky jazz: chord tones + extended 9th, 11th, and chromatic approach tones
+    const jazzPcs = [
+      chord.root,
+      chord.third,
+      chord.fifth,
+      chord.seventh,
+      chord.ninth,
+      (chord.root + 5) % 12, // 11th
+      (chord.root + 9) % 12, // 13th
+    ];
+    let bestPc = jazzPcs[0];
+    let minDiff = 999;
+    for (const jpc of jazzPcs) {
+      const diff = Math.min(Math.abs(pc - jpc), 12 - Math.abs(pc - jpc));
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestPc = jpc;
+      }
+    }
+    return octave + bestPc;
+  }
+
+  if (genre === GENRE_RULEBOOKS.MODAL_DRONE) {
+    // Modal drone: open fifths, Phrygian flat-2, and Lydian sharp-4
+    const modalPcs = chord.pitchClasses;
+    let bestPc = modalPcs[0];
+    let minDiff = 999;
+    for (const mpc of modalPcs) {
+      const diff = Math.min(Math.abs(pc - mpc), 12 - Math.abs(pc - mpc));
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestPc = mpc;
+      }
+    }
+    return octave + bestPc;
+  }
+
+  // Victorian Tonnetz & Renaissance Counterpoint: Euler Gradus Consonance Sieve
+  const relPc = ((pc - chord.root) % 12 + 12) % 12;
+  const rawG = SEMITONE_GRADUS[relPc];
+
+  // If the raw note is already sufficiently consonant under maxGradus, keep it!
+  if (rawG <= maxGradus && (allowPassing || chord.pitchClasses.includes(pc))) {
     return octave + pc;
   }
 
-  const allowedExtras = allowPassing
-    ? [chord.ninth, (chord.root + 5) % 12, (chord.root + 9) % 12, chord.seventh]
-    : [chord.ninth, (chord.root + 5) % 12];
-  const candidates = [...chord.pitchClasses, ...allowedExtras];
-
+  // Otherwise pull to the closest consonant pitch class that satisfies maxGradus
   let bestPc = chord.root;
-  let bestScore = Infinity;
-  for (const candidate of candidates) {
-    const dist = Math.min(
-      Math.abs(pc - candidate),
-      12 - Math.abs(pc - candidate),
-    );
-    const gradus = semitoneGradus(candidate - chord.root);
-    const penalty = gradus > maxGradus ? (gradus - maxGradus) * 3 : 0;
-    const totalCost = dist * 2.2 + gradus * 0.35 + penalty;
-    if (totalCost < bestScore) {
-      bestScore = totalCost;
-      bestPc = candidate;
+  let minCost = Infinity;
+  for (let c = 0; c < 12; c += 1) {
+    const candRel = ((c - chord.root) % 12 + 12) % 12;
+    const g = SEMITONE_GRADUS[candRel];
+    if (g <= maxGradus) {
+      const dist = Math.min(Math.abs(pc - c), 12 - Math.abs(pc - c));
+      const isChordTone = chord.pitchClasses.includes(c);
+      const penalty = isChordTone ? 0 : 0.6;
+      const cost = dist * 2.2 + g * 0.2 + penalty;
+      if (cost < minCost) {
+        minCost = cost;
+        bestPc = c;
+      }
     }
   }
-
   return octave + bestPc;
 }
 
@@ -497,18 +537,18 @@ export function conductEnsemble({
           let harmonizedInterval = chord.root;
 
           if (activeGenre === GENRE_RULEBOOKS.BLUES_TWELVE_BAR) {
-            // Walking blues shuffle shuttle [root, 3rd, 5th, 6th, b7th, 6th, 5th, 3rd]
-            const shuffleRanks = [0, 4, 7, 9, 10, 9, 7, 4];
-            const deg = shuffleRanks[(step.cell + stepIndex) % shuffleRanks.length];
+            // 12-bar walking blues bass sequence following chord progression
+            const bluesDegrees = [0, 4, 7, 9, 0, 4, 0, 7, 0, 0, 0, 0];
+            const deg = bluesDegrees[stepIndex % bluesDegrees.length];
             harmonizedInterval = (chord.root + deg) % 12;
           } else if (activeGenre === GENRE_RULEBOOKS.SMOKY_JAZZ) {
-            // Walking jazz acoustic bassline with chromatic passing tones
-            const jazzDegrees = isRegionStart ? [0, 0, 7] : [0, 4, 7, 10, 11];
-            const deg = jazzDegrees[(step.cell + stepIndex) % jazzDegrees.length];
+            // Walking jazz upright acoustic line with chromatic approach tones
+            const jazzDegrees = [0, 4, 10, 0, 7, 3, 0, 5, 0, 0, 7, 11];
+            const deg = jazzDegrees[stepIndex % jazzDegrees.length];
             harmonizedInterval = (chord.root + deg) % 12;
           } else if (activeGenre === GENRE_RULEBOOKS.MODAL_DRONE) {
             // Sustained sub-bass pedal on tonic root or 5th
-            harmonizedInterval = stepIndex % 6 === 0 ? chord.fifth : chord.root;
+            harmonizedInterval = stepIndex % 4 === 3 ? (chord.root + 7) % 12 : chord.root;
           } else if (activeGenre === GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT) {
             // Modal cantus firmus contrary motion to melody
             const mel = conductedMelody[stepIndex] % 12;
@@ -522,11 +562,19 @@ export function conductEnsemble({
             harmonizedInterval = bassChoices[(step.cell + stepIndex) % bassChoices.length];
           }
 
-          const gate = isRegionStart && kickActive ? Math.max(1, step.gate) : step.gate;
+          const gate = (activeGenre === GENRE_RULEBOOKS.BLUES_TWELVE_BAR || activeGenre === GENRE_RULEBOOKS.SMOKY_JAZZ || activeGenre === GENRE_RULEBOOKS.MODAL_DRONE)
+            ? Math.max(1, step.gate)
+            : (isRegionStart && kickActive ? Math.max(1, step.gate) : step.gate);
+          const noteName = PITCH_NAMES[(((score.root + harmonizedInterval) % 12) + 12) % 12];
+          const regMark = step.register > 0 ? "+" : "";
+          const slideMark = step.slide ? "~" : "";
+          const bassLabel = gate === 0 ? "REST" : `${noteName}${regMark}${slideMark}`;
+
           return Object.freeze({
             ...step,
             gate,
             interval: harmonizedInterval,
+            label: bassLabel,
           });
         }),
       ),
@@ -561,9 +609,24 @@ export function conductEnsemble({
           }
 
           const orderedChord = step.mirror === "/" ? voiced : [...voiced].reverse();
+          const absChordRoot = (((score.root + chord.root) % 12) + 12) % 12;
+          const rootName = PITCH_NAMES[absChordRoot];
+          const qualityShort = chord.quality === "major" ? ""
+            : chord.quality === "minor" ? "m"
+            : chord.quality === "dom7" ? "7"
+            : chord.quality === "maj9" ? "M9"
+            : chord.quality === "min9" ? "m9"
+            : chord.quality === "dom7alt" ? "7alt"
+            : chord.quality === "modal_open" ? "5"
+            : chord.quality === "phrygian" ? "phr"
+            : chord.quality === "lydian" ? "lyd"
+            : "";
+          const harmonyLabel = step.gate === 0 ? "REST" : `${rootName}${qualityShort}${step.mirror}`;
+
           return Object.freeze({
             ...step,
             chord: Object.freeze(orderedChord),
+            label: harmonyLabel,
           });
         }),
       ),
@@ -598,6 +661,7 @@ export function conductEnsemble({
             gate: hocketGate,
             ratioLabel: chosen.ratio,
             ratioValue: Number((chosen.value * chordRootFactor).toFixed(4)),
+            label: hocketGate === 0 ? "REST" : `${chosen.ratio} ${step.codelCode}`,
           });
         }),
       ),
@@ -619,10 +683,13 @@ export function conductEnsemble({
           };
           const targetInterval = personaHarmonyMap[step.personaShort] ?? chord.root;
           const phraseGate = stepIndex % 3 === 1 && step.gate === 1 ? 0 : step.gate;
+          const chantPitchName = PITCH_NAMES[(((score.root + targetInterval) % 12) + 12) % 12];
+          const chantLabel = phraseGate === 0 ? "SILENT" : `${step.personaShort}·${chantPitchName}`;
           return Object.freeze({
             ...step,
             gate: phraseGate,
             interval: targetInterval % 12,
+            label: chantLabel,
           });
         }),
       ),

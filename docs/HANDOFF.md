@@ -4,11 +4,11 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-18, session 15, on `main`: the Antique Parlor Acoustics engine (P5-15, D-019) has been audited and completely overhauled with high-presence Edison wax cylinder / 78 RPM shellac surface noise (-15.5 dBFS peaks, -41 dBFS RMS, rotational thump, and Poisson dust pops), un-normalized Victorian wood-and-velvet chamber convolution reverb (0.42 send gain), mechanical brass clockwork escapement tick/tock/ratchet engine, and interactive layer toggle buttons (crackle, reverb, escapement) across both live Web Audio and offline 16-bit WAV export._
+_Last updated: 2026-10-19, session 16, on `main`: the Kapellmeister Music-Theory & Genre Rulebook Console (P5-15, D-019) has been audited and overhauled with authentic genre rulebooks (12-bar Delta blues walking bass shuffle, smoky jazz upright acoustic walking lines with chromatic approach tones, mystic drone pedals, Palestrina counterpoint Picardy cadences, and raw VM pass-through), an active Euler Gradus consonance sieve ($G \le 3\dots 14$), live plate step pitch/chord labelling (`#bass-grid`, `#harmony-grid`, `#chant-grid`), and bug-fixed `#kapellmeister-telemetry` UI telemetry._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-16 are implemented and verified. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a procedural branching mycelial network with eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) engraved with Ernst Haeckel anatomical lithography, an antique turned-wood mahogany pedestal, mossy peat/driftwood substrate bed, 46 dew condensation droplets clinging to the vitrine bell jar, bio-acoustic audio sonification (micro-voltage action potentials, guttation droplet chimes, and tactile ballistospore puffs), drifting ballistospores with vitrine tap bursts, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume and tempo controls. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The Kapellmeister music-theory and genre console (`#kapellmeister-engine`, P5-15, D-019) allows confidants to switch between six historical and theoretical rulebooks (Victorian Neo-Riemannian Tonnetz, 12-Bar Delta Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Drone, Raw Esoteric Chaos) with a live harmonic dashboard and animated SVG Tonnetz compass. An antique parlor room acoustic space (`#parlor-acoustics-engine`) immerses the ensemble in tactile synthesized Edison wax-cylinder phonograph surface noise, a 1.6-second wood-and-velvet chamber convolution impulse response (`ConvolverNode`), and mechanical brass clockwork escapement ticks and ratchets, with individual layer toggle chips. The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing (P3-01), 1200×1520 broadsheet PNG plate engraving (P3-02), and client-side uncompressed 16-bit 44.1 kHz WAV loop export (`#export-wav`, P3-03). Remaining open work covers assistive-technology checks (P4-02) and public hosting (P6-01).
 
-**Verified** (2026-10-18, initial repository, local Linux environment)
+**Verified** (2026-10-19, initial repository, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
@@ -17,6 +17,7 @@ _Last updated: 2026-10-18, session 15, on `main`: the Antique Parlor Acoustics e
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 27 entries, 0 errors, 0 warnings** |
 
 **What works**
+
 
 - The static page accepts a phrase and offers surprise, replay, and mute controls (P2-03).
 - The phrase becomes a stable unsigned seed under the D-003 normalization contract.
@@ -68,6 +69,51 @@ _Last updated: 2026-10-18, session 15, on `main`: the Antique Parlor Acoustics e
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 16: 2026-10-19: the kapellmeister conductor awakens with authentic genre rulebooks & walking bass
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Audit and overhaul the Kapellmeister Music-Theory & Genre Rulebook Console (`#kapellmeister-engine`, `P5-15`, `D-019`) so that switching between the six historical and theoretical genres produces unmistakable, dramatic audiovisual and musical transformations, the Euler Gradus strictness slider ($G \le 3\dots 14$) smoothly sieves harmonic consonance, and all plate grids, telemetry bars, and compass indicators update synchronously on user interaction.
+
+**Done:** P5-15, D-019 Kapellmeister conductor audit and overhaul.
+
+**Changed:**
+1. **Genre Rulebooks & Harmonic Conductors (`src/conductor.mjs`)**:
+   - **Authentic Walking Basslines (`conductedBass`)**:
+     - `12-BAR DELTA & PARLOR BLUES`: Walks authentic chord root, 3rd, 5th, and 6th/b7th degrees (`[0, 4, 7, 9, 0, 4, 0, 7, 0, 0, 0, 0]`) locking to the 12-bar progression (I7 $\to$ IV7 $\to$ I7 $\to$ V7 $\to$ IV7 $\to$ I7 $\to$ V7 turn) with driving quarter-note gates.
+     - `SMOKY PARLOR JAZZ & EXTENDED TONNETZ`: Implements an authentic upright acoustic walking bass line with chromatic passing/approach tones (`[0, 4, 10, 0, 7, 3, 0, 5, 0, 0, 7, 11]`) enclosing each downbeat of the chord changes (Imaj9 $\to$ vi9 $\to$ ii9 $\to$ $\flat$II7alt tritone sub).
+     - `MYSTIC BYZANTINE & HIMALAYAN DRONE`: Sustained sub-bass pedal on tonic root with 4th-step open fifths.
+     - `PALESTRINA MODAL COUNTERPOINT`: Contrary-motion stepwise cantus firmus resolving to the Picardy third cadence at step 11.
+     - `VICTORIAN NEO-RIEMANNIAN TONNETZ`: Root/fifth/third triad voice-leading.
+   - **Accompaniment Plate Labels & Feedback**:
+     - `conductedBass`: Steps dynamically compute their note name and register/slide decoration (`PITCH_NAMES[absRoot]`, e.g., `E♭`, `G`, `B♭+~`, `C+`).
+     - `conductedHarmony`: Steps display conducted chord quality and mirror orientation (e.g., `E♭7/`, `A♭7\`, `E♭M9/`, `Cm9\`, `E5/`).
+     - `conductedChant`: Steps display dramatis persona and conducted vowel pitch (e.g., `HAM·G`, `PRO·C`, `HEC·E`).
+     - `conductedChimes`: Steps update ratio labels and indicate `REST` on Euclidean hockets.
+   - **Euler Gradus Consonance Sieve (`projectConsonantPitch`)**:
+     - Rewrote sieve to utilize a precomputed `SEMITONE_GRADUS` lookup table ($G = 1\dots 11$).
+     - Lower strictness ($G \le 3\dots 5$) strictly sieve raw VM pitches to pure unisons, octaves, and fifths; moderate strictness ($G \le 7\dots 9$) permits sweet major and minor thirds; permissive settings ($G \le 10\dots 14$) open up full chromatic extensions, blue notes ($\flat 5$), and dissonant intervals.
+2. **UI Wiring & State Mutation Bleed Prevention (`src/app.mjs`)**:
+   - Wired `#kapellmeister-telemetry` into `elements` (previously omitted from `elements`, preventing telemetry text from updating).
+   - Introduced `rawBeat`, `rawBass`, `rawHarmony`, `rawChimes`, `rawChant` references. Re-conducting now always pulls from pristine virtual machine outputs or active mutation shifts rather than re-conducting already-conducted structures, preserving exact VM purity when returning to `RAW ESOTERIC CHAOS`.
+   - Updated `applyEnsembleConductor()` to synchronously refresh plate grid buttons (`updateBassGrid`, `updateHarmonyGrid`, `updateChimeGrid`, `updateChantGrid`), `#kapellmeister-telemetry`, and active step indicators (`highlightBeatStep(activeBeatStep)`).
+   - Cell click cycling on accompaniment plates updates the raw state and re-conducts live sound and visuals immediately.
+3. **Automated Verification (`tests/oracle.test.mjs`)**:
+   - Expanded Kapellmeister test suite to assert note and chord labels across Blues, Jazz, Drone, Counterpoint, and Raw Chaos.
+   - Verified that `RAW_CHAOS` preserves the exact byte-for-byte outputs of all virtual machines.
+
+**Decisions:** Fulfills and refines D-016 and D-019.
+
+**Verified:** 33/33 Node checks passed (`node --test tests/*.test.mjs`), `python3 tools/check_docs.py` reported 0 errors and 0 warnings, `python3 tools/manual.py check docs/manual.json` passed with 0 warnings.
+
+**Not verified:** Assistive-technology and screen-reader testing remains P4-02 work.
+
+**Problems:** None.
+
+**Left undone:** P4-02 and P6-01 roadmap items.
+
+**Next session should start with:** P4-02 assistive technology and screen reader checks.
 
 ### Session 15: 2026-10-18: antique parlor acoustics overhaul & interactive layer console
 
@@ -320,26 +366,5 @@ _Last updated: 2026-10-18, session 15, on `main`: the Antique Parlor Acoustics e
 
 **Next session should start with:** Summon the same phrase after reload and record frame pacing; then continue P4-01.
 
-### Session 6: 2026-10-17: let the geometry keep its footing
-
-**Contributor:** Codex with maintainer direction
-
-**Goal:** Remove the beat-periodic jitter still visible after smoothing the scale envelope.
-
-**Done:** Incidental rendering correction; no roadmap item added.
-
-**Changed:** Removed audio-pulse-driven Canvas scaling completely. Boundary flux, internal kinetic systems, eye behavior, and slow orbital drift are unchanged.
-
-**Decisions:** D-008 supersedes the retained beat-scale portion of D-007.
-
-**Verified:** Reviewed the supplied 3.25-second, 757×648 H.264 screencast frame by frame; hard vertical update bands coincide with whole-creature beat changes. Thirteen Node checks passed, including a regression check that the visual draw path does not consume `score.pulse`; documentation checker reported 0 errors and 0 warnings.
-
-**Not verified:** A follow-up capture of the corrected renderer and cross-browser sensory review remain P4-01.
-
-**Problems:** The first correction made the scale envelope mathematically smooth but did not prevent large synchronous repaints from reading as jitter.
-
-**Left undone:** P3, P4, and P6 roadmap items.
-
-**Next session should start with:** Re-record the same creature, then continue P4-01.
-
 Older sessions: [archive/sessions.md](archive/sessions.md).
+

@@ -85,6 +85,7 @@ const elements = {
   kapellmeisterEngine: document.querySelector("#kapellmeister-engine"),
   kapellmeisterGenreTitle: document.querySelector("#kapellmeister-genre-title"),
   kapellmeisterGenre: document.querySelector("#kapellmeister-genre"),
+  kapellmeisterTelemetry: document.querySelector("#kapellmeister-telemetry"),
   kapellmeisterStrictness: document.querySelector("#kapellmeister-strictness"),
   kapellmeisterStrictnessVal: document.querySelector("#kapellmeister-strictness-val"),
   harmonicStep: document.querySelector("#harmonic-step"),
@@ -122,6 +123,11 @@ let currentBass = null;
 let currentHarmony = null;
 let currentChimes = null;
 let currentChant = null;
+let rawBeat = null;
+let rawBass = null;
+let rawHarmony = null;
+let rawChimes = null;
+let rawChant = null;
 let beatEnabled = true;
 let bassEnabled = true;
 let harmonyEnabled = true;
@@ -2819,12 +2825,14 @@ function renderBeatGrid() {
     `;
     button.addEventListener("click", () => {
       if (!currentBeat) return;
-      const nextSteps = [...currentBeat.steps];
+      const baseBeat = rawBeat || currentBeat;
+      const nextSteps = [...baseBeat.steps];
       nextSteps[index] = cycleBeatStep(nextSteps[index]);
-      currentBeat = Object.freeze({
-        ...currentBeat,
+      rawBeat = Object.freeze({
+        ...baseBeat,
         steps: Object.freeze(nextSteps),
       });
+      applyEnsembleConductor();
       updateBeatGrid();
       if (audioContext && currentTransport && currentScore && !muted) {
         scheduleBeatStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.18);
@@ -2879,13 +2887,14 @@ function renderBassGrid() {
     `;
     button.addEventListener("click", () => {
       if (!currentBass || !currentScore) return;
-      const nextSteps = [...currentBass.steps];
+      const baseBass = rawBass || currentBass;
+      const nextSteps = [...baseBass.steps];
       nextSteps[index] = cycleBassCell(nextSteps[index], melodyFor(currentScore));
-      currentBass = Object.freeze({
-        ...currentBass,
+      rawBass = Object.freeze({
+        ...baseBass,
         steps: Object.freeze(nextSteps),
       });
-      updateBassGrid();
+      applyEnsembleConductor();
       if (audioContext && currentTransport && !muted) {
         scheduleBassStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.24);
       }
@@ -2940,13 +2949,14 @@ function renderHarmonyGrid() {
     `;
     button.addEventListener("click", () => {
       if (!currentHarmony || !currentScore) return;
-      const nextSteps = [...currentHarmony.steps];
+      const baseHarmony = rawHarmony || currentHarmony;
+      const nextSteps = [...baseHarmony.steps];
       nextSteps[index] = cycleHarmonyCell(nextSteps[index], currentScore);
-      currentHarmony = Object.freeze({
-        ...currentHarmony,
+      rawHarmony = Object.freeze({
+        ...baseHarmony,
         steps: Object.freeze(nextSteps),
       });
-      updateHarmonyGrid();
+      applyEnsembleConductor();
       if (audioContext && currentTransport && !muted) {
         scheduleHarmonyStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.28);
       }
@@ -3017,13 +3027,14 @@ function renderChimeGrid() {
     `;
     button.addEventListener("click", () => {
       if (!currentChimes || !currentScore) return;
-      const nextSteps = [...currentChimes.steps];
+      const baseChimes = rawChimes || currentChimes;
+      const nextSteps = [...baseChimes.steps];
       nextSteps[index] = cycleChimeCell(nextSteps[index]);
-      currentChimes = Object.freeze({
-        ...currentChimes,
+      rawChimes = Object.freeze({
+        ...baseChimes,
         steps: Object.freeze(nextSteps),
       });
-      updateChimeGrid();
+      applyEnsembleConductor();
       if (audioContext && currentTransport && !muted) {
         scheduleChimeStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.3);
       }
@@ -3086,13 +3097,14 @@ function renderChantGrid() {
     `;
     button.addEventListener("click", () => {
       if (!currentChant || !currentScore) return;
-      const nextSteps = [...currentChant.steps];
+      const baseChant = rawChant || currentChant;
+      const nextSteps = [...baseChant.steps];
       nextSteps[index] = cycleChantCell(nextSteps[index], currentScore);
-      currentChant = Object.freeze({
-        ...currentChant,
+      rawChant = Object.freeze({
+        ...baseChant,
         steps: Object.freeze(nextSteps),
       });
-      updateChantGrid();
+      applyEnsembleConductor();
       if (audioContext && currentTransport && !muted) {
         scheduleChantStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.32);
       }
@@ -3341,11 +3353,11 @@ function applyEnsembleConductor() {
   const conducted = conductEnsemble({
     score: currentScore,
     melody: melodyFor(currentScore),
-    beat: currentBeat,
-    bass: currentBass,
-    harmony: currentHarmony,
-    chimes: currentChimes,
-    chant: currentChant,
+    beat: rawBeat || currentBeat,
+    bass: rawBass || currentBass,
+    harmony: rawHarmony || currentHarmony,
+    chimes: rawChimes || currentChimes,
+    chant: rawChant || currentChant,
     mutation: harmonyMutation + bassMutation + chimeMutation + chantMutation,
     genre: activeGenre,
     consonanceStrictness: activeStrictness,
@@ -3360,6 +3372,11 @@ function applyEnsembleConductor() {
     currentTransport.melody = currentConductedMelody;
   }
   updateKapellmeisterUI();
+  updateBassGrid();
+  updateHarmonyGrid();
+  updateChimeGrid();
+  updateChantGrid();
+  highlightBeatStep(activeBeatStep);
 }
 
 function showScore(score) {
@@ -3370,7 +3387,8 @@ function showScore(score) {
   chimeMutation = 0;
   chantMutation = 0;
   if (beatSource) {
-    currentBeat = composeBeat(beatSource, score, beatMutation);
+    rawBeat = composeBeat(beatSource, score, beatMutation);
+    currentBeat = rawBeat;
     if (elements.beatName) elements.beatName.textContent = currentBeat.modeName;
     if (elements.beatTelemetry) {
       elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · DENSITY ${score.beatDensity}%`;
@@ -3380,7 +3398,8 @@ function showScore(score) {
     elements.beatName.textContent = BEAT_NAMES[score.beatMode];
   }
   if (bassSource) {
-    currentBass = composeBass(bassSource, score, bassMutation);
+    rawBass = composeBass(bassSource, score, bassMutation);
+    currentBass = rawBass;
     if (elements.bassName) elements.bassName.textContent = currentBass.modeName;
     if (elements.bassTelemetry) {
       elements.bassTelemetry.textContent = `256-CELL TAPE · ${currentBass.stepsExecuted} OPS · GLIDE ${score.bassGlide}%`;
@@ -3390,7 +3409,8 @@ function showScore(score) {
     elements.bassName.textContent = BASS_NAMES[score.bassMode];
   }
   if (harmonySource) {
-    currentHarmony = composeHarmony(harmonySource, score, harmonyMutation);
+    rawHarmony = composeHarmony(harmonySource, score, harmonyMutation);
+    currentHarmony = rawHarmony;
     if (elements.harmonyName) elements.harmonyName.textContent = currentHarmony.modeName;
     if (elements.harmonyTelemetry) {
       elements.harmonyTelemetry.textContent = `2D TORUS · ${currentHarmony.stepsExecuted} OPS · ${currentHarmony.mirrorsHit} MIRRORS`;
@@ -3400,7 +3420,8 @@ function showScore(score) {
     elements.harmonyName.textContent = HARMONY_NAMES[score.harmonyMode];
   }
   if (pietSource && fractranSource) {
-    currentChimes = composeChimes(pietSource, fractranSource, score, chimeMutation);
+    rawChimes = composeChimes(pietSource, fractranSource, score, chimeMutation);
+    currentChimes = rawChimes;
     if (elements.chimeName) elements.chimeName.textContent = currentChimes.modeName;
     if (elements.chimeTelemetry) {
       elements.chimeTelemetry.textContent = `${currentChimes.pietStepsExecuted} CODELS · ${currentChimes.fractranStepsExecuted} FRACTRAN RATIOS · SHIMMER ${score.chimeShimmer}%`;
@@ -3410,7 +3431,8 @@ function showScore(score) {
     elements.chimeName.textContent = CHIME_NAMES[score.chimeMode];
   }
   if (chantSource) {
-    currentChant = composeChant(chantSource, score, chantMutation);
+    rawChant = composeChant(chantSource, score, chantMutation);
+    currentChant = rawChant;
     if (elements.chantName) elements.chantName.textContent = currentChant.modeName;
     if (elements.chantTelemetry) {
       elements.chantTelemetry.textContent = `3 ACTS · ${currentChant.statementsExecuted} CUES · FORMANT ${score.chantFormant}%`;
@@ -4113,7 +4135,8 @@ elements.beatToggle?.addEventListener("click", () => {
 elements.beatMutate?.addEventListener("click", () => {
   if (!currentScore || !beatSource) return;
   beatMutation += 1;
-  currentBeat = composeBeat(beatSource, currentScore, beatMutation);
+  rawBeat = composeBeat(beatSource, currentScore, beatMutation);
+  currentBeat = rawBeat;
   applyEnsembleConductor();
   if (elements.beatTelemetry) {
     elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · MUTATION #${beatMutation}`;
@@ -4137,7 +4160,8 @@ elements.bassToggle?.addEventListener("click", () => {
 elements.bassMutate?.addEventListener("click", () => {
   if (!currentScore || !bassSource) return;
   bassMutation += 1;
-  currentBass = composeBass(bassSource, currentScore, bassMutation);
+  rawBass = composeBass(bassSource, currentScore, bassMutation);
+  currentBass = rawBass;
   applyEnsembleConductor();
   if (elements.bassTelemetry) {
     elements.bassTelemetry.textContent = `256-CELL TAPE · ${currentBass.stepsExecuted} OPS · SHIFT #${bassMutation}`;
@@ -4160,7 +4184,8 @@ elements.harmonyToggle?.addEventListener("click", () => {
 elements.harmonyMutate?.addEventListener("click", () => {
   if (!currentScore || !harmonySource) return;
   harmonyMutation += 1;
-  currentHarmony = composeHarmony(harmonySource, currentScore, harmonyMutation);
+  rawHarmony = composeHarmony(harmonySource, currentScore, harmonyMutation);
+  currentHarmony = rawHarmony;
   applyEnsembleConductor();
   if (elements.harmonyTelemetry) {
     elements.harmonyTelemetry.textContent = `2D TORUS · ${currentHarmony.stepsExecuted} OPS · DEFLECTION #${harmonyMutation}`;
@@ -4186,7 +4211,8 @@ elements.chimeToggle?.addEventListener("click", () => {
 elements.chimeMutate?.addEventListener("click", () => {
   if (!currentScore || !pietSource || !fractranSource) return;
   chimeMutation += 1;
-  currentChimes = composeChimes(pietSource, fractranSource, currentScore, chimeMutation);
+  rawChimes = composeChimes(pietSource, fractranSource, currentScore, chimeMutation);
+  currentChimes = rawChimes;
   applyEnsembleConductor();
   if (elements.chimeTelemetry) {
     elements.chimeTelemetry.textContent = `${currentChimes.pietStepsExecuted} CODELS · ${currentChimes.fractranStepsExecuted} RATIOS · REFRACTION #${chimeMutation}`;
@@ -4209,7 +4235,8 @@ elements.chantToggle?.addEventListener("click", () => {
 elements.chantMutate?.addEventListener("click", () => {
   if (!currentScore || !chantSource) return;
   chantMutation += 1;
-  currentChant = composeChant(chantSource, currentScore, chantMutation);
+  rawChant = composeChant(chantSource, currentScore, chantMutation);
+  currentChant = rawChant;
   applyEnsembleConductor();
   if (elements.chantTelemetry) {
     elements.chantTelemetry.textContent = `3 ACTS · ${currentChant.statementsExecuted} CUES · RECAST #${chantMutation}`;
