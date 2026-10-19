@@ -60,6 +60,8 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Master volume | range input | active transport output gain | session-local `0..100` value mapped through a bounded perceptual curve; changes ramp over 18 ms |
 | Tempo (BPM) | range input (`#tempo-bpm`) | active audio transport scheduler | session-local `36..208` BPM value initialized to `score.pulse` on summon (double-click restores native pulse); updates upcoming step durations in real time |
 | Vitrine gesture | pointer events on `#vision` | Canvas renderer and active audio transport | transient normalized coordinates, hold, tap, and drag velocity modulate shape morphing, gaze, harmonic phase shift, filter/mix intensity, and synthesized percussion without mutating the score |
+| Fun Machine keyboard | `triggerFunKey()`, `buildFunChord()` | `src/app.mjs`, active audio transport | interactive 13-key manual (`C..C'`) and `[A..K]` physical keyboard mapping; plays 5.5 Hz vibrato reed organ chord, triggers accompaniment burst, and punches chords into `customSpine` |
+| Fun loop sequencer | `#fun-sequence-grid`, `#fun-machine-rec` | `conductEnsemble()`, `#export-wav` | 12-step progression matrix with step targeting, live punch-in recording, and progression reset; custom chords overlay the active genre spine and render into live audio and offline 16-bit WAV loops |
 
 ## Invariants
 
@@ -78,6 +80,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - Every silhouette stays within a radius envelope of `0.38..1.08`, and every kinetic core is clipped to the current deforming body path. Enforced structurally in `tests/static.test.mjs` (D-007).
 - Kinetic family, speed, depth, tilt, and boundary-flux family originate in validated spell output. Enforced by required ranges and the 256-phrase coverage test (D-007).
 - Mycelial branching density, fruiting body archetype, and ballistospore emission originate in validated spell output (`fungal_form`, `fungal_hyphae`, `fungal_spores`, `fungal_bloom`). Enforced by required ranges and the phrase batch test (D-017).
+- Custom chords punched into the Esoteric Fun Machine overlay the active genre spine via `customSpine` without altering virtual machine state or native Lolcode score determinism. Enforced by `tests/oracle.test.mjs` and D-020.
 
 ## Boundaries
 

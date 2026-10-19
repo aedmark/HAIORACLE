@@ -205,6 +205,8 @@ export function buildTriad(root, quality = "minor", op = "I", customPcs = null) 
 
   return Object.freeze({
     root: r,
+    name: PITCH_NAMES[r],
+    rootPc: r,
     quality,
     op,
     third,
@@ -229,6 +231,105 @@ export function chordLabelFor(chord, tonicMidi = 60) {
   if (chord.quality === "phrygian") return `${name} Phryg`;
   if (chord.quality === "lydian") return `${name} Lyd`;
   return `${name} ${chord.quality}`;
+}
+
+export const CHORD_QUALITIES = Object.freeze({
+  AUTO: "auto",
+  MAJOR: "major",
+  MINOR: "minor",
+  DOM7: "dom7",
+  MAJ9: "maj9",
+  DIM: "dim",
+  OPEN5: "modal_open",
+});
+
+export const FUN_KEY_MAP = Object.freeze([
+  { semitone: 0, note: "C", isBlack: false, key: "KeyA", displayKey: "A" },
+  { semitone: 1, note: "C♯", isBlack: true, key: "KeyW", displayKey: "W" },
+  { semitone: 2, note: "D", isBlack: false, key: "KeyS", displayKey: "S" },
+  { semitone: 3, note: "D♯", isBlack: true, key: "KeyE", displayKey: "E" },
+  { semitone: 4, note: "E", isBlack: false, key: "KeyD", displayKey: "D" },
+  { semitone: 5, note: "F", isBlack: false, key: "KeyF", displayKey: "F" },
+  { semitone: 6, note: "F♯", isBlack: true, key: "KeyT", displayKey: "T" },
+  { semitone: 7, note: "G", isBlack: false, key: "KeyG", displayKey: "G" },
+  { semitone: 8, note: "G♯", isBlack: true, key: "KeyY", displayKey: "Y" },
+  { semitone: 9, note: "A", isBlack: false, key: "KeyH", displayKey: "H" },
+  { semitone: 10, note: "A♯", isBlack: true, key: "KeyU", displayKey: "U" },
+  { semitone: 11, note: "B", isBlack: false, key: "KeyJ", displayKey: "J" },
+  { semitone: 12, note: "C'", isBlack: false, key: "KeyK", displayKey: "K" },
+]);
+
+export const FUN_KEY_BY_CODE = Object.freeze(
+  Object.fromEntries(FUN_KEY_MAP.map((item) => [item.key, item])),
+);
+
+export function buildFunChord(rootSemitone, quality = "auto", genre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ, tonicRoot = 0) {
+  const r = ((Math.trunc(rootSemitone) % 12) + 12) % 12;
+  const relFromTonic = ((r - (Math.trunc(tonicRoot) % 12)) % 12 + 12) % 12;
+  let resolvedQuality = quality;
+
+  if (quality === "auto" || !quality) {
+    switch (genre) {
+      case GENRE_RULEBOOKS.BLUES_TWELVE_BAR:
+        resolvedQuality = "dom7";
+        break;
+      case GENRE_RULEBOOKS.SMOKY_JAZZ:
+        resolvedQuality = [0, 5].includes(relFromTonic) ? "maj9"
+          : [1, 6, 11].includes(relFromTonic) ? "dom7alt"
+          : "min9";
+        break;
+      case GENRE_RULEBOOKS.MODAL_DRONE:
+        resolvedQuality = relFromTonic === 1 ? "phrygian"
+          : relFromTonic === 6 ? "lydian"
+          : "modal_open";
+        break;
+      case GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT:
+        resolvedQuality = [0, 2, 5, 7, 9].includes(relFromTonic) ? "minor" : "major";
+        break;
+      case GENRE_RULEBOOKS.RAW_CHAOS:
+        resolvedQuality = "raw";
+        break;
+      case GENRE_RULEBOOKS.VICTORIAN_TONNETZ:
+      default:
+        resolvedQuality = [0, 5, 7].includes(relFromTonic) ? "major" : "minor";
+        break;
+    }
+  }
+
+  let customPcs = null;
+  if (resolvedQuality === "dom7") {
+    customPcs = [r, (r + 4) % 12, (r + 7) % 12, (r + 10) % 12];
+  } else if (resolvedQuality === "maj9") {
+    customPcs = [r, (r + 4) % 12, (r + 7) % 12, (r + 11) % 12, (r + 2) % 12];
+  } else if (resolvedQuality === "min9") {
+    customPcs = [r, (r + 3) % 12, (r + 7) % 12, (r + 10) % 12, (r + 2) % 12];
+  } else if (resolvedQuality === "dom7alt") {
+    customPcs = [r, (r + 4) % 12, (r + 7) % 12, (r + 10) % 12, (r + 1) % 12];
+  } else if (resolvedQuality === "dim") {
+    customPcs = [r, (r + 3) % 12, (r + 6) % 12, (r + 9) % 12];
+  } else if (resolvedQuality === "modal_open") {
+    customPcs = [r, (r + 7) % 12, (r + 2) % 12];
+  } else if (resolvedQuality === "phrygian") {
+    customPcs = [r, (r + 1) % 12, (r + 4) % 12, (r + 7) % 12];
+  } else if (resolvedQuality === "lydian") {
+    customPcs = [r, (r + 6) % 12, (r + 7) % 12, (r + 11) % 12];
+  } else if (resolvedQuality === "minor") {
+    customPcs = [r, (r + 3) % 12, (r + 7) % 12];
+  } else if (resolvedQuality === "raw") {
+    customPcs = [];
+  } else {
+    resolvedQuality = "major";
+    customPcs = [r, (r + 4) % 12, (r + 7) % 12];
+  }
+
+  const name = PITCH_NAMES[r];
+  const opLabel = `FUN·${name}`;
+  const triad = buildTriad(r, resolvedQuality, opLabel, customPcs);
+  return Object.freeze({
+    ...triad,
+    name,
+    rootPc: r,
+  });
 }
 
 /**
@@ -490,12 +591,13 @@ export function conductEnsemble({
   genre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ,
   consonanceStrictness = 8,
   parsimonyRadius = 2,
+  customSpine = null,
 }) {
   const activeGenre = Object.values(GENRE_RULEBOOKS).includes(genre)
     ? genre
     : GENRE_RULEBOOKS.VICTORIAN_TONNETZ;
 
-  if (activeGenre === GENRE_RULEBOOKS.RAW_CHAOS) {
+  if (activeGenre === GENRE_RULEBOOKS.RAW_CHAOS && !customSpine) {
     const spine = buildRawChaosSpine(score);
     return Object.freeze({
       spine,
@@ -511,7 +613,12 @@ export function conductEnsemble({
     });
   }
 
-  const spine = buildGenreSpine(activeGenre, score, mutation);
+  const baseSpine = activeGenre === GENRE_RULEBOOKS.RAW_CHAOS
+    ? buildRawChaosSpine(score)
+    : buildGenreSpine(activeGenre, score, mutation);
+  const spine = customSpine
+    ? Object.freeze(baseSpine.map((chord, i) => customSpine[i] || chord))
+    : baseSpine;
   const leadMask = bjorklund(7, 12, score.melodyTurn % 12);
   const chimeHocketMask = bjorklund(5, 12, (score.melodyTurn + 2) % 12);
 

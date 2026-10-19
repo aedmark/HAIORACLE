@@ -230,6 +230,21 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** Confidants can sculpt the musicality and coherence of their summoned omen in real time, from smooth chamber jazz to raw avant-garde chaos, grounded in an authentic 1890s acoustic space.
 
+## D-020 Esoteric Fun Machine: Real-Time Play-Along Keyboard Manual, Auto-Chord Harmonization, and 12-Step Punch-In Loop Sequencer (2026-10-19, status: accepted)
+
+**Context:** While confidants could summon algorithmic creatures, modulate parameters via vitrine dragging, and select Kapellmeister genre rulebooks, they could not actively play along or compose harmonic sequences in real time. Confidants requested a Baldwin Fun Machine-inspired auto-chord organ console with a physical/screen keyboard manual, one-finger chord accompaniment, loop punch-in recording, and seamless integration into playback and offline WAV exports.
+
+**Decision:**
+1. **Interactive 13-Key Ivory & Ebony Manual (`#fun-keyboard`, `FUN_KEY_MAP`, `FUN_KEY_BY_CODE`)** — Implements an octave manual spanning $C$ to $C'$ with 8 ivory white keys and 5 ebony black keys (`KeyA, KeyW, KeyS, KeyE, KeyD, KeyF, KeyT, KeyG, KeyY, KeyH, KeyU, KeyJ, KeyK`). Keys are playable via pointer clicks, touch gestures, and physical computer keyboard keys, guarded against phrase input focus, key repeat spam, and browser hotkeys. Dynamic chord preview labels on each key update whenever chord quality or genre changes.
+2. **Dual-Oscillator Reed-Organ Voice with 5.5 Hz Parlor Vibrato (`scheduleFunMachineChord()`, `scheduleFunMachineLeadNote()`)** — Synthesizes vintage 1970s parlor chord organ tone using a sawtooth reed oscillator, sub-octave triangle foundation, a 5.5 Hz sine vibrato LFO, a vintage lowpass formant filter ($2200\,\text{Hz}$), and 12ms manual strum stagger between chord notes. Supports both `AUTO-CHORD: ONE-FINGER` and `LEAD SOLO: MANUAL NOTE` modes.
+3. **One-Finger Auto-Chord Harmonization (`buildFunChord()`, `CHORD_QUALITIES`)** — Quick chord quality selector chips (`AUTO-GENRE`, `MAJOR`, `MINOR`, `DOM 7TH`, `MAJ 9TH`, `DIMINISHED`, `OPEN 5TH`). In `AUTO-GENRE`, chords dynamically resolve according to the active Kapellmeister genre rulebook ($I7/IV7/V7$ for Blues, $\text{maj9}/\text{min9}$ for Jazz, major/minor triads for Tonnetz, open 5ths for Modal Drone). Striking a key fires instant accompaniment bursts across the ensemble (Brainfuck walking bass, Befunge chord organ, Shakespeare formant choir, Piet chimes).
+4. **12-Step Loop Sequencer Matrix & Punch-In Recording (`#fun-sequence-grid`, `#fun-machine-rec`, `#fun-machine-reset`)** — Visualizes the 12-step chord spine with step numbers, active chords, and `★ USER` / `AUTO` badges. When punch-in recording is armed (`#fun-machine-rec`) or when a step pill is targeted, striking any key instantly writes that chord into the loop (`customProgression[step] = chord`), re-conducting the entire ensemble on the fly via `customSpine` in `conductEnsemble()`. Resetting reverts cleanly to algorithmic genre chords.
+5. **Offline 16-Bit WAV Export Coherence** — Custom sequenced chord progressions and Fun Machine reed-organ voices are rendered directly into offline 16-bit 44.1 kHz WAV downloads alongside live playback.
+
+**Alternatives:** Implementing a freeform multi-track MIDI piano roll or third-party synth engine would breach the zero-dependency contract (D-001) and overwhelm the focused, playful vintage parlor premise.
+
+**Consequences:** HAI, ORACLE! transforms from an algorithmic spectator toy into a live esoteric jam instrument. Users can play along in real time, sequence custom chord progressions, and export deterministic WAV loops preserving their compositions.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

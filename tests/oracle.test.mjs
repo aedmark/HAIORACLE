@@ -3,7 +3,22 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { HARMONY_NAMES, composeHarmony, cycleHarmonyCell, runBefunge } from "../src/befunge.mjs";
 import { BASS_NAMES, composeBass, cycleBassCell, runBrainfuck } from "../src/brainfuck.mjs";
-import { GENRE_NAMES, GENRE_RULEBOOKS, applyTonnetzOperation, bjorklund, buildTonnetzSpine, buildTriad, chordLabelFor, conductEnsemble, eulerGradus, semitoneGradus } from "../src/conductor.mjs";
+import {
+  CHORD_QUALITIES,
+  FUN_KEY_BY_CODE,
+  FUN_KEY_MAP,
+  GENRE_NAMES,
+  GENRE_RULEBOOKS,
+  applyTonnetzOperation,
+  bjorklund,
+  buildFunChord,
+  buildTonnetzSpine,
+  buildTriad,
+  chordLabelFor,
+  conductEnsemble,
+  eulerGradus,
+  semitoneGradus,
+} from "../src/conductor.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell, runFractran, runPiet } from "../src/fractran.mjs";
 import { runLolcode } from "../src/lolcode.mjs";
 import { BEAT_NAMES, composeBeat, crazy, cycleBeatStep, rotr, runMalbolge } from "../src/malbolge.mjs";
@@ -470,5 +485,81 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   assert.deepEqual(chaos.bass, bass);
   assert.deepEqual(chaos.harmony, harmony);
   assert.equal(chordLabelFor(chaos.spine[0], 60), "RAW VM OUTPUT");
+});
+
+test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays custom progressions", () => {
+  const score = composeScore(source, "the celestial laundromat is closing");
+  const melody = melodyFor(score);
+  const beat = composeBeat(beatSource, score, 0);
+  const bass = composeBass(bassSource, score, 0);
+  const harmony = composeHarmony(harmonySource, score, 0);
+  const chimes = composeChimes(pietSource, fractranSource, score, 0);
+  const chant = composeChant(chantSource, score, 0);
+
+  // 1. Keyboard manual: exactly 13 keys, 5 black, 8 white, valid keyboard shortcuts [A..K]
+  assert.equal(FUN_KEY_MAP.length, 13);
+  const blackKeys = FUN_KEY_MAP.filter((k) => k.isBlack);
+  const whiteKeys = FUN_KEY_MAP.filter((k) => !k.isBlack);
+  assert.equal(blackKeys.length, 5);
+  assert.equal(whiteKeys.length, 8);
+  assert.deepEqual(blackKeys.map((k) => k.semitone), [1, 3, 6, 8, 10]);
+  assert.deepEqual(whiteKeys.map((k) => k.semitone), [0, 2, 4, 5, 7, 9, 11, 12]);
+  assert.equal(FUN_KEY_BY_CODE.KeyA.note, "C");
+  assert.equal(FUN_KEY_BY_CODE.KeyW.note, "C♯");
+  assert.equal(FUN_KEY_BY_CODE.KeyK.note, "C'");
+
+  // 2. buildFunChord chord qualities and auto-genre harmonization
+  const bluesChord = buildFunChord(0, CHORD_QUALITIES.AUTO, GENRE_RULEBOOKS.BLUES_TWELVE_BAR);
+  assert.equal(bluesChord.name, "C");
+  assert.equal(bluesChord.quality, "dom7");
+  assert.deepEqual(bluesChord.pitchClasses, [0, 4, 7, 10]);
+  assert.equal(bluesChord.op, "FUN·C");
+
+  const majorChord = buildFunChord(7, CHORD_QUALITIES.MAJOR);
+  assert.equal(majorChord.name, "G");
+  assert.equal(majorChord.quality, "major");
+  assert.deepEqual(majorChord.pitchClasses, [7, 11, 2]);
+
+  const minorChord = buildFunChord(9, CHORD_QUALITIES.MINOR);
+  assert.equal(minorChord.name, "A");
+  assert.equal(minorChord.quality, "minor");
+  assert.deepEqual(minorChord.pitchClasses, [9, 0, 4]);
+
+  const maj9Chord = buildFunChord(5, CHORD_QUALITIES.MAJ9);
+  assert.equal(maj9Chord.name, "F");
+  assert.equal(maj9Chord.quality, "maj9");
+  assert.deepEqual(maj9Chord.pitchClasses, [5, 9, 0, 4, 7]);
+
+  const dimChord = buildFunChord(11, CHORD_QUALITIES.DIM);
+  assert.equal(dimChord.name, "B");
+  assert.equal(dimChord.quality, "dim");
+  assert.deepEqual(dimChord.pitchClasses, [11, 2, 5, 8]);
+
+  const open5Chord = buildFunChord(2, CHORD_QUALITIES.OPEN5);
+  assert.equal(open5Chord.name, "D");
+  assert.equal(open5Chord.quality, "modal_open");
+  assert.deepEqual(open5Chord.pitchClasses, [2, 9, 4]);
+
+  // 3. customSpine overlay conducts ensemble loop without altering other algorithmic steps
+  const customProgression = Array(12).fill(null);
+  customProgression[2] = buildFunChord(5, "dom7"); // F dom7 on step 2
+  customProgression[5] = buildFunChord(0, "maj9"); // C maj9 on step 5
+
+  const conducted = conductEnsemble({
+    score, melody, beat, bass, harmony, chimes, chant,
+    genre: GENRE_RULEBOOKS.VICTORIAN_TONNETZ,
+    customSpine: customProgression,
+  });
+
+  assert.equal(conducted.spine[2].name, "F");
+  assert.equal(conducted.spine[2].quality, "dom7");
+  assert.equal(conducted.spine[2].op, "FUN·F");
+  assert.equal(conducted.spine[5].name, "C");
+  assert.equal(conducted.spine[5].quality, "maj9");
+  assert.equal(conducted.spine[5].op, "FUN·C");
+
+  // Step 0 was not customized, so it retains its Tonnetz rulebook chord
+  assert.notEqual(conducted.spine[0].op, "FUN·C");
+  assert.ok(conducted.spine[0].name);
 });
 

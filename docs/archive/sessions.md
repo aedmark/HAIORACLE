@@ -129,3 +129,26 @@ Active handoff state and the latest ten sessions live in [../HANDOFF.md](../HAND
 **Left undone:** P3, P4, and P6 roadmap items.
 
 **Next session should start with:** Re-record the same creature, then continue P4-01.
+
+### Session 7: 2026-10-17: take the fog machine off the linework
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Correct persistent animation judder without sacrificing kinetic motion or audio playback.
+
+**Done:** Incidental Canvas performance fix; no roadmap item added.
+
+**Changed:** Scoped the large silhouette shadow blur to the single body-fill pass and explicitly disabled shadow blur inside the kinetic renderer. Previously every internal line, ring, and eye inherited a blur as large as 62 pixels, multiplying per-frame compositing work.
+
+**Decisions:** No new durable product decision; this corrects leaked Canvas state.
+
+**Verified:** Fourteen Node checks passed, including a regression check that the body blur is restored before kinetic linework; the continuous audio scheduler marker still passes; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Follow-up subjective motion and audio playback in the maintainer's browser remain P4-01.
+
+**Problems:** The prior beat-decoupling change removed one synchronized repaint but did not address the underlying leaked blur cost. A page reload also stops the old audio context; playback requires a new Summon gesture under browser autoplay policy.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** Summon the same phrase after reload and record frame pacing; then continue P4-01.
+

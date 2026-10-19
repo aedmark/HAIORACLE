@@ -318,6 +318,122 @@
       </div>
     </section>
 
+    <section class="beat-engine fun-machine-engine" id="fun-machine-engine" aria-labelledby="fun-machine-heading">
+      <div class="beat-header">
+        <div class="beat-identity">
+          <p class="reading-label">ESOTERIC FUN MACHINE · REAL-TIME CHORD ORGAN &amp; LOOP SEQUENCER</p>
+          <div class="beat-title-row">
+            <h3 id="fun-machine-heading"><span id="fun-machine-status">ONE-FINGER CHORD ACCOMPANIMENT ACTIVE</span></h3>
+            <span class="beat-telemetry" id="fun-machine-telemetry">BALDWIN-STYLE ONE-FINGER AUTO-CHORD · PLAY-ALONG MANUAL · LIVE PUNCH-IN RECORD</span>
+          </div>
+        </div>
+        <div class="beat-actions fun-machine-actions">
+          <button class="beat-button" id="fun-machine-mode" type="button" aria-pressed="true">
+            AUTO-CHORD: ONE-FINGER
+          </button>
+          <button class="beat-button" id="fun-machine-rec" type="button" aria-pressed="false">
+            PUNCH-IN REC: OFF
+          </button>
+          <button class="beat-button" id="fun-machine-reset" type="button">
+            RESET PROGRESSION <span aria-hidden="true">↺</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="fun-machine-body">
+        <div class="fun-quality-bar" role="toolbar" aria-label="Chord quality selector">
+          <span class="fun-quality-label">CHORD QUALITY:</span>
+          <div class="fun-quality-chips">
+            <button class="fun-chip is-active" id="chip-q-auto" data-quality="auto" type="button" aria-pressed="true">AUTO-GENRE</button>
+            <button class="fun-chip" id="chip-q-major" data-quality="major" type="button" aria-pressed="false">MAJOR</button>
+            <button class="fun-chip" id="chip-q-minor" data-quality="minor" type="button" aria-pressed="false">MINOR</button>
+            <button class="fun-chip" id="chip-q-dom7" data-quality="dom7" type="button" aria-pressed="false">DOM 7TH</button>
+            <button class="fun-chip" id="chip-q-maj9" data-quality="maj9" type="button" aria-pressed="false">MAJ 9TH</button>
+            <button class="fun-chip" id="chip-q-dim" data-quality="dim" type="button" aria-pressed="false">DIMINISHED</button>
+            <button class="fun-chip" id="chip-q-open5" data-quality="modal_open" type="button" aria-pressed="false">OPEN 5TH</button>
+          </div>
+        </div>
+
+        <div class="fun-keyboard-wrap">
+          <div class="fun-keyboard" id="fun-keyboard" role="group" aria-label="Fun Machine Real-Time Play-Along Keyboard Manual">
+            <button class="fun-key fun-key-white" data-semitone="0" data-key="KeyA" type="button" aria-label="Key C (shortcut A)">
+              <span class="fun-key-note">C</span>
+              <span class="fun-key-shortcut">[A]</span>
+              <span class="fun-key-chord" id="fun-chord-0">C Maj</span>
+            </button>
+            <button class="fun-key fun-key-black" data-semitone="1" data-key="KeyW" type="button" aria-label="Key C sharp (shortcut W)">
+              <span class="fun-key-note">C♯</span>
+              <span class="fun-key-shortcut">[W]</span>
+              <span class="fun-key-chord" id="fun-chord-1">C♯</span>
+            </button>
+            <button class="fun-key fun-key-white" data-semitone="2" data-key="KeyS" type="button" aria-label="Key D (shortcut S)">
+              <span class="fun-key-note">D</span>
+              <span class="fun-key-shortcut">[S]</span>
+              <span class="fun-key-chord" id="fun-chord-2">D min</span>
+            </button>
+            <button class="fun-key fun-key-black" data-semitone="3" data-key="KeyE" type="button" aria-label="Key D sharp (shortcut E)">
+              <span class="fun-key-note">D♯</span>
+              <span class="fun-key-shortcut">[E]</span>
+              <span class="fun-key-chord" id="fun-chord-3">E♭</span>
+            </button>
+            <button class="fun-key fun-key-white" data-semitone="4" data-key="KeyD" type="button" aria-label="Key E (shortcut D)">
+              <span class="fun-key-note">E</span>
+              <span class="fun-key-shortcut">[D]</span>
+              <span class="fun-key-chord" id="fun-chord-4">E min</span>
+            </button>
+            <button class="fun-key fun-key-white" data-semitone="5" data-key="KeyF" type="button" aria-label="Key F (shortcut F)">
+              <span class="fun-key-note">F</span>
+              <span class="fun-key-shortcut">[F]</span>
+              <span class="fun-key-chord" id="fun-chord-5">F Maj</span>
+            </button>
+            <button class="fun-key fun-key-black" data-semitone="6" data-key="KeyT" type="button" aria-label="Key F sharp (shortcut T)">
+              <span class="fun-key-note">F♯</span>
+              <span class="fun-key-shortcut">[T]</span>
+              <span class="fun-key-chord" id="fun-chord-6">F♯</span>
+            </button>
+            <button class="fun-key fun-key-white" data-semitone="7" data-key="KeyG" type="button" aria-label="Key G (shortcut G)">
+              <span class="fun-key-note">G</span>
+              <span class="fun-key-shortcut">[G]</span>
+              <span class="fun-key-chord" id="fun-chord-7">G Maj</span>
+            </button>
+            <button class="fun-key fun-key-black" data-semitone="8" data-key="KeyY" type="button" aria-label="Key G sharp (shortcut Y)">
+              <span class="fun-key-note">G♯</span>
+              <span class="fun-key-shortcut">[Y]</span>
+              <span class="fun-key-chord" id="fun-chord-8">A♭</span>
+            </button>
+            <button class="fun-key fun-key-white" data-semitone="9" data-key="KeyH" type="button" aria-label="Key A (shortcut H)">
+              <span class="fun-key-note">A</span>
+              <span class="fun-key-shortcut">[H]</span>
+              <span class="fun-key-chord" id="fun-chord-9">A min</span>
+            </button>
+            <button class="fun-key fun-key-black" data-semitone="10" data-key="KeyU" type="button" aria-label="Key A sharp (shortcut U)">
+              <span class="fun-key-note">A♯</span>
+              <span class="fun-key-shortcut">[U]</span>
+              <span class="fun-key-chord" id="fun-chord-10">B♭</span>
+            </button>
+            <button class="fun-key fun-key-white" data-semitone="11" data-key="KeyJ" type="button" aria-label="Key B (shortcut J)">
+              <span class="fun-key-note">B</span>
+              <span class="fun-key-shortcut">[J]</span>
+              <span class="fun-key-chord" id="fun-chord-11">B dim</span>
+            </button>
+            <button class="fun-key fun-key-white" data-semitone="12" data-key="KeyK" type="button" aria-label="Key C octave (shortcut K)">
+              <span class="fun-key-note">C′</span>
+              <span class="fun-key-shortcut">[K]</span>
+              <span class="fun-key-chord" id="fun-chord-12">C Maj</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="fun-sequence-wrap">
+          <div class="fun-sequence-header">
+            <span class="fun-sequence-title">12-STEP LOOP PROGRESSION &amp; PUNCH-IN MATRIX</span>
+            <span class="fun-sequence-hint">CLICK STEP TO TARGET · PLAY KEYS [A..K] TO PUNCH IN CHORDS · ARM REC FOR LIVE JAM</span>
+          </div>
+          <div class="fun-sequence-grid" id="fun-sequence-grid" role="group" aria-label="12-step chord progression sequence"></div>
+        </div>
+      </div>
+    </section>
+
     <section class="beat-engine bandstand-engine" id="bandstand-engine" aria-labelledby="bandstand-heading">
       <div class="beat-header">
         <div class="beat-identity">

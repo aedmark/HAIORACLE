@@ -1,6 +1,16 @@
 import { HARMONY_NAMES, composeHarmony, cycleHarmonyCell } from "./befunge.mjs";
 import { BASS_NAMES, composeBass, cycleBassCell } from "./brainfuck.mjs";
-import { GENRE_NAMES, GENRE_RULEBOOKS, chordLabelFor, conductEnsemble, semitoneGradus } from "./conductor.mjs";
+import {
+  CHORD_QUALITIES,
+  FUN_KEY_BY_CODE,
+  FUN_KEY_MAP,
+  GENRE_NAMES,
+  GENRE_RULEBOOKS,
+  buildFunChord,
+  chordLabelFor,
+  conductEnsemble,
+  semitoneGradus,
+} from "./conductor.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
@@ -107,6 +117,14 @@ const elements = {
   chipCrackle: document.querySelector("#chip-crackle"),
   chipReverb: document.querySelector("#chip-reverb"),
   chipTick: document.querySelector("#chip-tick"),
+  funMachineEngine: document.querySelector("#fun-machine-engine"),
+  funMachineStatus: document.querySelector("#fun-machine-status"),
+  funMachineTelemetry: document.querySelector("#fun-machine-telemetry"),
+  funMachineMode: document.querySelector("#fun-machine-mode"),
+  funMachineRec: document.querySelector("#fun-machine-rec"),
+  funMachineReset: document.querySelector("#fun-machine-reset"),
+  funKeyboard: document.querySelector("#fun-keyboard"),
+  funSequenceGrid: document.querySelector("#fun-sequence-grid"),
   status: document.querySelector("#status"),
 };
 
@@ -153,6 +171,12 @@ let parlorAcousticsLevel = 0.55;
 let parlorCrackleEnabled = true;
 let parlorReverbEnabled = true;
 let parlorTickEnabled = true;
+let funMachineMode = "auto_chord";
+let funMachineRec = false;
+let funMachineChordQuality = "auto";
+let customProgression = Array(12).fill(null);
+let selectedSequencerStep = null;
+let funMachineDryGain = null;
 
 
 const interaction = {
@@ -2721,6 +2745,122 @@ function scheduleFungalBioStep(context, transport, score, stepIndex, at, stepDur
   }
 }
 
+function getFunMachineDirectDestination(context) {
+  if (currentTransport) return currentTransport.output;
+  if (!funMachineDryGain || funMachineDryGain.context !== context) {
+    funMachineDryGain = context.createGain();
+    funMachineDryGain.connect(context.destination);
+  }
+  funMachineDryGain.gain.value = masterGainFor(masterVolume);
+  return funMachineDryGain;
+}
+
+function scheduleFunMachineChord(context, destination, chord, at, duration) {
+  if (!chord || !chord.pitchClasses || chord.pitchClasses.length === 0) return;
+  const strumSec = 0.012;
+  const holdBoost = 1 + interaction.hold * 0.15;
+  const basePeak = 0.14 * holdBoost;
+  const baseOctave = 48;
+  const rootPc = chord.rootPc ?? 0;
+  const soundingTime = Math.max(0.18, duration || 0.42);
+
+  for (const [idx, pc] of chord.pitchClasses.entries()) {
+    const noteStart = at + idx * strumSec;
+    let midi = baseOctave + pc;
+    if (idx > 0 && midi < baseOctave + rootPc) {
+      midi += 12;
+    }
+    const freq = midiToFrequency(midi);
+
+    const oscReed = context.createOscillator();
+    oscReed.type = "sawtooth";
+    oscReed.frequency.setValueAtTime(freq, noteStart);
+
+    const oscBody = context.createOscillator();
+    oscBody.type = "triangle";
+    oscBody.frequency.setValueAtTime(midiToFrequency(midi - 12), noteStart);
+
+    const lfo = context.createOscillator();
+    const lfoGain = context.createGain();
+    lfo.type = "sine";
+    lfo.frequency.setValueAtTime(5.5, noteStart);
+    lfoGain.gain.setValueAtTime(10, noteStart);
+    lfo.connect(lfoGain);
+    lfoGain.connect(oscReed.detune);
+    lfoGain.connect(oscBody.detune);
+
+    const filter = context.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(2200, noteStart);
+    filter.Q.setValueAtTime(2.2, noteStart);
+
+    const voiceGain = context.createGain();
+    const peak = basePeak / Math.sqrt(chord.pitchClasses.length);
+    const attack = 0.008;
+
+    voiceGain.gain.setValueAtTime(0.0001, noteStart);
+    voiceGain.gain.exponentialRampToValueAtTime(peak, noteStart + attack);
+    voiceGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + soundingTime);
+
+    oscReed.connect(filter);
+    oscBody.connect(filter);
+    filter.connect(voiceGain).connect(destination);
+
+    lfo.start(noteStart);
+    oscReed.start(noteStart);
+    oscBody.start(noteStart);
+
+    const stopTime = noteStart + soundingTime + 0.04;
+    lfo.stop(stopTime);
+    oscReed.stop(stopTime);
+    oscBody.stop(stopTime);
+  }
+}
+
+function scheduleFunMachineLeadNote(context, destination, semitone, at, duration = 0.42) {
+  const midi = 60 + semitone;
+  const freq = midiToFrequency(midi);
+  const oscLead = context.createOscillator();
+  const oscSub = context.createOscillator();
+  const lfo = context.createOscillator();
+  const lfoGain = context.createGain();
+  const filter = context.createBiquadFilter();
+  const voiceGain = context.createGain();
+
+  oscLead.type = "sawtooth";
+  oscLead.frequency.setValueAtTime(freq, at);
+  oscSub.type = "triangle";
+  oscSub.frequency.setValueAtTime(midiToFrequency(midi - 12), at);
+
+  lfo.type = "sine";
+  lfo.frequency.setValueAtTime(5.5, at);
+  lfoGain.gain.setValueAtTime(12, at);
+  lfo.connect(lfoGain);
+  lfoGain.connect(oscLead.detune);
+  lfoGain.connect(oscSub.detune);
+
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(2600, at);
+  filter.Q.setValueAtTime(2.5, at);
+
+  const attack = 0.008;
+  voiceGain.gain.setValueAtTime(0.0001, at);
+  voiceGain.gain.exponentialRampToValueAtTime(0.16, at + attack);
+  voiceGain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+
+  oscLead.connect(filter);
+  oscSub.connect(filter);
+  filter.connect(voiceGain).connect(destination);
+
+  lfo.start(at);
+  oscLead.start(at);
+  oscSub.start(at);
+  const stopTime = at + duration + 0.04;
+  lfo.stop(stopTime);
+  oscLead.stop(stopTime);
+  oscSub.stop(stopTime);
+}
+
 function highlightBeatStep(stepIndex) {
   const normalized = ((stepIndex % 12) + 12) % 12;
   activeBeatStep = normalized;
@@ -2750,6 +2890,12 @@ function highlightBeatStep(stepIndex) {
   }
   if (elements.chantGrid) {
     for (const button of elements.chantGrid.querySelectorAll(".chant-step")) {
+      const idx = Number(button.dataset.step);
+      button.classList.toggle("is-current", idx === normalized);
+    }
+  }
+  if (elements.funSequenceGrid) {
+    for (const button of elements.funSequenceGrid.querySelectorAll(".fun-step")) {
       const idx = Number(button.dataset.step);
       button.classList.toggle("is-current", idx === normalized);
     }
@@ -3131,11 +3277,156 @@ function updateBandstandStatus() {
   }
 }
 
+function updateFunKeyboardChordLabels() {
+  for (let semitone = 0; semitone <= 12; semitone += 1) {
+    const el = document.querySelector(`#fun-chord-${semitone}`);
+    if (!el) continue;
+    const chord = buildFunChord(
+      semitone,
+      funMachineChordQuality,
+      activeGenre,
+      currentScore ? currentScore.root : 0
+    );
+    const qualityLabel = chord.quality === "major" ? "Maj"
+      : chord.quality === "minor" ? "min"
+      : chord.quality.toUpperCase();
+    el.textContent = `${chord.name} ${qualityLabel}`;
+  }
+}
+
+function flashSequencerStep(stepIndex) {
+  if (!elements.funSequenceGrid) return;
+  const button = elements.funSequenceGrid.querySelector(`.fun-step[data-step="${stepIndex}"]`);
+  if (!button) return;
+  button.classList.add("is-selected");
+  window.setTimeout(() => {
+    if (selectedSequencerStep !== stepIndex) {
+      button.classList.remove("is-selected");
+    }
+  }, 240);
+}
+
+function renderFunSequencerGrid() {
+  if (!elements.funSequenceGrid) return;
+  elements.funSequenceGrid.innerHTML = "";
+  for (let index = 0; index < 12; index += 1) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "fun-step";
+    button.dataset.step = String(index);
+
+    const isCustom = Boolean(customProgression[index]);
+    const chord = customProgression[index] || currentConductedSpine?.[index] || null;
+    const isCurrent = index === activeBeatStep;
+    const isSelected = index === selectedSequencerStep;
+
+    if (isCustom) button.classList.add("is-custom");
+    if (isCurrent) button.classList.add("is-current");
+    if (isSelected) button.classList.add("is-selected");
+
+    const chordText = chord
+      ? `${chord.name} ${chord.quality === "major" ? "Maj" : chord.quality === "minor" ? "min" : chord.quality.toUpperCase()}`
+      : "---";
+    const badgeText = isCustom ? "★ USER" : (chord?.op || "AUTO");
+
+    button.innerHTML = `
+      <span class="fun-step-num">@${String(index + 1).padStart(2, "0")}</span>
+      <span class="fun-step-chord">${chordText}</span>
+      <span class="fun-step-badge">${badgeText}</span>
+    `;
+
+    button.setAttribute(
+      "aria-label",
+      `Step ${index + 1}: ${chordText}${isCustom ? " (custom punched-in)" : ""}`,
+    );
+
+    button.addEventListener("click", () => {
+      if (selectedSequencerStep === index) {
+        selectedSequencerStep = null;
+        if (elements.funMachineTelemetry) {
+          elements.funMachineTelemetry.textContent = "STEP TARGET RELEASED · PLAY TO AUDITION OR ARM REC";
+        }
+      } else {
+        selectedSequencerStep = index;
+        if (elements.funMachineTelemetry) {
+          elements.funMachineTelemetry.textContent = `STEP @${String(index + 1).padStart(2, "0")} TARGETED · PLAY ANY KEY [A..K] TO PUNCH IN`;
+        }
+      }
+      renderFunSequencerGrid();
+    });
+
+    elements.funSequenceGrid.append(button);
+  }
+}
+
+async function triggerFunKey(semitone, isKeyDown = true) {
+  const normSemi = ((Math.trunc(semitone) % 13) + 13) % 13;
+  const keyBtn = elements.funKeyboard?.querySelector(`.fun-key[data-semitone="${normSemi}"]`);
+
+  if (!isKeyDown) {
+    if (keyBtn) keyBtn.classList.remove("is-pressed");
+    return;
+  }
+
+  if (keyBtn) {
+    keyBtn.classList.add("is-pressed");
+    window.setTimeout(() => keyBtn.classList.remove("is-pressed"), 200);
+  }
+
+  const context = await ensureAudioContext();
+  const now = context.currentTime;
+  const dest = getFunMachineDirectDestination(context);
+
+  const chord = buildFunChord(
+    normSemi,
+    funMachineChordQuality,
+    activeGenre,
+    currentScore ? currentScore.root : 0
+  );
+
+  if (funMachineMode === "auto_chord") {
+    scheduleFunMachineChord(context, dest, chord, now, 0.45);
+  } else {
+    scheduleFunMachineLeadNote(context, dest, normSemi, now, 0.45);
+  }
+
+  let targetStep = null;
+  if (selectedSequencerStep !== null) {
+    targetStep = selectedSequencerStep;
+  } else if (funMachineRec) {
+    targetStep = activeBeatStep >= 0 ? activeBeatStep : 0;
+  }
+
+  if (targetStep !== null && targetStep >= 0 && targetStep < 12) {
+    customProgression[targetStep] = chord;
+    applyEnsembleConductor();
+    renderFunSequencerGrid();
+    flashSequencerStep(targetStep);
+  }
+
+  if (currentTransport && !muted && currentScore) {
+    const burstStep = targetStep !== null ? targetStep : (activeBeatStep >= 0 ? activeBeatStep : 0);
+    scheduleBassStep(context, currentTransport, currentScore, burstStep, now + 0.005, 0.24);
+    scheduleHarmonyStep(context, currentTransport, currentScore, burstStep, now + 0.005, 0.28);
+    scheduleChimeStep(context, currentTransport, currentScore, burstStep, now + 0.005, 0.3);
+    scheduleChantStep(context, currentTransport, currentScore, burstStep, now + 0.005, 0.32);
+  }
+
+  if (elements.funMachineTelemetry) {
+    const keyInfo = FUN_KEY_MAP[normSemi];
+    const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${normSemi}`;
+    const punchInfo = targetStep !== null ? ` · PUNCHED INTO STEP @${String(targetStep + 1).padStart(2, "0")}` : "";
+    elements.funMachineTelemetry.textContent = `${keyLabel} STRUCK · CHORD ${chord.name} ${chord.quality.toUpperCase()}${punchInfo}`;
+  }
+}
+
 renderBeatGrid();
 renderBassGrid();
 renderHarmonyGrid();
 renderChimeGrid();
 renderChantGrid();
+renderFunSequencerGrid();
+updateFunKeyboardChordLabels();
 
 async function playScore(score) {
   stopCurrentSound();
@@ -3308,6 +3599,9 @@ async function playScore(score) {
       scheduleChimeStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleChantStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleFungalBioStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
+      if (customProgression[currentStep % 12]) {
+        scheduleFunMachineChord(context, transport.mix, customProgression[currentStep % 12], transport.nextNoteTime, soundingDuration);
+      }
       if (parlorAcousticsEnabled && parlorTickEnabled) {
         scheduleClockworkTick(context, output, transport.nextNoteTime, currentStep, parlorAcousticsLevel);
       }
@@ -3361,6 +3655,7 @@ function applyEnsembleConductor() {
     mutation: harmonyMutation + bassMutation + chimeMutation + chantMutation,
     genre: activeGenre,
     consonanceStrictness: activeStrictness,
+    customSpine: customProgression,
   });
   currentConductedSpine = conducted.spine;
   currentConductedMelody = conducted.melody;
@@ -3376,6 +3671,7 @@ function applyEnsembleConductor() {
   updateHarmonyGrid();
   updateChimeGrid();
   updateChantGrid();
+  renderFunSequencerGrid();
   highlightBeatStep(activeBeatStep);
 }
 
@@ -3386,6 +3682,8 @@ function showScore(score) {
   harmonyMutation = 0;
   chimeMutation = 0;
   chantMutation = 0;
+  customProgression = Array(12).fill(null);
+  selectedSequencerStep = null;
   if (beatSource) {
     rawBeat = composeBeat(beatSource, score, beatMutation);
     currentBeat = rawBeat;
@@ -3447,6 +3745,8 @@ function showScore(score) {
   updateHarmonyGrid();
   updateChimeGrid();
   updateChantGrid();
+  updateFunKeyboardChordLabels();
+  renderFunSequencerGrid();
   if (elements.bandstandMutateAll) elements.bandstandMutateAll.disabled = false;
   updateBandstandStatus();
   elements.name.textContent = score.name;
@@ -3947,6 +4247,9 @@ async function exportSpecimenWav() {
       scheduleChimeStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
       scheduleChantStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
       scheduleFungalBioStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
+      if (customProgression[step % 12]) {
+        scheduleFunMachineChord(offlineCtx, mix, customProgression[step % 12], stepTime, soundingDuration);
+      }
       if (parlorAcousticsEnabled && parlorTickEnabled) {
         scheduleClockworkTick(offlineCtx, output, stepTime, step, parlorAcousticsLevel);
       }
@@ -4367,6 +4670,8 @@ elements.kapellmeisterGenre?.addEventListener("change", (e) => {
   updateHarmonyGrid();
   updateChimeGrid();
   updateChantGrid();
+  updateFunKeyboardChordLabels();
+  renderFunSequencerGrid();
 });
 
 elements.kapellmeisterStrictness?.addEventListener("input", (e) => {
@@ -4381,6 +4686,121 @@ elements.kapellmeisterStrictness?.addEventListener("input", (e) => {
   updateHarmonyGrid();
   updateChimeGrid();
   updateChantGrid();
+});
+
+elements.funMachineMode?.addEventListener("click", () => {
+  funMachineMode = funMachineMode === "auto_chord" ? "lead" : "auto_chord";
+  if (funMachineMode === "auto_chord") {
+    elements.funMachineMode.textContent = "AUTO-CHORD: ONE-FINGER";
+    elements.funMachineMode.setAttribute("aria-pressed", "true");
+    if (elements.funMachineStatus) {
+      elements.funMachineStatus.textContent = "ONE-FINGER CHORD ACCOMPANIMENT ACTIVE";
+    }
+  } else {
+    elements.funMachineMode.textContent = "LEAD SOLO: MANUAL NOTE";
+    elements.funMachineMode.setAttribute("aria-pressed", "false");
+    if (elements.funMachineStatus) {
+      elements.funMachineStatus.textContent = "MANUAL LEAD SOLO ACTIVE · CHORDS BYPASS";
+    }
+  }
+});
+
+elements.funMachineRec?.addEventListener("click", () => {
+  funMachineRec = !funMachineRec;
+  if (funMachineRec) {
+    elements.funMachineRec.textContent = "PUNCH-IN REC: ARMED ●";
+    elements.funMachineRec.setAttribute("aria-pressed", "true");
+    if (elements.funMachineStatus) {
+      elements.funMachineStatus.textContent = "PUNCH-IN RECORD ARMED · LIVE JAM WILL OVERWRITE BEAT STEPS";
+    }
+  } else {
+    elements.funMachineRec.textContent = "PUNCH-IN REC: OFF";
+    elements.funMachineRec.setAttribute("aria-pressed", "false");
+    if (elements.funMachineStatus) {
+      elements.funMachineStatus.textContent = funMachineMode === "auto_chord"
+        ? "ONE-FINGER CHORD ACCOMPANIMENT ACTIVE"
+        : "MANUAL LEAD SOLO ACTIVE";
+    }
+  }
+});
+
+elements.funMachineReset?.addEventListener("click", () => {
+  customProgression = Array(12).fill(null);
+  selectedSequencerStep = null;
+  applyEnsembleConductor();
+  renderFunSequencerGrid();
+  if (elements.funMachineTelemetry) {
+    elements.funMachineTelemetry.textContent = "CUSTOM PROGRESSION RESET · RESTORED KAPELLMEISTER GENRE CHORDS";
+  }
+});
+
+for (const chip of document.querySelectorAll(".fun-chip")) {
+  chip.addEventListener("click", () => {
+    const quality = chip.dataset.quality;
+    if (!quality) return;
+    funMachineChordQuality = quality;
+    for (const c of document.querySelectorAll(".fun-chip")) {
+      const active = c === chip;
+      c.classList.toggle("is-active", active);
+      c.setAttribute("aria-pressed", String(active));
+    }
+    updateFunKeyboardChordLabels();
+    if (elements.funMachineTelemetry) {
+      elements.funMachineTelemetry.textContent = `CHORD QUALITY SET TO: ${chip.textContent.trim()}`;
+    }
+  });
+}
+
+if (elements.funKeyboard) {
+  for (const keyBtn of elements.funKeyboard.querySelectorAll(".fun-key")) {
+    const semitone = Number(keyBtn.dataset.semitone);
+    keyBtn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      triggerFunKey(semitone, true);
+    });
+    keyBtn.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      triggerFunKey(semitone, false);
+    });
+    keyBtn.addEventListener("pointerleave", () => {
+      triggerFunKey(semitone, false);
+    });
+  }
+}
+
+window.addEventListener("keydown", (event) => {
+  if (
+    event.target === elements.phrase ||
+    event.target?.tagName === "INPUT" ||
+    event.target?.tagName === "TEXTAREA" ||
+    event.target?.isContentEditable
+  ) {
+    return;
+  }
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  if (event.repeat) return;
+  const mapped = FUN_KEY_BY_CODE[event.code];
+  if (mapped) {
+    event.preventDefault();
+    triggerFunKey(mapped.semitone, true);
+  }
+});
+
+window.addEventListener("keyup", (event) => {
+  if (
+    event.target === elements.phrase ||
+    event.target?.tagName === "INPUT" ||
+    event.target?.tagName === "TEXTAREA" ||
+    event.target?.isContentEditable
+  ) {
+    return;
+  }
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const mapped = FUN_KEY_BY_CODE[event.code];
+  if (mapped) {
+    event.preventDefault();
+    triggerFunKey(mapped.semitone, false);
+  }
 });
 
 

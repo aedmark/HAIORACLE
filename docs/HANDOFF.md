@@ -4,17 +4,17 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-19, session 16, on `main`: the Kapellmeister Music-Theory & Genre Rulebook Console (P5-15, D-019) has been audited and overhauled with authentic genre rulebooks (12-bar Delta blues walking bass shuffle, smoky jazz upright acoustic walking lines with chromatic approach tones, mystic drone pedals, Palestrina counterpoint Picardy cadences, and raw VM pass-through), an active Euler Gradus consonance sieve ($G \le 3\dots 14$), live plate step pitch/chord labelling (`#bass-grid`, `#harmony-grid`, `#chant-grid`), and bug-fixed `#kapellmeister-telemetry` UI telemetry._
+_Last updated: 2026-10-19, session 17, on `main`: the Esoteric Fun Machine (P5-17, D-020) auto-chord organ console and 12-step punch-in loop sequencer have been implemented with an interactive 13-key manual (`C..C'`), physical computer keyboard mapping (`[A..K]`), 5.5 Hz vibrato dual-oscillator reed organ voice, one-finger auto-chord harmonization with quick quality chips, real-time accompaniment bursts, and punch-in loop sequencing rendered into playback and offline 16-bit WAV loop exports._
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-16 are implemented and verified. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a procedural branching mycelial network with eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) engraved with Ernst Haeckel anatomical lithography, an antique turned-wood mahogany pedestal, mossy peat/driftwood substrate bed, 46 dew condensation droplets clinging to the vitrine bell jar, bio-acoustic audio sonification (micro-voltage action potentials, guttation droplet chimes, and tactile ballistospore puffs), drifting ballistospores with vitrine tap bursts, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume and tempo controls. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The Kapellmeister music-theory and genre console (`#kapellmeister-engine`, P5-15, D-019) allows confidants to switch between six historical and theoretical rulebooks (Victorian Neo-Riemannian Tonnetz, 12-Bar Delta Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Drone, Raw Esoteric Chaos) with a live harmonic dashboard and animated SVG Tonnetz compass. An antique parlor room acoustic space (`#parlor-acoustics-engine`) immerses the ensemble in tactile synthesized Edison wax-cylinder phonograph surface noise, a 1.6-second wood-and-velvet chamber convolution impulse response (`ConvolverNode`), and mechanical brass clockwork escapement ticks and ratchets, with individual layer toggle chips. The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing (P3-01), 1200×1520 broadsheet PNG plate engraving (P3-02), and client-side uncompressed 16-bit 44.1 kHz WAV loop export (`#export-wav`, P3-03). Remaining open work covers assistive-technology checks (P4-02) and public hosting (P6-01).
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-17 are implemented and verified. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a procedural branching mycelial network with eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) engraved with Ernst Haeckel anatomical lithography, an antique turned-wood mahogany pedestal, mossy peat/driftwood substrate bed, 46 dew condensation droplets clinging to the vitrine bell jar, bio-acoustic audio sonification (micro-voltage action potentials, guttation droplet chimes, and tactile ballistospore puffs), drifting ballistospores with vitrine tap bursts, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume and tempo controls. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The Kapellmeister music-theory and genre console (`#kapellmeister-engine`, P5-15, D-019) allows confidants to switch between six historical and theoretical rulebooks (Victorian Neo-Riemannian Tonnetz, 12-Bar Delta Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Drone, Raw Esoteric Chaos) with a live harmonic dashboard and animated SVG Tonnetz compass. An antique parlor room acoustic space (`#parlor-acoustics-engine`) immerses the ensemble in tactile synthesized Edison wax-cylinder phonograph surface noise, a 1.6-second wood-and-velvet chamber convolution impulse response (`ConvolverNode`), and mechanical brass clockwork escapement ticks and ratchets, with individual layer toggle chips. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, D-020) provides real-time play-along chord organ accompaniment via an interactive 13-key manual (`C..C'`) and physical keyboard mapping (`[A..K]`), one-finger auto-chord harmonization with 7 quality chips, live accompaniment bursts, and a 12-step punch-in loop sequencer matrix (`#fun-sequence-grid`). The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), an Esoteric Fun Machine organ manual and sequencer matrix (Plate VII), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing (P3-01), 1200×1520 broadsheet PNG plate engraving (P3-02), and client-side uncompressed 16-bit 44.1 kHz WAV loop export (`#export-wav`, P3-03). Remaining open work covers assistive-technology checks (P4-02) and public hosting (P6-01).
 
 **Verified** (2026-10-19, initial repository, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **33/33 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **35/35 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 27 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 28 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -43,8 +43,9 @@ _Last updated: 2026-10-19, session 16, on `main`: the Kapellmeister Music-Theory
 - An Euler-Tonnetz and Euclidean harmonic conductor (`src/conductor.mjs`) harmonizes all six esoteric bandmates across a 4-region Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) progression, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, pure 5-limit Just Intonation chime overtones, and Bjorklund Euclidean rhythm hocketing $E(k, 12)$ (P5-14, D-016).
 - The Kapellmeister music-theory console (`#kapellmeister-engine`) provides six selectable rulebooks (`Victorian Tonnetz`, `12-Bar Blues`, `Smoky Jazz`, `Palestrina Counterpoint`, `Mystic Drone`, `Raw Chaos`), an Euler consonance strictness slider ($3\dots 14$), live harmonic step/chord/vector/Euler score telemetry, and an animated 4-region SVG Tonnetz compass (P5-15, D-019).
 - The Antique Parlor Room Acoustic Space (`#parlor-acoustics-engine`) synthesizes authentic 1890s Edison wax-cylinder surface noise (horn resonance, Poisson dust pops, 78 RPM groove rumble), a 1.6-second wood-and-velvet chamber convolution reverb (`ConvolverNode`), and mechanical brass clockwork escapement ticks on quarter-beats, active in both live playback and offline 16-bit WAV rendering (P5-15, D-019).
+- Play along in real time using the Esoteric Fun Machine (`#fun-machine-engine`), an authentic 1970s Baldwin-inspired auto-chord organ console featuring an interactive 13-key manual (`C..C'`) and physical keyboard mapping (`[A..K]`). In One-Finger Auto-Chord mode, striking a key fires a dual-oscillator reed-organ voice with 5.5 Hz parlor vibrato and triggers matching accompaniment bursts across the ensemble, with quick chord quality chips (`AUTO-GENRE`, `MAJOR`, `MINOR`, `DOM 7TH`, `MAJ 9TH`, `DIMINISHED`, `OPEN 5TH`). A 12-step punch-in loop sequencer matrix (`#fun-sequence-grid`) lets users punch chords into the loop on the fly or target steps, re-conducting the entire ensemble and rendering custom progressions into live playback and offline 16-bit WAV downloads (P5-17, D-020).
 - Summoned creatures sync their phrase to `#omen=...` URL fragments without sending query parameters over HTTP, can be copied via `COPY OMEN LINK` (`#share-link`), and can be exported as a 1200×1520 engraved broadsheet PNG (`#export-png`) containing the live creature capture, specimen name, confided phrase, seed, and six-language ensemble ledger (P3-01, P3-02, D-015).
-- A comprehensive 3x technical manual (`docs/manual.json`, `manual.html`, `tools/manual.py`) documents What, How, and Why across all 27 major systems, interpreters, and algorithms with 0 warnings.
+- A comprehensive 3x technical manual (`docs/manual.json`, `manual.html`, `tools/manual.py`) documents What, How, and Why across all 28 major systems, interpreters, and algorithms with 0 warnings.
 - Full interactive and audiovisual functionality verified in live browser review (P4-01).
 - Runtime assets are local and dependency-free (D-001).
 
@@ -69,6 +70,46 @@ _Last updated: 2026-10-19, session 16, on `main`: the Kapellmeister Music-Theory
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 17: 2026-10-19: esoteric fun machine real-time play-along keyboard & loop sequencer
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement the Esoteric Fun Machine (`#fun-machine-engine`, `P5-17`, `D-020`) auto-chord organ console, enabling users to play along with summoned creatures in real time on an interactive 13-key manual (`C..C'`) and physical computer keyboard (`[A..K]`), trigger one-finger chord progressions and ensemble accompaniment bursts on demand, and punch custom chords into the 12-step loop sequencer for live jam sessions and offline 16-bit WAV downloads.
+
+**Done:** P5-17, D-020 Esoteric Fun Machine play-along manual, auto-chord engine, and punch-in sequencer matrix.
+
+**Changed:**
+1. **Interactive 13-Key Ivory & Ebony Keyboard Manual (`src/conductor.mjs`, `index.html`, `styles.css`)**:
+   - `FUN_KEY_MAP` and `FUN_KEY_BY_CODE`: 13 chromatic keys from semitone 0 (`C`) to 12 (`C'`), mapping 8 ivory white keys and 5 ebony black keys to physical computer keyboard shortcuts (`KeyA, KeyW, KeyS, KeyE, KeyD, KeyF, KeyT, KeyG, KeyY, KeyH, KeyU, KeyJ, KeyK`).
+   - Positioned black keys proportionally with vintage stepped keytops, active press transforms, brass glows, and dynamic chord preview labels (`#fun-chord-0` to `#fun-chord-12`) that update instantly with genre and quality changes.
+   - Screen buttons and physical keys support pointer and keyboard events, with phrase input, repeat spam, and modifier key guards.
+2. **Dual-Oscillator Reed Organ Synthesizer & Accompaniment Bursts (`src/app.mjs`)**:
+   - Implemented `scheduleFunMachineChord()` and `scheduleFunMachineLeadNote()`: dual-oscillator voice featuring a sawtooth reed generator, sub-octave triangle foundation, a 5.5 Hz vibrato LFO, a $2200\,\text{Hz}$ vintage lowpass formant filter, and a 12ms chord note strum stagger.
+   - In `AUTO-CHORD: ONE-FINGER` mode, striking a key harmonizes the chord via `buildFunChord()`, plays the organ voice, and fires synchronized accompaniment bursts (Brainfuck walking bass, Befunge chord organ, Shakespeare formant choir, Piet chimes).
+   - In `LEAD SOLO: MANUAL NOTE` mode, keys play single lead notes over the backing track.
+   - `getFunMachineDirectDestination()` ensures direct keyboard playing routes through `masterGainFor(masterVolume)` even when transport is stopped.
+3. **One-Finger Auto-Chord Harmonization & Quality Chips (`src/conductor.mjs`, `index.html`, `src/app.mjs`)**:
+   - 7 chord quality selector chips (`AUTO-GENRE`, `MAJOR`, `MINOR`, `DOM 7TH`, `MAJ 9TH`, `DIMINISHED`, `OPEN 5TH`).
+   - In `AUTO-GENRE`, chords resolve according to the active Kapellmeister genre (Blues $\to$ dom7, Jazz $\to$ maj9/min9, Tonnetz $\to$ major/minor, Counterpoint $\to$ minor/major, Drone $\to$ open fifth).
+4. **12-Step Loop Sequencer Matrix & Punch-In Recording (`#fun-sequence-grid`, `#fun-machine-rec`, `#fun-machine-reset`)**:
+   - Renders 12 step pills showing step index, chord label, and `★ USER` / `AUTO` badges.
+   - Clicking a step pill targets that step (`selectedSequencerStep`); striking any key punches the chord into `customProgression[step]`, re-conducting the entire ensemble via `customSpine` in `conductEnsemble()`.
+   - Arming punch-in recording (`#fun-machine-rec`) writes struck keys directly into the active beat step (`activeBeatStep`) during live playback.
+   - `#fun-machine-reset` clears custom chords and restores Kapellmeister genre rulebook chords.
+   - Custom progressions and Fun Machine organ chords are rendered into both live playback (`scheduleAhead`) and offline 16-bit 44.1 kHz WAV exports (`exportSpecimenWav()`).
+
+**Decisions:** D-020 accepted.
+
+**Verified:** Thirty-five Node checks passed (`tests/oracle.test.mjs`, `tests/static.test.mjs`), including manual key mapping, `buildFunChord` qualities across all genres, `conductEnsemble` with `customSpine`, markup and styling invariants, and control event wiring. Documentation checker passed with 0 errors and 0 warnings; manual validator passed with 0 warnings.
+
+**Not verified:** Subjective physical jam feel across external MIDI keyboard devices remains out of scope for browser-native prototype.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P4-02 assistive-technology review, P6-01 public hosting.
+
+**Next session should start with:** P4-02 or P6-01.
 
 ### Session 16: 2026-10-19: the kapellmeister conductor awakens with authentic genre rulebooks & walking bass
 
@@ -343,28 +384,6 @@ _Last updated: 2026-10-19, session 16, on `main`: the Kapellmeister Music-Theory
 **Left undone:** P3, P4, and P6 roadmap items.
 
 **Next session should start with:** Listen to several sparse and dense creatures at default and maximum volume, then continue P4-01.
-
-### Session 7: 2026-10-17: take the fog machine off the linework
-
-**Contributor:** Codex with maintainer direction
-
-**Goal:** Correct persistent animation judder without sacrificing kinetic motion or audio playback.
-
-**Done:** Incidental Canvas performance fix; no roadmap item added.
-
-**Changed:** Scoped the large silhouette shadow blur to the single body-fill pass and explicitly disabled shadow blur inside the kinetic renderer. Previously every internal line, ring, and eye inherited a blur as large as 62 pixels, multiplying per-frame compositing work.
-
-**Decisions:** No new durable product decision; this corrects leaked Canvas state.
-
-**Verified:** Fourteen Node checks passed, including a regression check that the body blur is restored before kinetic linework; the continuous audio scheduler marker still passes; documentation checker reported 0 errors and 0 warnings.
-
-**Not verified:** Follow-up subjective motion and audio playback in the maintainer's browser remain P4-01.
-
-**Problems:** The prior beat-decoupling change removed one synchronized repaint but did not address the underlying leaked blur cost. A page reload also stops the old audio context; playback requires a new Summon gesture under browser autoplay policy.
-
-**Left undone:** P3, P4, and P6 roadmap items.
-
-**Next session should start with:** Summon the same phrase after reload and record frame pacing; then continue P4-01.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).
 
