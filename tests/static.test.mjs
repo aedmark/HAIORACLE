@@ -309,6 +309,11 @@ test("the Esoteric Fun Machine play-along organ and loop punch-in sequencer are 
   assert.match(html, /data-semitone="1"\s+data-key="KeyW"/);
   assert.match(html, /data-semitone="12"\s+data-key="KeyK"/);
 
+  // Plate ordering: Fun Machine is at the top of the plates stack immediately above Malbolge Plate II
+  const funIdx = html.indexOf('id="fun-machine-engine"');
+  const beatIdx = html.indexOf('id="beat-engine"');
+  assert.ok(funIdx > 0 && beatIdx > funIdx, "Fun Machine section must sit above Plate II beat-engine in the stack");
+
   // Styles
   assert.match(styles, /\.fun-machine-engine/);
   assert.match(styles, /\.fun-keyboard/);
@@ -319,6 +324,7 @@ test("the Esoteric Fun Machine play-along organ and loop punch-in sequencer are 
   // Application logic
   assert.match(app, /function scheduleFunMachineChord\(/);
   assert.match(app, /function scheduleFunMachineLeadNote\(/);
+  assert.match(app, /linearRampToValueAtTime\(peak, noteStart \+ attack\)/);
   assert.match(app, /function renderFunSequencerGrid\(/);
   assert.match(app, /function updateFunKeyboardChordLabels\(/);
   assert.match(app, /async function triggerFunKey\(/);

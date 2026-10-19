@@ -3,6 +3,7 @@ import { BASS_NAMES, composeBass, cycleBassCell } from "./brainfuck.mjs";
 import {
   CHORD_QUALITIES,
   FUN_KEY_BY_CODE,
+  FUN_KEY_BY_KEY,
   FUN_KEY_MAP,
   GENRE_NAMES,
   GENRE_RULEBOOKS,
@@ -221,6 +222,11 @@ function masterGainFor(volume) {
 function setMasterVolume(value) {
   masterVolume = Math.max(0, Math.min(100, Number(value)));
   elements.volumeValue.value = `${Math.round(masterVolume)}%`;
+  if (audioContext && funMachineDryGain) {
+    const now = audioContext.currentTime;
+    funMachineDryGain.gain.cancelScheduledValues(now);
+    funMachineDryGain.gain.setTargetAtTime(masterGainFor(masterVolume), now, 0.018);
+  }
   if (!audioContext || !currentTransport) return;
   const now = audioContext.currentTime;
   currentTransport.output.gain.cancelScheduledValues(now);
@@ -2746,7 +2752,8 @@ function scheduleFungalBioStep(context, transport, score, stepIndex, at, stepDur
 }
 
 function getFunMachineDirectDestination(context) {
-  if (currentTransport) return currentTransport.output;
+  if (currentTransport?.funBus) return currentTransport.funBus;
+  if (currentTransport?.output) return currentTransport.output;
   if (!funMachineDryGain || funMachineDryGain.context !== context) {
     funMachineDryGain = context.createGain();
     funMachineDryGain.connect(context.destination);
@@ -2757,15 +2764,17 @@ function getFunMachineDirectDestination(context) {
 
 function scheduleFunMachineChord(context, destination, chord, at, duration) {
   if (!chord || !chord.pitchClasses || chord.pitchClasses.length === 0) return;
-  const strumSec = 0.012;
-  const holdBoost = 1 + interaction.hold * 0.15;
-  const basePeak = 0.14 * holdBoost;
+  const strumSec = 0.010;
+  const holdBoost = 1 + interaction.hold * 0.2;
+  const basePeak = 0.28 * holdBoost;
   const baseOctave = 48;
   const rootPc = chord.rootPc ?? 0;
-  const soundingTime = Math.max(0.18, duration || 0.42);
+  const soundingTime = Math.max(0.24, duration || 0.45);
+  const now = context.currentTime;
+  const baseStart = Math.max(now + 0.015, (at || now));
 
   for (const [idx, pc] of chord.pitchClasses.entries()) {
-    const noteStart = at + idx * strumSec;
+    const noteStart = baseStart + idx * strumSec;
     let midi = baseOctave + pc;
     if (idx > 0 && midi < baseOctave + rootPc) {
       midi += 12;
@@ -2791,15 +2800,15 @@ function scheduleFunMachineChord(context, destination, chord, at, duration) {
 
     const filter = context.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.setValueAtTime(2200, noteStart);
-    filter.Q.setValueAtTime(2.2, noteStart);
+    filter.frequency.setValueAtTime(2400, noteStart);
+    filter.Q.setValueAtTime(2.0, noteStart);
 
     const voiceGain = context.createGain();
     const peak = basePeak / Math.sqrt(chord.pitchClasses.length);
-    const attack = 0.008;
+    const attack = 0.022;
 
     voiceGain.gain.setValueAtTime(0.0001, noteStart);
-    voiceGain.gain.exponentialRampToValueAtTime(peak, noteStart + attack);
+    voiceGain.gain.linearRampToValueAtTime(peak, noteStart + attack);
     voiceGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + soundingTime);
 
     oscReed.connect(filter);
@@ -2810,14 +2819,16 @@ function scheduleFunMachineChord(context, destination, chord, at, duration) {
     oscReed.start(noteStart);
     oscBody.start(noteStart);
 
-    const stopTime = noteStart + soundingTime + 0.04;
+    const stopTime = noteStart + soundingTime + 0.06;
     lfo.stop(stopTime);
     oscReed.stop(stopTime);
     oscBody.stop(stopTime);
   }
 }
 
-function scheduleFunMachineLeadNote(context, destination, semitone, at, duration = 0.42) {
+function scheduleFunMachineLeadNote(context, destination, semitone, at, duration = 0.45) {
+  const now = context.currentTime;
+  const startTime = Math.max(now + 0.015, (at || now));
   const midi = 60 + semitone;
   const freq = midiToFrequency(midi);
   const oscLead = context.createOscillator();
@@ -2828,34 +2839,38 @@ function scheduleFunMachineLeadNote(context, destination, semitone, at, duration
   const voiceGain = context.createGain();
 
   oscLead.type = "sawtooth";
-  oscLead.frequency.setValueAtTime(freq, at);
+  oscLead.frequency.setValueAtTime(freq, startTime);
   oscSub.type = "triangle";
-  oscSub.frequency.setValueAtTime(midiToFrequency(midi - 12), at);
+  oscSub.frequency.setValueAtTime(midiToFrequency(midi - 12), startTime);
 
   lfo.type = "sine";
-  lfo.frequency.setValueAtTime(5.5, at);
-  lfoGain.gain.setValueAtTime(12, at);
+  lfo.frequency.setValueAtTime(5.5, startTime);
+  lfoGain.gain.setValueAtTime(12, startTime);
   lfo.connect(lfoGain);
   lfoGain.connect(oscLead.detune);
   lfoGain.connect(oscSub.detune);
 
   filter.type = "lowpass";
-  filter.frequency.setValueAtTime(2600, at);
-  filter.Q.setValueAtTime(2.5, at);
+  filter.frequency.setValueAtTime(2800, startTime);
+  filter.Q.setValueAtTime(2.2, startTime);
 
-  const attack = 0.008;
-  voiceGain.gain.setValueAtTime(0.0001, at);
-  voiceGain.gain.exponentialRampToValueAtTime(0.16, at + attack);
-  voiceGain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+  const holdBoost = 1 + interaction.hold * 0.2;
+  const peak = 0.28 * holdBoost;
+  const attack = 0.022;
+  const soundingTime = Math.max(0.24, duration || 0.45);
+
+  voiceGain.gain.setValueAtTime(0.0001, startTime);
+  voiceGain.gain.linearRampToValueAtTime(peak, startTime + attack);
+  voiceGain.gain.exponentialRampToValueAtTime(0.0001, startTime + soundingTime);
 
   oscLead.connect(filter);
   oscSub.connect(filter);
   filter.connect(voiceGain).connect(destination);
 
-  lfo.start(at);
-  oscLead.start(at);
-  oscSub.start(at);
-  const stopTime = at + duration + 0.04;
+  lfo.start(startTime);
+  oscLead.start(startTime);
+  oscSub.start(startTime);
+  const stopTime = startTime + soundingTime + 0.06;
   lfo.stop(stopTime);
   oscLead.stop(stopTime);
   oscSub.stop(stopTime);
@@ -3373,7 +3388,17 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     window.setTimeout(() => keyBtn.classList.remove("is-pressed"), 200);
   }
 
+  if (muted) return;
+
   const context = await ensureAudioContext();
+  if (context.state === "suspended") {
+    try {
+      await context.resume();
+    } catch {
+      // AudioContext resume might fail if no gesture has occurred yet
+    }
+  }
+
   const now = context.currentTime;
   const dest = getFunMachineDirectDestination(context);
 
@@ -3384,10 +3409,12 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     currentScore ? currentScore.root : 0
   );
 
+  const keyPlayTime = Math.max(context.currentTime + 0.015, now + 0.015);
+
   if (funMachineMode === "auto_chord") {
-    scheduleFunMachineChord(context, dest, chord, now, 0.45);
+    scheduleFunMachineChord(context, dest, chord, keyPlayTime, 0.45);
   } else {
-    scheduleFunMachineLeadNote(context, dest, normSemi, now, 0.45);
+    scheduleFunMachineLeadNote(context, dest, normSemi, keyPlayTime, 0.45);
   }
 
   let targetStep = null;
@@ -3406,10 +3433,11 @@ async function triggerFunKey(semitone, isKeyDown = true) {
 
   if (currentTransport && !muted && currentScore) {
     const burstStep = targetStep !== null ? targetStep : (activeBeatStep >= 0 ? activeBeatStep : 0);
-    scheduleBassStep(context, currentTransport, currentScore, burstStep, now + 0.005, 0.24);
-    scheduleHarmonyStep(context, currentTransport, currentScore, burstStep, now + 0.005, 0.28);
-    scheduleChimeStep(context, currentTransport, currentScore, burstStep, now + 0.005, 0.3);
-    scheduleChantStep(context, currentTransport, currentScore, burstStep, now + 0.005, 0.32);
+    const burstAt = Math.max(context.currentTime + 0.018, keyPlayTime + 0.005);
+    scheduleBassStep(context, currentTransport, currentScore, burstStep, burstAt, 0.24);
+    scheduleHarmonyStep(context, currentTransport, currentScore, burstStep, burstAt, 0.28);
+    scheduleChimeStep(context, currentTransport, currentScore, burstStep, burstAt, 0.3);
+    scheduleChantStep(context, currentTransport, currentScore, burstStep, burstAt, 0.32);
   }
 
   if (elements.funMachineTelemetry) {
@@ -3447,6 +3475,7 @@ async function playScore(score) {
   const chimeBus = context.createGain();
   const chantBus = context.createGain();
   const fungalBus = context.createGain();
+  const funBus = context.createGain();
   const filter = context.createBiquadFilter();
   const panner = typeof context.createStereoPanner === "function" ? context.createStereoPanner() : null;
   const compressor = context.createDynamicsCompressor();
@@ -3463,6 +3492,7 @@ async function playScore(score) {
     chimeBus,
     chantBus,
     fungalBus,
+    funBus,
     filter,
     panner,
     delay,
@@ -3488,6 +3518,7 @@ async function playScore(score) {
   chimeBus.gain.setValueAtTime(chimeEnabled ? 0.8 : 0.0001, now);
   chantBus.gain.setValueAtTime(chantEnabled ? 0.82 : 0.0001, now);
   fungalBus.gain.setValueAtTime(0.72, now);
+  funBus.gain.setValueAtTime(0.88, now);
   filter.type = ["lowpass", "bandpass", "lowpass", "lowpass", "lowpass", "bandpass"][score.voice];
   filter.frequency.value = 720 + score.bloom * 20 + score.hueShift * 1.6;
   filter.Q.value = 1.6 + score.edge / 28;
@@ -3505,6 +3536,8 @@ async function playScore(score) {
   fungalBus.connect(filter);
   beatBus.connect(compressor);
   bassBus.connect(compressor);
+  funBus.connect(output);
+  funBus.connect(compressor);
 
   if (panner) {
     panner.pan.setValueAtTime(0, now);
@@ -3600,7 +3633,7 @@ async function playScore(score) {
       scheduleChantStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleFungalBioStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       if (customProgression[currentStep % 12]) {
-        scheduleFunMachineChord(context, transport.mix, customProgression[currentStep % 12], transport.nextNoteTime, soundingDuration);
+        scheduleFunMachineChord(context, transport.funBus, customProgression[currentStep % 12], transport.nextNoteTime, soundingDuration);
       }
       if (parlorAcousticsEnabled && parlorTickEnabled) {
         scheduleClockworkTick(context, output, transport.nextNoteTime, currentStep, parlorAcousticsLevel);
@@ -4127,6 +4160,7 @@ async function exportSpecimenWav() {
     const chimeBus = offlineCtx.createGain();
     const chantBus = offlineCtx.createGain();
     const fungalBus = offlineCtx.createGain();
+    const funBus = offlineCtx.createGain();
     const filter = offlineCtx.createBiquadFilter();
     const compressor = offlineCtx.createDynamicsCompressor();
     const delay = offlineCtx.createDelay(1.5);
@@ -4140,6 +4174,7 @@ async function exportSpecimenWav() {
     chimeBus.gain.setValueAtTime(chimeEnabled ? 0.8 : 0.0001, 0);
     chantBus.gain.setValueAtTime(chantEnabled ? 0.82 : 0.0001, 0);
     fungalBus.gain.setValueAtTime(0.72, 0);
+    funBus.gain.setValueAtTime(0.88, 0);
 
     filter.type = ["lowpass", "bandpass", "lowpass", "lowpass", "lowpass", "bandpass"][score.voice];
     filter.frequency.value = 720 + score.bloom * 20 + score.hueShift * 1.6;
@@ -4161,6 +4196,8 @@ async function exportSpecimenWav() {
     bassBus.connect(compressor);
     fungalBus.connect(delay);
     fungalBus.connect(compressor);
+    funBus.connect(output);
+    funBus.connect(compressor);
     filter.connect(compressor).connect(output).connect(offlineCtx.destination);
     filter.connect(delay);
     delay.connect(feedback).connect(delay);
@@ -4228,6 +4265,7 @@ async function exportSpecimenWav() {
       chimeBus,
       chantBus,
       fungalBus,
+      funBus,
       melody: currentConductedMelody || melodyFor(score),
       drones: [],
       droneGains: [],
@@ -4248,7 +4286,7 @@ async function exportSpecimenWav() {
       scheduleChantStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
       scheduleFungalBioStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
       if (customProgression[step % 12]) {
-        scheduleFunMachineChord(offlineCtx, mix, customProgression[step % 12], stepTime, soundingDuration);
+        scheduleFunMachineChord(offlineCtx, funBus, customProgression[step % 12], stepTime, soundingDuration);
       }
       if (parlorAcousticsEnabled && parlorTickEnabled) {
         scheduleClockworkTick(offlineCtx, output, stepTime, step, parlorAcousticsLevel);
@@ -4752,14 +4790,18 @@ for (const chip of document.querySelectorAll(".fun-chip")) {
 }
 
 if (elements.funKeyboard) {
+  let lastPointerTriggerTime = 0;
   for (const keyBtn of elements.funKeyboard.querySelectorAll(".fun-key")) {
     const semitone = Number(keyBtn.dataset.semitone);
-    keyBtn.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
+    keyBtn.addEventListener("pointerdown", () => {
+      lastPointerTriggerTime = Date.now();
       triggerFunKey(semitone, true);
     });
-    keyBtn.addEventListener("pointerup", (e) => {
-      e.preventDefault();
+    keyBtn.addEventListener("click", () => {
+      if (Date.now() - lastPointerTriggerTime < 250) return;
+      triggerFunKey(semitone, true);
+    });
+    keyBtn.addEventListener("pointerup", () => {
       triggerFunKey(semitone, false);
     });
     keyBtn.addEventListener("pointerleave", () => {
@@ -4779,7 +4821,7 @@ window.addEventListener("keydown", (event) => {
   }
   if (event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.repeat) return;
-  const mapped = FUN_KEY_BY_CODE[event.code];
+  const mapped = FUN_KEY_BY_CODE[event.code] || (event.key ? FUN_KEY_BY_KEY[event.key.toUpperCase()] : null);
   if (mapped) {
     event.preventDefault();
     triggerFunKey(mapped.semitone, true);
@@ -4796,7 +4838,7 @@ window.addEventListener("keyup", (event) => {
     return;
   }
   if (event.ctrlKey || event.metaKey || event.altKey) return;
-  const mapped = FUN_KEY_BY_CODE[event.code];
+  const mapped = FUN_KEY_BY_CODE[event.code] || (event.key ? FUN_KEY_BY_KEY[event.key.toUpperCase()] : null);
   if (mapped) {
     event.preventDefault();
     triggerFunKey(mapped.semitone, false);

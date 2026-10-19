@@ -263,6 +263,10 @@ export const FUN_KEY_BY_CODE = Object.freeze(
   Object.fromEntries(FUN_KEY_MAP.map((item) => [item.key, item])),
 );
 
+export const FUN_KEY_BY_KEY = Object.freeze(
+  Object.fromEntries(FUN_KEY_MAP.map((item) => [item.displayKey, item])),
+);
+
 export function buildFunChord(rootSemitone, quality = "auto", genre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ, tonicRoot = 0) {
   const r = ((Math.trunc(rootSemitone) % 12) + 12) % 12;
   const relFromTonic = ((r - (Math.trunc(tonicRoot) % 12)) % 12 + 12) % 12;
