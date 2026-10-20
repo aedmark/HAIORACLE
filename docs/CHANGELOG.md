@@ -14,6 +14,7 @@
 
 ### Fixed
 
+- Read the cabinet more easily: no text is smaller than 9.6 px, faint labels are brighter (at least 4.5:1 contrast), screen readers no longer announce every step of the loop, and reduced motion takes effect as soon as you turn it on.
 - Keep the echo in time when you move the tempo slider during play. The delay was timed once at the start of the loop, so afterwards the Fun Machine's pads, arpeggios, and lead (which all feed it) echoed at the old tempo and sounded rushed or dragging.
 - Play the Fun Machine manual like a keyboard: each key now sounds higher than the one to its left, and C' sounds an octave above C (they used to play in the same octave).
 - Load the new version after an update without a hard reload: every module and esoteric source URL carries a version stamp, so the browser can no longer run a fresh module against a cached old one ("does not provide an export named ..."). `python3 tools/serve.py` serves the page for local development without stale caching.
@@ -27,6 +28,7 @@
 
 ### Added
 
+- Discover the cabinet as you play: a first visit opens on the phrase, the vitrine, the transport, and the Fun Machine, and the Kapellmeister, Mix, Keep, and Band drawers open themselves when you reach for them. OPEN THE WHOLE CABINET lays every control bare, and your choice is remembered in this browser only.
 - Play Parlor Ragtime, a seventh Kapellmeister genre: Joplin-style changes (I · I7 · IV · ♯iv° · I · VI7 · II7 · V7), an oom-pah stride bass that climbs home, an organ "pah", sixth-chord melodies, and a "Parlor Rag" one-finger progression (I → I7 → IV → V7). It was written entirely in the Inform 7 rulebooks.
 - Overcome the ensemble's "wall of sound" using the Grand Conductor in INTERCAL 1972 (`src/conductor.i`, `src/intercal.mjs`). Evaluates statement politeness (22.9% P/N, adhering to ICL079/ICL099 limits), dynamically orchestrates channel breathing across Exposition, Antiphony, Tutti, and Breakdown regions with `PLEASE IGNORE` and `PLEASE REMEMBER`, and intercepts turnaround cadences at step 11 with `COME FROM (60)`.
 - Play the Esoteric Fun Machine as a one-finger accompanist: hold a key and a stereo synth pad plays a **Swell** (one chord), an **Arpeggio** (chord tones rippling in the band's rhythm), or a **Progression** (four chords with a singing lead line) while the band follows your chord and the LOLCODE lead steps back.

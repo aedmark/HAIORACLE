@@ -404,7 +404,11 @@ test("the master transport deck exposes play, pause, stop, position, and hotkeys
   assert.match(html, /id="transport-play"[^>]*aria-pressed="false"[^>]*aria-keyshortcuts="Space"/);
   assert.match(html, /id="transport-pause"[^>]*aria-pressed="false"[^>]*aria-keyshortcuts="Space"/);
   assert.match(html, /id="transport-stop"[^>]*aria-keyshortcuts="Escape"/);
-  assert.match(html, /<output class="transport-position" id="transport-position">/);
+  // The step readout changes every step, so it must not talk to screen readers (P4-02).
+  assert.match(html, /<output class="transport-position" id="transport-position" aria-live="off">/);
+  assert.doesNotMatch(html, /class="kapellmeister-readout" aria-live/, "the per-step harmony readout stays quiet");
+  assert.doesNotMatch(styles, /font-size: 0\.[0-5]\d?rem/, "no text below 0.6rem");
+  assert.doesNotMatch(styles, /(?<!-)color: rgba\(228, 215, 190, 0\.(?:[0-4]\d?|5[0-4]?)\)/, "dimmed bone text keeps 4.5:1");
   assert.match(styles, /\.transport-deck \{/);
   assert.match(styles, /\.transport-button\[aria-pressed="true"\]/);
   assert.match(app, /async function runTransportCommand\(command\)/);
@@ -481,12 +485,19 @@ test("the session ledger saves presets on-device and .fun files through the vali
   // Every storage access is guarded.
   const storageCalls = app.match(/window\.localStorage\.\w+/g) || [];
   assert.ok(storageCalls.length >= 3);
-  for (const fn of ["readPresetStore", "writePresetStore"]) {
+  for (const fn of ["readPresetStore", "writePresetStore", "readCabinetState", "writeCabinetState"]) {
     const body = app.slice(app.indexOf(`function ${fn}(`), app.indexOf("\n}\n", app.indexOf(`function ${fn}(`)));
     assert.match(body, /try \{[\s\S]*window\.localStorage[\s\S]*\} catch \{/, fn);
   }
   assert.equal((app.match(/localStorage\./g) || []).length, storageCalls.length, "no unguarded storage access elsewhere");
   assert.doesNotMatch(app, /sessionStorage|indexedDB|document\.cookie/);
+  // Discovery (D-037): the four drawers unlock from the app's own moments.
+  assert.match(app, /unlockDrawer\("held-key"\)/);
+  assert.match(app, /if \(currentStep % 12 === 11\) noteLoopHeard\(\);/);
+  assert.match(app, /if \(target\.closest\(KEEPSAKE_AREAS\)\) unlockDrawer\("change"\);/);
+  assert.match(app, /unlockDrawer\("band"\)/);
+  assert.match(html, /<div class="cabinet-switch" id="cabinet-switch" hidden>/, "the switch appears only once the script runs");
+  assert.match(html, /<p class="visually-hidden" id="cabinet-announcer" role="status"><\/p>/);
 });
 
 test("the page groups the workstation into perform, mix, keep, and band wings (D-027)", async () => {
@@ -500,7 +511,7 @@ test("the page groups the workstation into perform, mix, keep, and band wings (D
     return index;
   };
   const wingOf = (id) => ["wing-band", "wing-keep", "wing-mix", "wing-perform"].find((wing) => at(wing) < at(id));
-  const order = ["reading", "wing-perform", "transport-deck", "fun-machine-engine", "kapellmeister-engine",
+  const order = ["reading", "cabinet-switch", "wing-perform", "transport-deck", "fun-machine-engine", "kapellmeister-engine",
     "wing-mix", "bandstand-engine", "mixer-engine", "parlor-acoustics-engine",
     "wing-keep", "session-engine", "export-engine",
     "wing-band", "beat-engine", "bass-engine", "harmony-engine", "chime-engine", "chant-engine"];
@@ -513,7 +524,7 @@ test("the page groups the workstation into perform, mix, keep, and band wings (D
   }
 
   // The reading strip only reads: no control lives inside the live region.
-  const reading = html.slice(at("reading"), at("wing-perform"));
+  const reading = html.slice(at("reading"), html.indexOf("</section>", at("reading")));
   assert.doesNotMatch(reading, /<button|<input|<select/);
   for (const id of ["transport-play", "replay", "master-volume", "tempo-bpm"]) {
     assert.equal(wingOf(id), "wing-perform", id);

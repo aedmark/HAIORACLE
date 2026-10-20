@@ -546,6 +546,21 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Consequences:** Keys to the right sound brighter and higher; C' reaches G6 at the top of its arpeggio. This refines D-029's voicing, and it needs a listening pass at the top of the manual.
 
+## D-037 Discovery first, the whole cabinet on request (2026-10-20, status: accepted)
+
+**Context:** P4-02's accessibility review found 172 tab stops on the page (70 in the band wing alone). It also found per-step readouts that made screen readers talk throughout the loop, text as small as 6.7 px, and four dimmed text colours under 4.5:1. The maintainer wanted the cabinet not to overwhelm people all at once: "more like a discovery, and then maybe an advanced mode where it's all laid bare like equipment cabinet." They chose drawers that unlock as you play, remembered on this device.
+
+**Decision:**
+1. **Discovery is the default.** The front panel (phrase, vitrine, transport, Fun Machine) is always open. Four drawers sit below: Kapellmeister, Mix, Keep, and The Band. Each opens itself the first time the visitor reaches for what it holds: holding a Fun Machine key, finishing a loop, changing something worth keeping (rulebook, mix, plate, sequencer, accompaniment style), and soloing or silencing a voice or hearing four loops. Any drawer opens early by hand, and a drawer the visitor closes stays closed. Openings are announced through a polite status region; focus never moves.
+2. **The whole cabinet lays everything bare.** One switch above Wing I toggles between discovery and the whole cabinet, which hides the drawer bars and opens every drawer. Returning to discovery restores the drawers as the visitor left them.
+3. **Progressive enhancement.** Drawers are added by `src/app.mjs` around existing elements (ids unchanged). Without scripts every drawer stays open and the switch stays hidden. Sealed drawer bodies use `hidden`, so they leave the tab order and the accessibility tree: discovery starts at 55 tab stops instead of 172.
+4. **Remembered on this device only.** `localStorage` key `edmark-fun-machine.cabinet.v1` holds `{ mode, open, seen }`, validated by `parseCabinetState()` (anything foreign starts fresh). Every access is guarded. This extends the on-device storage the maintainer approved for presets (D-026), with the maintainer's explicit approval (2026-10-20).
+5. **Accessibility floor.** No text below 0.6rem, dimmed text at 4.5:1 or better, per-step readouts silent, and reduced motion re-read when the setting changes.
+
+**Alternatives:** A fixed simple panel plus one switch would be easier to build but would never invite a visitor further. A guided tour hand-holds most and costs the most to maintain.
+
+**Consequences:** A first visit shows a small, playable instrument; the depth arrives as the visitor plays. A screen-reader pass with real assistive technology is still outstanding (P4-02 stays open).
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

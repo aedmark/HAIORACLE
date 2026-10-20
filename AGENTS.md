@@ -96,6 +96,7 @@ Never force-push or rewrite shared history.
 | `src/inform.mjs` | Inform 7 subset interpreter and rulebook compiler |
 | `src/ensemble.mjs` | Shared Web Audio ensemble graph for live playback and offline WAV export |
 | `src/accompaniment.mjs` | Fun Machine one-finger accompanist: styles, pad voicing, arpeggios, tonic-relative chords |
+| `src/cabinet.mjs` | Discovery drawers and the whole-cabinet mode: state, unlock rules, on-device memory |
 | `src/mixer.mjs` | Eight-channel mixing console state, fader taper, solo rules, and VU meter math |
 | `src/session.mjs` | Validated `.fun` session format and on-device preset store |
 | `src/zip.mjs` | Zero-dependency STORED ZIP writer for stem bundles |

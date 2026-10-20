@@ -76,6 +76,17 @@ import {
   upsertPreset,
 } from "./session.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
+import {
+  CABINET_STORAGE_KEY,
+  DRAWERS,
+  LOOPS_BEFORE_BAND,
+  cabinetReduce,
+  defaultCabinetState,
+  drawerForTrigger,
+  isDrawerOpen,
+  parseCabinetState,
+  serializeCabinetState,
+} from "./cabinet.mjs";
 
 // Esoteric sources share this module's ?v= stamp from the index.html import map
 // (D-035), so a cached old spell is never paired with a fresh interpreter.
@@ -1779,7 +1790,12 @@ class OracleVision {
     this.fruitingBodies = [];
     this.spores = [];
     this.glassCondensation = [];
-    this.reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Re-read when the visitor changes the setting, not only at load (P4-02).
+    const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
+    this.reducedMotion = motionQuery.matches;
+    motionQuery.addEventListener?.("change", (event) => {
+      this.reducedMotion = event.matches;
+    });
     this.resize = this.resize.bind(this);
     this.draw = this.draw.bind(this);
     window.addEventListener("resize", this.resize, { passive: true });
@@ -3736,6 +3752,7 @@ async function triggerFunKey(semitone, isKeyDown = true) {
 
   const performance = buildPerformance(normSemi, funMachineStyle, activeGenre, currentScore ? currentScore.root : 0);
   activeFunPerformance = performance;
+  unlockDrawer("held-key");
 
   let targetStep = null;
   if (selectedSequencerStep !== null) {
@@ -3996,6 +4013,7 @@ async function playScore(score, { cursor = 0 } = {}) {
       window.setTimeout(() => {
         if (currentTransport !== transport) return;
         transport.audibleStep = currentStep;
+        if (currentStep % 12 === 11) noteLoopHeard();
         highlightBeatStep(currentStep);
         updateTransportPosition(currentStep);
       }, delayMs);
@@ -5487,6 +5505,136 @@ elements.sessionFileInput?.addEventListener("change", async () => {
 });
 
 syncSessionButtons();
+
+// ---------------------------------------------------------------------------
+// Discovery and the whole cabinet (D-037). Each drawer target keeps its own
+// markup and ids; at load its contents move into a drawer body behind a bar
+// with a name, a one-line invitation, and a toggle. Hidden bodies leave the
+// tab order and the accessibility tree. Without this script every drawer
+// stays open, so nothing becomes unreachable.
+
+let cabinetState = readCabinetState();
+let loopsHeard = 0;
+const drawerElements = {};
+
+function readCabinetState() {
+  try {
+    return parseCabinetState(window.localStorage.getItem(CABINET_STORAGE_KEY));
+  } catch {
+    return defaultCabinetState();
+  }
+}
+
+function writeCabinetState() {
+  try {
+    window.localStorage.setItem(CABINET_STORAGE_KEY, serializeCabinetState(cabinetState));
+  } catch {
+    // Storage can be blocked; the cabinet still works for this visit.
+  }
+}
+
+function buildDrawers() {
+  for (const drawer of DRAWERS) {
+    const host = document.getElementById(drawer.target);
+    if (!host) continue;
+    const header = host.classList.contains("workstation-wing") ? host.querySelector(":scope > .wing-header") : null;
+    const body = document.createElement("div");
+    body.className = "drawer-body";
+    body.id = `drawer-body-${drawer.id}`;
+    body.append(...[...host.children].filter((child) => child !== header));
+    body.addEventListener("animationend", () => body.classList.remove("is-newly-open"));
+
+    const bar = document.createElement("div");
+    bar.className = "drawer-bar";
+    const invite = document.createElement("p");
+    invite.className = "drawer-invite";
+    const name = document.createElement("b");
+    name.textContent = drawer.label;
+    const line = document.createElement("span");
+    invite.append(name, line);
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "drawer-toggle";
+    toggle.setAttribute("aria-controls", body.id);
+    toggle.addEventListener("click", () => applyCabinet(cabinetReduce(cabinetState, { type: "toggle", drawer: drawer.id })));
+    bar.append(invite, toggle);
+
+    host.append(bar, body);
+    drawerElements[drawer.id] = { host, bar, body, toggle, line };
+  }
+  const toggle = document.querySelector("#cabinet-mode-toggle");
+  toggle?.addEventListener("click", () => {
+    const mode = cabinetState.mode === "cabinet" ? "discovery" : "cabinet";
+    applyCabinet(cabinetReduce(cabinetState, { type: "mode", mode }));
+    announceCabinet(mode === "cabinet" ? "THE WHOLE CABINET IS OPEN" : "BACK TO DISCOVERY · THE DRAWERS OPEN AS YOU PLAY");
+  });
+  document.querySelector("#cabinet-switch")?.removeAttribute("hidden");
+}
+
+function renderCabinet() {
+  const whole = cabinetState.mode === "cabinet";
+  for (const drawer of DRAWERS) {
+    const refs = drawerElements[drawer.id];
+    if (!refs) continue;
+    const open = isDrawerOpen(cabinetState, drawer.id);
+    refs.body.hidden = !open;
+    refs.bar.hidden = whole;
+    refs.host.classList.toggle("is-sealed", !open);
+    refs.toggle.setAttribute("aria-expanded", String(open));
+    refs.toggle.textContent = open ? `CLOSE ${drawer.label}` : `OPEN ${drawer.label}`;
+    refs.line.textContent = open ? " · OPEN" : ` · ${drawer.invite.toUpperCase()}`;
+  }
+  const toggle = document.querySelector("#cabinet-mode-toggle");
+  if (toggle) {
+    toggle.setAttribute("aria-pressed", String(whole));
+    toggle.textContent = whole ? "RETURN TO DISCOVERY" : "OPEN THE WHOLE CABINET";
+  }
+  const text = document.querySelector("#cabinet-switch-text");
+  if (text) text.textContent = whole ? "THE WHOLE CABINET · EVERY DRAWER LAID BARE" : "DISCOVERY · THE DRAWERS OPEN AS YOU PLAY";
+}
+
+function announceCabinet(message) {
+  const announcer = document.querySelector("#cabinet-announcer");
+  if (announcer) announcer.textContent = message;
+}
+
+function applyCabinet({ state, opened }) {
+  if (state === cabinetState) return;
+  cabinetState = state;
+  writeCabinetState();
+  renderCabinet();
+  if (opened) {
+    const drawer = DRAWERS.find((entry) => entry.id === opened);
+    drawerElements[opened]?.body.classList.add("is-newly-open");
+    announceCabinet(`THE ${drawer.label} DRAWER OPENS`);
+  }
+}
+
+function unlockDrawer(trigger) {
+  const drawer = drawerForTrigger(trigger);
+  if (drawer) applyCabinet(cabinetReduce(cabinetState, { type: "unlock", drawer }));
+}
+
+function noteLoopHeard() {
+  loopsHeard += 1;
+  unlockDrawer("loop");
+  if (loopsHeard >= LOOPS_BEFORE_BAND) unlockDrawer("band");
+}
+
+// Anything worth keeping (a rulebook, a fader, a plate edit, a punched step,
+// an accompaniment style) opens the Keep drawer; soloing or silencing a voice
+// opens the band.
+const KEEPSAKE_AREAS = "#kapellmeister-engine, #wing-mix, #wing-band, #fun-sequence-grid, .fun-quality-chips";
+function noteVisitorChange(event) {
+  const target = event.target;
+  if (!(target instanceof Element) || target.closest(".drawer-toggle, #cabinet-switch")) return;
+  if (target.closest(KEEPSAKE_AREAS)) unlockDrawer("change");
+  if (event.type === "click" && target.closest("#mixer-strips button, #bandstand-engine button")) unlockDrawer("band");
+}
+for (const type of ["input", "change", "click"]) document.addEventListener(type, noteVisitorChange);
+
+buildDrawers();
+renderCabinet();
 
 elements.bandstandEngageAll?.addEventListener("click", () => {
   setBandPlayersEnabled(true);

@@ -30,7 +30,7 @@ Goal: let a creature travel without adding accounts or remote storage.
 Goal: verify the sensory experience beyond structural automation.
 
 - [x] P4-01 Review animation, mix, controls, and responsive layout across the six-language parlor ensemble in a live browser. Verified by maintainer hands-on review on 2026-10-18.
-- [ ] P4-02 Test keyboard navigation, reduced motion, contrast, screen-reader announcements, and mute behavior with real assistive technology. Origin: accessibility review, 2026-10-17.
+- [ ] P4-02 Test keyboard navigation, reduced motion, contrast, screen-reader announcements, and mute behavior with real assistive technology. Origin: accessibility review, 2026-10-17. Progress 2026-10-20: automated and browser audit done. It brought discovery mode (172 → 55 tab stops), silent per-step readouts, a 0.6rem text floor, 4.5:1 dimmed text, and live reduced motion (D-037). A real screen-reader pass is still open.
 
 ## Phase 5: Later experiments
 

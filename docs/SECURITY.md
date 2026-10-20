@@ -21,7 +21,8 @@ Until a public reporting address exists, contact the repository maintainer priva
 | Score output | unknown keys, duplicate fields, invalid values | allowlist, exact required set, integer and range checks | score parser |
 | Audio output | startling or persistent playback | user gesture, visible mute, low master gain, clean stop on mute or replacement | browser host |
 | Session files (`.fun`) | malformed, oversized, or hostile JSON | 64 KB limit, `parseSession()` allowlist with exact fields, integer ranges, and enums; rejected whole; values reach the page only as text or form values | session boundary |
-| Stored presets | tampered or corrupt `localStorage` value; blocked storage | revalidated on every read, bad entries dropped, every access wrapped so failure falls back to files | session boundary |
+| Stored presets | tampered or corrupt `localStorage` value; blocked storage | revalidated on every read, bad entries dropped, every access wrapped so failure falls back to files |
+| Stored cabinet | tampered or corrupt `localStorage` value; blocked storage | `parseCabinetState()` accepts only `{ mode, open, seen }` with known values, otherwise starts fresh; every access wrapped | session boundary |
 | User privacy | phrase disclosure | no outbound requests, logs, or analytics; presets stay on-device and are deleted with DELETE or by clearing site data; `.fun` files, PNG plates, and `#omen=` links contain the phrase and travel only where the player sends them | whole application |
 
 ## Secure development rules
@@ -30,7 +31,7 @@ Until a public reporting address exists, contact the repository maintainer priva
 - Insert user-controlled text with `textContent` or form values, never HTML parsing.
 - Preserve score validation between interpreter and renderers.
 - Keep audio user-controlled, moderate in level, and immediately stoppable.
-- Treat any proposed remote asset, analytics call, new storage, or dependency as a boundary change requiring a decision and review. Session presets in `localStorage` are the one accepted store (D-026); keep them on-device and validated.
+- Treat any proposed remote asset, analytics call, new storage, or dependency as a boundary change requiring a decision and review. Session presets (D-026) and the remembered cabinet mode and drawers (D-037) are the two accepted `localStorage` stores; keep them on-device and validated.
 - Do not describe the deterministic seed as cryptographic or globally unique.
 
 ## Verification

@@ -30,6 +30,7 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Ensemble audio graph | `src/ensemble.mjs` | `buildEnsembleGraph()` | live `AudioContext` and offline WAV `OfflineAudioContext` in `src/app.mjs` |
 | Session boundary | `src/session.mjs` | `parseSession()`, `validateSession()`, `parsePresetStore()` | session ledger in `src/app.mjs`, `localStorage`, `.fun` files |
 | Export writers | `src/zip.mjs`, `src/midi.mjs` | `createStoredZip()`, `buildMidiFile()` | stem and MIDI exports in `src/app.mjs` |
+| Discovery and the cabinet | `src/cabinet.mjs` | `cabinetReduce()`, `parseCabinetState()`, `DRAWERS` | drawer chrome, unlock triggers, and the cabinet switch in `src/app.mjs` (D-037) |
 | Fun Machine accompanist | `src/accompaniment.mjs` | `buildPerformance()`, `padVoicing()`, `arpeggioNotes()`, `toTonicRelative()` | Fun Machine voices and scheduler in `src/app.mjs` |
 | Mixer model | `src/mixer.mjs` | `channelSettings()`, `isChannelAudible()`, `meterReading()` | mixing console and strips in `src/app.mjs`, `src/ensemble.mjs` |
 | Master transport | `src/transport.mjs` | `transportReduce()`, `transportCommandForKey()` | transport deck and hotkeys in `src/app.mjs` |
@@ -125,6 +126,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 | Spell output | line array | `parseScore()` allowlist, type, uniqueness, and ranges | no repair or best-effort coercion |
 | Session file | user-chosen `.fun` file, at most 64 KB | `parseSession()` allowlist, types, ranges, enums | rejected whole on the first bad field; never repaired |
 | Stored presets | `localStorage` value on this origin | `parsePresetStore()` revalidates each preset on read | invalid entries dropped individually; storage errors degrade to files only |
+| Stored cabinet | `localStorage` value on this origin | `parseCabinetState()` exact-key allowlist | anything malformed starts discovery fresh |
 | Browser capabilities | Canvas and Web Audio APIs | feature use at runtime | a failure surfaces as status text and console detail |
 
 ## Dependencies
@@ -142,6 +144,7 @@ The visual system uses locally installed old-style and transitional book serifs 
 | Mixer settings | browser memory | `updateMixer()` | RESET CONSOLE, reload, or tab close | no |
 | Transport state and cursor | browser memory | `runTransportCommand()` | stop, summon, reload, or tab close | no |
 | Session presets | `localStorage` key `edmark-fun-machine.presets.v1` | SAVE PRESET | DELETE, or clearing site data | no |
+| Cabinet mode and drawers | `localStorage` key `edmark-fun-machine.cabinet.v1` | opening or closing drawers, the cabinet switch | clearing site data | no |
 | Static HTTP cache | browser-managed, keyed by `?v=<ASSET_VERSION>` URLs (D-035) | browser | a new stamp, or browser controls | no |
 
 Because a file's content changes only together with its URL, the browser may keep any stamped module or source as long as it likes. Only `index.html`, which holds the stamp, should be revalidated: `tools/serve.py` does that locally with `Cache-Control: no-cache`, and a public host should do the same for the page (D-035).

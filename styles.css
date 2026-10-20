@@ -70,6 +70,130 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+select:focus-visible {
+  outline: 2px solid var(--brass-bright);
+  outline-offset: 3px;
+}
+
+/* Accessibility floor (P4-02): no text below 0.6rem (9.6px), and dimmed bone
+   text on the dark panels keeps at least 4.5:1 contrast (alpha 0.55 and up). */
+
+/* Discovery and the whole cabinet (D-037). */
+.cabinet-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1.2rem;
+  padding: 0.75rem clamp(1.1rem, 3vw, 2.8rem);
+  border-bottom: 1px solid var(--brass-dim);
+  color: var(--bone);
+  background: linear-gradient(180deg, var(--ebony-raised) 0%, var(--ebony) 100%);
+  font-family: var(--mono-ledger);
+}
+
+.cabinet-switch[hidden] {
+  display: none;
+}
+
+.cabinet-switch-text {
+  margin: 0;
+  color: rgba(228, 215, 190, 0.86);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.cabinet-switch-button,
+.drawer-toggle {
+  padding: 0.55rem 0.95rem;
+  border: 1px solid var(--brass);
+  color: var(--parchment-light);
+  background: rgba(10, 8, 7, 0.55);
+  font-family: var(--mono-ledger);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+}
+
+.cabinet-switch-button:hover,
+.drawer-toggle:hover {
+  border-color: var(--brass-bright);
+}
+
+/* A drawer's bar: its name, its one-line invitation, and the toggle. Shown
+   only in discovery; the whole cabinet hides the bars and opens everything. */
+.drawer-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.7rem clamp(1.1rem, 3vw, 2.8rem);
+  border-top: 1px solid rgba(184, 146, 73, 0.32);
+  color: var(--bone);
+  background: rgba(10, 8, 7, 0.6);
+  font-family: var(--mono-ledger);
+}
+
+.drawer-bar[hidden] {
+  display: none;
+}
+
+.drawer-invite {
+  margin: 0;
+  color: rgba(228, 215, 190, 0.82);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+}
+
+.drawer-invite b {
+  color: var(--brass-bright);
+}
+
+.drawer-body[hidden] {
+  display: none;
+}
+
+/* A sealed wing keeps a slim nameplate instead of its full parchment band. */
+.workstation-wing.is-sealed .wing-header {
+  padding-block: 0.45rem 0.4rem;
+}
+
+.workstation-wing.is-sealed .wing-dek {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .drawer-body.is-newly-open {
+    animation: drawer-open 520ms ease-out;
+  }
+}
+
+@keyframes drawer-open {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .skip-link {
   position: fixed;
   top: 1rem;
@@ -472,7 +596,7 @@ h1 em {
   background: rgba(18, 13, 11, 0.84);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   color: var(--brass-bright);
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   letter-spacing: 0.15em;
 }
 
@@ -495,7 +619,7 @@ h1 em {
   border: 1px solid rgba(184, 146, 73, 0.45);
   background: rgba(15, 11, 10, 0.82);
   color: rgba(237, 227, 206, 0.88);
-  font-size: 0.56rem;
+  font-size: 0.6rem;
   letter-spacing: 0.16em;
   text-align: center;
 }
@@ -649,7 +773,7 @@ h1 em {
   margin: 0 0 0.45rem;
   color: var(--brass-bright);
   font-family: var(--mono-ledger);
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   letter-spacing: 0.2em;
 }
 
@@ -679,7 +803,7 @@ h1 em {
   display: grid;
   gap: 0.2rem;
   color: rgba(228, 215, 190, 0.65);
-  font-size: 0.54rem;
+  font-size: 0.6rem;
   letter-spacing: 0.14em;
 }
 
@@ -705,7 +829,7 @@ h1 em {
   gap: 1rem;
   color: rgba(228, 215, 190, 0.78);
   font-family: var(--mono-ledger);
-  font-size: 0.56rem;
+  font-size: 0.6rem;
 }
 
 .volume-heading output {
@@ -819,7 +943,7 @@ h1 em {
   height: 1.5em;
   line-height: 1.5em;
   color: rgba(228, 215, 190, 0.72);
-  font-size: 0.54rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   white-space: nowrap;
@@ -830,7 +954,7 @@ h1 em {
 .transport-hint {
   margin: 0 0 0 auto;
   color: rgba(228, 215, 190, 0.6);
-  font-size: 0.54rem;
+  font-size: 0.6rem;
   letter-spacing: 0.14em;
 }
 
@@ -885,7 +1009,7 @@ h1 em {
 
 .wing-numeral {
   color: var(--oxblood);
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   letter-spacing: 0.32em;
 }
 
@@ -900,7 +1024,7 @@ h1 em {
 
 .wing-dek {
   color: var(--ink-muted);
-  font-size: 0.52rem;
+  font-size: 0.6rem;
   letter-spacing: 0.16em;
 }
 
@@ -946,7 +1070,7 @@ h1 em {
   color: rgba(228, 215, 190, 0.72);
   background: rgba(8, 6, 5, 0.55);
   font-family: var(--mono-ledger);
-  font-size: 0.54rem;
+  font-size: 0.6rem;
   letter-spacing: 0.14em;
 }
 
@@ -963,14 +1087,14 @@ h1 em {
   color: var(--parchment-light);
   background: linear-gradient(180deg, rgba(184, 146, 73, 0.13), rgba(14, 10, 9, 0.85));
   font-family: var(--mono-ledger);
-  font-size: 0.56rem;
+  font-size: 0.6rem;
   letter-spacing: 0.14em;
   transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
 }
 
 .beat-button[aria-pressed="false"] {
   border-color: rgba(184, 146, 73, 0.28);
-  color: rgba(228, 215, 190, 0.52);
+  color: rgba(228, 215, 190, 0.62);
   background: rgba(12, 9, 8, 0.7);
 }
 
@@ -1028,7 +1152,7 @@ h1 em {
   padding: 0 0.3rem;
   border: 1px solid var(--brass-dim);
   color: var(--brass-bright);
-  font-size: 0.44rem;
+  font-size: 0.6rem;
   letter-spacing: 0.16em;
 }
 
@@ -1044,7 +1168,7 @@ h1 em {
   max-width: 100%;
   overflow: hidden;
   color: rgba(228, 215, 190, 0.55);
-  font-size: 0.46rem;
+  font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1102,7 +1226,7 @@ h1 em {
 .mixer-db,
 .mixer-pan-value {
   color: var(--parchment-light);
-  font-size: 0.56rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
@@ -1159,9 +1283,9 @@ h1 em {
 
 .mixer-legend {
   margin: 0;
-  color: rgba(228, 215, 190, 0.5);
+  color: rgba(228, 215, 190, 0.62);
   font-family: var(--mono-ledger);
-  font-size: 0.5rem;
+  font-size: 0.6rem;
   letter-spacing: 0.12em;
 }
 
@@ -1183,7 +1307,7 @@ h1 em {
 .session-files-label {
   color: rgba(228, 215, 190, 0.7);
   font-family: var(--mono-ledger);
-  font-size: 0.54rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.16em;
 }
@@ -1215,7 +1339,7 @@ h1 em {
 }
 
 #session-preset-name::placeholder {
-  color: rgba(228, 215, 190, 0.42);
+  color: rgba(228, 215, 190, 0.62);
 }
 
 #session-preset-name:focus-visible,
@@ -1258,8 +1382,8 @@ h1 em {
 }
 
 .step-index {
-  color: rgba(228, 215, 190, 0.5);
-  font-size: 0.48rem;
+  color: rgba(228, 215, 190, 0.62);
+  font-size: 0.6rem;
   letter-spacing: 0.12em;
 }
 
@@ -1307,7 +1431,7 @@ h1 em {
 
 .step-trits {
   color: var(--brass-bright);
-  font-size: 0.56rem;
+  font-size: 0.6rem;
   letter-spacing: 0.1em;
 }
 
@@ -1319,12 +1443,12 @@ h1 em {
 
 .bass-step .cell-byte {
   color: rgba(228, 215, 190, 0.56);
-  font-size: 0.48rem;
+  font-size: 0.6rem;
   letter-spacing: 0.08em;
 }
 
 .bass-step .step-trits {
-  font-size: 0.54rem;
+  font-size: 0.6rem;
 }
 
 .bass-step[data-gate="0"] {
@@ -1344,12 +1468,12 @@ h1 em {
 
 .harmony-step .cell-byte {
   color: rgba(228, 215, 190, 0.58);
-  font-size: 0.48rem;
+  font-size: 0.6rem;
   letter-spacing: 0.08em;
 }
 
 .harmony-step .step-trits {
-  font-size: 0.54rem;
+  font-size: 0.6rem;
 }
 
 .harmony-step[data-gate="0"] {
@@ -1384,12 +1508,12 @@ h1 em {
 
 .chime-step .cell-byte {
   color: rgba(228, 215, 190, 0.62);
-  font-size: 0.47rem;
+  font-size: 0.6rem;
   letter-spacing: 0.06em;
 }
 
 .chime-step .step-trits {
-  font-size: 0.52rem;
+  font-size: 0.6rem;
 }
 
 .chime-step[data-gate="0"] {
@@ -1410,12 +1534,12 @@ h1 em {
 
 .chant-step .cell-byte {
   color: rgba(228, 215, 190, 0.6);
-  font-size: 0.47rem;
+  font-size: 0.6rem;
   letter-spacing: 0.06em;
 }
 
 .chant-step .step-trits {
-  font-size: 0.52rem;
+  font-size: 0.6rem;
 }
 
 .chant-step[data-gate="0"] {
@@ -1453,6 +1577,7 @@ h1 em {
 /* The Fun Machine's telemetry narrates every held key and progression, so
    it takes its own line, never widens the row, and always reserves two lines. */
 #fun-machine-telemetry {
+  box-sizing: content-box;
   display: -webkit-box;
   flex: 1 0 100%;
   height: 3.2em;
@@ -1504,6 +1629,7 @@ h1 em {
 
 /* Fixed line box: ♭ and ♯ fall back to a font with a taller one. */
 #kapellmeister-telemetry {
+  box-sizing: content-box;
   height: 1.6em;
   line-height: 1.6em;
   max-width: 100%;
@@ -1599,7 +1725,7 @@ h1 em {
 
 .readout-label {
   font-family: var(--mono-ledger);
-  font-size: 0.54rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   color: var(--brass-bright);
@@ -1720,7 +1846,7 @@ h1 em {
   }
 
   .tonnetz-node-text {
-    font-size: 0.54rem;
+    font-size: 0.6rem;
     letter-spacing: -0.02em;
   }
 }
@@ -1772,7 +1898,7 @@ h1 em {
   background: #16110e;
   color: #a89478;
   font-family: var(--mono-ledger);
-  font-size: 0.56rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1840,7 +1966,7 @@ h1 em {
 
 .fun-quality-label {
   font-family: var(--mono-ledger);
-  font-size: 0.56rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: var(--brass-bright);
   letter-spacing: 0.12em;
@@ -1850,7 +1976,7 @@ h1 em {
   margin-left: auto;
   color: rgba(228, 215, 190, 0.55);
   font-family: var(--mono-ledger);
-  font-size: 0.5rem;
+  font-size: 0.6rem;
   letter-spacing: 0.12em;
 }
 
@@ -1866,7 +1992,7 @@ h1 em {
   user-select: none;
   padding: 0.28rem 0.65rem;
   font-family: var(--mono-ledger);
-  font-size: 0.56rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   background: #211812;
@@ -1985,14 +2111,14 @@ h1 em {
 
 .fun-key-white .fun-key-shortcut {
   font-family: var(--mono-ledger);
-  font-size: 0.52rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: #72562b;
 }
 
 .fun-key-white .fun-key-chord {
   font-family: var(--mono-ledger);
-  font-size: 0.46rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: #8c6832;
   white-space: nowrap;
@@ -2011,14 +2137,14 @@ h1 em {
 
 .fun-key-black .fun-key-shortcut {
   font-family: var(--mono-ledger);
-  font-size: 0.46rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: #d4af65;
 }
 
 .fun-key-black .fun-key-chord {
   font-family: var(--mono-ledger);
-  font-size: 0.42rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: #ffd875;
   white-space: nowrap;
@@ -2046,7 +2172,7 @@ h1 em {
 
 .fun-sequence-title {
   font-family: var(--mono-ledger);
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: var(--brass-bright);
   letter-spacing: 0.12em;
@@ -2054,7 +2180,7 @@ h1 em {
 
 .fun-sequence-hint {
   font-family: var(--mono-ledger);
-  font-size: 0.48rem;
+  font-size: 0.6rem;
   color: rgba(228, 215, 190, 0.65);
   letter-spacing: 0.06em;
 }
@@ -2105,7 +2231,7 @@ h1 em {
 
 .fun-step-num {
   font-family: var(--mono-ledger);
-  font-size: 0.52rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: var(--brass-bright);
   line-height: 1;
@@ -2136,7 +2262,7 @@ h1 em {
   white-space: nowrap;
   margin-top: 0.2rem;
   font-family: var(--mono-ledger);
-  font-size: 0.44rem;
+  font-size: 0.6rem;
   color: rgba(228, 215, 190, 0.6);
   text-transform: uppercase;
 }
@@ -2170,7 +2296,7 @@ footer {
   color: rgba(228, 215, 190, 0.82);
   background: #110d0b;
   font-family: var(--mono-ledger);
-  font-size: 0.58rem;
+  font-size: 0.6rem;
 }
 
 footer > span:first-child {
@@ -2288,7 +2414,7 @@ noscript {
 
   .stage-marker {
     top: 13%;
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .stage-marker-left {
@@ -2304,7 +2430,7 @@ noscript {
     left: 0.85rem;
     max-width: calc(100% - 1.7rem);
     padding: 0.3rem 0.55rem;
-    font-size: 0.48rem;
+    font-size: 0.6rem;
     line-height: 1.4;
   }
 

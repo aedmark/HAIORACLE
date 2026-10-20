@@ -659,6 +659,28 @@
           "related": ["tonnetz-spine", "euler-consonance-sieve", "antique-parlor-acoustics", "bandstand-console", "inform-rulebooks"]
         },
         {
+          "id": "discovery-cabinet",
+          "title": "Discovery Drawers & the Whole Cabinet",
+          "summary": "A first visit opens on a small playable instrument; the Kapellmeister, Mix, Keep, and Band drawers open themselves as the visitor plays.",
+          "tags": ["accessibility", "discovery", "progressive-disclosure", "drawers", "storage"],
+          "what": "The page starts in discovery: the phrase box, the vitrine, the transport, and the Fun Machine are open, and four drawers wait below with a one-line invitation each. Holding a Fun Machine key wakes the Kapellmeister, finishing a loop opens the Mix, changing something worth keeping opens Keep, and soloing or silencing a voice (or four loops) opens The Band. OPEN THE WHOLE CABINET lays every control bare.",
+          "how": {
+            "lead": "`src/cabinet.mjs` holds the state and rules; `src/app.mjs` adds the drawer chrome around existing elements:",
+            "points": [
+              "`cabinetReduce()` applies unlock, toggle, and mode events: a trigger opens a drawer only the first time, and a drawer the visitor closes stays closed.",
+              "Sealed drawer bodies use `hidden`, leaving the tab order and the accessibility tree (55 tab stops at first instead of 172); openings are announced through a polite status region without moving focus.",
+              "The mode and drawers are remembered in `localStorage` (`edmark-fun-machine.cabinet.v1`), validated by `parseCabinetState()`; without scripts every drawer simply stays open."
+            ]
+          },
+          "why": "Fifteen panels of esoteric machinery at once overwhelmed newcomers and keyboard and screen-reader users alike. Discovery lets the depth arrive as the visitor plays, and the whole cabinet keeps everything one switch away (D-037).",
+          "evidence": [
+            {"label": "Cabinet state and rules", "target": "src/cabinet.mjs"},
+            {"label": "Cabinet tests", "target": "tests/cabinet.test.mjs"},
+            {"label": "Architecture Record D-037", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["kapellmeister-genre-console", "inform-rulebooks"]
+        },
+        {
           "id": "inform-rulebooks",
           "title": "Inform 7 Kapellmeister Rulebooks",
           "summary": "The seven genres are written in a strict subset of Inform 7 and compiled at load into the data the conductor plays.",

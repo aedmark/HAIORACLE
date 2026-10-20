@@ -734,3 +734,23 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** Listening pass on the accompanist and the new forms; P4-02; P6-01.
 
 **Next session should start with:** a listening pass across a handful of phrases.
+
+### Session 28: 2026-10-20: a fuller floor and a still transport
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Maintainer listening pass: "Everything sounds pretty great. Some arrangements definitely do sound thin." The Perform wing still rearranged once per loop.
+
+**Done:** D-032 (replaces D-031's guardrails).
+
+**Changed:**
+1. `src/conductor.i`: 35 statements, 8 polite (22.9%). Every step keeps at least five of the seven band voices. Lead, pulse, and bass always open; pulse and bass hold through the antiphony; lead and organ both carry the breakdown over the bass or the choir. The seven choices left: organ and choir in the exposition, lead or organ answering the choir, chimes breathing in the antiphony, bass or choir under the breakdown, the choir joining the turnaround, and the turnaround's start step. That gives 120 distinct forms across 400 sample phrases.
+2. `styles.css`: `#transport-section` gets `contain: inline-size`. Its text had been widening `.transport-keys` from about 980 px up, and on windows of about 1440 px or wider the long section IV label pushed the volume controls onto a new line once per loop. Session 27 had measured only at 314 and 1280 px, where this never happened.
+
+**Verified:** 89/89 Node checks; the property suite now asserts the five-voice floor on every step of 160 phrases. Wing-1 geometry stayed identical for every section label and every long harmony readout at 15 widths from 360 to 1920 px. Live playback at 1500 px and 208 BPM kept one layout across all 12 steps.
+
+**Not verified:** Listening to the fuller forms.
+
+**Left undone:** P4-02; P6-01.
+
+**Next session should start with:** a listening pass on a few phrases to confirm no form sounds thin, then P5-23 (Inform 7 rulebooks, D-033), whose phase 1 golden fixture is the next step.

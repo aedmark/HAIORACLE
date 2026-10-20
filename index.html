@@ -106,6 +106,14 @@
       </div>
     </section>
 
+    <!-- Discovery or the whole cabinet (D-037). Drawers below unlock as the
+         visitor plays; without scripts every drawer simply stays open. -->
+    <div class="cabinet-switch" id="cabinet-switch" hidden>
+      <p class="cabinet-switch-text" id="cabinet-switch-text">DISCOVERY · THE DRAWERS OPEN AS YOU PLAY</p>
+      <button class="cabinet-switch-button" id="cabinet-mode-toggle" type="button" aria-pressed="false">OPEN THE WHOLE CABINET</button>
+      <p class="visually-hidden" id="cabinet-announcer" role="status"></p>
+    </div>
+
     <section class="workstation-wing wing-perform" id="wing-perform" aria-labelledby="wing-perform-heading">
       <header class="wing-header">
         <span class="wing-rule" aria-hidden="true"></span>
@@ -130,7 +138,7 @@
           <button class="transport-button" id="replay" type="button" disabled>
             <span class="transport-glyph" aria-hidden="true">↻</span> RESTART THE MELODY
           </button>
-          <output class="transport-position" id="transport-position">STEP -- / 12</output>
+          <output class="transport-position" id="transport-position" aria-live="off">STEP -- / 12</output>
           <output class="transport-section" id="transport-section" aria-live="off" title="The INTERCAL conductor's section for the current step"></output>
         </div>
         <div class="volume-control">
@@ -277,7 +285,7 @@
           </div>
         </div>
         <div class="kapellmeister-body">
-          <div class="kapellmeister-readout" aria-live="polite">
+          <div class="kapellmeister-readout">
             <div class="readout-cell">
               <span class="readout-label">STEP</span>
               <span class="readout-value" id="harmonic-step">01 / 12</span>
@@ -638,9 +646,9 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "1066a3555697";
+      const ASSET_VERSION = "df9bb9477c5b";
       const MODULES = [
-        "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "conductor.mjs",
+        "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs",
         "malbolge.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "score.mjs",
         "session.mjs", "shakespeare.mjs", "share.mjs", "transport.mjs", "zip.mjs",

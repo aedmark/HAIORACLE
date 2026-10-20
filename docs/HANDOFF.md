@@ -4,17 +4,17 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 38, on `main`: Parlor Ragtime ships as the seventh Kapellmeister genre, written only in Inform 7 (P5-24); session 37 completed P5-23 with a test-only barbershop genre._
+_Last updated: 2026-10-20, session 39, on `main`: the cabinet starts in discovery, with drawers that open as you play and a switch for the whole cabinet, plus the first P4-02 accessibility fixes (D-037); session 38 shipped Parlor Ragtime._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-24 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-20, session 38, local Linux environment)
+**Verified** (2026-10-20, session 39, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **113/113 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **117/117 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 34 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -87,6 +87,32 @@ _Last updated: 2026-10-20, session 38, on `main`: Parlor Ragtime ships as the se
 
 ## Session log
 
+### Session 39: 2026-10-20: discovery drawers and the accessibility audit
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Start P4-02. The maintainer asked that the cabinet not overwhelm people: "more like a discovery, and then maybe an advanced mode where it's all laid bare like equipment cabinet." They chose drawers that unlock as you play, remembered on this device. (The maintainer also listened to Parlor Ragtime from session 38: "its beautiful".)
+
+**Done:** D-037; P4-02 progress (real assistive-technology pass still open).
+
+**Audit found:** 172 tab stops (top 14, Perform 38, Mix 41, Keep 9, Band 70); `#transport-position` (an `<output>`, so implicitly polite) and the Kapellmeister readout (`aria-live="polite"`) re-announced every loop step; 43 rules set text below 0.6rem, the smallest rendering at 6.7 px; dimmed bone text at alpha 0.42/0.5/0.52 fell below 4.5:1; reduced motion was read once at load. Every control already had an accessible name, and the Fun Machine letter keys ignore typing fields. Automatic contrast detection is unreliable on the parchment and wood textures, so contrast was computed per colour token instead.
+
+**Changed:**
+1. `src/cabinet.mjs` (new): `DRAWERS` (Kapellmeister, Mix, Keep, The Band; each with a target, invitation, and trigger), `cabinetReduce()`, `parseCabinetState()`/`serializeCabinetState()`, `isDrawerOpen()`.
+2. `src/app.mjs`: `buildDrawers()` moves each target's contents into a `drawer-body` behind a `drawer-bar` with a toggle (`aria-expanded`, `aria-controls`). It also adds the cabinet switch, announcements via `#cabinet-announcer`, guarded storage, and four triggers: a held key, a completed loop, changes inside the Kapellmeister/Mix/Band/sequencer/style chips, and mute/solo or bandstand clicks (or four loops).
+3. `index.html`: `#cabinet-switch` (hidden until the script runs) with the announcer; `cabinet.mjs` in the import map; `#transport-position` set to `aria-live="off"`; the Kapellmeister readout is no longer a live region.
+4. `styles.css`: drawer and switch styles, slim sealed nameplates, an opening animation only without reduced motion, `select:focus-visible`, a `.visually-hidden` utility, a 0.6rem text floor, dimmed text raised to alpha 0.62, and content-box sizing for the two telemetry boxes (border-box had left the Fun Machine status room for only about 1.5 lines).
+5. Tests: `tests/cabinet.test.mjs`; static checks for the triggers, guarded cabinet storage, the switch, quiet readouts, the type floor, and the contrast floor.
+6. Docs: D-037, SECURITY and ARCHITECTURE (a second accepted `localStorage` store), README, TESTING, CHANGELOG, ROADMAP (P4-02 progress), AGENTS map, and a manual entry (35 entries).
+
+**Verified:** 117/117 Node checks. In the browser, a fresh visit starts with all four drawers sealed and 55 tab stops. A held key, a loop, a genre change, and a mute each opened their drawer in turn with an announcement. A drawer closed by hand stayed closed across the cabinet switch and in storage, and the whole cabinet showed every drawer and no bars. With the larger type, every width from 320 to 1720 px kept one page height across all seven genres and held keys, with nothing clipped and no horizontal overflow; the Fun Machine status text fits at 360, 720, and 1390 px. No console errors.
+
+**Not verified:** A screen reader (NVDA, VoiceOver, or Orca) reading the drawers and announcements; Safari and Firefox.
+
+**Left undone:** The P4-02 assistive-technology pass; P6-01.
+
+**Next session should start with:** a screen-reader pass of discovery mode, or the maintainer's feel for the drawer triggers.
+
 ### Session 38: 2026-10-20: Parlor Ragtime, written in Inform 7
 
 **Contributor:** Claude Code with maintainer direction
@@ -103,7 +129,7 @@ _Last updated: 2026-10-20, session 38, on `main`: Parlor Ragtime ships as the se
 
 **Verified:** 113/113 Node checks. In the browser: seven menu entries with ragtime sixth; title, motto, compass (I, IV, I, II7), and key colours update; one page height and nothing clipped at 340, 400, 720, and 1390 px across all seven genres; holding a key during play works; no console errors.
 
-**Not verified:** Listening to the rag.
+**Not verified:** Nothing further; the maintainer listened on 2026-10-20 ("its beautiful").
 
 **Left undone:** Listening passes; P4-02; P6-01.
 
@@ -278,25 +304,5 @@ _Last updated: 2026-10-20, session 38, on `main`: Parlor Ragtime ships as the se
 **Left undone:** P5-23 phases 2–5 (interpreter and `src/rulebooks.ni`, migration, surfaced menu, fixture-only seventh genre); listening pass on the fuller forms; P4-02; P6-01.
 
 **Next session should start with:** P5-23 phase 2, `src/inform.mjs` and `src/rulebooks.ni`, using the subset table in D-033.
-
-### Session 28: 2026-10-20: a fuller floor and a still transport
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Maintainer listening pass: "Everything sounds pretty great. Some arrangements definitely do sound thin." The Perform wing still rearranged once per loop.
-
-**Done:** D-032 (replaces D-031's guardrails).
-
-**Changed:**
-1. `src/conductor.i`: 35 statements, 8 polite (22.9%). Every step keeps at least five of the seven band voices. Lead, pulse, and bass always open; pulse and bass hold through the antiphony; lead and organ both carry the breakdown over the bass or the choir. The seven choices left: organ and choir in the exposition, lead or organ answering the choir, chimes breathing in the antiphony, bass or choir under the breakdown, the choir joining the turnaround, and the turnaround's start step. That gives 120 distinct forms across 400 sample phrases.
-2. `styles.css`: `#transport-section` gets `contain: inline-size`. Its text had been widening `.transport-keys` from about 980 px up, and on windows of about 1440 px or wider the long section IV label pushed the volume controls onto a new line once per loop. Session 27 had measured only at 314 and 1280 px, where this never happened.
-
-**Verified:** 89/89 Node checks; the property suite now asserts the five-voice floor on every step of 160 phrases. Wing-1 geometry stayed identical for every section label and every long harmony readout at 15 widths from 360 to 1920 px. Live playback at 1500 px and 208 BPM kept one layout across all 12 steps.
-
-**Not verified:** Listening to the fuller forms.
-
-**Left undone:** P4-02; P6-01.
-
-**Next session should start with:** a listening pass on a few phrases to confirm no form sounds thin, then P5-23 (Inform 7 rulebooks, D-033), whose phase 1 golden fixture is the next step.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).
