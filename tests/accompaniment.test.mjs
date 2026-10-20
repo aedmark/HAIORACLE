@@ -11,9 +11,9 @@ import {
   soundingPitchClasses,
   stepsToRegionBoundary,
 } from "../src/accompaniment.mjs";
-import { GENRE_RULEBOOKS, buildFunChord, buildFunProgression } from "../src/conductor.mjs";
+import { buildFunChord, buildFunProgression } from "../src/conductor.mjs";
+import { GENRES } from "./install-rulebooks.mjs";
 
-const GENRES = Object.values(GENRE_RULEBOOKS);
 
 test("each style turns a key into four region chords and twelve steps", () => {
   for (const genre of GENRES) {
@@ -35,17 +35,17 @@ test("each style turns a key into four region chords and twelve steps", () => {
 });
 
 test("swell and arpeggio hold one genre-coloured chord; progression walks the genre progression with a lead line", () => {
-  const swell = buildPerformance(7, "swell", GENRE_RULEBOOKS.SMOKY_JAZZ, 52);
-  const expected = buildFunChord(7, "auto", GENRE_RULEBOOKS.SMOKY_JAZZ, 52);
+  const swell = buildPerformance(7, "swell", "smoky_jazz", 52);
+  const expected = buildFunChord(7, "auto", "smoky_jazz", 52);
   assert.ok(swell.chords.every((chord) => JSON.stringify(chord) === JSON.stringify(expected)));
   assert.ok(swell.steps.every((step) => step.leadPitch === null));
   assert.equal(swell.summary, `${chordText(expected)} · SWELL`);
 
-  const arpeggio = buildPerformance(7, "arpeggio", GENRE_RULEBOOKS.SMOKY_JAZZ, 52);
+  const arpeggio = buildPerformance(7, "arpeggio", "smoky_jazz", 52);
   assert.deepEqual(arpeggio.chords, swell.chords);
 
-  const progression = buildPerformance(7, "progression", GENRE_RULEBOOKS.BLUES_TWELVE_BAR, 52);
-  const genreProgression = buildFunProgression(7, "auto", GENRE_RULEBOOKS.BLUES_TWELVE_BAR, 52);
+  const progression = buildPerformance(7, "progression", "blues_twelve_bar", 52);
+  const genreProgression = buildFunProgression(7, "auto", "blues_twelve_bar", 52);
   assert.deepEqual(progression.chords, genreProgression.chords);
   assert.deepEqual(progression.steps.map((s) => s.leadPitch), genreProgression.steps.map((s) => s.melodyPitch));
   assert.ok(progression.steps.every((s) => leadMidi(s.leadPitch) >= 60 && leadMidi(s.leadPitch) <= 96));
@@ -71,7 +71,7 @@ test("pad voicings keep the root low, upper voices in range, and no doubled note
 });
 
 test("voice leading moves each upper voice to the nearest octave of its pitch class", () => {
-  const jazz = buildPerformance(2, "progression", GENRE_RULEBOOKS.SMOKY_JAZZ, 52).chords;
+  const jazz = buildPerformance(2, "progression", "smoky_jazz", 52).chords;
   let previous = null;
   let totalLed = 0;
   let totalNaive = 0;
@@ -98,7 +98,7 @@ test("arpeggios ripple up and back down the chord, an octave above the pad, cont
 });
 
 test("raw chaos chords still sing an open fifth, and region boundaries count correctly", () => {
-  const raw = buildPerformance(5, "swell", GENRE_RULEBOOKS.RAW_CHAOS, 52).chords[0];
+  const raw = buildPerformance(5, "swell", "raw_chaos", 52).chords[0];
   assert.equal(raw.pitchClasses.length, 0);
   assert.deepEqual(soundingPitchClasses(raw), [5, 0]);
   assert.equal(padVoicing(raw).length, 3);
@@ -114,6 +114,6 @@ test("Fun Machine chords shift into the conductor's tonic-relative frame", async
   assert.equal(relative.quality, "minor");
   assert.equal((relative.root + 51) % 12, gMinor.rootPc, "adding the tonic back recovers the absolute chord");
   assert.deepEqual(toTonicRelative(gMinor, 48).pitchClasses, gMinor.pitchClasses, "a C tonic changes nothing");
-  const raw = buildFunChord(5, "auto", GENRE_RULEBOOKS.RAW_CHAOS, 51);
+  const raw = buildFunChord(5, "auto", "raw_chaos", 51);
   assert.deepEqual([...toTonicRelative(raw, 51).pitchClasses], []);
 });

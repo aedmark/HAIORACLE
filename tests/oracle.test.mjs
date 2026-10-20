@@ -7,8 +7,6 @@ import {
   CHORD_QUALITIES,
   FUN_KEY_BY_CODE,
   FUN_KEY_MAP,
-  GENRE_NAMES,
-  GENRE_RULEBOOKS,
   applyTonnetzOperation,
   bjorklund,
   buildFunChord,
@@ -20,6 +18,7 @@ import {
   eulerGradus,
   semitoneGradus,
 } from "../src/conductor.mjs";
+import { GENRES, rulebooks } from "./install-rulebooks.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell, runFractran, runPiet } from "../src/fractran.mjs";
 import { runLolcode } from "../src/lolcode.mjs";
 import { BEAT_NAMES, composeBeat, crazy, cycleBeatStep, rotr, runMalbolge } from "../src/malbolge.mjs";
@@ -430,16 +429,16 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   const chimes = composeChimes(pietSource, fractranSource, score, 0);
   const chant = composeChant(chantSource, score, 0);
 
-  // 1. All six genre rulebook keys and human-readable names exist
-  assert.equal(Object.keys(GENRE_RULEBOOKS).length, 6);
-  for (const [key, rulebook] of Object.entries(GENRE_RULEBOOKS)) {
-    assert.ok(GENRE_NAMES[rulebook], `Expected display name for genre ${rulebook}`);
+  // 1. All six genre rulebooks load from src/rulebooks.ni with display names
+  assert.equal(GENRES.length, 6);
+  for (const genre of rulebooks.genres) {
+    assert.ok(genre.title, `Expected display name for genre ${genre.code}`);
   }
 
   // 2. 12-Bar Blues rulebook: I7 (steps 0-3), IV7 (steps 4-5), I7 (steps 6-7), V7 (step 8), IV7 (step 9), I7 (step 10), V7 Turnaround (step 11)
   const blues = conductEnsemble({
     score, melody, beat, bass, harmony, chimes, chant,
-    genre: GENRE_RULEBOOKS.BLUES_TWELVE_BAR,
+    genre: "blues_twelve_bar",
   });
   assert.equal(blues.genre, "blues_twelve_bar");
   assert.equal(blues.spine[0].op, "I7");
@@ -455,7 +454,7 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   // 3. Smoky Jazz rulebook: Imaj9, vi9, ii9, subV7
   const jazz = conductEnsemble({
     score, melody, beat, bass, harmony, chimes, chant,
-    genre: GENRE_RULEBOOKS.SMOKY_JAZZ,
+    genre: "smoky_jazz",
   });
   assert.equal(jazz.genre, "smoky_jazz");
   assert.equal(jazz.spine[0].op, "Imaj9");
@@ -469,7 +468,7 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   // 4. Renaissance Counterpoint rulebook: Picardy third on step 11
   const counterpoint = conductEnsemble({
     score, melody, beat, bass, harmony, chimes, chant,
-    genre: GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT,
+    genre: "renaissance_counterpoint",
   });
   assert.equal(counterpoint.genre, "renaissance_counterpoint");
   assert.equal(counterpoint.spine[11].quality, "major");
@@ -478,7 +477,7 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   // 5. Modal Drone rulebook: root and fifth pedal
   const drone = conductEnsemble({
     score, melody, beat, bass, harmony, chimes, chant,
-    genre: GENRE_RULEBOOKS.MODAL_DRONE,
+    genre: "modal_drone",
   });
   assert.equal(drone.genre, "modal_drone");
   assert.ok(drone.spine[0].op.includes("Drone"));
@@ -488,7 +487,7 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   // 6. Raw Chaos rulebook: zero filtering, exact native VM output preserved
   const chaos = conductEnsemble({
     score, melody, beat, bass, harmony, chimes, chant,
-    genre: GENRE_RULEBOOKS.RAW_CHAOS,
+    genre: "raw_chaos",
   });
   assert.equal(chaos.genre, "raw_chaos");
   assert.deepEqual(chaos.melody, melody);
@@ -519,7 +518,7 @@ test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays cus
   assert.equal(FUN_KEY_BY_CODE.KeyK.note, "C'");
 
   // 2. buildFunChord chord qualities and auto-genre harmonization
-  const bluesChord = buildFunChord(0, CHORD_QUALITIES.AUTO, GENRE_RULEBOOKS.BLUES_TWELVE_BAR);
+  const bluesChord = buildFunChord(0, CHORD_QUALITIES.AUTO, "blues_twelve_bar");
   assert.equal(bluesChord.name, "C");
   assert.equal(bluesChord.quality, "dom7");
   assert.deepEqual(bluesChord.pitchClasses, [0, 4, 7, 10]);
@@ -557,7 +556,7 @@ test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays cus
 
   const conducted = conductEnsemble({
     score, melody, beat, bass, harmony, chimes, chant,
-    genre: GENRE_RULEBOOKS.VICTORIAN_TONNETZ,
+    genre: "victorian_tonnetz",
     customSpine: customProgression,
   });
 
@@ -573,7 +572,7 @@ test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays cus
   assert.ok(conducted.spine[0].name);
 
   // 4. buildFunProgression generates complete 12-step chord progression melody
-  const bluesProg = buildFunProgression(0, "auto", GENRE_RULEBOOKS.BLUES_TWELVE_BAR);
+  const bluesProg = buildFunProgression(0, "auto", "blues_twelve_bar");
   assert.equal(bluesProg.rootPc, 0);
   assert.equal(bluesProg.chords.length, 4);
   assert.equal(bluesProg.steps.length, 12);
@@ -591,7 +590,7 @@ test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays cus
   assert.ok(bluesProg.steps[0].melodyNote);
   assert.match(bluesProg.summary, /C7 → F7 → G7 → C7/);
 
-  const majorProg = buildFunProgression(0, "major", GENRE_RULEBOOKS.VICTORIAN_TONNETZ);
+  const majorProg = buildFunProgression(0, "major", "victorian_tonnetz");
   assert.equal(majorProg.chords[0].name, "C");
   assert.equal(majorProg.chords[1].name, "A");
   assert.equal(majorProg.chords[1].quality, "minor");
@@ -599,7 +598,7 @@ test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays cus
   assert.equal(majorProg.chords[3].name, "G");
   assert.match(majorProg.summary, /C Maj → Am → F Maj → G Maj/);
 
-  const jazzProg = buildFunProgression(2, "auto", GENRE_RULEBOOKS.SMOKY_JAZZ);
+  const jazzProg = buildFunProgression(2, "auto", "smoky_jazz");
   assert.equal(jazzProg.chords[0].name, "D");
   assert.equal(jazzProg.chords[0].quality, "maj9");
   assert.equal(jazzProg.chords[1].name, "B");
@@ -607,7 +606,7 @@ test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays cus
   assert.equal(jazzProg.chords[3].name, "A");
   assert.match(jazzProg.summary, /Dmaj9 → Bm9 → Em9 → A7alt/);
 
-  const minorProg = buildFunProgression(9, "auto", GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT);
+  const minorProg = buildFunProgression(9, "auto", "renaissance_counterpoint");
   assert.equal(minorProg.chords[0].name, "A");
   assert.equal(minorProg.chords[0].quality, "minor");
   assert.equal(minorProg.chords[1].name, "F");

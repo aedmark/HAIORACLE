@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { GENRE_RULEBOOKS } from "../src/conductor.mjs";
+import { GENRES } from "./install-rulebooks.mjs";
 import { CAPTURE_VERSION, captureRulebooks, serializeCapture } from "./rulebook-capture.mjs";
 
 const fixtureText = await readFile(new URL("./fixtures/rulebooks-golden.json", import.meta.url), "utf8");
@@ -10,7 +10,7 @@ const golden = JSON.parse(fixtureText);
 
 test("the golden fixture covers every genre in every rulebook decision", () => {
   assert.equal(golden.version, CAPTURE_VERSION);
-  const genres = Object.values(GENRE_RULEBOOKS);
+  const genres = GENRES;
   assert.deepEqual(golden.genres.map((genre) => genre.id), genres);
   for (const section of ["colours", "progressions", "spines", "projection"]) {
     const covered = new Set(Object.keys(golden[section]).map((key) => key.split("|")[0]));

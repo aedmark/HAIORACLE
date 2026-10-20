@@ -10,7 +10,7 @@
 // (cells cycle independently, so order does not matter).
 
 import { ACCOMPANIMENT_STYLES } from "./accompaniment.mjs";
-import { GENRE_RULEBOOKS } from "./conductor.mjs";
+import { genreCodes } from "./conductor.mjs";
 import { MIXER_CHANNEL_IDS } from "./mixer.mjs";
 
 export const SESSION_FORMAT = "edmark-fun-session";
@@ -36,7 +36,6 @@ const V1_FUN_QUALITIES = Object.freeze(["auto", "major", "minor", "dom7", "maj9"
 export const CHORD_QUALITY_IDS = Object.freeze([
   "major", "minor", "dom7", "maj9", "min9", "dom7alt", "dim", "modal_open", "phrygian", "lydian", "raw",
 ]);
-export const GENRE_IDS = Object.freeze(Object.values(GENRE_RULEBOOKS));
 
 export class SessionError extends Error {
   constructor(path, message) {
@@ -169,7 +168,9 @@ export function validateSession(raw) {
     phrase: expectPhrase(raw.phrase, "session.phrase"),
     tempo: expectInt(raw.tempo, "session.tempo", 36, 208),
     volume: expectInt(raw.volume, "session.volume", 0, 100),
-    genre: expectEnum(raw.genre, "session.genre", GENRE_IDS),
+    // Genre codes come from the installed Inform 7 rulebooks (D-033); validating
+    // before they are installed throws instead of rejecting every genre.
+    genre: expectEnum(raw.genre, "session.genre", genreCodes()),
     strictness: expectInt(raw.strictness, "session.strictness", 3, 14),
     acoustics,
     funMachine,
@@ -225,6 +226,9 @@ export function parsePresetStore(text) {
     return emptyPresetStore();
   }
   if (!isPlainObject(parsed) || parsed.version !== 1 || !Array.isArray(parsed.presets)) return emptyPresetStore();
+  // Presets name genres from the installed rulebooks. Reading them earlier must
+  // fail loudly: dropping every preset here would let the next save erase them.
+  genreCodes();
   const presets = [];
   for (const entry of parsed.presets.slice(0, MAX_PRESETS)) {
     try {

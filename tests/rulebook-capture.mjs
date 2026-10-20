@@ -9,9 +9,6 @@ import { readFile } from "node:fs/promises";
 import { composeHarmony } from "../src/befunge.mjs";
 import { composeBass } from "../src/brainfuck.mjs";
 import {
-  GENRE_DESCRIPTIONS,
-  GENRE_NAMES,
-  GENRE_RULEBOOKS,
   buildFunChord,
   buildFunProgression,
   buildGenreSpine,
@@ -23,10 +20,10 @@ import { composeBeat } from "../src/malbolge.mjs";
 import { melodyFor } from "../src/music.mjs";
 import { composeScore } from "../src/score.mjs";
 import { composeChant } from "../src/shakespeare.mjs";
+import { GENRES, rulebooks } from "./install-rulebooks.mjs";
 
 export const CAPTURE_VERSION = 2;
 
-const GENRES = Object.values(GENRE_RULEBOOKS);
 const KEYS = Array.from({ length: 12 }, (_, i) => i);
 // Only "auto" colouring reads the tonic, so only "auto" is swept across tonics.
 const TONICS = [0, 7];
@@ -97,7 +94,7 @@ export async function captureRulebooks() {
   const { chords, ref } = chordTable();
   const scores = PHRASES.map((phrase) => composeScore(oracle, phrase));
 
-  const genres = GENRES.map((id) => ({ id, name: GENRE_NAMES[id], description: GENRE_DESCRIPTIONS[id] }));
+  const genres = rulebooks.genres.map((genre) => ({ id: genre.code, name: genre.title, description: genre.motto }));
 
   // Fun Machine chord colours: "genre|quality|tonic" → chord per key.
   const colours = {};

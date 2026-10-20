@@ -5,9 +5,6 @@ import test from "node:test";
 import { composeHarmony } from "../src/befunge.mjs";
 import { composeBass } from "../src/brainfuck.mjs";
 import {
-  GENRE_DESCRIPTIONS,
-  GENRE_NAMES,
-  GENRE_RULEBOOKS,
   PITCH_NAMES,
   buildFunChord,
   buildFunProgression,
@@ -21,6 +18,7 @@ import { composeBeat } from "../src/malbolge.mjs";
 import { melodyFor } from "../src/music.mjs";
 import { composeScore } from "../src/score.mjs";
 import { composeChant } from "../src/shakespeare.mjs";
+import { GENRES } from "./install-rulebooks.mjs";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const [rulebookSource, oracle, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource] = await Promise.all([
@@ -135,10 +133,10 @@ test("compile validation names the genre and what is wrong", () => {
 });
 
 // ---------------------------------------------------------------------------
-// The canonical rulebooks against today's conductor (until P5-23 phase 3
-// migrates the conductor onto this data, these two must agree).
+// The conductor honours the compiled data. Since P5-23 phase 3 it reads this
+// data directly; these tests pin down how each method is applied, while
+// tests/rulebooks.test.mjs pins down the resulting music.
 
-const GENRES = Object.values(GENRE_RULEBOOKS);
 const snap = (pc, candidates) => {
   let best = candidates[0];
   let min = 999;
@@ -152,12 +150,9 @@ const snap = (pc, candidates) => {
   return best;
 };
 
-test("genres, codes, titles, mottos, and menu order match the conductor", () => {
+test("genre codes, flags, and menu order are as the rulebooks state", () => {
   assert.deepEqual(books.genres.map((genre) => genre.code), GENRES);
-  for (const genre of books.genres) {
-    assert.equal(genre.title, GENRE_NAMES[genre.code]);
-    assert.equal(genre.motto, GENRE_DESCRIPTIONS[genre.code]);
-  }
+  assert.deepEqual(GENRES, ["victorian_tonnetz", "blues_twelve_bar", "smoky_jazz", "renaissance_counterpoint", "modal_drone", "raw_chaos"]);
   assert.deepEqual(books.genres.filter((g) => g.unfettered).map((g) => g.code), ["raw_chaos"]);
   assert.deepEqual(books.genres.filter((g) => g.insistent).map((g) => g.code), ["blues_twelve_bar", "smoky_jazz", "modal_drone"]);
 });
@@ -177,7 +172,7 @@ test("colouring and progression rules match the Fun Machine's chord colours and 
     }
   }
   for (const [quality, id] of Object.entries(books.qualityProgressions)) {
-    const expected = buildFunProgression(4, quality, GENRE_RULEBOOKS.VICTORIAN_TONNETZ, 0);
+    const expected = buildFunProgression(4, quality, "victorian_tonnetz", 0);
     assert.deepEqual(books.progressions[id].map((row) => [(4 + row.degree) % 12, row.quality]), expected.chords.map((c) => [c.rootPc, c.quality]), quality);
   }
 });

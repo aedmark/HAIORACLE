@@ -1,29 +1,35 @@
-export const GENRE_RULEBOOKS = Object.freeze({
-  VICTORIAN_TONNETZ: "victorian_tonnetz",
-  BLUES_TWELVE_BAR: "blues_twelve_bar",
-  SMOKY_JAZZ: "smoky_jazz",
-  RENAISSANCE_COUNTERPOINT: "renaissance_counterpoint",
-  MODAL_DRONE: "modal_drone",
-  RAW_CHAOS: "raw_chaos",
-});
+// The Kapellmeister genres are not written here: src/rulebooks.ni states them
+// in Inform 7 and src/inform.mjs compiles them (D-033). The host installs the
+// compiled rulebooks once at load; every genre-dependent choice below reads
+// them by genre code.
+let installedRulebooks = null;
 
-export const GENRE_NAMES = Object.freeze({
-  victorian_tonnetz: "VICTORIAN NEO-RIEMANNIAN TONNETZ",
-  blues_twelve_bar: "12-BAR DELTA & PARLOR BLUES",
-  smoky_jazz: "SMOKY PARLOR JAZZ & EXTENDED TONNETZ",
-  renaissance_counterpoint: "PALESTRINA MODAL COUNTERPOINT",
-  modal_drone: "MYSTIC BYZANTINE & HIMALAYAN DRONE",
-  raw_chaos: "RAW ESOTERIC CHAOS (UNFETTERED VMS)",
-});
+export function installRulebooks(rulebooks) {
+  if (!rulebooks?.genres?.length || !rulebooks.byCode || !rulebooks.progressions || !rulebooks.qualityProgressions) {
+    throw new TypeError("installRulebooks() needs compileRulebooks() output");
+  }
+  installedRulebooks = rulebooks;
+}
 
-export const GENRE_DESCRIPTIONS = Object.freeze({
-  victorian_tonnetz: "Parsimonious P/L/R voice-leading across 4 harmonic regions with Euler G ≤ 8 consonance.",
-  blues_twelve_bar: "Authentic I7-IV7-V7 12-bar chord matrix with walking shuffle bass and blue-note sieve.",
-  smoky_jazz: "ii-V-I progressions with rootless 3rd/7th/9th guide tones, swung overtones, and chromatic approaches.",
-  renaissance_counterpoint: "16th-century species counterpoint with prepared suspensions, stepwise motion, and strict G ≤ 5 consonance.",
-  modal_drone: "Hypnotic root & fifth drone pedal with Phrygian dominant microtonal scale ladders and open chords.",
-  raw_chaos: "Zero harmonic filtration. Raw, native, unquantized mathematical outputs from all six esoteric virtual machines.",
-});
+export function rulebooksInstalled() {
+  return installedRulebooks !== null;
+}
+
+function rulebooks() {
+  if (!installedRulebooks) throw new Error("The Kapellmeister rulebooks (src/rulebooks.ni) are not installed yet");
+  return installedRulebooks;
+}
+
+/** Codes of every installed genre, in menu order. */
+export function genreCodes() {
+  return rulebooks().genres.map((genre) => genre.code);
+}
+
+/** The compiled genre for a code; an unknown code falls back to the first genre. */
+export function genreBook(code) {
+  const books = rulebooks();
+  return books.byCode[code] ?? books.genres[0];
+}
 
 export const PITCH_NAMES = Object.freeze(["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"]);
 
@@ -40,70 +46,6 @@ const SEMITONE_RATIOS = Object.freeze([
   [5, 3],   // 9: Major Sixth (G = 7)
   [9, 5],   // 10: Minor Seventh (G = 9)
   [15, 8],  // 11: Major Seventh (G = 10)
-]);
-
-const TONNETZ_PATHS = Object.freeze([
-  ["R", "L", "P"],
-  ["P", "R", "L"],
-  ["L", "R", "P"],
-  ["R", "P", "L"],
-  ["L", "P", "R"],
-  ["R", "L", "R"],
-  ["P", "L", "R"],
-  ["L", "R", "L"],
-]);
-
-const CONSONANT_CHIME_RATIOS = Object.freeze([
-  { ratio: "1/1", value: 1.0 },
-  { ratio: "9/8", value: 9 / 8 },
-  { ratio: "6/5", value: 6 / 5 },
-  { ratio: "5/4", value: 5 / 4 },
-  { ratio: "4/3", value: 4 / 3 },
-  { ratio: "3/2", value: 3 / 2 },
-  { ratio: "5/3", value: 5 / 3 },
-  { ratio: "2/1", value: 2.0 },
-]);
-
-const BLUES_CHIME_RATIOS = Object.freeze([
-  { ratio: "1/1", value: 1.0 },
-  { ratio: "7/6", value: 7 / 6 },
-  { ratio: "6/5", value: 6 / 5 },
-  { ratio: "5/4", value: 5 / 4 },
-  { ratio: "4/3", value: 4 / 3 },
-  { ratio: "7/5", value: 7 / 5 }, // Blue note (septimal tritone)
-  { ratio: "3/2", value: 3 / 2 },
-  { ratio: "7/4", value: 7 / 4 }, // Harmonic flat 7th
-  { ratio: "2/1", value: 2.0 },
-]);
-
-const JAZZ_CHIME_RATIOS = Object.freeze([
-  { ratio: "1/1", value: 1.0 },
-  { ratio: "9/8", value: 9 / 8 },
-  { ratio: "5/4", value: 5 / 4 },
-  { ratio: "11/8", value: 11 / 8 }, // Sharp 11th
-  { ratio: "3/2", value: 3 / 2 },
-  { ratio: "13/8", value: 13 / 8 }, // Flat 13th
-  { ratio: "7/4", value: 7 / 4 },
-  { ratio: "2/1", value: 2.0 },
-]);
-
-const COUNTERPOINT_CHIME_RATIOS = Object.freeze([
-  { ratio: "1/1", value: 1.0 },
-  { ratio: "9/8", value: 9 / 8 },
-  { ratio: "4/3", value: 4 / 3 },
-  { ratio: "3/2", value: 3 / 2 },
-  { ratio: "16/9", value: 16 / 9 },
-  { ratio: "2/1", value: 2.0 },
-]);
-
-const MODAL_DRONE_CHIME_RATIOS = Object.freeze([
-  { ratio: "1/1", value: 1.0 },
-  { ratio: "9/8", value: 9 / 8 },
-  { ratio: "5/4", value: 5 / 4 },
-  { ratio: "4/3", value: 4 / 3 },
-  { ratio: "3/2", value: 3 / 2 },
-  { ratio: "7/4", value: 7 / 4 },
-  { ratio: "2/1", value: 2.0 },
 ]);
 
 function gcd(a, b) {
@@ -267,38 +209,11 @@ export const FUN_KEY_BY_KEY = Object.freeze(
   Object.fromEntries(FUN_KEY_MAP.map((item) => [item.displayKey, item])),
 );
 
-export function buildFunChord(rootSemitone, quality = "auto", genre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ, tonicRoot = 0) {
+export function buildFunChord(rootSemitone, quality = "auto", genre = null, tonicRoot = 0) {
   const r = ((Math.trunc(rootSemitone) % 12) + 12) % 12;
   const relFromTonic = ((r - (Math.trunc(tonicRoot) % 12)) % 12 + 12) % 12;
-  let resolvedQuality = quality;
-
-  if (quality === "auto" || !quality) {
-    switch (genre) {
-      case GENRE_RULEBOOKS.BLUES_TWELVE_BAR:
-        resolvedQuality = "dom7";
-        break;
-      case GENRE_RULEBOOKS.SMOKY_JAZZ:
-        resolvedQuality = [0, 5].includes(relFromTonic) ? "maj9"
-          : [1, 6, 11].includes(relFromTonic) ? "dom7alt"
-          : "min9";
-        break;
-      case GENRE_RULEBOOKS.MODAL_DRONE:
-        resolvedQuality = relFromTonic === 1 ? "phrygian"
-          : relFromTonic === 6 ? "lydian"
-          : "modal_open";
-        break;
-      case GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT:
-        resolvedQuality = [0, 2, 5, 7, 9].includes(relFromTonic) ? "minor" : "major";
-        break;
-      case GENRE_RULEBOOKS.RAW_CHAOS:
-        resolvedQuality = "raw";
-        break;
-      case GENRE_RULEBOOKS.VICTORIAN_TONNETZ:
-      default:
-        resolvedQuality = [0, 5, 7].includes(relFromTonic) ? "major" : "minor";
-        break;
-    }
-  }
+  // "auto" asks the genre's colouring rules; an explicit quality needs no rulebook.
+  let resolvedQuality = quality === "auto" || !quality ? genreBook(genre).colouring[relFromTonic] : quality;
 
   let customPcs = null;
   if (resolvedQuality === "dom7") {
@@ -336,82 +251,16 @@ export function buildFunChord(rootSemitone, quality = "auto", genre = GENRE_RULE
   });
 }
 
-export function buildFunProgression(rootSemitone, quality = "auto", genre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ, tonicRoot = 0) {
+export function buildFunProgression(rootSemitone, quality = "auto", genre = null, tonicRoot = 0) {
   const r = ((Math.trunc(rootSemitone) % 12) + 12) % 12;
   const relFromTonic = ((r - (Math.trunc(tonicRoot) % 12)) % 12 + 12) % 12;
-
-  let chordDefs = [];
-  let summary = "";
-
-  if (quality === "dom7" || (quality === "auto" && genre === GENRE_RULEBOOKS.BLUES_TWELVE_BAR)) {
-    // 12-Bar Blues Riff Progression: I7 -> IV7 -> V7 -> I7 Turnaround
-    const sub = (r + 5) % 12;
-    const dom = (r + 7) % 12;
-    chordDefs = [
-      { root: r, quality: "dom7", melodyOffsets: [0, 4, 7] },
-      { root: sub, quality: "dom7", melodyOffsets: [5, 3, 5] },
-      { root: dom, quality: "dom7", melodyOffsets: [7, 6, 7] },
-      { root: r, quality: "dom7", melodyOffsets: [10, 7, 6] },
-    ];
-    summary = `${PITCH_NAMES[r]}7 → ${PITCH_NAMES[sub]}7 → ${PITCH_NAMES[dom]}7 → ${PITCH_NAMES[r]}7`;
-  } else if (quality === "maj9" || (quality === "auto" && genre === GENRE_RULEBOOKS.SMOKY_JAZZ)) {
-    // Smoky Jazz ii-V-I-VI turnaround: Imaj9 -> vi9 -> ii9 -> V7alt
-    const vi = (r + 9) % 12;
-    const ii = (r + 2) % 12;
-    const v = (r + 7) % 12;
-    chordDefs = [
-      { root: r, quality: "maj9", melodyOffsets: [14, 11, 7] },
-      { root: vi, quality: "min9", melodyOffsets: [11, 7, 3] },
-      { root: ii, quality: "min9", melodyOffsets: [4, 0, 5] },
-      { root: v, quality: "dom7alt", melodyOffsets: [8, 5, 0] },
-    ];
-    summary = `${PITCH_NAMES[r]}maj9 → ${PITCH_NAMES[vi]}m9 → ${PITCH_NAMES[ii]}m9 → ${PITCH_NAMES[v]}7alt`;
-  } else if (quality === "modal_open" || (quality === "auto" && genre === GENRE_RULEBOOKS.MODAL_DRONE)) {
-    // Mystic Modal Drone Progression: Open 5th -> Phrygian -> Lydian -> Harmonic 7th
-    chordDefs = [
-      { root: r, quality: "modal_open", melodyOffsets: [0, 7, 12] },
-      { root: r, quality: "phrygian", melodyOffsets: [1, 4, 7] },
-      { root: r, quality: "lydian", melodyOffsets: [6, 7, 11] },
-      { root: r, quality: "modal_open", melodyOffsets: [10, 7, 0] },
-    ];
-    summary = `${PITCH_NAMES[r]} Drone → Phryg → Lydian → 7th`;
-  } else if (quality === "minor" || (quality === "auto" && (genre === GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT || (![0, 5, 7].includes(relFromTonic) && genre === GENRE_RULEBOOKS.VICTORIAN_TONNETZ)))) {
-    // Minor Progression: i -> VI -> iv -> V
-    const vi = (r + 8) % 12;
-    const iv = (r + 5) % 12;
-    const v = (r + 7) % 12;
-    chordDefs = [
-      { root: r, quality: "minor", melodyOffsets: [0, 3, 7] },
-      { root: vi, quality: "major", melodyOffsets: [8, 12, 8] },
-      { root: iv, quality: "minor", melodyOffsets: [5, 8, 12] },
-      { root: v, quality: "major", melodyOffsets: [7, 11, 14] },
-    ];
-    summary = `${PITCH_NAMES[r]}m → ${PITCH_NAMES[vi]} Maj → ${PITCH_NAMES[iv]}m → ${PITCH_NAMES[v]} Maj`;
-  } else if (quality === "dim") {
-    // Symmetrical Diminished Circle
-    const d1 = (r + 3) % 12;
-    const d2 = (r + 6) % 12;
-    const d3 = (r + 9) % 12;
-    chordDefs = [
-      { root: r, quality: "dim", melodyOffsets: [0, 3, 6] },
-      { root: d1, quality: "dim", melodyOffsets: [3, 6, 9] },
-      { root: d2, quality: "dim", melodyOffsets: [6, 9, 12] },
-      { root: d3, quality: "dim", melodyOffsets: [9, 6, 3] },
-    ];
-    summary = `${PITCH_NAMES[r]}° → ${PITCH_NAMES[d1]}° → ${PITCH_NAMES[d2]}° → ${PITCH_NAMES[d3]}°`;
-  } else {
-    // Classic Victorian & Parlor Major Progression: I -> vi -> IV -> V (Baldwin Heart & Soul Vamp)
-    const vi = (r + 9) % 12;
-    const iv = (r + 5) % 12;
-    const v = (r + 7) % 12;
-    chordDefs = [
-      { root: r, quality: "major", melodyOffsets: [0, 4, 7] },
-      { root: vi, quality: "minor", melodyOffsets: [9, 12, 9] },
-      { root: iv, quality: "major", melodyOffsets: [5, 9, 12] },
-      { root: v, quality: "major", melodyOffsets: [7, 11, 14] },
-    ];
-    summary = `${PITCH_NAMES[r]} Maj → ${PITCH_NAMES[vi]}m → ${PITCH_NAMES[iv]} Maj → ${PITCH_NAMES[v]} Maj`;
-  }
+  const books = rulebooks();
+  const tableId = quality === "auto" || !quality
+    ? genreBook(genre).progressionByInterval[relFromTonic]
+    : books.qualityProgressions[quality] ?? books.qualityProgressions.major;
+  const rows = books.progressions[tableId];
+  const chordDefs = rows.map((row) => ({ root: (r + row.degree) % 12, quality: row.quality, melodyOffsets: row.melody }));
+  const summary = rows.map((row, i) => row.shown.replace("[root]", PITCH_NAMES[chordDefs[i].root])).join(" → ");
 
   const chords = chordDefs.map((def) => buildFunChord(def.root, def.quality, genre, tonicRoot));
 
@@ -468,9 +317,11 @@ function initialQualityForScore(score) {
   return "minor";
 }
 
-export function buildTonnetzSpine(score, mutation = 0) {
-  const pathIndex = ((score.harmonyMode ?? 0) + (score.scale ?? 0) + mutation) % TONNETZ_PATHS.length;
-  const ops = TONNETZ_PATHS[pathIndex];
+// The Tonnetz walk: start on the score's tonic triad and apply one walk of
+// P/L/R moves (from the genre's Table of Tonnetz Walks) region by region.
+export function buildTonnetzSpine(score, mutation = 0, walks = genreBook(null).spine.walks) {
+  const pathIndex = ((score.harmonyMode ?? 0) + (score.scale ?? 0) + mutation) % walks.length;
+  const ops = walks[pathIndex];
   const tonicQuality = initialQualityForScore(score);
   const chords = [buildTriad(0, tonicQuality, "I")];
   for (const op of ops) {
@@ -478,83 +329,6 @@ export function buildTonnetzSpine(score, mutation = 0) {
   }
   // 12 steps grouped into 4 harmonic regions of 3 steps each
   return Object.freeze(Array.from({ length: 12 }, (_, stepIndex) => chords[Math.floor(stepIndex / 3) % 4]));
-}
-
-export function buildBluesSpine(score, mutation = 0) {
-  const root = 0;
-  const sub = (root + 5) % 12; // IV
-  const dom = (root + 7) % 12; // V
-
-  const chordI = buildTriad(root, "dom7", "I7", [root, (root + 4) % 12, (root + 7) % 12, (root + 10) % 12]);
-  const chordIV = buildTriad(sub, "dom7", "IV7", [sub, (sub + 4) % 12, (sub + 7) % 12, (sub + 10) % 12]);
-  const chordV = buildTriad(dom, "dom7", "V7", [dom, (dom + 4) % 12, (dom + 7) % 12, (dom + 10) % 12]);
-  const chordTurn = buildTriad(dom, "dom7", "V7 (Turn)", [dom, (dom + 4) % 12, (dom + 7) % 12, (dom + 10) % 12]);
-
-  // Standard 12-bar blues layout across 12 steps
-  const progression = [
-    chordI, chordI, chordI, chordI, // Steps 0-3: I7
-    chordIV, chordIV,               // Steps 4-5: IV7
-    chordI, chordI,                 // Steps 6-7: I7
-    chordV,                         // Step 8: V7
-    chordIV,                        // Step 9: IV7
-    chordI,                         // Step 10: I7
-    chordTurn,                      // Step 11: Turnaround V7
-  ];
-  return Object.freeze(progression);
-}
-
-export function buildJazzSpine(score, mutation = 0) {
-  const root = 0;
-  const chordImaj9 = buildTriad(root, "maj9", "Imaj9", [root, (root + 4) % 12, (root + 7) % 12, (root + 11) % 12, (root + 2) % 12]);
-  const viRoot = (root + 9) % 12;
-  const chordVi9 = buildTriad(viRoot, "min9", "vi9", [viRoot, (viRoot + 3) % 12, (viRoot + 7) % 12, (viRoot + 10) % 12, (viRoot + 2) % 12]);
-  const iiRoot = (root + 2) % 12;
-  const chordIi9 = buildTriad(iiRoot, "min9", "ii9", [iiRoot, (iiRoot + 3) % 12, (iiRoot + 7) % 12, (iiRoot + 10) % 12, (iiRoot + 2) % 12]);
-  const tritoneSubRoot = (root + 1) % 12; // Flat II7 tritone sub
-  const chordSubV7 = buildTriad(tritoneSubRoot, "dom7alt", "♭II7alt", [tritoneSubRoot, (tritoneSubRoot + 4) % 12, (tritoneSubRoot + 7) % 12, (tritoneSubRoot + 10) % 12]);
-
-  const progression = [
-    chordImaj9, chordImaj9, chordImaj9,
-    chordVi9, chordVi9, chordVi9,
-    chordIi9, chordIi9, chordIi9,
-    chordSubV7, chordSubV7, chordSubV7,
-  ];
-  return Object.freeze(progression);
-}
-
-export function buildCounterpointSpine(score, mutation = 0) {
-  const root = 0;
-  const sub = (root + 5) % 12;
-  const dom = (root + 7) % 12;
-
-  const chordI = buildTriad(root, "minor", "i (Tonic)", [root, (root + 3) % 12, (root + 7) % 12]);
-  const chordIV = buildTriad(sub, "minor", "iv (Susp 4-3)", [sub, (sub + 3) % 12, (sub + 7) % 12]);
-  const chordV = buildTriad(dom, "minor", "v (Susp 7-6)", [dom, (dom + 3) % 12, (dom + 7) % 12]);
-  const chordPicardy = buildTriad(root, "major", "I (Picardy Cadence)", [root, (root + 4) % 12, (root + 7) % 12]);
-
-  const progression = [
-    chordI, chordI, chordI,
-    chordIV, chordIV, chordIV,
-    chordV, chordV, chordV,
-    chordI, chordI, chordPicardy,
-  ];
-  return Object.freeze(progression);
-}
-
-export function buildModalDroneSpine(score, mutation = 0) {
-  const root = 0;
-  const droneOpen = buildTriad(root, "modal_open", "Tonic 1-5 Drone", [root, (root + 7) % 12, (root + 2) % 12]);
-  const dronePhryg = buildTriad(root, "phrygian", "Phrygian Inflection", [root, (root + 1) % 12, (root + 4) % 12, (root + 7) % 12]);
-  const droneLyd = buildTriad(root, "lydian", "Lydian Mystic (#4)", [root, (root + 6) % 12, (root + 7) % 12, (root + 11) % 12]);
-  const droneSept = buildTriad(root, "modal_open", "Harmonic 7th Return", [root, (root + 7) % 12, (root + 10) % 12]);
-
-  const progression = [
-    droneOpen, droneOpen, droneOpen,
-    dronePhryg, dronePhryg, dronePhryg,
-    droneLyd, droneLyd, droneLyd,
-    droneSept, droneSept, droneSept,
-  ];
-  return Object.freeze(progression);
 }
 
 export function buildRawChaosSpine(score) {
@@ -572,93 +346,59 @@ export function buildRawChaosSpine(score) {
 }
 
 export function buildGenreSpine(genre, score, mutation = 0) {
-  switch (genre) {
-    case GENRE_RULEBOOKS.BLUES_TWELVE_BAR:
-      return buildBluesSpine(score, mutation);
-    case GENRE_RULEBOOKS.SMOKY_JAZZ:
-      return buildJazzSpine(score, mutation);
-    case GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT:
-      return buildCounterpointSpine(score, mutation);
-    case GENRE_RULEBOOKS.MODAL_DRONE:
-      return buildModalDroneSpine(score, mutation);
-    case GENRE_RULEBOOKS.RAW_CHAOS:
-      return buildRawChaosSpine(score);
-    case GENRE_RULEBOOKS.VICTORIAN_TONNETZ:
-    default:
-      return buildTonnetzSpine(score, mutation);
-  }
+  const book = genreBook(genre);
+  if (book.spine.method === "unfettered") return buildRawChaosSpine(score);
+  if (book.spine.method === "tonnetz") return buildTonnetzSpine(score, mutation, book.spine.walks);
+  return Object.freeze(book.spine.steps.map((step) => (
+    buildTriad(step.degree, step.quality, step.label, step.tones.map((tone) => step.degree + tone))
+  )));
 }
+
+// Nearest pitch class on the circle; ties go to the earlier candidate.
+function snapToNearest(pc, candidates) {
+  let best = candidates[0];
+  let minDiff = 999;
+  for (const candidate of candidates) {
+    const diff = Math.min(Math.abs(pc - candidate), 12 - Math.abs(pc - candidate));
+    if (diff < minDiff) {
+      minDiff = diff;
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+const chordMember = (chord, member) => (member === "octave" ? chord.root + 12 : chord[member]);
 
 /**
  * Projects an arbitrary semitone interval onto the nearest pitch that is consonant
  * (low Euler Gradus Suavitatis) with the active Tonnetz or genre chord.
  */
-export function projectConsonantPitch(rawSemitone, chord, allowPassing = false, maxGradus = 8, genre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ) {
-  if (genre === GENRE_RULEBOOKS.RAW_CHAOS || !chord || chord.quality === "raw") {
+export function projectConsonantPitch(rawSemitone, chord, allowPassing = false, maxGradus = 8, genre = null) {
+  const book = genreBook(genre);
+  if (book.unfettered || !chord || chord.quality === "raw") {
     return rawSemitone;
   }
 
   const octave = Math.floor(rawSemitone / 12) * 12;
   const pc = ((Math.trunc(rawSemitone) % 12) + 12) % 12;
+  const { melody } = book;
 
-  if (genre === GENRE_RULEBOOKS.BLUES_TWELVE_BAR) {
-    // 6-note authentic delta blues scale relative to chord root:
-    // [root, b3 (3), 4 (5), b5 Blue Note (6), 5 (7), b7 (10)]
-    // If strictness <= 5, lock to strong blues chord tones; if > 5, fully express dirty blue notes!
-    const bluesPcs = maxGradus <= 5
-      ? [chord.root, (chord.root + 4) % 12, (chord.root + 7) % 12, (chord.root + 10) % 12]
-      : [chord.root, (chord.root + 3) % 12, (chord.root + 5) % 12, (chord.root + 6) % 12, (chord.root + 7) % 12, (chord.root + 10) % 12];
-    let bestPc = bluesPcs[0];
-    let minDiff = 999;
-    for (const bpc of bluesPcs) {
-      const diff = Math.min(Math.abs(pc - bpc), 12 - Math.abs(pc - bpc));
-      if (diff < minDiff) {
-        minDiff = diff;
-        bestPc = bpc;
-      }
-    }
-    return octave + bestPc;
+  if (melody.method === "scale") {
+    // The genre's melody tone rules decide the scale above the chord root at
+    // each strictness (the blues let their blue notes in when the sieve is loose).
+    const strictness = Math.min(14, Math.max(1, Math.ceil(maxGradus)));
+    return octave + snapToNearest(pc, melody.tonesByStrictness[strictness].map((tone) => (chord.root + tone) % 12));
+  }
+  if (melody.method === "members") {
+    const candidates = [...melody.members.map((member) => chordMember(chord, member)), ...melody.extensions.map((tone) => (chord.root + tone) % 12)];
+    return octave + snapToNearest(pc, candidates);
+  }
+  if (melody.method === "chord") {
+    return octave + snapToNearest(pc, chord.pitchClasses);
   }
 
-  if (genre === GENRE_RULEBOOKS.SMOKY_JAZZ) {
-    // Smoky jazz: chord tones + extended 9th, 11th, and chromatic approach tones
-    const jazzPcs = [
-      chord.root,
-      chord.third,
-      chord.fifth,
-      chord.seventh,
-      chord.ninth,
-      (chord.root + 5) % 12, // 11th
-      (chord.root + 9) % 12, // 13th
-    ];
-    let bestPc = jazzPcs[0];
-    let minDiff = 999;
-    for (const jpc of jazzPcs) {
-      const diff = Math.min(Math.abs(pc - jpc), 12 - Math.abs(pc - jpc));
-      if (diff < minDiff) {
-        minDiff = diff;
-        bestPc = jpc;
-      }
-    }
-    return octave + bestPc;
-  }
-
-  if (genre === GENRE_RULEBOOKS.MODAL_DRONE) {
-    // Modal drone: open fifths, Phrygian flat-2, and Lydian sharp-4
-    const modalPcs = chord.pitchClasses;
-    let bestPc = modalPcs[0];
-    let minDiff = 999;
-    for (const mpc of modalPcs) {
-      const diff = Math.min(Math.abs(pc - mpc), 12 - Math.abs(pc - mpc));
-      if (diff < minDiff) {
-        minDiff = diff;
-        bestPc = mpc;
-      }
-    }
-    return octave + bestPc;
-  }
-
-  // Victorian Tonnetz & Renaissance Counterpoint: Euler Gradus Consonance Sieve
+  // Euler sieving (Victorian Tonnetz, Palestrina Counterpoint): Gradus Suavitatis consonance
   const relPc = ((pc - chord.root) % 12 + 12) % 12;
   const rawG = SEMITONE_GRADUS[relPc];
 
@@ -700,16 +440,15 @@ export function conductEnsemble({
   chimes,
   chant,
   mutation = 0,
-  genre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ,
+  genre = null,
   consonanceStrictness = 8,
   parsimonyRadius = 2,
   customSpine = null,
 }) {
-  const activeGenre = Object.values(GENRE_RULEBOOKS).includes(genre)
-    ? genre
-    : GENRE_RULEBOOKS.VICTORIAN_TONNETZ;
+  const book = genreBook(genre);
+  const activeGenre = book.code;
 
-  if (activeGenre === GENRE_RULEBOOKS.RAW_CHAOS && !customSpine) {
+  if (book.unfettered && !customSpine) {
     const spine = buildRawChaosSpine(score);
     return Object.freeze({
       spine,
@@ -720,14 +459,12 @@ export function conductEnsemble({
       chimes,
       chant,
       genre: activeGenre,
-      genreName: GENRE_NAMES[activeGenre],
+      genreName: book.title,
       consonanceStrictness,
     });
   }
 
-  const baseSpine = activeGenre === GENRE_RULEBOOKS.RAW_CHAOS
-    ? buildRawChaosSpine(score)
-    : buildGenreSpine(activeGenre, score, mutation);
+  const baseSpine = buildGenreSpine(activeGenre, score, mutation);
   const spine = customSpine
     ? Object.freeze(baseSpine.map((chord, i) => customSpine[i] || chord))
     : baseSpine;
@@ -755,33 +492,24 @@ export function conductEnsemble({
           const kickActive = (beatStep?.kick ?? 0) > 0;
           let harmonizedInterval = chord.root;
 
-          if (activeGenre === GENRE_RULEBOOKS.BLUES_TWELVE_BAR) {
-            // 12-bar walking blues bass sequence following chord progression
-            const bluesDegrees = [0, 4, 7, 9, 0, 4, 0, 7, 0, 0, 0, 0];
-            const deg = bluesDegrees[stepIndex % bluesDegrees.length];
-            harmonizedInterval = (chord.root + deg) % 12;
-          } else if (activeGenre === GENRE_RULEBOOKS.SMOKY_JAZZ) {
-            // Walking jazz upright acoustic line with chromatic approach tones
-            const jazzDegrees = [0, 4, 10, 0, 7, 3, 0, 5, 0, 0, 7, 11];
-            const deg = jazzDegrees[stepIndex % jazzDegrees.length];
-            harmonizedInterval = (chord.root + deg) % 12;
-          } else if (activeGenre === GENRE_RULEBOOKS.MODAL_DRONE) {
-            // Sustained sub-bass pedal on tonic root or 5th
-            harmonizedInterval = stepIndex % 4 === 3 ? (chord.root + 7) % 12 : chord.root;
-          } else if (activeGenre === GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT) {
+          if (book.bass.method === "walk") {
+            // The genre's bass walk: one interval above the chord root per step.
+            harmonizedInterval = (chord.root + book.bass.walk[stepIndex % book.bass.walk.length]) % 12;
+          } else if (book.bass.method === "contrary") {
             // Modal cantus firmus contrary motion to melody
             const mel = conductedMelody[stepIndex] % 12;
             const choices = chord.pitchClasses.filter((pc) => Math.abs(pc - mel) % 12 !== 7);
             harmonizedInterval = choices.length > 0 ? choices[(step.cell + stepIndex) % choices.length] : chord.root;
           } else {
-            // Victorian Tonnetz default
+            // Cell choosing: the Brainfuck cell picks among root, fifth, and third
             const bassChoices = isRegionStart
               ? [chord.root, chord.root, chord.fifth]
               : [chord.root, chord.fifth, chord.third, chord.root];
             harmonizedInterval = bassChoices[(step.cell + stepIndex) % bassChoices.length];
           }
 
-          const gate = (activeGenre === GENRE_RULEBOOKS.BLUES_TWELVE_BAR || activeGenre === GENRE_RULEBOOKS.SMOKY_JAZZ || activeGenre === GENRE_RULEBOOKS.MODAL_DRONE)
+          // Insistent genres never let the bass rest; patient ones follow the kick.
+          const gate = book.insistent
             ? Math.max(1, step.gate)
             : (isRegionStart && kickActive ? Math.max(1, step.gate) : step.gate);
           const noteName = PITCH_NAMES[(((score.root + harmonizedInterval) % 12) + 12) % 12];
@@ -809,15 +537,9 @@ export function conductEnsemble({
           const chord = spine[stepIndex];
           let voiced = [];
 
-          if (activeGenre === GENRE_RULEBOOKS.BLUES_TWELVE_BAR) {
-            // Crunchy dominant 7th voicings (3rd, 5th, b7th)
-            voiced = [chord.third, chord.fifth, chord.seventh].sort((a, b) => a - b);
-          } else if (activeGenre === GENRE_RULEBOOKS.SMOKY_JAZZ) {
-            // Rootless guide-tone voicings (3rd, b7th, 9th)
-            voiced = [chord.third, chord.seventh, chord.ninth].sort((a, b) => a - b);
-          } else if (activeGenre === GENRE_RULEBOOKS.MODAL_DRONE) {
-            // Open 5th and 4th drone pads
-            voiced = [chord.root, chord.fifth, (chord.root + 12)].sort((a, b) => a - b);
+          if (book.organ.method === "voiced") {
+            // The genre's organ voicing: named chord members, low to high
+            voiced = book.organ.members.map((member) => chordMember(chord, member)).sort((a, b) => a - b);
           } else {
             // Standard triadic voicing with inversions
             const inversion = (step.raw + stepIndex) % 3;
@@ -859,16 +581,7 @@ export function conductEnsemble({
       steps: Object.freeze(
         chimes.steps.map((step, stepIndex) => {
           const chord = spine[stepIndex];
-          let ratios = CONSONANT_CHIME_RATIOS;
-          if (activeGenre === GENRE_RULEBOOKS.BLUES_TWELVE_BAR) {
-            ratios = BLUES_CHIME_RATIOS;
-          } else if (activeGenre === GENRE_RULEBOOKS.SMOKY_JAZZ) {
-            ratios = JAZZ_CHIME_RATIOS;
-          } else if (activeGenre === GENRE_RULEBOOKS.RENAISSANCE_COUNTERPOINT) {
-            ratios = COUNTERPOINT_CHIME_RATIOS;
-          } else if (activeGenre === GENRE_RULEBOOKS.MODAL_DRONE) {
-            ratios = MODAL_DRONE_CHIME_RATIOS;
-          }
+          const ratios = book.overtones;
 
           const chosen = ratios[(step.hueIndex + step.exponents.e2 + step.exponents.e3 + stepIndex) % ratios.length];
           const chordRootFactor = Math.pow(2, chord.root / 12);
@@ -924,7 +637,7 @@ export function conductEnsemble({
     chimes: conductedChimes,
     chant: conductedChant,
     genre: activeGenre,
-    genreName: GENRE_NAMES[activeGenre],
+    genreName: book.title,
     consonanceStrictness,
   });
 }

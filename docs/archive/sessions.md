@@ -571,3 +571,28 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P5-20, P5-21, P4-02, P6-01.
 
 **Next session should start with:** P5-21.
+
+### Session 21: 2026-10-19: stems and the MIDI score
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-21: a zero-dependency nine-track WAV stem ZIP and a Type 1 MIDI file, built on the shared graph and mixer.
+
+**Done:** P5-21, D-025. Also in this session's run-up: mixer fader ceiling raised to +12 dB, default voicing trims (lead +6 dB, choir +12 dB), the choir routed around the creature filter, and a dry lead tap on bandpass creatures (all D-024).
+
+**Changed:**
+1. `src/zip.mjs` (new): CRC-32 and STORED ZIP writer with fixed DOS dates and entry-name validation.
+2. `src/midi.mjs` (new): VLQ, SMF Type 1 writer, GM track layout, loop-safe note clipping, velocity scaling.
+3. `src/mixer.mjs`: `stemSettings()` and `silentSettings()`.
+4. `src/app.mjs`: `renderEnsembleLoop()` replaces the WAV-only renderer; `exportSpecimenStems()` and `exportSpecimenMidi()`; `logNote()` in the lead, beat, bass, organ, chime, choir, and Fun Machine chord schedulers; `transportEngages()` lets offline renders include muted plates.
+5. `index.html`: `#export-stems` and `#export-midi` buttons.
+
+**Verified:** 67/67 Node checks, including a new writer suite. Python `zipfile.testzip()` and `unzip -t` accept a 3 MB generated archive. In-browser export of "the moon owes me five dollars" with one punched-in chord: ZIP of 9 WAVs plus README (8.45 MB, 1.8 s), all stems 2-channel 44.1 kHz and 234,638 frames, summing to the full mix within −27 dB; MIDI 1,109 bytes, Type 1, 480 PPQ, eight tracks ending at 2160 ticks (the 3.971 s loop at 68 BPM), balanced note-on/off counts, and the punched G minor chord on MANUAL.
+
+**Not verified:** DAW import; listening review.
+
+**Problems:** None.
+
+**Left undone:** P5-20, P4-02, P6-01; five-cell rhythm tiling; export button grouping.
+
+**Next session should start with:** a decision on P5-20 storage, or the design and layout pass.

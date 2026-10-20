@@ -502,6 +502,8 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Consequences:** Retuning or adding a genre becomes editing English prose and tables, and a second source of truth disappears from `conductor.mjs`. The page loads one more file and parses about 250 lines at startup. Determinism and the zero-dependency boundary are unchanged. The risk is a subtle behaviour change during migration, which the golden fixture is there to catch. No Inform 7 project code is copied; only its published syntax is followed.
 
+**Phase 3 note (2026-10-20):** Genre-dependent code runs only after the app installs the rulebooks. Session validation reads `genreCodes()`, and the preset store refuses to parse before installation. Without that guard, every preset would have been dropped, and the next save would have erased them.
+
 **Maintainer answers (2026-10-20):** Raw Esoteric Chaos stays a rulebook in the file (`Raw Esoteric Chaos is an unfettered genre.`). A seventh playable genre is a follow-up; P5-23 only proves it is possible, using the fixture-only genre in phase 5.
 
 ## Open questions

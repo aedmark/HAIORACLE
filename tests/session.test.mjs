@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { buildFunChord, buildFunProgression, GENRE_RULEBOOKS } from "../src/conductor.mjs";
+import { buildFunChord, buildFunProgression } from "../src/conductor.mjs";
+import { GENRES } from "./install-rulebooks.mjs";
 import { composeBeat, cycleBeatStep } from "../src/malbolge.mjs";
 import { composeChant, cycleChantCell } from "../src/shakespeare.mjs";
 import { createMixerState, mixerStateFromChannels, setFader, setPan, toggleMute, toggleSolo } from "../src/mixer.mjs";
@@ -40,7 +41,7 @@ function sampleSession(overrides = {}) {
     phrase: "the moon owes me five dollars",
     tempo: 96,
     volume: 70,
-    genre: GENRE_RULEBOOKS.SMOKY_JAZZ,
+    genre: "smoky_jazz",
     strictness: 10,
     acoustics: { enabled: true, level: 40, crackle: false, reverb: true, ticks: true },
     funMachine: { style: "arpeggio", progression: [[7, "minor"], null, null, [0, "maj9"], null, null, null, null, null, null, null, null] },
@@ -153,7 +154,7 @@ test("console state rebuilds from session channels", () => {
 });
 
 test("punched chords rebuild exactly from root and quality", () => {
-  for (const genre of Object.values(GENRE_RULEBOOKS)) {
+  for (const genre of GENRES) {
     for (const quality of ["auto", "major", "minor", "dom7", "maj9", "dim", "modal_open"]) {
       for (let semitone = 0; semitone < 12; semitone += 1) {
         for (const chord of buildFunProgression(semitone, quality, genre, 52).chords) {

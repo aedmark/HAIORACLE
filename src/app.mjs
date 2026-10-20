@@ -4,13 +4,16 @@ import {
   FUN_KEY_BY_CODE,
   FUN_KEY_BY_KEY,
   FUN_KEY_MAP,
-  GENRE_NAMES,
-  GENRE_RULEBOOKS,
   buildFunChord,
   chordLabelFor,
   conductEnsemble,
+  genreBook,
+  genreCodes,
+  installRulebooks,
+  rulebooksInstalled,
   semitoneGradus,
 } from "./conductor.mjs";
+import { compileRulebooks } from "./inform.mjs";
 import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
@@ -237,7 +240,8 @@ let currentTransport = null;
 let muted = false;
 let masterVolume = Number(elements.volume.value);
 let activeTempoBpm = Number(elements.tempo?.value || 108);
-let activeGenre = GENRE_RULEBOOKS.VICTORIAN_TONNETZ;
+// A genre code from src/rulebooks.ni; set once the rulebooks load.
+let activeGenre = null;
 let activeStrictness = 8;
 let currentConductedSpine = null;
 let parlorAcousticsEnabled = true;
@@ -3593,6 +3597,8 @@ function updateBandstandStatus() {
 }
 
 function updateFunKeyboardChordLabels() {
+  // Key colours come from the Inform 7 rulebooks; the labels fill in once they load.
+  if (!rulebooksInstalled()) return;
   for (let semitone = 0; semitone <= 12; semitone += 1) {
     const el = document.querySelector(`#fun-chord-${semitone}`);
     if (!el) continue;
@@ -3686,7 +3692,8 @@ function funKeyLabel(semitone) {
  * rhythm. With the loop stopped, the key auditions a sustained pad.
  */
 async function triggerFunKey(semitone, isKeyDown = true) {
-  if (semitone === null || semitone === undefined) return;
+  // The accompanist plays genre colours, so the manual is silent until the rulebooks load.
+  if (semitone === null || semitone === undefined || !rulebooksInstalled()) return;
   const normSemi = ((Math.trunc(semitone) % 13) + 13) % 13;
   const keyBtn = elements.funKeyboard?.querySelector(`.fun-key[data-semitone="${normSemi}"]`);
 
@@ -3807,7 +3814,7 @@ function ensembleGraphOptions(context, { start, unit, fadeIn, stop = null, meter
 // The INTERCAL arrangement in force, or null when the Raw Chaos rulebook
 // unfetters the VMs (or the conductor score has not loaded).
 function activeArrangement() {
-  return activeGenre === GENRE_RULEBOOKS.RAW_CHAOS ? null : currentArrangement;
+  return rulebooksInstalled() && genreBook(activeGenre).unfettered ? null : currentArrangement;
 }
 
 function arrangementPlays(channel, step) {
@@ -4056,7 +4063,7 @@ let currentConductedMelody = null;
 
 function updateKapellmeisterUI() {
   if (elements.kapellmeisterGenreTitle) {
-    elements.kapellmeisterGenreTitle.textContent = GENRE_NAMES[activeGenre] || activeGenre;
+    elements.kapellmeisterGenreTitle.textContent = genreBook(activeGenre).title;
   }
   if (elements.kapellmeisterTelemetry) {
     const chord0 = currentConductedSpine?.[0];
@@ -5306,11 +5313,15 @@ function applySession(session) {
 // localStorage can be missing, full, or blocked (private windows, previews);
 // every access is guarded and the ledger still works with files alone.
 function readPresetStore() {
+  let text;
   try {
-    return parsePresetStore(window.localStorage.getItem(PRESET_STORAGE_KEY));
+    text = window.localStorage.getItem(PRESET_STORAGE_KEY);
   } catch {
     return emptyPresetStore();
   }
+  // Throws until src/rulebooks.ni is installed, so nothing reads or rewrites
+  // presets with an empty genre list.
+  return parsePresetStore(text);
 }
 
 function writePresetStore(store) {
@@ -5438,7 +5449,6 @@ elements.sessionFileInput?.addEventListener("change", async () => {
   }
 });
 
-renderPresetList();
 syncSessionButtons();
 
 elements.bandstandEngageAll?.addEventListener("click", () => {
@@ -5820,7 +5830,7 @@ elements.tempo?.addEventListener("dblclick", () => {
 });
 
 try {
-  const [oracleResponse, beatResponse, bassResponse, harmonyResponse, pietResponse, fractranResponse, chantResponse, conductorResponse] = await Promise.all([
+  const [oracleResponse, beatResponse, bassResponse, harmonyResponse, pietResponse, fractranResponse, chantResponse, conductorResponse, rulebooksResponse] = await Promise.all([
     fetch("src/oracle.lol"),
     fetch("src/beat.mal"),
     fetch("src/bass.bf"),
@@ -5829,6 +5839,7 @@ try {
     fetch("src/chimes.frac"),
     fetch("src/chant.spl"),
     fetch("src/conductor.i"),
+    fetch("src/rulebooks.ni"),
   ]);
   if (!oracleResponse.ok) throw new Error(`Oracle source returned ${oracleResponse.status}`);
   if (!beatResponse.ok) throw new Error(`Malbolge source returned ${beatResponse.status}`);
@@ -5838,7 +5849,9 @@ try {
   if (!fractranResponse.ok) throw new Error(`FRACTRAN source returned ${fractranResponse.status}`);
   if (!chantResponse.ok) throw new Error(`Shakespeare source returned ${chantResponse.status}`);
   if (!conductorResponse.ok) throw new Error(`INTERCAL source returned ${conductorResponse.status}`);
-  [oracleSource, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource, conductorSource] = await Promise.all([
+  if (!rulebooksResponse.ok) throw new Error(`Inform 7 rulebooks returned ${rulebooksResponse.status}`);
+  let rulebooksSource;
+  [oracleSource, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource, conductorSource, rulebooksSource] = await Promise.all([
     oracleResponse.text(),
     beatResponse.text(),
     bassResponse.text(),
@@ -5847,7 +5860,16 @@ try {
     fractranResponse.text(),
     chantResponse.text(),
     conductorResponse.text(),
+    rulebooksResponse.text(),
   ]);
+  // The Kapellmeister's genres live in Inform 7 (D-033). Nothing that reads a
+  // genre (the conductor, the Fun Machine, saved presets) runs before this.
+  installRulebooks(compileRulebooks(rulebooksSource));
+  const menuGenre = elements.kapellmeisterGenre?.value;
+  activeGenre = genreCodes().includes(menuGenre) ? menuGenre : genreCodes()[0];
+  updateFunKeyboardChordLabels();
+  renderPresetList();
+  syncSessionButtons();
   const initialHashPhrase = decodeOmenHash(window.location.hash);
   if (initialHashPhrase) {
     elements.phrase.value = initialHashPhrase;
@@ -5856,6 +5878,7 @@ try {
     elements.status.textContent = "AWAITING INPUT";
   }
 } catch (error) {
-  elements.status.textContent = "SERVE THIS DIRECTORY OVER HTTP";
+  const rulebookProblem = error?.name === "InformError" || String(error?.message).startsWith("Kapellmeister rulebooks");
+  elements.status.textContent = rulebookProblem ? "KAPELLMEISTER RULEBOOKS REJECTED" : "SERVE THIS DIRECTORY OVER HTTP";
   console.error(error);
 }

@@ -240,6 +240,14 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.match(app, /fetch\("src\/chimes\.frac"\)/);
   assert.match(app, /fetch\("src\/chant\.spl"\)/);
   assert.match(app, /fetch\("src\/conductor\.i"\)/);
+  assert.match(app, /fetch\("src\/rulebooks\.ni"\)/);
+  // The Inform 7 rulebooks install before anything reads a genre or a preset (D-033).
+  const install = app.indexOf("installRulebooks(compileRulebooks(rulebooksSource));");
+  assert.ok(install > 0, "the app installs the compiled rulebooks");
+  assert.ok(app.indexOf("renderPresetList();", install) > install, "presets render only after the rulebooks install");
+  assert.equal(app.slice(0, install).match(/^renderPresetList\(\);$/m), null, "no preset render at module start");
+  assert.match(app, /function updateFunKeyboardChordLabels\(\) \{\n[^\n]*\n  if \(!rulebooksInstalled\(\)\) return;/);
+  assert.match(app, /async function triggerFunKey\(semitone, isKeyDown = true\) \{\n[^\n]*\n  if \(semitone === null \|\| semitone === undefined \|\| !rulebooksInstalled\(\)\) return;/);
   assert.match(app, /composeArrangement\(/);
   // The arrangement reaches the whole workstation, not only the scheduler.
   assert.match(app, /function activeArrangement\(\)/);
