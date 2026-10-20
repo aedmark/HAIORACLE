@@ -174,4 +174,24 @@ Active handoff state and the latest ten sessions live in [../HANDOFF.md](../HAND
 
 **Next session should start with:** Listen to several sparse and dense creatures at default and maximum volume, then continue P4-01.
 
+### Session 9: 2026-10-17: twelve notes walk into infinity
 
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Give every creature a deterministic repeating melody with explicit arpeggio and chromatic vocabularies.
+
+**Done:** P5-05
+
+**Changed:** Added LOLCODE-selected melody family and rotation fields, a pure twelve-step motif engine, twelve named melodic families, transport-level motif caching, and a visible motif label in the score readout.
+
+**Decisions:** D-010
+
+**Verified:** Sixteen Node checks passed, including all score ranges, coverage of all twelve families across 256 phrases, and exact major-arpeggio plus ascending and descending chromatic sequences; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Musicality, loop transitions, register balance, and the score-label layout in real browsers remain P4-01 work.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** Listen across all twelve named motifs, then continue P4-01.

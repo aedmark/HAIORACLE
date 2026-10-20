@@ -731,6 +731,98 @@ input[type="text"]:focus {
   gap: 0.55rem;
 }
 
+/* Master transport (P5-18): a full-width brass rail beneath the reading. */
+.transport-deck {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  padding-top: 0.95rem;
+  border-top: 1px solid var(--brass-dim);
+  font-family: var(--mono-ledger);
+}
+
+.transport-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.72rem 1.05rem;
+  border: 1px solid var(--brass);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6);
+  color: var(--parchment-light);
+  background: linear-gradient(180deg, rgba(184, 146, 73, 0.16), rgba(15, 11, 10, 0.8));
+  font-family: var(--mono-ledger);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.transport-glyph {
+  color: var(--brass-bright);
+  font-size: 0.72rem;
+  letter-spacing: 0;
+}
+
+.transport-button:not(:disabled):hover {
+  border-color: var(--brass-bright);
+  color: var(--ink);
+  background: var(--brass-bright);
+}
+
+.transport-button:not(:disabled):hover .transport-glyph {
+  color: var(--oxblood-dark);
+}
+
+.transport-button[aria-pressed="true"] {
+  border-color: var(--brass-bright);
+  color: var(--parchment-light);
+  background: linear-gradient(180deg, var(--oxblood-bright), var(--oxblood-dark));
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 12px rgba(217, 184, 108, 0.28);
+}
+
+.transport-button:focus-visible {
+  outline: 2px solid var(--brass-bright);
+  outline-offset: 2px;
+}
+
+.transport-button:disabled {
+  cursor: default;
+  opacity: 0.38;
+}
+
+.transport-position {
+  min-width: 9ch;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--brass-dim);
+  color: var(--brass-bright);
+  background: rgba(10, 8, 7, 0.48);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums;
+}
+
+.transport-hint {
+  margin: 0 0 0 auto;
+  color: rgba(228, 215, 190, 0.6);
+  font-size: 0.54rem;
+  letter-spacing: 0.14em;
+}
+
+.transport-hint kbd {
+  padding: 0.12rem 0.4rem;
+  border: 1px solid var(--brass-dim);
+  border-bottom-width: 2px;
+  color: var(--parchment-light);
+  font-family: inherit;
+  font-size: inherit;
+}
+
 .replay-button {
   padding: 0.72rem 0.95rem;
   border: 1px solid var(--brass);
@@ -1646,6 +1738,10 @@ noscript {
     grid-column: 2;
     grid-row: 1;
   }
+
+  .transport-deck {
+    grid-row: 3;
+  }
 }
 
 @media (max-width: 620px) {
@@ -1749,15 +1845,23 @@ noscript {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .transport-deck {
+    grid-row: 3;
+  }
+
+  .transport-hint {
+    margin-left: 0;
+  }
+
   .volume-control {
     grid-column: 1 / -1;
-    grid-row: 3;
+    grid-row: 4;
     width: min(16rem, 100%);
   }
 
   .reading-actions {
     grid-column: 1 / -1;
-    grid-row: 4;
+    grid-row: 5;
     justify-content: flex-start;
   }
 

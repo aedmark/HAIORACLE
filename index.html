@@ -104,6 +104,19 @@
         <span><b id="score-melody">---</b> MOTIF</span>
         <span><b id="score-fungal">---</b> MYCELIUM</span>
       </div>
+      <div class="transport-deck" id="transport-deck" role="group" aria-label="Master transport" data-state="stopped">
+        <button class="transport-button" id="transport-play" type="button" aria-pressed="false" aria-keyshortcuts="Space" disabled>
+          <span class="transport-glyph" aria-hidden="true">▶</span> PLAY
+        </button>
+        <button class="transport-button" id="transport-pause" type="button" aria-pressed="false" aria-keyshortcuts="Space" disabled>
+          <span class="transport-glyph" aria-hidden="true">❚❚</span> PAUSE
+        </button>
+        <button class="transport-button" id="transport-stop" type="button" aria-keyshortcuts="Escape" disabled>
+          <span class="transport-glyph" aria-hidden="true">■</span> STOP · REWIND
+        </button>
+        <output class="transport-position" id="transport-position">STEP -- / 12</output>
+        <p class="transport-hint"><kbd>SPACE</kbd> PLAY / PAUSE · <kbd>ESC</kbd> STOP &amp; REWIND</p>
+      </div>
       <div class="volume-control">
         <div class="volume-heading">
           <label for="master-volume">MASTER VOLUME</label>

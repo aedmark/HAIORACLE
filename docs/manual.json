@@ -308,6 +308,31 @@
           "related": ["repeating-motifs", "live-tempo-control", "bandstand-console"]
         },
         {
+          "id": "master-transport",
+          "title": "Master Transport: Play, Pause, Stop & Hotkeys",
+          "summary": "Starts, pauses at the last heard step, and stops-and-rewinds the ensemble loop from buttons or the keyboard.",
+          "tags": ["transport", "audio", "keyboard", "accessibility"],
+          "what": "A brass transport rail (`#transport-deck`) with PLAY, PAUSE, and STOP · REWIND buttons, a loop position readout (`STEP 05 / 12`), and global hotkeys: `Space` toggles play/pause and `Esc` stops and rewinds to step one. Pause resumes on the next unheard step; mute silences without changing the transport state.",
+          "how": {
+            "lead": "`src/transport.mjs` holds the pure state model; `runTransportCommand()` in `src/app.mjs` applies it to audio and the page:",
+            "points": [
+              "`transportReduce()` moves between `stopped`, `playing`, and `paused`, keeping a raw step cursor that is never wrapped to 12, so five- and six-cell rhythm patterns resume in phase.",
+              "Each live transport records `audibleStep` when a step actually sounds; pausing resumes after it rather than after the 280 ms look-ahead window, so queued but unheard steps are never skipped.",
+              "`stopCurrentSound()` fades the whole output bus, not only the drone mix, so already-scheduled drums and bass stop with the pause.",
+              "`transportCommandForKey()` leaves Space alone while typing and on keyboard-focused buttons, checkboxes, and switches, but takes it from a control last focused by a pointer press, so Space after clicking MUTATE pauses instead of mutating again.",
+              "Audio runs only while the transport is playing and the bell is unmuted; summon and RESTART THE MELODY both issue `restart`."
+            ]
+          },
+          "why": "Basic DAW control is the first step toward a playable synthesizer workstation (roadmap P5-18). Pausing by rebuilding the graph at the saved cursor, instead of suspending the AudioContext, keeps the Fun Machine keyboard auditioning while paused and preserves the single-transport invariant (ADR D-023).",
+          "evidence": [
+            {"label": "Transport state and hotkey resolution", "target": "src/transport.mjs"},
+            {"label": "Transport controller", "target": "src/app.mjs"},
+            {"label": "Transport and hotkey tests", "target": "tests/transport.test.mjs"},
+            {"label": "Architecture Record D-023", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["lookahead-scheduler", "live-tempo-control", "deterministic-wav-export"]
+        },
+        {
           "id": "repeating-motifs",
           "title": "Twelve Repeating Motif Families",
           "summary": "Maps generative seeds into recognizable, musically coherent 12-note loops.",
@@ -717,7 +742,7 @@
             "lead": "`exportSpecimenWav()` in `src/app.mjs` and `audioBufferToWavBlob()` in `src/share.mjs` execute offline audio synthesis and PCM packaging:",
             "points": [
               "Calculates precise loop duration from active tempo BPM and score rhythm multipliers, adding a 1.35-second tail for delay and reverb decay.",
-              "Instantiates a 2-channel 44.1 kHz `OfflineAudioContext`, mirroring the real-time audio graph with compressor, resonant filter, modulated delay, and continuous drones.",
+              "Instantiates a 2-channel 44.1 kHz `OfflineAudioContext` and builds the same graph as live playback with `buildEnsembleGraph()` from `src/ensemble.mjs`, so the export renders the listener's exact routing (ADR D-023).",
               "Schedules all six conducted esoteric instruments (LOLCODE lead, Malbolge beat, Brainfuck bass, Befunge-93 organ, Piet/FRACTRAN chimes, Shakespeare choir) plus fungal bio-acoustics.",
               "`audioBufferToWavBlob()` constructs a canonical 44-byte RIFF/WAVE header and writes interleaved clamped 16-bit signed integer samples.",
               "Triggers immediate browser download via an ephemeral object URL anchor with automatic cleanup."
@@ -726,6 +751,7 @@
           "why": "Confidants wanted high-fidelity audio keepsakes of their summoned creatures. Offline Web Audio rendering guarantees bit-exact acoustic determinism without server roundtrips, network telemetry, or heavyweight external audio libraries (ADR D-018).",
           "evidence": [
             {"label": "WAV audio exporter", "target": "src/app.mjs"},
+            {"label": "Shared ensemble graph", "target": "src/ensemble.mjs"},
             {"label": "Pure PCM WAV encoder", "target": "src/share.mjs"},
             {"label": "Audio encoding unit tests", "target": "tests/oracle.test.mjs"},
             {"label": "Architecture Record D-018", "target": "docs/DECISIONS.md"}

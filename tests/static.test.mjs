@@ -12,6 +12,7 @@ test("the static entry points exist", async () => {
     "src/befunge.mjs",
     "src/brainfuck.mjs",
     "src/conductor.mjs",
+    "src/ensemble.mjs",
     "src/fractran.mjs",
     "src/lolcode.mjs",
     "src/malbolge.mjs",
@@ -19,6 +20,7 @@ test("the static entry points exist", async () => {
     "src/score.mjs",
     "src/share.mjs",
     "src/shakespeare.mjs",
+    "src/transport.mjs",
     "src/oracle.lol",
     "src/beat.mal",
     "src/bass.bf",
@@ -102,13 +104,17 @@ test("audio uses a continuing look-ahead scheduler", async () => {
 });
 
 test("master volume raises the default mix and updates the live output safely", async () => {
-  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  const [app, ensemble] = await Promise.all([
+    readFile(new URL("src/app.mjs", root), "utf8"),
+    readFile(new URL("src/ensemble.mjs", root), "utf8"),
+  ]);
   assert.match(app, /function masterGainFor\(volume\)/);
   assert.match(app, /function setTempoBpm\(value\)/);
-  assert.match(app, /exponentialRampToValueAtTime\(0\.28, now \+ 0\.16\)/);
-  assert.match(app, /output\.gain\.value = masterGainFor\(masterVolume\)/);
+  assert.match(ensemble, /exponentialRampToValueAtTime\(0\.28, now \+ 0\.16\)/);
+  assert.match(app, /outputGain: masterGainFor\(masterVolume\)/);
+  assert.match(ensemble, /output\.gain\.value = outputGain/);
   assert.match(app, /output\.gain\.setTargetAtTime\(masterGainFor\(masterVolume\), now, 0\.018\)/);
-  assert.match(app, /delay\.connect\(compressor\)/);
+  assert.match(ensemble, /delay\.connect\(compressor\)/);
 });
 
 test("kinetic geometry remains inside a bounded, deforming silhouette", async () => {
@@ -236,6 +242,7 @@ test("the application has no remote runtime assets", async () => {
     "src/befunge.mjs",
     "src/brainfuck.mjs",
     "src/conductor.mjs",
+    "src/ensemble.mjs",
     "src/fractran.mjs",
     "src/lolcode.mjs",
     "src/malbolge.mjs",
@@ -243,16 +250,18 @@ test("the application has no remote runtime assets", async () => {
     "src/score.mjs",
     "src/share.mjs",
     "src/shakespeare.mjs",
+    "src/transport.mjs",
   ].map((path) => readFile(new URL(path, root), "utf8")));
   assert.equal(files.some((contents) => /https?:\/\//i.test(contents)), false);
   assert.equal(files.some((contents) => /node_modules|from\s+["'](?!\.\/)/i.test(contents)), false);
 });
 
 test("the Kapellmeister console and antique parlor acoustics controls are wired up", async () => {
-  const [html, styles, app] = await Promise.all([
+  const [html, styles, app, ensemble] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),
     readFile(new URL("src/app.mjs", root), "utf8"),
+    readFile(new URL("src/ensemble.mjs", root), "utf8"),
   ]);
   assert.match(html, /id="kapellmeister-engine"/);
   assert.match(html, /id="kapellmeister-genre"/);
@@ -274,8 +283,8 @@ test("the Kapellmeister console and antique parlor acoustics controls are wired 
   assert.match(app, /function ensureParlorImpulseResponse\(/);
   assert.match(app, /function scheduleClockworkTick\(/);
   assert.match(app, /function updateKapellmeisterUI\(/);
-  assert.match(app, /parlorConvolver\.normalize\s*=\s*false/);
-  assert.match(app, /parlorReverbFilter/);
+  assert.match(ensemble, /parlorConvolver\.normalize\s*=\s*false/);
+  assert.match(ensemble, /parlorReverbFilter/);
   assert.match(app, /maxSpectralMag/);
   assert.match(app, /elements\.chipCrackle\?\.addEventListener/);
   assert.match(app, /elements\.chipReverb\?\.addEventListener/);
@@ -340,3 +349,23 @@ test("the Esoteric Fun Machine play-along organ and loop punch-in sequencer are 
 });
 
 
+
+test("the master transport deck exposes play, pause, stop, position, and hotkeys", async () => {
+  const [html, styles, app] = await Promise.all([
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("styles.css", root), "utf8"),
+    readFile(new URL("src/app.mjs", root), "utf8"),
+  ]);
+  assert.match(html, /id="transport-deck" role="group" aria-label="Master transport"/);
+  assert.match(html, /id="transport-play"[^>]*aria-pressed="false"[^>]*aria-keyshortcuts="Space"/);
+  assert.match(html, /id="transport-pause"[^>]*aria-pressed="false"[^>]*aria-keyshortcuts="Space"/);
+  assert.match(html, /id="transport-stop"[^>]*aria-keyshortcuts="Escape"/);
+  assert.match(html, /<output class="transport-position" id="transport-position">/);
+  assert.match(styles, /\.transport-deck \{/);
+  assert.match(styles, /\.transport-button\[aria-pressed="true"\]/);
+  assert.match(app, /async function runTransportCommand\(command\)/);
+  assert.match(app, /transportCommandForKey\(event, \{ pointerFocused: pointerFocusedControl \}\)/);
+  // Both transports build from the shared graph so a WAV renders what is heard.
+  assert.equal(app.match(/buildEnsembleGraph\(/g).length, 2);
+  assert.doesNotMatch(app, /context\.createDynamicsCompressor\(\)|offlineCtx\.createDynamicsCompressor\(\)/);
+});

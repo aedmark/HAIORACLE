@@ -277,6 +277,20 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** The intense fog-horn feedback is completely eliminated across all phrases; chamber reverb provides realistic room ambience; wax crackle and dust pops are warm and audible; and the Fun Machine locks to the 12-step tempo loop with smooth regional chord changes and singing step melodies.
 
+## D-023 Master transport with a shared live/offline ensemble graph (2026-10-19, status: accepted)
+
+**Context:** P5-18 begins the synthesizer-workstation phase (P5-18 through P5-21). Until now the loop could only be restarted or muted, and `playScore()` and `exportSpecimenWav()` each built their own copy of the ensemble graph by hand. The copies had drifted: exports routed chimes, choir, and fungal voices around the creature filter, omitted the stereo panner and the dry filter tap, and played sequenced Fun Machine chords even in lead-solo mode. A mixer (P5-19) and stem export (P5-21) would have had to be built twice.
+
+**Decision:**
+1. **One graph builder (`src/ensemble.mjs`, `buildEnsembleGraph()`)** creates and wires every bus, filter, delay, compressor, parlor reverb and crackle layer, and drone for both the live `AudioContext` and the `OfflineAudioContext`. The live routing is canonical because it is what the maintainer has listened to. Per-step voices are scheduled through one host function, `scheduleEnsembleStep()`, plus `scheduleSequencedFunChord()`; held-key play-along and punch-in recording stay live-only.
+2. **Transport states (`src/transport.mjs`)** are `stopped`, `playing`, and `paused`, reduced by pure `transportReduce()`. Audio runs only while the transport is playing and the bell is unmuted. Mute keeps the transport state and freezes the cursor; summon and RESTART THE MELODY issue `restart`.
+3. **Pause rebuilds rather than suspends.** Pausing stops the scheduler, fades the whole output bus, and stores the raw step after the last *audible* step. Play rebuilds the graph and resumes at that step. The cursor is a raw counter, not wrapped to 12, because rhythm patterns with five or six cells would otherwise lose phase.
+4. **Hotkeys:** `Space` toggles play/pause, `Esc` stops and rewinds. Space is left to the browser while typing and on keyboard-focused buttons, checkboxes, and switches. The host tracks the control last focused by a pointer press; Space on that control goes to the transport. `:focus-visible` was tried first and rejected: Chrome promotes a clicked button to `:focus-visible` on the first key press, so Space re-submitted the summon form.
+
+**Alternatives:** `AudioContext.suspend()` would freeze reverb and delay tails mid-air and resume them exactly, but it also silences the Fun Machine keyboard and vitrine percussion while paused, and step-highlight timers run on wall-clock time and would fire early. Space as an unconditional hotkey would take Space activation away from keyboard users (P4-02). Keeping two hand-built graphs would mean building the mixer twice.
+
+**Consequences:** WAV exports now render the same routing as live playback, so they sound slightly different from earlier exports: chimes, choir, and fungal voices pass through the creature filter, with the panner and dry filter tap present. Lead-solo mode no longer renders sequenced chords into the WAV. A paused loop resumes with a fresh 160 ms drone fade-in instead of a frozen tail. P5-19 can add per-channel strips inside `buildEnsembleGraph()` once and get them in both live and offline audio.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

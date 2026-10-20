@@ -7,6 +7,7 @@ Automated checks prove determinism, boundary validation, the required LOLCODE su
 | Suite | File | Proves | Does not prove | Needs |
 | --- | --- | --- | --- | --- |
 | Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/body/eye/scale/kinetic/melody/beat diversity, exact twelve-note arpeggio and chromatic motifs, Malbolge `crazy`/`rotr` ternary VM and `src/beat.mal` execution, negative LOLCODE and Malbolge interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
+| Transport and graph | `tests/transport.test.mjs` | shared ensemble graph routing and live/offline topology parity via a fake `AudioContext`, transport state transitions and cursor handling, `Space`/`Esc` focus rules | real audio output, timing under load, or how pause/resume sounds | Node 20 or newer |
 | Static structure | `tests/static.test.mjs` | required assets (`src/oracle.lol`, `src/beat.mal`, `manual.html`, `docs/manual.json`), basic labels, centered apparition-stage and serif-broadsheet markers, continuous scheduler and master-volume markers, bounded silhouette and clipped-core markers, vitrine tap/hold/drag interaction and percussion markers, Malbolge 12-step beat matrix and percussion scheduler markers, no audio-driven visual resizing, scoped body glow, no remote runtime references | computed accessibility tree, scheduler timing, perceived loudness, or visual quality | Node 20 or newer |
 | Documentation | `tools/check_docs.py` | no placeholders, broken local links, or unknown roadmap and decision references | factual accuracy of every claim | Python 3 |
 | 3x Manual | `tools/manual.py` | structural validity, What/How/Why completeness, and evidence integrity of `docs/manual.json` | subjective prose elegance | Python 3 |
@@ -49,16 +50,17 @@ Expected results from specific runs live in `HANDOFF.md`.
 
 1. Serve the repository and summon three phrases in current Chrome, Firefox, and Safari.
 2. Confirm sound starts only after a gesture, loops without an audible gap, mutes immediately, restarts, and is replaced cleanly by a new summon.
-3. Move master volume through zero, the default 82 percent, and maximum using pointer and keyboard; confirm live ramps are smooth and the loudest dense voice does not clip or pump.
-4. Listen to every named motif family; confirm each forms a recognizable twelve-note loop and that restarts return to its first note.
-5. Confirm repeated text produces identical metadata and creature structure.
-6. Summon enough creatures to inspect every eye silhouette, iris treatment, pupil geometry, and layout for clipping or illegibility.
-7. Inspect all eight kinetic cores and silhouette-flux families for distinct motion, boundary containment, legibility, and stable frame rate.
-8. Tap, press-and-hold, and hold-and-drag across the vitrine with mouse and touch; confirm percussive strikes, ratchet ticks, pitch bends, filter swells, eye tracking, and shape morphing respond smoothly and return to the resting creature on release.
-9. Use keyboard-only controls at desktop and narrow mobile widths.
-10. Confirm the cabinet remains bilaterally balanced, the apparition stays centered in its bell-jar vitrine, labels do not collide, and the serif and telegraph-monospace stacks remain legible at desktop and phone widths.
-11. Enable reduced motion and confirm the interface remains legible, calm, and frozen at a representative phase.
-12. Inspect the network panel for unexpected outbound requests.
+3. Play, pause, and resume mid-loop; confirm resume picks up on the next step without a skipped or doubled beat, Stop rewinds to step one, and `Space`/`Esc` work after clicking a plate button but `Space` still activates a button reached with Tab.
+4. Move master volume through zero, the default 82 percent, and maximum using pointer and keyboard; confirm live ramps are smooth and the loudest dense voice does not clip or pump.
+5. Listen to every named motif family; confirm each forms a recognizable twelve-note loop and that restarts return to its first note.
+6. Confirm repeated text produces identical metadata and creature structure.
+7. Summon enough creatures to inspect every eye silhouette, iris treatment, pupil geometry, and layout for clipping or illegibility.
+8. Inspect all eight kinetic cores and silhouette-flux families for distinct motion, boundary containment, legibility, and stable frame rate.
+9. Tap, press-and-hold, and hold-and-drag across the vitrine with mouse and touch; confirm percussive strikes, ratchet ticks, pitch bends, filter swells, eye tracking, and shape morphing respond smoothly and return to the resting creature on release.
+10. Use keyboard-only controls at desktop and narrow mobile widths.
+11. Confirm the cabinet remains bilaterally balanced, the apparition stays centered in its bell-jar vitrine, labels do not collide, and the serif and telegraph-monospace stacks remain legible at desktop and phone widths.
+12. Enable reduced motion and confirm the interface remains legible, calm, and frozen at a representative phase.
+13. Inspect the network panel for unexpected outbound requests.
 
 ## Known pitfalls
 

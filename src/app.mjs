@@ -19,6 +19,8 @@ import { MELODY_NAMES, melodyFor } from "./music.mjs";
 import { composeScore, WAVEFORMS } from "./score.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
+import { buildEnsembleGraph, parlorSendLevels } from "./ensemble.mjs";
+import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
 
 const RHYTHMS = Object.freeze([
   [1, 1, 1, 1],
@@ -54,6 +56,11 @@ const elements = {
   exportPng: document.querySelector("#export-png"),
   exportWav: document.querySelector("#export-wav"),
   sound: document.querySelector("#sound-toggle"),
+  transportDeck: document.querySelector("#transport-deck"),
+  transportPlay: document.querySelector("#transport-play"),
+  transportPause: document.querySelector("#transport-pause"),
+  transportStop: document.querySelector("#transport-stop"),
+  transportPosition: document.querySelector("#transport-position"),
   volume: document.querySelector("#master-volume"),
   volumeValue: document.querySelector("#volume-value"),
   tempo: document.querySelector("#tempo-bpm"),
@@ -159,6 +166,7 @@ let harmonyMutation = 0;
 let chimeMutation = 0;
 let chantMutation = 0;
 let activeBeatStep = -1;
+let transportState = createTransportState();
 let audioContext = null;
 let noiseBuffer = null;
 let currentTransport = null;
@@ -2095,17 +2103,22 @@ function triggerSporePuff(strength = 1, atTime = null) {
   pip.stop(now + 0.055);
 }
 
+// Silences the active loop and returns the raw step it should resume from, or
+// null when nothing was playing. Steps already queued in the look-ahead window
+// are cut by fading the whole output, not just the drone mix.
 function stopCurrentSound() {
   if (activeFunVoice) {
     stopFunMachineVoice(null, true);
   }
-  if (!currentTransport || !audioContext) return;
+  if (!currentTransport || !audioContext) return null;
   const transport = currentTransport;
   currentTransport = null;
   window.clearInterval(transport.timer);
   const now = audioContext.currentTime;
   transport.mix.gain.cancelScheduledValues(now);
   transport.mix.gain.setTargetAtTime(0.0001, now, 0.035);
+  transport.output.gain.cancelScheduledValues(now);
+  transport.output.gain.setTargetAtTime(0.0001, now, 0.03);
   for (const drone of transport.drones) {
     try {
       drone.stop(now + 0.18);
@@ -2114,6 +2127,7 @@ function stopCurrentSound() {
     }
   }
   window.setTimeout(() => transport.output.disconnect(), 350);
+  return transport.audibleStep + 1;
 }
 
 function voiceStack(score, step) {
@@ -3042,8 +3056,9 @@ function stopFunMachineVoice(semitone = null, immediateCrossfade = false) {
   }
 }
 
+// A negative step clears every plate's playhead (transport stopped).
 function highlightBeatStep(stepIndex) {
-  const normalized = ((stepIndex % 12) + 12) % 12;
+  const normalized = stepIndex < 0 ? -1 : stepIndex % 12;
   activeBeatStep = normalized;
   if (elements.beatGrid) {
     for (const button of elements.beatGrid.querySelectorAll(".beat-step")) {
@@ -3083,7 +3098,7 @@ function highlightBeatStep(stepIndex) {
   }
 
   if (elements.harmonicStep) {
-    elements.harmonicStep.textContent = `${String(normalized + 1).padStart(2, "0")} / 12`;
+    elements.harmonicStep.textContent = normalized < 0 ? "-- / 12" : `${String(normalized + 1).padStart(2, "0")} / 12`;
   }
   if (currentConductedSpine && currentConductedSpine[normalized]) {
     const chord = currentConductedSpine[normalized];
@@ -3111,7 +3126,7 @@ function highlightBeatStep(stepIndex) {
     });
   }
 
-  if (elements.funMachineTelemetry && activeHeldFunKey !== null && activeFunProgression) {
+  if (normalized >= 0 && elements.funMachineTelemetry && activeHeldFunKey !== null && activeFunProgression) {
     const regIdx = Math.floor(normalized / 3) % 4;
     const currentChord = activeFunProgression.chords[regIdx];
     const currentMelody = activeFunProgression.steps[normalized]?.melodyNote || "—";
@@ -3649,7 +3664,76 @@ renderChantGrid();
 renderFunSequencerGrid();
 updateFunKeyboardChordLabels();
 
-async function playScore(score) {
+// Options shared by the live and offline graphs, read from the current session
+// controls so an export captures exactly what the listener has dialed in.
+function ensembleGraphOptions(context, { start, unit, fadeIn, stop = null }) {
+  let impulseBuffer = null;
+  let crackleBuffer = null;
+  try {
+    impulseBuffer = ensureParlorImpulseResponse(context, 1.6);
+  } catch {
+    // The chamber stays silent if the impulse cannot be synthesized.
+  }
+  try {
+    crackleBuffer = ensureWaxCrackleBuffer(context, 4.0);
+  } catch {
+    // The wax surface stays silent if its buffer cannot be synthesized.
+  }
+  return {
+    start,
+    stop,
+    unit,
+    fadeIn,
+    outputGain: masterGainFor(masterVolume),
+    enabled: {
+      beat: beatEnabled,
+      bass: bassEnabled,
+      harmony: harmonyEnabled,
+      chime: chimeEnabled,
+      chant: chantEnabled,
+    },
+    parlor: parlorSendLevels({
+      enabled: parlorAcousticsEnabled,
+      reverbEnabled: parlorReverbEnabled,
+      crackleEnabled: parlorCrackleEnabled,
+      level: parlorAcousticsLevel,
+    }),
+    impulseBuffer,
+    crackleBuffer,
+  };
+}
+
+// Every voice that sounds on a loop step, for both the live scheduler and the
+// offline render. Live-only behavior (held Fun Machine keys, punch-in) stays
+// in the live scheduler.
+function scheduleEnsembleStep(context, transport, score, step, at, stepDuration, soundingDuration) {
+  scheduleNote(context, transport, score, step, at, soundingDuration);
+  scheduleBeatStep(context, transport, score, step, at, stepDuration);
+  scheduleBassStep(context, transport, score, step, at, stepDuration);
+  scheduleHarmonyStep(context, transport, score, step, at, stepDuration);
+  scheduleChimeStep(context, transport, score, step, at, stepDuration);
+  scheduleChantStep(context, transport, score, step, at, stepDuration);
+  scheduleFungalBioStep(context, transport, score, step, at, stepDuration);
+  if (parlorAcousticsEnabled && parlorTickEnabled) {
+    scheduleClockworkTick(context, transport.output, at, step, parlorAcousticsLevel);
+  }
+}
+
+// Chords punched into the Fun Machine sequencer: sustained across each 3-step
+// region, re-struck mid-region only when the punched chord changes.
+function scheduleSequencedFunChord(context, transport, step, at, stepDuration, soundingDuration) {
+  const stepIndex = step % 12;
+  if (!customProgression[stepIndex] || funMachineMode !== "auto_chord") return;
+  const prevStepIndex = (stepIndex + 11) % 12;
+  const isRegStart = stepIndex % 3 === 0;
+  const isNewChord = customProgression[stepIndex] !== customProgression[prevStepIndex];
+  if (isRegStart || isNewChord) {
+    const chordDuration = isRegStart ? stepDuration * 3.0 : soundingDuration;
+    scheduleFunMachineChord(context, transport.funBus, customProgression[stepIndex], at, chordDuration);
+  }
+}
+
+async function playScore(score, { cursor = 0 } = {}) {
   stopCurrentSound();
   vision.setScore(score);
   if (muted) {
@@ -3658,156 +3742,28 @@ async function playScore(score) {
   }
 
   const context = await ensureAudioContext();
+  // A newer play, pause, or stop may have landed while the context resumed.
+  if (muted || transportState.state !== TRANSPORT_STATES.PLAYING || currentScore !== score) return;
+  stopCurrentSound();
   const now = context.currentTime + 0.045;
   const initialPulse = activeTempoBpm || score.pulse;
   const initialUnit = 60 / initialPulse / 2;
-  const mix = context.createGain();
-  const beatBus = context.createGain();
-  const bassBus = context.createGain();
-  const harmonyBus = context.createGain();
-  const chimeBus = context.createGain();
-  const chantBus = context.createGain();
-  const fungalBus = context.createGain();
-  const funBus = context.createGain();
-  const filter = context.createBiquadFilter();
-  const panner = typeof context.createStereoPanner === "function" ? context.createStereoPanner() : null;
-  const compressor = context.createDynamicsCompressor();
-  const delay = context.createDelay(1.5);
-  const feedback = context.createGain();
-  const output = context.createGain();
-  const drones = [];
-  const droneGains = [];
+  const graph = buildEnsembleGraph(context, score, ensembleGraphOptions(context, {
+    start: now,
+    unit: initialUnit,
+    fadeIn: true,
+  }));
   const transport = {
-    mix,
-    beatBus,
-    bassBus,
-    harmonyBus,
-    chimeBus,
-    chantBus,
-    fungalBus,
-    funBus,
-    filter,
-    panner,
-    delay,
-    feedback,
-    output,
-    drones,
-    droneGains,
+    ...graph,
     melody: currentConductedMelody || melodyFor(score),
     timer: 0,
     nextNoteTime: now,
-    step: 0,
-    parlorReverbSend: null,
-    parlorCrackleGain: null,
-    parlorCrackleSource: null,
+    step: cursor,
+    // Last step that actually sounded; pause resumes after it, not after the
+    // look-ahead window, so no scheduled-but-unheard steps are skipped.
+    audibleStep: cursor - 1,
   };
   currentTransport = transport;
-
-  mix.gain.setValueAtTime(0.0001, now);
-  mix.gain.exponentialRampToValueAtTime(0.28, now + 0.16);
-  beatBus.gain.setValueAtTime(beatEnabled ? 0.82 : 0.0001, now);
-  bassBus.gain.setValueAtTime(bassEnabled ? 0.84 : 0.0001, now);
-  harmonyBus.gain.setValueAtTime(harmonyEnabled ? 0.78 : 0.0001, now);
-  chimeBus.gain.setValueAtTime(chimeEnabled ? 0.8 : 0.0001, now);
-  chantBus.gain.setValueAtTime(chantEnabled ? 0.82 : 0.0001, now);
-  fungalBus.gain.setValueAtTime(0.72, now);
-  funBus.gain.setValueAtTime(0.88, now);
-  filter.type = ["lowpass", "bandpass", "lowpass", "lowpass", "lowpass", "bandpass"][score.voice];
-  filter.frequency.value = 720 + score.bloom * 20 + score.hueShift * 1.6;
-  filter.Q.value = 1.6 + score.edge / 28;
-  compressor.threshold.value = -18;
-  compressor.knee.value = 18;
-  compressor.ratio.value = 5;
-  delay.delayTime.value = Math.min(1.45, initialUnit * [1, 1.5, 0.75, 2, 1.25, 0.5][score.rhythm]);
-  feedback.gain.value = 0.14 + score.bloom / 650;
-  output.gain.value = masterGainFor(masterVolume);
-
-  mix.connect(filter);
-  harmonyBus.connect(filter);
-  chimeBus.connect(filter);
-  chantBus.connect(filter);
-  fungalBus.connect(filter);
-  beatBus.connect(compressor);
-  bassBus.connect(compressor);
-  funBus.connect(output);
-  funBus.connect(compressor);
-
-  if (panner) {
-    panner.pan.setValueAtTime(0, now);
-    filter.connect(panner);
-    panner.connect(compressor);
-    panner.connect(delay);
-  } else {
-    filter.connect(compressor);
-    filter.connect(delay);
-  }
-
-  filter.connect(output);
-  delay.connect(feedback).connect(delay);
-  delay.connect(compressor);
-  compressor.connect(output).connect(context.destination);
-
-  // Antique Parlor Acoustics Space: Chamber Convolution Reverb & Horn Surface Crackle
-  const parlorReverbSend = context.createGain();
-  const parlorReverbFilter = context.createBiquadFilter();
-  parlorReverbFilter.type = "highpass";
-  parlorReverbFilter.frequency.setValueAtTime(180, now);
-  parlorReverbFilter.Q.setValueAtTime(0.7, now);
-
-  const parlorConvolver = context.createConvolver();
-  try {
-    parlorConvolver.normalize = false;
-  } catch {
-    // Ignore normalization error
-  }
-  try {
-    parlorConvolver.buffer = ensureParlorImpulseResponse(context, 1.6);
-  } catch {
-    // Ignore buffer creation errors
-  }
-  parlorReverbSend.gain.setValueAtTime(
-    parlorAcousticsEnabled && parlorReverbEnabled ? 0.32 * parlorAcousticsLevel : 0.0001,
-    now
-  );
-  filter.connect(parlorReverbFilter).connect(parlorReverbSend).connect(parlorConvolver).connect(compressor).connect(output);
-
-  let parlorCrackleSource = null;
-  let parlorCrackleGain = null;
-  try {
-    parlorCrackleSource = context.createBufferSource();
-    parlorCrackleSource.buffer = ensureWaxCrackleBuffer(context, 4.0);
-    parlorCrackleSource.loop = true;
-    parlorCrackleGain = context.createGain();
-    parlorCrackleGain.gain.setValueAtTime(
-      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
-      now
-    );
-    parlorCrackleSource.connect(parlorCrackleGain).connect(output);
-    parlorCrackleSource.start(now);
-  } catch {
-    // Ignore buffer source errors
-  }
-
-  transport.parlorReverbSend = parlorReverbSend;
-  transport.parlorCrackleGain = parlorCrackleGain;
-  transport.parlorCrackleSource = parlorCrackleSource;
-
-  const droneIntervals = [-12, -5, 7];
-  const initialDroneGains = [0.085, score.voice === 5 ? 0.035 : 0.018, 0.0001];
-  for (const [index, interval] of droneIntervals.entries()) {
-    const drone = context.createOscillator();
-    const droneGain = context.createGain();
-    drone.type = index === 0
-      ? (score.waveform === "square" ? "triangle" : score.waveform)
-      : "sine";
-    drone.frequency.value = midiToFrequency(score.root + interval);
-    drone.detune.value = [-5, 4, -3][index];
-    droneGain.gain.value = initialDroneGains[index];
-    drone.connect(droneGain).connect(mix);
-    drone.start(now);
-    drones.push(drone);
-    droneGains.push(droneGain);
-  }
 
   const scheduleAhead = () => {
     if (currentTransport !== transport) return;
@@ -3821,13 +3777,7 @@ async function playScore(score) {
       const stepDuration = unit * lengthMultiplier;
       const gateRatio = Math.min(0.94, score.gate / 100 + interaction.hold * 0.12);
       const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
-      scheduleNote(context, transport, score, currentStep, transport.nextNoteTime, soundingDuration);
-      scheduleBeatStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
-      scheduleBassStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
-      scheduleHarmonyStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
-      scheduleChimeStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
-      scheduleChantStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
-      scheduleFungalBioStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
+      scheduleEnsembleStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration, soundingDuration);
 
       // Fun Machine: 12-step synchronized loop chord progression & overlay melody
       const stepIndex = currentStep % 12;
@@ -3860,21 +3810,15 @@ async function playScore(score) {
             flashSequencerStep(targetStep);
           }, delayMs);
         }
-      } else if (customProgression[stepIndex] && funMachineMode === "auto_chord") {
-        // Sequenced custom chords: play sustained regional chords or note transitions
-        const prevStepIndex = (stepIndex + 11) % 12;
-        const isNewChord = customProgression[stepIndex] !== customProgression[prevStepIndex];
-        if (isRegStart || isNewChord) {
-          const chordDuration = isRegStart ? stepDuration * 3.0 : soundingDuration;
-          scheduleFunMachineChord(context, transport.funBus, customProgression[stepIndex], transport.nextNoteTime, chordDuration);
-        }
-      }
-      if (parlorAcousticsEnabled && parlorTickEnabled) {
-        scheduleClockworkTick(context, output, transport.nextNoteTime, currentStep, parlorAcousticsLevel);
+      } else {
+        scheduleSequencedFunChord(context, transport, currentStep, transport.nextNoteTime, stepDuration, soundingDuration);
       }
       const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
       window.setTimeout(() => {
-        if (currentTransport === transport) highlightBeatStep(currentStep);
+        if (currentTransport !== transport) return;
+        transport.audibleStep = currentStep;
+        highlightBeatStep(currentStep);
+        updateTransportPosition(currentStep);
       }, delayMs);
       transport.nextNoteTime += stepDuration;
       transport.step += 1;
@@ -3884,6 +3828,51 @@ async function playScore(score) {
   scheduleAhead();
   transport.timer = window.setInterval(scheduleAhead, 90);
   elements.status.textContent = "OMEN LOOPING";
+}
+
+function updateTransportPosition(step) {
+  if (!elements.transportPosition) return;
+  elements.transportPosition.value = step === null || step < 0
+    ? "STEP -- / 12"
+    : `STEP ${String((step % 12) + 1).padStart(2, "0")} / 12`;
+}
+
+function syncTransportUI() {
+  const { state } = transportState;
+  const ready = Boolean(currentScore);
+  elements.transportDeck?.setAttribute("data-state", state);
+  // Buttons stay enabled while ready so a keyboard user never loses focus to a
+  // control that disables itself; pressed state carries the transport state.
+  for (const button of [elements.transportPlay, elements.transportPause, elements.transportStop]) {
+    if (button) button.disabled = !ready;
+  }
+  elements.transportPlay?.setAttribute("aria-pressed", String(state === TRANSPORT_STATES.PLAYING));
+  elements.transportPause?.setAttribute("aria-pressed", String(state === TRANSPORT_STATES.PAUSED));
+}
+
+// The single path for starting, pausing, and stopping the loop. Audio runs only
+// while the transport is playing and the bell is unmuted; muting leaves the
+// transport state alone and freezes the cursor where the sound stopped.
+async function runTransportCommand(command) {
+  if (!currentScore) return;
+  const resumeStep = currentTransport ? currentTransport.audibleStep + 1 : transportState.cursor;
+  const next = transportReduce(transportState, command, { cursor: resumeStep });
+  if (next === transportState) return;
+  transportState = next;
+  syncTransportUI();
+  if (next.state === TRANSPORT_STATES.PLAYING) {
+    await playScore(currentScore, { cursor: next.cursor });
+    return;
+  }
+  stopCurrentSound();
+  if (next.state === TRANSPORT_STATES.STOPPED) {
+    highlightBeatStep(-1);
+    updateTransportPosition(null);
+    elements.status.textContent = "OMEN STOPPED · REWOUND";
+  } else {
+    // The position readout holds the last step heard; resume plays the one after.
+    elements.status.textContent = `OMEN PAUSED · ${elements.transportPosition?.value || "STEP -- / 12"}`;
+  }
 }
 
 let currentConductedMelody = null;
@@ -4023,6 +4012,7 @@ function showScore(score) {
   elements.melody.textContent = MELODY_NAMES[score.melodyMode];
   if (elements.fungal) elements.fungal.textContent = score.fungalName;
   elements.replay.disabled = false;
+  syncTransportUI();
   if (elements.shareLink) elements.shareLink.disabled = false;
   if (elements.exportPng) elements.exportPng.disabled = false;
   if (elements.exportWav) elements.exportWav.disabled = false;
@@ -4046,8 +4036,13 @@ async function summon(phrase, { playAudio = true } = {}) {
     const score = composeScore(oracleSource, phrase);
     showScore(score);
     if (playAudio) {
-      await playScore(score);
+      await runTransportCommand("restart");
     } else {
+      stopCurrentSound();
+      transportState = createTransportState();
+      syncTransportUI();
+      highlightBeatStep(-1);
+      updateTransportPosition(null);
       elements.status.textContent = "OMEN RESTORED FROM LINK · PRESS SUMMON OR REPLAY FOR SOUND";
     }
   } catch (error) {
@@ -4387,125 +4382,15 @@ async function exportSpecimenWav() {
     const totalFrames = Math.ceil(totalDuration * sampleRate);
 
     const offlineCtx = new OfflineAudioCtx(2, totalFrames, sampleRate);
-    const mix = offlineCtx.createGain();
-    const beatBus = offlineCtx.createGain();
-    const bassBus = offlineCtx.createGain();
-    const harmonyBus = offlineCtx.createGain();
-    const chimeBus = offlineCtx.createGain();
-    const chantBus = offlineCtx.createGain();
-    const fungalBus = offlineCtx.createGain();
-    const funBus = offlineCtx.createGain();
-    const filter = offlineCtx.createBiquadFilter();
-    const compressor = offlineCtx.createDynamicsCompressor();
-    const delay = offlineCtx.createDelay(1.5);
-    const feedback = offlineCtx.createGain();
-    const output = offlineCtx.createGain();
-
-    mix.gain.setValueAtTime(0.28, 0);
-    beatBus.gain.setValueAtTime(beatEnabled ? 0.82 : 0.0001, 0);
-    bassBus.gain.setValueAtTime(bassEnabled ? 0.84 : 0.0001, 0);
-    harmonyBus.gain.setValueAtTime(harmonyEnabled ? 0.78 : 0.0001, 0);
-    chimeBus.gain.setValueAtTime(chimeEnabled ? 0.8 : 0.0001, 0);
-    chantBus.gain.setValueAtTime(chantEnabled ? 0.82 : 0.0001, 0);
-    fungalBus.gain.setValueAtTime(0.72, 0);
-    funBus.gain.setValueAtTime(0.88, 0);
-
-    filter.type = ["lowpass", "bandpass", "lowpass", "lowpass", "lowpass", "bandpass"][score.voice];
-    filter.frequency.value = 720 + score.bloom * 20 + score.hueShift * 1.6;
-    filter.Q.value = 1.6 + score.edge / 28;
-    compressor.threshold.value = -18;
-    compressor.knee.value = 18;
-    compressor.ratio.value = 5;
-    delay.delayTime.value = Math.min(1.45, unit * [1, 1.5, 0.75, 2, 1.25, 0.5][score.rhythm]);
-    feedback.gain.value = 0.14 + score.bloom / 650;
-    output.gain.value = masterGainFor(masterVolume);
-
-    mix.connect(filter);
-    harmonyBus.connect(filter);
-    chimeBus.connect(delay);
-    chimeBus.connect(compressor);
-    chantBus.connect(delay);
-    chantBus.connect(compressor);
-    beatBus.connect(compressor);
-    bassBus.connect(compressor);
-    fungalBus.connect(delay);
-    fungalBus.connect(compressor);
-    funBus.connect(output);
-    funBus.connect(compressor);
-    filter.connect(compressor).connect(output).connect(offlineCtx.destination);
-    filter.connect(delay);
-    delay.connect(feedback).connect(delay);
-    delay.connect(compressor);
-
-    if (parlorAcousticsEnabled) {
-      const parlorReverbSend = offlineCtx.createGain();
-      const parlorReverbFilter = offlineCtx.createBiquadFilter();
-      parlorReverbFilter.type = "highpass";
-      parlorReverbFilter.frequency.setValueAtTime(180, 0);
-      parlorReverbFilter.Q.setValueAtTime(0.7, 0);
-
-      const parlorConvolver = offlineCtx.createConvolver();
-      try {
-        parlorConvolver.normalize = false;
-      } catch {
-        // Ignore normalization error
-      }
-      try {
-        parlorConvolver.buffer = ensureParlorImpulseResponse(offlineCtx, 1.6);
-      } catch {
-        // Ignore buffer creation errors
-      }
-      parlorReverbSend.gain.setValueAtTime(
-        parlorReverbEnabled ? 0.32 * parlorAcousticsLevel : 0.0001,
-        0
-      );
-      filter.connect(parlorReverbFilter).connect(parlorReverbSend).connect(parlorConvolver).connect(compressor).connect(output);
-
-      if (parlorCrackleEnabled) {
-        try {
-          const crackle = offlineCtx.createBufferSource();
-          crackle.buffer = ensureWaxCrackleBuffer(offlineCtx, 4.0);
-          crackle.loop = true;
-          const crackleGain = offlineCtx.createGain();
-          crackleGain.gain.setValueAtTime(0.42 * parlorAcousticsLevel, 0);
-          crackle.connect(crackleGain).connect(output);
-          crackle.start(0);
-          crackle.stop(totalDuration);
-        } catch {
-          // Ignore buffer errors
-        }
-      }
-    }
-
-    // Continuous ambient drones
-    const droneIntervals = [-12, -5, 7];
-    const initialDroneGains = [0.085, score.voice === 5 ? 0.035 : 0.018, 0.0001];
-    for (const [index, interval] of droneIntervals.entries()) {
-      const drone = offlineCtx.createOscillator();
-      const droneGain = offlineCtx.createGain();
-      drone.type = index === 0
-        ? (score.waveform === "square" ? "triangle" : score.waveform)
-        : "sine";
-      drone.frequency.value = midiToFrequency(score.root + interval);
-      drone.detune.value = [-5, 4, -3][index];
-      droneGain.gain.value = initialDroneGains[index];
-      drone.connect(droneGain).connect(mix);
-      drone.start(0);
-      drone.stop(totalDuration);
-    }
-
+    const graph = buildEnsembleGraph(offlineCtx, score, ensembleGraphOptions(offlineCtx, {
+      start: 0,
+      stop: totalDuration,
+      unit,
+      fadeIn: false,
+    }));
     const offlineTransport = {
-      mix,
-      beatBus,
-      bassBus,
-      harmonyBus,
-      chimeBus,
-      chantBus,
-      fungalBus,
-      funBus,
+      ...graph,
       melody: currentConductedMelody || melodyFor(score),
-      drones: [],
-      droneGains: [],
     };
 
     let stepTime = 0.04;
@@ -4514,28 +4399,8 @@ async function exportSpecimenWav() {
       const stepDuration = unit * lengthMultiplier;
       const gateRatio = Math.min(0.94, score.gate / 100);
       const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
-
-      scheduleNote(offlineCtx, offlineTransport, score, step, stepTime, soundingDuration);
-      scheduleBeatStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
-      scheduleBassStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
-      scheduleHarmonyStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
-      scheduleChimeStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
-      scheduleChantStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
-      scheduleFungalBioStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
-      if (customProgression[step % 12]) {
-        const stepIndex = step % 12;
-        const prevStepIndex = (stepIndex + 11) % 12;
-        const isNewChord = customProgression[stepIndex] !== customProgression[prevStepIndex];
-        const isRegStart = (stepIndex % 3 === 0);
-        if (isRegStart || isNewChord) {
-          const chordDuration = isRegStart ? stepDuration * 3.0 : soundingDuration;
-          scheduleFunMachineChord(offlineCtx, funBus, customProgression[stepIndex], stepTime, chordDuration);
-        }
-      }
-      if (parlorAcousticsEnabled && parlorTickEnabled) {
-        scheduleClockworkTick(offlineCtx, output, stepTime, step, parlorAcousticsLevel);
-      }
-
+      scheduleEnsembleStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration, soundingDuration);
+      scheduleSequencedFunChord(offlineCtx, offlineTransport, step, stepTime, stepDuration, soundingDuration);
       stepTime += stepDuration;
     }
 
@@ -4611,8 +4476,9 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
     const initialPhrase = elements.phrase.value.trim() || SURPRISES[0];
     elements.phrase.value = initialPhrase;
     await summon(initialPhrase);
-  } else if (currentScore && !currentTransport && !muted) {
-    await playScore(currentScore);
+  } else if (currentScore && transportState.state === TRANSPORT_STATES.STOPPED && !muted) {
+    // Tapping a stopped vitrine wakes the loop; a deliberate pause stays paused.
+    await runTransportCommand("play");
   }
 
   updateAudioInteraction();
@@ -5081,7 +4947,23 @@ window.addEventListener("blur", () => {
   }
 });
 
+// The control most recently focused by a pointer press. Keyboard focus moves
+// (Tab, scripted focus) clear it, so Space on that control is native again.
+let pointerFocusedControl = null;
+document.addEventListener("pointerdown", (event) => {
+  pointerFocusedControl = event.target?.closest?.("button, summary, input, [role]") || null;
+}, true);
+document.addEventListener("focusin", (event) => {
+  if (event.target !== pointerFocusedControl) pointerFocusedControl = null;
+});
+
 window.addEventListener("keydown", (event) => {
+  const transportCommand = transportCommandForKey(event, { pointerFocused: pointerFocusedControl });
+  if (transportCommand && currentScore) {
+    event.preventDefault();
+    if (!event.repeat) runTransportCommand(transportCommand);
+    return;
+  }
   if (
     event.target === elements.phrase ||
     event.target?.tagName === "INPUT" ||
@@ -5100,6 +4982,12 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => {
+  // Space activates a mouse-focused button on keyup; the transport already
+  // consumed this press on keydown.
+  if (currentScore && transportCommandForKey(event, { pointerFocused: pointerFocusedControl }) === "toggle") {
+    event.preventDefault();
+    return;
+  }
   if (
     event.target === elements.phrase ||
     event.target?.tagName === "INPUT" ||
@@ -5129,7 +5017,19 @@ elements.surprise.addEventListener("click", () => {
 });
 
 elements.replay.addEventListener("click", () => {
-  if (currentScore) playScore(currentScore);
+  runTransportCommand("restart");
+});
+
+elements.transportPlay?.addEventListener("click", () => {
+  runTransportCommand("play");
+});
+
+elements.transportPause?.addEventListener("click", () => {
+  runTransportCommand("pause");
+});
+
+elements.transportStop?.addEventListener("click", () => {
+  runTransportCommand("stop");
 });
 
 elements.shareLink?.addEventListener("click", () => {
@@ -5157,10 +5057,15 @@ elements.sound.addEventListener("click", () => {
   elements.sound.setAttribute("aria-pressed", String(muted));
   elements.sound.setAttribute("aria-label", muted ? "Enable sound" : "Mute sound");
   if (muted) {
-    stopCurrentSound();
+    const resumeStep = stopCurrentSound();
+    if (resumeStep !== null) {
+      transportState = Object.freeze({ state: transportState.state, cursor: resumeStep });
+    }
     elements.status.textContent = currentScore ? "OMEN MUTED" : "AWAITING INPUT";
+  } else if (currentScore && transportState.state === TRANSPORT_STATES.PLAYING) {
+    playScore(currentScore, { cursor: transportState.cursor });
   } else if (currentScore) {
-    playScore(currentScore);
+    elements.status.textContent = transportState.state === TRANSPORT_STATES.PAUSED ? "OMEN PAUSED · BELL UNSEALED" : "BELL UNSEALED · PRESS PLAY";
   }
 });
 

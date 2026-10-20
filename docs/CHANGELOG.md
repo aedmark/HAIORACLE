@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Render WAV exports through the same audio graph as live playback, so chimes, choir, and fungal voices are filtered and panned exactly as heard.
 - Remove audio-synchronous geometry scaling after screencast review exposed beat-periodic tearing and compression-like jumps.
 - Confine the large body-glow blur to one silhouette fill instead of applying it to every kinetic line, ring, and eye.
 
@@ -12,6 +13,7 @@
 - Enter a phrase to summon a deterministic named audiovisual creature.
 - Hear a continuously looping synthesized composition generated from the creature's LOLCODE score.
 - Use surprise, replay, and mute controls.
+- Play, pause, and stop-and-rewind the loop from a master transport rail, or press `Space` to play/pause and `Esc` to stop. Pause resumes on the next unheard step.
 - Control a louder default mix and live ensemble pace with keyboard-accessible master-volume (`0..100%`) and tempo (`36..208` BPM) sliders.
 - Hear twelve deterministic repeating motif families spanning seeded scale walks, arpeggios, chromatic movement, fifths, whole tones, and stranger ladders.
 - Enter a redesigned esoteric parlor cabinet and broadsheet with engraved serif type, foxed parchment, oxblood and tarnished brass trim, formal specimen labels, and a framed central apparition vitrine.

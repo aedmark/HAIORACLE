@@ -25,6 +25,8 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Codel & fraction spells | `src/pad.piet`, `src/chimes.frac` | 2001 Piet codel canvas & 1987 FRACTRAN fractions | Piet and FRACTRAN VM output |
 | Shakespeare runtime | `src/shakespeare.mjs` | `runShakespeare()`, `composeChant()` | `src/chant.spl`, validated score, browser host |
 | Dramatic choir spell | `src/chant.spl` | 2001 Shakespeare Programming Language play | Shakespeare VM output |
+| Ensemble audio graph | `src/ensemble.mjs` | `buildEnsembleGraph()` | live `AudioContext` and offline WAV `OfflineAudioContext` in `src/app.mjs` |
+| Master transport | `src/transport.mjs` | `transportReduce()`, `transportCommandForKey()` | transport deck and hotkeys in `src/app.mjs` |
 | Harmonic conductor | `src/conductor.mjs` | `conductEnsemble()`, `eulerGradus()`, `buildTonnetzSpine()`, `bjorklund()` | all 6 esoteric engines, `src/app.mjs` |
 | Verification | `tests/` | Node test runner | pure modules and static assets |
 
@@ -56,6 +58,8 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Mycelial network | `buildMycelialNetwork()`, `buildFruitingBodies()` | Canvas renderer (`src/app.mjs`) | procedural branching hyphae, anastomotic fusion loops, eight generative sporophore archetypes, and drifting ballistospores growing over a 10-second envelope from creature perimeter into vitrine glass |
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
+| Ensemble graph | `buildEnsembleGraph()` | `playScore()`, `exportSpecimenWav()` | one node topology for live and offline audio; drums, bass, and Fun Machine bypass the creature filter, everything else passes through it; `stop` ends looping sources for offline renders |
+| Master transport | `#transport-deck` buttons, `Space`/`Esc` via `transportCommandForKey()` | `runTransportCommand()` | `stopped`/`playing`/`paused` with a raw step cursor; pause resumes after the last audible step; audio runs only while playing and unmuted |
 | Melody motif | `melodyFor()` | audio transport | exactly twelve frozen semitone offsets selected and rotated by validated score fields |
 | Master volume | range input | active transport output gain | session-local `0..100` value mapped through a bounded perceptual curve; changes ramp over 18 ms |
 | Tempo (BPM) | range input (`#tempo-bpm`) | active audio transport scheduler | session-local `36..208` BPM value initialized to `score.pulse` on summon (double-click restores native pulse); updates upcoming step durations in real time |
@@ -73,6 +77,8 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - Unsupported LOLCODE syntax fails with a line number. Enforced by the interpreter and its negative test.
 - Rendering and sound share one immutable score. Enforced by the `showScore()` and `playScore()` call path.
 - Only one audio transport loops at a time. Enforced by `stopCurrentSound()` before every start.
+- Live playback and WAV export build the same node topology. Enforced by `tests/transport.test.mjs` and D-023.
+- Audio loops only while the transport is `playing` and the bell is unmuted; mute never changes transport state. Enforced by `runTransportCommand()` and D-023.
 - Master volume changes only the post-compressor output gain and never changes the deterministic creature score. Enforced structurally in `tests/static.test.mjs` (D-009).
 - Vitrine tap, hold, and drag gestures modulate transient visual morphing, pitch, intensity, and synthesized percussion and decay smoothly back to the immutable score on release. Enforced structurally in `tests/static.test.mjs` (D-012).
 - Every melody family resolves to exactly twelve deterministic semitone offsets and the transport repeats them modulo twelve. Enforced by exact arpeggio and chromatic tests (D-010).
@@ -102,7 +108,8 @@ The visual system uses locally installed old-style and transitional book serifs 
 | What | Where | Written by | Reset by | Committed? |
 | --- | --- | --- | --- | --- |
 | Current phrase and score | browser memory | `src/app.mjs` | reload or tab close | no |
-| Audio graph and loop timer | browser audio context and window | `playScore()` | mute, replacement, reload, or tab close | no |
+| Audio graph and loop timer | browser audio context and window | `playScore()` | pause, stop, mute, replacement, reload, or tab close | no |
+| Transport state and cursor | browser memory | `runTransportCommand()` | stop, summon, reload, or tab close | no |
 | Static HTTP cache | browser-managed | browser | browser controls | no |
 
 The prototype uses no cookies, local storage, indexed database, analytics, or service worker.
