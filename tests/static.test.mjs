@@ -382,7 +382,15 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   assert.match(app, /applyEnsembleConductor\(performance\.steps\.map\(\(step\) => step\.chord\)\)/);
   // Raw Esoteric Chaos is unfettered unless a key is held (P5-27): no empty spine stands in.
   assert.match(app, /const spineToUse = overrideProgression\n    \? overrideProgression\.map\([^\n]*\n    : null;/);
-  assert.match(app, /const duck = transport === currentTransport && activeHeldFunKey !== null \? LEAD_DUCK_GAIN : 1;/);
+  // The LOLCODE lead steps back for a held key or a recorded layer that leads (D-029, D-039).
+  assert.match(app, /const duck = transport === currentTransport && \(activeHeldFunKey !== null \|\| transport\.songLeading\) \? LEAD_DUCK_GAIN : 1;/);
+  // The loop machine (P5-26 phase 2): record, follow, and play every layer on the step grid.
+  assert.match(html, /<div class="looper" id="looper" role="group" aria-label="Loop machine">/);
+  for (const id of ["looper-record", "looper-overdub", "looper-clear"]) assert.match(html, new RegExp(`id="${id}"`));
+  assert.match(html, /<output class="looper-readout" id="looper-readout" aria-live="off">/);
+  assert.match(app, /advanceRecorder\(stepIndex, position, liveSlot\);\n      followSong\(transport, loop, stepIndex, liveSlot\);\n\n      scheduleEnsembleStep\(/, "the band is conducted before it plays the step");
+  assert.match(app, /for \(const \{ layerIndex, slot \} of slotsAt\(loop, stepIndex\)\)/);
+  assert.match(app, /releasable: false,/, "recorded pads ring out when a live key lets go");
   assert.match(app, /function updateFunKeyboardChordLabels\(/);
   assert.match(app, /async function triggerFunKey\(/);
   assert.doesNotMatch(app, /customProgression|funMachineRec|funMachineReset|renderFunSequencerGrid|scheduleSequencedFunChord|selectedSequencerStep/);

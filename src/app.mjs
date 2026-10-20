@@ -77,6 +77,21 @@ import {
 } from "./session.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
 import {
+  appendLoop,
+  canAppendLoop,
+  canOverdub,
+  emptySong,
+  idleRecorder,
+  isEmptyTake,
+  leadSlotAt,
+  makeSlot,
+  overdubLayer,
+  recorderReduce,
+  slotsAt,
+  songPasses,
+  songPosition,
+} from "./looper.mjs";
+import {
   CABINET_STORAGE_KEY,
   DRAWERS,
   LOOPS_BEFORE_BAND,
@@ -2095,7 +2110,7 @@ function updateAudioInteraction() {
   const fifthWeight = 0.035 + field.radius * 0.065 * (0.5 - 0.5 * Math.cos(field.angle * 2));
   const shimmerWeight = field.radius * 0.058 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5));
   // The tonic drones step back with the lead while the band follows a held key.
-  const leadDuck = activeHeldFunKey !== null ? LEAD_DUCK_GAIN : 1;
+  const leadDuck = activeHeldFunKey !== null || currentTransport?.songLeading ? LEAD_DUCK_GAIN : 1;
   const targetDroneGains = [subWeight * leadDuck, fifthWeight * leadDuck, shimmerWeight * leadDuck];
 
   for (const [index, drone] of transport.drones.entries()) {
@@ -2255,7 +2270,7 @@ function scheduleNote(context, transport, score, step, at, duration) {
   const shiftedNote = score.root + transport.melody[(step + field.phaseStep) % transport.melody.length] + consonantInterval;
   const envelope = context.createGain();
   const attack = Math.min(0.055, duration * (0.2 + field.radius * 0.06));
-  const duck = transport === currentTransport && activeHeldFunKey !== null ? LEAD_DUCK_GAIN : 1;
+  const duck = transport === currentTransport && (activeHeldFunKey !== null || transport.songLeading) ? LEAD_DUCK_GAIN : 1;
   const peakGain = 0.3 * (1 + interaction.hold * 0.16) * duck;
   envelope.gain.setValueAtTime(0.0001, at);
   envelope.gain.exponentialRampToValueAtTime(peakGain, at + Math.max(0.01, attack));
@@ -2958,7 +2973,7 @@ const funPadHandles = new Set();
  * envelope whose attack scales with the chord's length. The release overlaps
  * the next chord so changes crossfade. Returns a handle for releaseFunPads().
  */
-function schedulePadChord(context, destination, chord, at, duration, { level = 1, voicing = null, transport = null } = {}) {
+function schedulePadChord(context, destination, chord, at, duration, { level = 1, voicing = null, transport = null, releasable = true } = {}) {
   if (!chord) return null;
   const notes = voicing || padVoicing(chord);
   const start = Math.max(context.currentTime + 0.01, at);
@@ -3027,8 +3042,9 @@ function schedulePadChord(context, destination, chord, at, duration, { level = 1
   lfo.stop(stopAt);
 
   const handle = { env, oscillators, stopAt };
-  // Only live pads can be released; offline renders keep their own clock.
-  if (context === audioContext) {
+  // Only live pads can be released; offline renders keep their own clock, and
+  // recorded loop layers ring out on their own when a live key lets go.
+  if (context === audioContext && releasable) {
     funPadHandles.add(handle);
     window.setTimeout(() => funPadHandles.delete(handle), Math.max(0, (stopAt - context.currentTime) * 1000) + 200);
   }
@@ -3660,7 +3676,7 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     activeHeldFunKey = null;
     keyBtn?.classList.remove("is-pressed");
     releaseFunPads(audioContext, 0.9);
-    if (currentTransport) currentTransport.funLeadMidi = null;
+    if (currentTransport) currentTransport.liveVoice = { voicing: currentTransport.liveVoice?.voicing ?? null, leadMidi: null };
     applyEnsembleConductor();
     if (elements.funMachineTelemetry) {
       elements.funMachineTelemetry.textContent = `${funKeyLabel(normSemi)} RELEASED · THE BAND RETURNS TO ITS OWN SCORE`;
@@ -3706,8 +3722,9 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     const bridge = regionStart - context.currentTime;
     if (bridge > 0.12) {
       const chord = performance.steps[nextStep % 12].chord;
-      transport.funVoicing = padVoicing(chord, transport.funVoicing, performance.lift);
-      schedulePadChord(context, transport.funBus, chord, context.currentTime, bridge + 0.2, { level, voicing: transport.funVoicing });
+      const voice = liveVoiceOf(transport);
+      voice.voicing = padVoicing(chord, voice.voicing, performance.lift);
+      schedulePadChord(context, transport.funBus, chord, context.currentTime, bridge + 0.2, { level, voicing: voice.voicing });
     }
   } else {
     const chord = performance.chords[0];
@@ -3801,6 +3818,57 @@ function scheduleEnsembleStep(context, transport, score, step, at, stepDuration,
   }
 }
 
+function liveVoiceOf(transport) {
+  transport.liveVoice ??= { voicing: null, leadMidi: null };
+  return transport.liveVoice;
+}
+
+function sameSlot(a, b) {
+  return Boolean(a && b && a.key === b.key && a.style === b.style);
+}
+
+function padStepsDuration(score, absoluteStep, steps) {
+  let duration = 0;
+  for (let k = 0; k < steps; k += 1) duration += loopStepDuration(score, absoluteStep + k);
+  return duration;
+}
+
+/**
+ * Plays one step of a performance on the band's grid: a pad when
+ * `padDuration` is given, then the style's arpeggio pair or lead note. Shared by
+ * the live key and every recorded layer; `voice` keeps that player's pad
+ * voicing and lead glide.
+ */
+function playPerformanceStep(context, transport, voice, performance, { stepIndex, at, stepDuration, soundingDuration, padDuration = null, releasable = true }) {
+  const stepInfo = performance.steps[stepIndex];
+  if (padDuration !== null) {
+    voice.voicing = padVoicing(stepInfo.chord, voice.voicing, performance.lift);
+    schedulePadChord(context, transport.funBus, stepInfo.chord, at, padDuration, {
+      level: FUN_PAD_LEVEL[performance.style],
+      voicing: voice.voicing,
+      transport,
+      releasable,
+    });
+  }
+  if (performance.style === "arpeggio") {
+    const half = stepDuration / 2;
+    arpeggioNotes(stepInfo.chord, stepIndex, 2, performance.lift).forEach((midi, k) => {
+      scheduleArpNote(context, transport.funBus, midi, at + k * half, half, {
+        accent: stepInfo.isRegionStart && k === 0,
+        pan: k === 0 ? -0.3 : 0.3,
+        transport,
+      });
+    });
+  } else if (performance.style === "progression" && stepInfo.leadPitch !== null) {
+    const midi = leadMidi(stepInfo.leadPitch);
+    scheduleFunLeadNote(context, transport.funBus, midi, at, Math.max(soundingDuration, stepDuration * 0.92), {
+      glideFrom: voice.leadMidi ?? null,
+      transport,
+    });
+    voice.leadMidi = midi;
+  }
+}
+
 async function playScore(score, { cursor = 0 } = {}) {
   stopCurrentSound();
   vision.setScore(score);
@@ -3846,45 +3914,47 @@ async function playScore(score, { cursor = 0 } = {}) {
       const stepDuration = unit * lengthMultiplier;
       const gateRatio = Math.min(0.94, score.gate / 100 + interaction.hold * 0.12);
       const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
-      scheduleEnsembleStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration, soundingDuration);
-
-      // Fun Machine: 12-step synchronized loop chord progression & overlay melody
+      // Fun Machine and loop machine (D-039): record what is held, let the band
+      // follow a live key or else the newest recorded layer, then play the band,
+      // the live accompanist, and every recorded layer on this step.
       const stepIndex = currentStep % 12;
+      const at = transport.nextNoteTime;
+      const liveSlot = activeHeldFunKey !== null && activeFunPerformance ? makeSlot(activeHeldFunKey, funMachineStyle) : null;
+      const position = songPosition(song, currentStep);
+      const loop = position ? song.loops[position.loopIndex] : null;
+      transport.songPosition = position;
+      advanceRecorder(stepIndex, position, liveSlot);
+      followSong(transport, loop, stepIndex, liveSlot);
+
+      scheduleEnsembleStep(context, transport, score, currentStep, at, stepDuration, soundingDuration);
 
       if (!arrangementPlays("fun", stepIndex)) {
         // The conductor score rests the player only if src/conductor.i stops
         // IGNOREing register :8; the canonical score never does.
-      } else if (activeHeldFunKey !== null && activeFunPerformance) {
-        // The accompanist plays on the band's own step grid.
-        const performance = activeFunPerformance;
-        const stepInfo = performance.steps[stepIndex];
-        const at = transport.nextNoteTime;
-        if (stepInfo.isRegionStart) {
-          let regionDuration = 0;
-          for (let k = 0; k < 3; k += 1) regionDuration += loopStepDuration(score, currentStep + k);
-          transport.funVoicing = padVoicing(stepInfo.chord, transport.funVoicing, performance.lift);
-          schedulePadChord(context, transport.funBus, stepInfo.chord, at, regionDuration, {
-            level: FUN_PAD_LEVEL[performance.style],
-            voicing: transport.funVoicing,
-            transport,
-          });
+      } else {
+        const timing = { stepIndex, at, stepDuration, soundingDuration };
+        if (liveSlot) {
+          const padDuration = activeFunPerformance.steps[stepIndex].isRegionStart ? padStepsDuration(score, currentStep, 3) : null;
+          playPerformanceStep(context, transport, liveVoiceOf(transport), activeFunPerformance, { ...timing, padDuration });
         }
-        if (performance.style === "arpeggio") {
-          const half = stepDuration / 2;
-          arpeggioNotes(stepInfo.chord, stepIndex, 2, performance.lift).forEach((midi, k) => {
-            scheduleArpNote(context, transport.funBus, midi, at + k * half, half, {
-              accent: stepInfo.isRegionStart && k === 0,
-              pan: k === 0 ? -0.3 : 0.3,
-              transport,
+        if (loop) {
+          transport.layerVoices ??= [];
+          for (const { layerIndex, slot } of slotsAt(loop, stepIndex)) {
+            const take = loop.layers[layerIndex];
+            const previous = stepIndex > 0 ? take[stepIndex - 1] : null;
+            const starts = stepIndex % 3 === 0 || !sameSlot(previous, slot);
+            let padSteps = 0;
+            if (starts) {
+              do padSteps += 1;
+              while ((stepIndex + padSteps) % 3 !== 0 && sameSlot(take[stepIndex + padSteps], slot));
+            }
+            transport.layerVoices[layerIndex] ??= { voicing: null, leadMidi: null };
+            playPerformanceStep(context, transport, transport.layerVoices[layerIndex], performanceFor(slot), {
+              ...timing,
+              padDuration: starts ? padStepsDuration(score, currentStep, padSteps) : null,
+              releasable: false,
             });
-          });
-        } else if (performance.style === "progression" && stepInfo.leadPitch !== null) {
-          const midi = leadMidi(stepInfo.leadPitch);
-          scheduleFunLeadNote(context, transport.funBus, midi, at, Math.max(soundingDuration, stepDuration * 0.92), {
-            glideFrom: transport.funLeadMidi ?? null,
-            transport,
-          });
-          transport.funLeadMidi = midi;
+          }
         }
       }
       const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
@@ -3892,6 +3962,7 @@ async function playScore(score, { cursor = 0 } = {}) {
         if (currentTransport !== transport) return;
         transport.audibleStep = currentStep;
         if (currentStep % 12 === 11) noteLoopHeard();
+        if (currentStep % 12 === 0) renderLooper();
         highlightBeatStep(currentStep);
         updateTransportPosition(currentStep);
       }, delayMs);
@@ -3959,11 +4030,15 @@ async function runTransportCommand(command) {
   if (next === transportState) return;
   transportState = next;
   syncTransportUI();
+  // A take needs an unbroken pass: stop, pause, and restart (and a new summon,
+  // which restarts) abandon it. Playing on from a pause or an arm does not.
+  if (command === "restart" || next.state !== TRANSPORT_STATES.PLAYING) cancelRecording();
   if (next.state === TRANSPORT_STATES.PLAYING) {
     await playScore(currentScore, { cursor: next.cursor });
     return;
   }
   stopCurrentSound();
+  renderLooper();
   if (next.state === TRANSPORT_STATES.STOPPED) {
     highlightBeatStep(-1);
     updateTransportPosition(null);
@@ -5499,6 +5574,145 @@ for (const type of ["input", "change", "click"]) document.addEventListener(type,
 
 buildDrawers();
 renderCabinet();
+
+// ---------------------------------------------------------------------------
+// The loop machine (D-039, P5-26). `song` is the visitor's arrangement of
+// recorded takes, kept across summons; the recorder turns held keys into a
+// take one step at a time, from the same moment the live accompanist reads.
+
+let song = emptySong();
+let recorder = idleRecorder();
+let selectedLoop = null;
+const performanceCache = new Map();
+
+function performanceFor(slot) {
+  const tonic = currentScore ? currentScore.root : 0;
+  const key = `${slot.key}:${slot.style}:${activeGenre}:${tonic}`;
+  if (!performanceCache.has(key)) performanceCache.set(key, buildPerformance(slot.key, slot.style, activeGenre, tonic));
+  return performanceCache.get(key);
+}
+
+function announceLooper(message) {
+  const announcer = document.querySelector("#looper-announcer");
+  if (announcer) announcer.textContent = message;
+}
+
+function advanceRecorder(stepIndex, position, liveSlot) {
+  if (recorder.mode === "idle") return;
+  const wasArmed = recorder.mode === "armed";
+  const result = recorderReduce(recorder, { type: "step", step: stepIndex, loopIndex: position?.loopIndex ?? null, held: liveSlot });
+  recorder = result.recorder;
+  if (wasArmed && recorder.mode === "recording") {
+    announceLooper(recorder.kind === "new" ? "RECORDING A NEW LOOP" : `OVERDUBBING LOOP ${recorder.loopIndex + 1}`);
+  }
+  if (result.finished) landTake(result.finished);
+  renderLooper();
+}
+
+function landTake({ kind, loopIndex, take }) {
+  if (isEmptyTake(take)) {
+    announceLooper("NO KEY WAS HELD · THE TAKE WAS DISCARDED");
+    return;
+  }
+  const next = kind === "new" ? appendLoop(song, take) : overdubLayer(song, loopIndex, take);
+  if (next === song) {
+    announceLooper(kind === "new" ? "THE SONG IS FULL" : "THAT LOOP ALREADY HAS FOUR LAYERS");
+    return;
+  }
+  song = next;
+  selectedLoop = kind === "new" ? song.loops.length - 1 : loopIndex;
+  announceLooper(kind === "new" ? `LOOP ${song.loops.length} ADDED TO THE SONG` : `LAYER ADDED TO LOOP ${loopIndex + 1}`);
+  unlockDrawer("change");
+}
+
+// The band follows a live key (conducted when the key goes down), else the
+// newest recorded layer holding a key at this step, else its own score.
+function followSong(transport, loop, stepIndex, liveSlot) {
+  if (liveSlot) {
+    transport.songLeading = false;
+    transport.followedSlot = "live";
+    return;
+  }
+  const lead = leadSlotAt(loop, stepIndex);
+  transport.songLeading = Boolean(lead);
+  const followed = lead ? `${lead.key}:${lead.style}` : null;
+  if (followed === transport.followedSlot) return;
+  transport.followedSlot = followed;
+  if (lead) applyEnsembleConductor(performanceFor(lead).steps.map((step) => step.chord));
+  else applyEnsembleConductor();
+}
+
+function armRecorder(kind) {
+  if (!currentScore) {
+    announceLooper("SUMMON A CREATURE FIRST");
+    return;
+  }
+  if (recorder.mode !== "idle" && recorder.kind === kind) {
+    recorder = idleRecorder();
+    announceLooper("RECORDING CANCELLED");
+    renderLooper();
+    return;
+  }
+  if (kind === "new" && !canAppendLoop(song)) {
+    announceLooper("THE SONG IS FULL");
+    return;
+  }
+  if (kind === "overdub" && !canOverdub(song, selectedLoop)) {
+    announceLooper(song.loops.length ? "THAT LOOP ALREADY HAS FOUR LAYERS" : "RECORD A LOOP FIRST");
+    return;
+  }
+  recorder = recorderReduce(idleRecorder(), kind === "new" ? { type: "arm", kind } : { type: "arm", kind, loopIndex: selectedLoop }).recorder;
+  announceLooper(kind === "new" ? "ARMED · THE NEW LOOP STARTS ON STEP 1" : `ARMED · THE OVERDUB STARTS WITH LOOP ${selectedLoop + 1}`);
+  renderLooper();
+  if (transportState.state !== TRANSPORT_STATES.PLAYING) runTransportCommand("play");
+}
+
+function cancelRecording() {
+  if (recorder.mode === "idle") return;
+  recorder = idleRecorder();
+  announceLooper("RECORDING STOPPED · NOTHING WAS KEPT");
+  renderLooper();
+}
+
+function clearSong() {
+  song = emptySong();
+  selectedLoop = null;
+  recorder = idleRecorder();
+  if (currentTransport) currentTransport.followedSlot = null;
+  if (currentTransport) currentTransport.songLeading = false;
+  if (activeHeldFunKey === null) applyEnsembleConductor();
+  announceLooper("THE SONG IS CLEARED");
+  renderLooper();
+}
+
+function looperReadoutText() {
+  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "S"}`;
+  if (recorder.mode === "armed") return recorder.kind === "new" ? "ARMED · NEW LOOP STARTS ON STEP 1" : `ARMED · OVERDUB WAITS FOR LOOP ${recorder.loopIndex + 1}`;
+  if (recorder.mode === "recording") return recorder.kind === "new" ? "● RECORDING A NEW LOOP" : `● OVERDUBBING LOOP ${recorder.loopIndex + 1}`;
+  if (!song.loops.length) return "NO LOOPS YET · HOLD KEYS AND RECORD WHAT YOU PLAY";
+  const playing = currentTransport?.songPosition;
+  const now = playing ? `NOW LOOP ${playing.loopIndex + 1} · ` : "";
+  const target = selectedLoop !== null ? ` · OVERDUB TARGET LOOP ${selectedLoop + 1} (${plural(song.loops[selectedLoop].layers.length, "LAYER")})` : "";
+  return `${now}${plural(song.loops.length, "LOOP")} · ${plural(songPasses(song), "PASS")}${target}`.replace("PASSS", "PASSES");
+}
+
+function renderLooper() {
+  const record = document.querySelector("#looper-record");
+  const overdub = document.querySelector("#looper-overdub");
+  const clear = document.querySelector("#looper-clear");
+  const readout = document.querySelector("#looper-readout");
+  const active = (kind) => recorder.mode !== "idle" && recorder.kind === kind;
+  record?.setAttribute("aria-pressed", String(active("new")));
+  overdub?.setAttribute("aria-pressed", String(active("overdub")));
+  if (overdub) overdub.disabled = !song.loops.length;
+  if (clear) clear.disabled = !song.loops.length && recorder.mode === "idle";
+  if (readout) readout.value = looperReadoutText();
+}
+
+document.querySelector("#looper-record")?.addEventListener("click", () => armRecorder("new"));
+document.querySelector("#looper-overdub")?.addEventListener("click", () => armRecorder("overdub"));
+document.querySelector("#looper-clear")?.addEventListener("click", clearSong);
+renderLooper();
 
 elements.bandstandEngageAll?.addEventListener("click", () => {
   setBandPlayersEnabled(true);

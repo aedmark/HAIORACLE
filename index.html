@@ -246,6 +246,16 @@
               </button>
             </div>
           </div>
+
+          <!-- The loop machine (D-039): a song of loops, each a stack of takes. -->
+          <div class="looper" id="looper" role="group" aria-label="Loop machine">
+            <span class="looper-label">LOOP MACHINE</span>
+            <button class="beat-button looper-button" id="looper-record" type="button" aria-pressed="false">● RECORD NEW LOOP</button>
+            <button class="beat-button looper-button" id="looper-overdub" type="button" aria-pressed="false" disabled>OVERDUB</button>
+            <button class="beat-button looper-button" id="looper-clear" type="button" disabled>CLEAR SONG</button>
+            <output class="looper-readout" id="looper-readout" aria-live="off">NO LOOPS YET · HOLD KEYS AND RECORD WHAT YOU PLAY</output>
+            <p class="visually-hidden" id="looper-announcer" role="status"></p>
+          </div>
         </div>
       </section>
 
@@ -631,10 +641,10 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "2b27884023b3";
+      const ASSET_VERSION = "42e0b9dbf5dc";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs",
-        "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs",
+        "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
         "malbolge.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "score.mjs",
         "session.mjs", "shakespeare.mjs", "share.mjs", "transport.mjs", "zip.mjs",
       ];
