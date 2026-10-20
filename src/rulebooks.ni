@@ -1,6 +1,6 @@
 "The Kapellmeister's Rulebooks" by Edmark's Esoteric Fun Machine
 
-[The six music-theory genres of the Kapellmeister console, written in a strict subset of Inform 7 (D-033) and read by src/inform.mjs. Everything a genre decides lives here: its chord colours, its changes, its Fun Machine progressions, how its melody snaps, how its bass walks, how its organ voices chords, and which overtones its chimes ring. The few true algorithms a genre may name (the Tonnetz walk, the Euler sieve, contrary motion, cell choosing, inverted triads) stay in src/conductor.mjs.]
+[The music-theory genres of the Kapellmeister console, written in a strict subset of Inform 7 (D-033) and read by src/inform.mjs. Everything a genre decides lives here: its chord colours, its changes, its Fun Machine progressions, how its melody snaps, how its bass walks, how its organ voices chords, and which overtones its chimes ring. The few true algorithms a genre may name (the Tonnetz walk, the Euler sieve, contrary motion, cell choosing, inverted triads) stay in src/conductor.mjs.]
 
 [Departures from real Inform 7, on purpose: rules fire in source order and the first match wins; a changes table counts its rows by "region" (three steps each) or by "step" (twelve rows).]
 
@@ -178,7 +178,52 @@ region	degree	quality	label	tones
 3	0	lydian	"Lydian Mystic (#4)"	{0, 6, 7, 11}
 4	0	modal open	"Harmonic 7th Return"	{0, 7, 10}
 
-Chapter 6 - Raw Esoteric Chaos
+Chapter 6 - Parlor Ragtime
+
+[A Joplin-style strain for the parlor upright: the bass goes "oom" on the root and fifth, the organ answers "pah", and secondary dominants march the tune home.]
+
+Parlor Ragtime is an insistent voiced genre. The code of Parlor Ragtime is "parlor_ragtime". The title of Parlor Ragtime is "PARLOR RAGTIME & CAKEWALK STRAINS". The motto of Parlor Ragtime is "Joplin-style strains: an oom-pah stride bass, sixth-chord melodies, and secondary dominants marching home through VI7, II7, and V7."
+
+The changes of Parlor Ragtime are the Table of Ragtime Changes.
+The melody method of Parlor Ragtime is member snapping. The melody members of Parlor Ragtime are {root, third, fifth}. The melody extensions of Parlor Ragtime are {9}.
+The bass method of Parlor Ragtime is walking. The bass walk of Parlor Ragtime is {0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 2, 4}.
+The organ voicing of Parlor Ragtime is {third, fifth, octave}.
+The overtones of Parlor Ragtime are the Table of Ragtime Overtones.
+
+[Tonic and subdominant ring major; the dominant family (II, III, V, VI, and the flat seventh) gets its seventh; the in-between keys are passing diminished chords.]
+Colouring rule for Parlor Ragtime when the interval above the tonic is listed in {0, 5}: rule succeeds with result major.
+Colouring rule for Parlor Ragtime when the interval above the tonic is listed in {2, 4, 7, 9, 10}: rule succeeds with result dom7.
+Colouring rule for Parlor Ragtime: rule succeeds with result dim.
+Progression rule for Parlor Ragtime: rule succeeds with result the Table of Parlor Rag.
+
+[The bass walk climbs 2 and 4 above V7 on the last two steps, A and B in C, so the strain steps back up to the tonic.]
+
+Table of Ragtime Changes
+step	degree	quality	label	tones
+1	0	major	"I"	{0, 4, 7}
+2	0	major	"I"	{0, 4, 7}
+3	0	dom7	"I7"	{0, 4, 7, 10}
+4	5	major	"IV"	{0, 4, 7}
+5	5	major	"IV"	{0, 4, 7}
+6	6	dim	"♯iv°"	{0, 3, 6, 9}
+7	0	major	"I"	{0, 4, 7}
+8	0	major	"I"	{0, 4, 7}
+9	9	dom7	"VI7"	{0, 4, 7, 10}
+10	2	dom7	"II7"	{0, 4, 7, 10}
+11	7	dom7	"V7"	{0, 4, 7, 10}
+12	7	dom7	"V7"	{0, 4, 7, 10}
+
+Table of Ragtime Overtones
+ratio
+"1/1"
+"5/4"
+"4/3"
+"3/2"
+"5/3"
+"7/4"
+"2/1"
+
+Chapter 7 - Raw Esoteric Chaos
 
 [Unfettered: the conductor leaves every VM's raw output alone, so only what the Fun Machine needs is written down.]
 
@@ -239,6 +284,13 @@ degree	quality	melody	shown
 0	phrygian	{1, 4, 7}	"Phryg"
 0	lydian	{6, 7, 11}	"Lydian"
 0	modal open	{10, 7, 0}	"7th"
+
+Table of Parlor Rag
+degree	quality	melody	shown
+0	major	{4, 7, 9}	"[root] Maj"
+0	dom7	{10, 9, 7}	"[root]7"
+5	major	{9, 12, 14}	"[root] Maj"
+7	dom7	{11, 14, 5}	"[root]7"
 
 Table of Diminished Circle
 degree	quality	melody	shown

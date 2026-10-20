@@ -27,6 +27,7 @@
 
 ### Added
 
+- Play Parlor Ragtime, a seventh Kapellmeister genre: Joplin-style changes (I · I7 · IV · ♯iv° · I · VI7 · II7 · V7), an oom-pah stride bass that climbs home, an organ "pah", sixth-chord melodies, and a "Parlor Rag" one-finger progression (I → I7 → IV → V7). It was written entirely in the Inform 7 rulebooks.
 - Overcome the ensemble's "wall of sound" using the Grand Conductor in INTERCAL 1972 (`src/conductor.i`, `src/intercal.mjs`). Evaluates statement politeness (22.9% P/N, adhering to ICL079/ICL099 limits), dynamically orchestrates channel breathing across Exposition, Antiphony, Tutti, and Breakdown regions with `PLEASE IGNORE` and `PLEASE REMEMBER`, and intercepts turnaround cadences at step 11 with `COME FROM (60)`.
 - Play the Esoteric Fun Machine as a one-finger accompanist: hold a key and a stereo synth pad plays a **Swell** (one chord), an **Arpeggio** (chord tones rippling in the band's rhythm), or a **Progression** (four chords with a singing lead line) while the band follows your chord and the LOLCODE lead steps back.
 - Enter a phrase to summon a deterministic named audiovisual creature.

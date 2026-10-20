@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 36, on `main`: the echo follows live tempo changes, so the accompaniment no longer drifts from the tempo setting; session 35 made the manual climb like a keyboard (D-036)._
+_Last updated: 2026-10-20, session 38, on `main`: Parlor Ragtime ships as the seventh Kapellmeister genre, written only in Inform 7 (P5-24); session 37 completed P5-23 with a test-only barbershop genre._
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-22 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-24 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-20, session 34, local Linux environment)
+**Verified** (2026-10-20, session 38, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **105/105 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **113/113 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 34 entries, 0 errors, 0 warnings** |
 
@@ -86,6 +86,48 @@ _Last updated: 2026-10-20, session 36, on `main`: the echo follows live tempo ch
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 38: 2026-10-20: Parlor Ragtime, written in Inform 7
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Ship a seventh Kapellmeister genre written only in Inform 7 (follow-up to P5-23). The maintainer chose Parlor Ragtime over Sea Shanty Dorian and Gamelan Slendro.
+
+**Done:** P5-24.
+
+**Changed:**
+1. `src/rulebooks.ni`: Chapter 6, Parlor Ragtime (`parlor_ragtime`, insistent, voiced). Twelve-step changes I · I · I7 · IV · IV · ♯iv° · I · I · VI7 · II7 · V7 · V7. Colours: major on 0 and 5, dom7 on 2/4/7/9/10, passing diminished elsewhere. A "Table of Parlor Rag" progression (I → I7 → IV → V7) and member snapping {root, third, fifth} plus the major sixth. A stride bass walk {0, 7, …, 0, 7, 2, 4} (climbs A, B over V7 back to C), organ {third, fifth, octave}, and Ragtime Overtones including 5/3 and 7/4. Raw Esoteric Chaos moves to Chapter 7 so it stays last in the menu. No `src/*.mjs` changed.
+2. `tests/fixtures/rulebooks-golden.json` re-frozen with `--rewrite`. After resolving interned chord indices, every entry of the original six genres is identical; the fixture only gained ragtime entries (colours 14, progressions 8, spines 24, projection 14, ensembles 36).
+3. Tests: genre lists include ragtime; a new suite pins its changes, colours, Fun Machine summary ("C Maj → C7 → F Maj → G7"), stride bass, organ, and sixth overtone. The barbershop fixture test now calls itself an extra, test-only genre.
+4. Docs: README, manual (Kapellmeister and Inform entries), ARCHITECTURE, TESTING, ROADMAP (P5-24), CHANGELOG. `ASSET_VERSION` restamped.
+
+**Verified:** 113/113 Node checks. In the browser: seven menu entries with ragtime sixth; title, motto, compass (I, IV, I, II7), and key colours update; one page height and nothing clipped at 340, 400, 720, and 1390 px across all seven genres; holding a key during play works; no console errors.
+
+**Not verified:** Listening to the rag.
+
+**Left undone:** Listening passes; P4-02; P6-01.
+
+**Next session should start with:** the maintainer's listen to Parlor Ragtime.
+
+### Session 37: 2026-10-20: Inform 7 rulebooks, phase 5 (P5-23 complete)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-23 phase 5: prove a genre written only in Inform 7 plays with no JavaScript change (D-033).
+
+**Done:** P5-23 (all five phases).
+
+**Changed:**
+1. `tests/fixtures/barbershop.ni`: a barbershop quartet. Changes I → VI7 → II7 → V7, a major tonic with every other key coloured dom7, a "Barbershop Tag" progression, a root–fifth bass walk, organ voicing {third, fifth, seventh}, melody snapping to {root, third, fifth, seventh}, and overtones ringing 7/4. It reuses the canonical kinds and adds its own three tables.
+2. `tests/seventh-genre.test.mjs`: appends it to `src/rulebooks.ni`, installs the result, and checks that the six canonical genres compile identically. It then checks key colours, the progression summary ("D Maj → B7 → E7 → A7"), the accompanist's chords and lifted lead, the conducted spine, bass walk and insistent gates, organ voicing, melody on chord members, and overtones. Sessions accept the new code but still refuse "polka", and no `src/*.mjs` or `index.html` mentions "barbershop".
+
+**Verified:** 112/112 Node checks; the new suite passed on its first run.
+
+**Not verified:** The barbershop genre in the browser. It is test-only and never shipped.
+
+**Left undone:** A seventh playable genre in `src/rulebooks.ni` (the maintainer's follow-up); listening passes; P4-02; P6-01.
+
+**Next session should start with:** the maintainer's choice: ship a seventh genre, the outstanding listening passes, or P4-02 / P6-01.
 
 ### Session 36: 2026-10-20: the echo keeps the tempo
 
@@ -256,55 +298,5 @@ _Last updated: 2026-10-20, session 36, on `main`: the echo follows live tempo ch
 **Left undone:** P4-02; P6-01.
 
 **Next session should start with:** a listening pass on a few phrases to confirm no form sounds thin, then P5-23 (Inform 7 rulebooks, D-033), whose phase 1 golden fixture is the next step.
-
-### Session 27: 2026-10-20: every phrase gets its own form
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Maintainer: "the arrangements should vary per phrase", and the transport's section text was re-wrapping and rearranging the layout as its length changed.
-
-**Done:** D-031 (supersedes D-030's "same form for every creature").
-
-**Changed:**
-1. `src/intercal.mjs`: the VM gains `WRITE IN` (input queue; `ICL562` when exhausted), select `~` and mingle `$` in assignments, and the `ICL275` onespot overflow check. `arrangementWordFor(score)` mixes the seed into a 16-bit word; `composeArrangement(source, score)` feeds the word and its complement and lets the turnaround run from step 10 or 11 to the loop's end.
-2. `src/conductor.i`: 37 statements, 8 polite (21.6%). Nine `~` choices per phrase within guardrails: lead and pulse open; the choir sings the antiphony answered by lead or organ, never both; the third section is always tutti; the breakdown drops the pulse and keeps exactly one of lead and organ; pulse, bass, and lead come home on the turnaround, whose start step `#3 $ .7` mingles to 10 or 11.
-3. `styles.css`: `#transport-section` sits on its own fixed-height, non-wrapping line; Kapellmeister readout values always reserve two lines (the per-step "G = 9 (Dissonant)" wrap was shifting the Perform wing by 18 px).
-4. Tests: per-phrase property suite over 160 phrases (determinism, guardrails, ≥60 distinct forms), program-edit and rejection cases, WRITE IN and mingle checks, a layout-stability style assertion.
-
-**Verified:** 89/89 Node checks; 272 distinct forms across 400 sample phrases. In the browser, "three pigeons in a borrowed coat" played its own form (bass waits in I; lead and choir hush in the breakdown; COME FROM from step 11 of 12, counting from 1). During a full loop, the transport stayed 263 px at 314 px width and page height held constant at 1280 px; at 314 px only the footer status changed, once, on play.
-
-**Not verified:** Listening across many phrases; whether forms where the beat steps out of the antiphony feel too thin.
-
-**Left undone:** Listening pass on the accompanist and the new forms; P4-02; P6-01.
-
-**Next session should start with:** a listening pass across a handful of phrases.
-
-### Session 26: 2026-10-20: the conductor reaches the whole workstation
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Audit whether the INTERCAL conductor (P5-22, D-028) was tied into the transport, mixer, exports, sessions, and accompanist, and tie the gaps together.
-
-**Done:** D-030 (refines D-028's arrangement mechanics).
-
-**Audit findings:**
-1. Already tied: `scheduleEnsembleStep()` gates both the live loop and `renderEnsembleLoop()`, so WAV, stems, MIDI capture, and the VU meters all followed the masks. Sessions needed nothing (the arrangement derives from the score and the stored rulebook).
-2. Gap: `composeArrangement()` hard-coded its four masks and only read the politeness ratio from the VM. Run literally, `src/conductor.i` would have kept the beat playing in the breakdown, and its `PLEASE IGNORE :1` froze the lead rather than resting it.
-3. Gap: nothing showed the arrangement. `INTERCAL_SECTION_NAMES` was imported and unused, and a soloed choir went silent in the Exposition with no explanation.
-4. Gap: the MIDI file and stem bundle carried no section information. The `fun` mask field was never read.
-
-**Changed:**
-1. `src/intercal.mjs`: the VM records a register snapshot at each onespot assignment; `composeArrangement(source)` builds every mask from those snapshots and rejects malformed form; new `arrangementSectionAt()`.
-2. `src/conductor.i`: rewritten to the calling convention. It produces the same masks as before (27 statements, 22.2% politeness); `PLEASE IGNORE :8` makes the breakdown's `DO :8 <- #0` a no-op so the player is never rested, and `COME FROM (60)` skips the lead's exit.
-3. `src/app.mjs`: `activeArrangement()` and `arrangementPlays()`; the transport shows the section; console strips light TACET while rested; the player's part consults register `:8`; MIDI export writes Marker events and the stem README maps sections to seconds. `src/midi.mjs`: `buildMidiFile({ markers })`.
-4. `index.html`, `styles.css`: `#transport-section` and the TACET badge.
-
-**Verified:** 89/89 Node checks, including program-driven arrangement, rejection, and MIDI marker tests. In the browser on "three pigeons", the transport walked I → IV with COME FROM on step 12; TACET lit harmony and choir in I, the lead in II, nothing in III, and beat and bass in IV until the turnaround; Raw Chaos shows UNFETTERED; the exported MIDI held all five markers.
-
-**Not verified:** Listening (the masks are unchanged, so the sound should be identical); DAW display of the markers.
-
-**Left undone:** Listening pass on the accompanist; P4-02; P6-01.
-
-**Next session should start with:** a listening pass on the accompanist.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).

@@ -637,9 +637,9 @@
         {
           "id": "kapellmeister-genre-console",
           "title": "Kapellmeister Music-Theory & Genre Rulebook Console",
-          "summary": "Enables real-time switching between six music-theory rulebooks with live harmonic readouts.",
+          "summary": "Enables real-time switching between seven music-theory rulebooks with live harmonic readouts.",
           "tags": ["music-theory", "genres", "counterpoint", "blues", "jazz", "tonnetz"],
-          "what": "Allows the user to select and manipulate the harmonic rulebook governing the six-language esoteric ensemble (`#kapellmeister-engine`). Offers six distinct rulebooks: Victorian Neo-Riemannian Tonnetz, 12-Bar Delta & Parlor Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Modal Drone, and Raw Esoteric Chaos. Displays active Step (01..12), Chord Name (e.g. C Maj, F7, Cmaj9), Harmonic Vector, and Euler Consonance score in real time alongside an interactive SVG Tonnetz compass.",
+          "what": "Allows the user to select and manipulate the harmonic rulebook governing the six-language esoteric ensemble (`#kapellmeister-engine`). Offers seven distinct rulebooks: Victorian Neo-Riemannian Tonnetz, 12-Bar Delta & Parlor Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Modal Drone, Parlor Ragtime & Cakewalk Strains (a Joplin-style strain with an oom-pah stride bass, added purely in Inform 7), and Raw Esoteric Chaos. Displays active Step (01..12), Chord Name (e.g. C Maj, F7, Cmaj9), Harmonic Vector, and Euler Consonance score in real time alongside an interactive SVG Tonnetz compass.",
           "how": {
             "lead": "`src/rulebooks.ni` states the genres; `src/conductor.mjs` and `src/app.mjs` apply them and show harmonic telemetry:",
             "points": [
@@ -661,7 +661,7 @@
         {
           "id": "inform-rulebooks",
           "title": "Inform 7 Kapellmeister Rulebooks",
-          "summary": "The six genres are written in a strict subset of Inform 7 and compiled at load into the data the conductor plays.",
+          "summary": "The seven genres are written in a strict subset of Inform 7 and compiled at load into the data the conductor plays.",
           "tags": ["inform-7", "rulebooks", "genres", "interpreter", "natural-language"],
           "what": "`src/rulebooks.ni` states everything a Kapellmeister genre decides, in Inform 7's English: its chord colours, changes, Fun Machine progressions, melody snapping, bass walk, organ voicing, chime overtones, menu title, and motto. `src/inform.mjs` reads it, rejects anything outside the subset with a line number, and compiles it into frozen genre data before the app plays a note.",
           "how": {
@@ -680,6 +680,7 @@
             {"label": "Inform 7 subset interpreter", "target": "src/inform.mjs"},
             {"label": "Interpreter and rulebook tests", "target": "tests/inform.test.mjs"},
             {"label": "Migration contract", "target": "tests/rulebooks.test.mjs"},
+            {"label": "A test-only genre in Inform 7 alone", "target": "tests/seventh-genre.test.mjs"},
             {"label": "Architecture Record D-033", "target": "docs/DECISIONS.md"}
           ],
           "related": ["kapellmeister-genre-console", "tonnetz-spine", "euler-consonance-sieve", "esoteric-fun-machine"]

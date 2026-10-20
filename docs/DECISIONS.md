@@ -504,6 +504,8 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Phase 3 note (2026-10-20):** Genre-dependent code runs only after the app installs the rulebooks. Session validation reads `genreCodes()`, and the preset store refuses to parse before installation. Without that guard, every preset would have been dropped, and the next save would have erased them.
 
+**Completed (2026-10-20):** All five phases landed. A fixture-only seventh genre (barbershop quartet, `tests/fixtures/barbershop.ni`) compiles after the six and plays everywhere genres are read, with no JavaScript change.
+
 **Maintainer answers (2026-10-20):** Raw Esoteric Chaos stays a rulebook in the file (`Raw Esoteric Chaos is an unfettered genre.`). A seventh playable genre is a follow-up; P5-23 only proves it is possible, using the fixture-only genre in phase 5.
 
 ## D-034 The parlor room hears the whole band, and its layers are measured (2026-10-20, status: accepted)

@@ -152,9 +152,9 @@ const snap = (pc, candidates) => {
 
 test("genre codes, flags, and menu order are as the rulebooks state", () => {
   assert.deepEqual(books.genres.map((genre) => genre.code), GENRES);
-  assert.deepEqual(GENRES, ["victorian_tonnetz", "blues_twelve_bar", "smoky_jazz", "renaissance_counterpoint", "modal_drone", "raw_chaos"]);
+  assert.deepEqual(GENRES, ["victorian_tonnetz", "blues_twelve_bar", "smoky_jazz", "renaissance_counterpoint", "modal_drone", "parlor_ragtime", "raw_chaos"]);
   assert.deepEqual(books.genres.filter((g) => g.unfettered).map((g) => g.code), ["raw_chaos"]);
-  assert.deepEqual(books.genres.filter((g) => g.insistent).map((g) => g.code), ["blues_twelve_bar", "smoky_jazz", "modal_drone"]);
+  assert.deepEqual(books.genres.filter((g) => g.insistent).map((g) => g.code), ["blues_twelve_bar", "smoky_jazz", "modal_drone", "parlor_ragtime"]);
 });
 
 test("colouring and progression rules match the Fun Machine's chord colours and progressions", () => {
@@ -243,4 +243,17 @@ test("bass walks, organ voicings, and overtones match the conducted ensemble", (
       });
     }
   });
+});
+
+test("Parlor Ragtime marches a Joplin strain home: changes, colours, Fun Machine rag, and the stride bass", () => {
+  const rag = books.byCode.parlor_ragtime;
+  assert.equal(rag.title, "PARLOR RAGTIME & CAKEWALK STRAINS");
+  assert.deepEqual(rag.spine.steps.map((step) => step.label), ["I", "I", "I7", "IV", "IV", "♯iv°", "I", "I", "VI7", "II7", "V7", "V7"]);
+  assert.deepEqual([0, 5, 7, 9, 2, 6].map((key) => buildFunChord(key, "auto", "parlor_ragtime", 0).quality), ["major", "major", "dom7", "dom7", "dom7", "dim"]);
+  assert.equal(buildFunProgression(0, "auto", "parlor_ragtime", 0).summary, "C Maj → C7 → F Maj → G7");
+  const spine = buildGenreSpine("parlor_ragtime", scores[0]);
+  // The stride bass alternates root and fifth, then climbs A, B over the V7 back to C.
+  assert.deepEqual(spine.map((chord, step) => (chord.root + rag.bass.walk[step]) % 12), [0, 7, 0, 0, 5, 1, 0, 7, 9, 9, 9, 11]);
+  assert.deepEqual(rag.organ.members, ["third", "fifth", "octave"], "the organ answers the bass with the pah");
+  assert.ok(rag.overtones.some((overtone) => overtone.ratio === "5/3"), "the sixth rings in the chimes");
 });
