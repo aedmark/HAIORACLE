@@ -87,7 +87,7 @@ test("the interface uses the centered esoteric parlor cabinet design system", as
     readFile(new URL("src/app.mjs", root), "utf8"),
   ]);
   assert.match(html, /class="vision-stage"/);
-  assert.match(html, /CONFIDE A PHRASE<br><em>UNTO THE PARLOR GLASS<\/em>/);
+  assert.match(html, /UTTER A PHRASE<br><em>UNTO THE GLASS<\/em>/);
   assert.match(styles, /--serif-display: "Palatino Linotype", "Book Antiqua", Palatino/);
   assert.match(styles, /grid-template-columns: 1fr auto 1fr/);
   assert.match(app, /const centerX = width \* 0\.5/);
