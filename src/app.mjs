@@ -2009,8 +2009,8 @@ function updateAudioInteraction() {
   // Vitrine bell jar glass acoustic proximity resonance
   if (transport.parlorReverbSend && parlorAcousticsEnabled && parlorReverbEnabled) {
     const glassProximity = Math.max(0, (field.radius - 0.5) / 0.5);
-    const glassBoost = 1 + glassProximity * 0.75;
-    transport.parlorReverbSend.gain.setTargetAtTime(0.42 * parlorAcousticsLevel * glassBoost, now, 0.05);
+    const glassBoost = 1 + glassProximity * 0.45;
+    transport.parlorReverbSend.gain.setTargetAtTime(0.32 * parlorAcousticsLevel * glassBoost, now, 0.05);
   }
 }
 
@@ -2196,16 +2196,22 @@ function ensureWaxCrackleBuffer(context, durationSeconds = 4.0) {
 
   let b0L = 0, b1L = 0, b2L = 0;
   let b0R = 0, b1R = 0, b2R = 0;
-  const rotPeriod = 60 / 78;
+  let rumbleL = 0, rumbleR = 0;
+  const rotPeriod = 60 / 78; // 78 RPM period ~0.769s
 
   for (let i = 0; i < frames; i += 1) {
     const t = i / context.sampleRate;
     const rotPhase = (t % rotPeriod) / rotPeriod;
-    const rotThump = Math.exp(-Math.pow((rotPhase - 0.12) * 14, 2)) * 0.09;
-    const rumble = (Math.sin(t * 33 * Math.PI * 2) * 0.04 +
-                    Math.sin(t * 66 * Math.PI * 2) * 0.02 +
-                    Math.sin(t * 1.3 * Math.PI * 2) * 0.025) * (1 + rotThump * 0.6);
+    const rotThump = Math.exp(-Math.pow((rotPhase - 0.12) * 12, 2)) * 0.04;
+    const rotWobble = 1 + 0.25 * Math.sin(t * (1 / rotPeriod) * 2 * Math.PI) + rotThump;
 
+    // Filtered brown noise for mechanical turntable rumble (subtle, non-tonal)
+    const subWhiteL = Math.random() * 2 - 1;
+    const subWhiteR = Math.random() * 2 - 1;
+    rumbleL = rumbleL * 0.96 + subWhiteL * 0.04;
+    rumbleR = rumbleR * 0.96 + subWhiteR * 0.04;
+
+    // Acoustic horn body noise (bandpass 800Hz - 3.5kHz)
     const whiteL = Math.random() * 2 - 1;
     const whiteR = Math.random() * 2 - 1;
     b0L = 0.85 * b0L + whiteL * 0.15;
@@ -2216,35 +2222,35 @@ function ensureWaxCrackleBuffer(context, durationSeconds = 4.0) {
     b1R = 0.72 * b1R + (whiteR - b0R) * 0.28;
     b2R = 0.55 * b2R + b1R * 0.45;
 
-    const hornL = (b1L - b2L) * 0.28;
-    const hornR = (b1R - b2R) * 0.28;
+    const hornL = (b1L - b2L) * 0.24;
+    const hornR = (b1R - b2R) * 0.24;
 
-    left[i] = hornL + rumble * 0.55;
-    right[i] = hornR + rumble * 0.55;
+    left[i] = (hornL + rumbleL * 0.20) * rotWobble;
+    right[i] = (hornR + rumbleR * 0.20) * rotWobble;
   }
 
   // Dense stylus micro-crackle: small asperities with fast exponential decay
   for (let i = 0; i < frames; i += 1) {
-    if (Math.random() < 190 / context.sampleRate) {
-      const amp = (Math.random() * 0.22 + 0.06) * (Math.random() < 0.5 ? 1 : -1);
-      const decayLen = Math.floor(Math.random() * 10 + 4);
+    if (Math.random() < 340 / context.sampleRate) {
+      const amp = (Math.random() * 0.28 + 0.08) * (Math.random() < 0.5 ? 1 : -1);
+      const decayLen = Math.floor(Math.random() * 12 + 4);
       for (let k = 0; k < decayLen && i + k < frames; k += 1) {
-        const env = Math.exp(-k * 0.4);
+        const env = Math.exp(-k * 0.42);
         left[i + k] += amp * env;
         right[i + k] += amp * env * (0.7 + Math.random() * 0.6);
       }
     }
   }
 
-  // Discrete dust pops & shellac scratches with damped ringing
+  // Discrete dust pops & shellac clicks with damped acoustic ringing
   for (let i = 0; i < frames; i += 1) {
-    if (Math.random() < 28 / context.sampleRate) {
-      const popAmp = (Math.random() * 0.48 + 0.28) * (Math.random() < 0.5 ? 1 : -1);
+    if (Math.random() < 38 / context.sampleRate) {
+      const popAmp = (Math.random() * 0.55 + 0.30) * (Math.random() < 0.5 ? 1 : -1);
       const popLen = Math.floor(Math.random() * 32 + 16);
-      const ringFreq = 1800 + Math.random() * 2000;
+      const ringFreq = 1800 + Math.random() * 2200;
       for (let k = 0; k < popLen && i + k < frames; k += 1) {
         const tPop = k / context.sampleRate;
-        const env = Math.exp(-k * 0.16) * Math.cos(2 * Math.PI * ringFreq * tPop);
+        const env = Math.exp(-k * 0.18) * Math.cos(2 * Math.PI * ringFreq * tPop);
         left[i + k] += popAmp * env;
         right[i + k] += popAmp * env * (0.8 + Math.random() * 0.4);
       }
@@ -2273,15 +2279,16 @@ function ensureParlorImpulseResponse(context, durationSeconds = 1.6) {
   const left = buffer.getChannelData(0);
   const right = buffer.getChannelData(1);
 
+  // Discrete early reflections with alternating polarity and room delays
   const reflections = [
-    { t: 0.008, gL: 0.48, gR: 0.32 },
-    { t: 0.016, gL: 0.38, gR: 0.44 },
-    { t: 0.027, gL: 0.32, gR: 0.26 },
-    { t: 0.041, gL: 0.26, gR: 0.30 },
-    { t: 0.058, gL: 0.22, gR: 0.18 },
-    { t: 0.079, gL: 0.17, gR: 0.21 },
-    { t: 0.105, gL: 0.13, gR: 0.15 },
-    { t: 0.138, gL: 0.10, gR: 0.11 },
+    { t: 0.007, gL: 0.35, gR: -0.28 },
+    { t: 0.015, gL: -0.28, gR: 0.32 },
+    { t: 0.024, gL: 0.22, gR: -0.19 },
+    { t: 0.036, gL: -0.18, gR: 0.22 },
+    { t: 0.052, gL: 0.14, gR: -0.15 },
+    { t: 0.073, gL: -0.11, gR: 0.12 },
+    { t: 0.098, gL: 0.08, gR: -0.09 },
+    { t: 0.128, gL: -0.06, gR: 0.07 },
   ];
 
   for (const ref of reflections) {
@@ -2290,19 +2297,54 @@ function ensureParlorImpulseResponse(context, durationSeconds = 1.6) {
     right[idx] += ref.gR;
   }
 
-  let prevL = 0;
-  let prevR = 0;
+  // Tail with highpass DC block and air damping to eliminate low-frequency fog-horn resonance
+  let lpL = 0, lpR = 0;
+  let hpInL = 0, hpOutL = 0;
+  let hpInR = 0, hpOutR = 0;
+  const R = 0.985; // ~105Hz highpass cutoff preventing low-end rumble accumulation
+
   for (let i = 0; i < frames; i += 1) {
     const t = i / context.sampleRate;
-    const decay = Math.exp(-2.2 * t);
-    const whiteL = (Math.random() * 2 - 1) * decay * 0.38;
-    const whiteR = (Math.random() * 2 - 1) * decay * 0.38;
-    const filterCoeff = 0.45 + 0.35 * Math.exp(-3.0 * t);
-    prevL = prevL * filterCoeff + whiteL * (1 - filterCoeff);
-    prevR = prevR * filterCoeff + whiteR * (1 - filterCoeff);
-    left[i] += prevL;
-    right[i] += prevR;
+    const decay = Math.exp(-2.8 * t);
+    const whiteL = (Math.random() * 2 - 1) * decay * 0.25;
+    const whiteR = (Math.random() * 2 - 1) * decay * 0.25;
+
+    // Air absorption damping (gentle lowpass)
+    const filterCoeff = 0.55 + 0.35 * Math.exp(-3.5 * t);
+    lpL = lpL * filterCoeff + whiteL * (1 - filterCoeff);
+    lpR = lpR * filterCoeff + whiteR * (1 - filterCoeff);
+
+    // DC-block highpass filter
+    hpOutL = lpL - hpInL + R * hpOutL;
+    hpInL = lpL;
+    hpOutR = lpR - hpInR + R * hpOutR;
+    hpInR = lpR;
+
+    left[i] += hpOutL;
+    right[i] += hpOutR;
   }
+
+  // Measure peak spectral magnitude to normalize impulse response to safe unity room gain
+  const probeFreqs = [30, 60, 90, 120, 150, 200, 300, 500, 1000, 2000, 4000];
+  let maxSpectralMag = 0;
+  for (const f of probeFreqs) {
+    let re = 0, im = 0;
+    const omega = 2 * Math.PI * f / context.sampleRate;
+    for (let n = 0; n < frames; n += 2) {
+      re += left[n] * Math.cos(omega * n);
+      im -= left[n] * Math.sin(omega * n);
+    }
+    const mag = Math.sqrt(re * re + im * im) * 2;
+    if (mag > maxSpectralMag) maxSpectralMag = mag;
+  }
+
+  const targetGain = 0.75;
+  const normFactor = maxSpectralMag > 0 ? targetGain / maxSpectralMag : 0.05;
+  for (let i = 0; i < frames; i += 1) {
+    left[i] *= normFactor;
+    right[i] *= normFactor;
+  }
+
   cachedParlorImpulseBuffer = buffer;
   return buffer;
 }
@@ -2867,7 +2909,7 @@ function scheduleFunMachineLeadNote(context, destination, semitone, at, duration
   const holdBoost = 1 + interaction.hold * 0.2;
   const peak = 0.28 * holdBoost;
   const attack = 0.020;
-  const soundingTime = Math.max(0.24, duration || 0.45);
+  const soundingTime = Math.max(0.12, Math.min(0.65, duration || 0.35));
   const releaseTime = Math.min(0.08, soundingTime * 0.25);
   const sustainLevel = peak * 0.85;
 
@@ -3067,6 +3109,15 @@ function highlightBeatStep(stepIndex) {
     compassNodes.forEach((node, idx) => {
       if (node) node.classList.toggle("is-active", idx === regionIdx);
     });
+  }
+
+  if (elements.funMachineTelemetry && activeHeldFunKey !== null && activeFunProgression) {
+    const regIdx = Math.floor(normalized / 3) % 4;
+    const currentChord = activeFunProgression.chords[regIdx];
+    const currentMelody = activeFunProgression.steps[normalized]?.melodyNote || "—";
+    const keyInfo = FUN_KEY_MAP[activeHeldFunKey];
+    const keyLabel = keyInfo ? `[${keyInfo.displayKey}]` : "";
+    elements.funMachineTelemetry.textContent = `${keyLabel} PLAYING · STEP @${String(normalized + 1).padStart(2, "0")} · REGION ${regIdx + 1} (${currentChord.name} ${currentChord.quality.toUpperCase()}) · SOLO NOTE [${currentMelody}]`;
   }
 }
 
@@ -3561,17 +3612,32 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     flashSequencerStep(targetStep);
   }
 
-  // Play the sustained organ chord over top of the accompaniment (unchained from tempo steps)
-  const dest = getFunMachineDirectDestination(context);
+  // 12-Step Fun Machine progression & solo voice handling
   const primaryChord = activeFunProgression.chords[0];
-  startFunMachineVoice(context, dest, primaryChord, normSemi, funMachineMode);
+  if (currentTransport && currentTransport.funBus) {
+    const stepIndex = (currentTransport.step || 0) % 12;
+    const regIdx = Math.floor(stepIndex / 3) % 4;
+    const immediateChord = activeFunProgression.chords[regIdx];
+    const progStep = activeFunProgression.steps[stepIndex];
+    const now = context.currentTime;
+    if (funMachineMode === "auto_chord") {
+      scheduleFunMachineChord(context, currentTransport.funBus, immediateChord, now, 0.45);
+    }
+    if (progStep?.melodyPitch !== undefined) {
+      scheduleFunMachineLeadNote(context, currentTransport.funBus, progStep.melodyPitch, now, 0.35);
+    }
+  } else {
+    // Engine stopped / idle: audition voice directly
+    const dest = getFunMachineDirectDestination(context);
+    startFunMachineVoice(context, dest, primaryChord, normSemi, funMachineMode);
+  }
 
   if (elements.funMachineTelemetry) {
     const keyInfo = FUN_KEY_MAP[normSemi];
     const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${normSemi}`;
     const punchInfo = targetStep !== null ? ` · PUNCHED INTO STEP @${String(targetStep + 1).padStart(2, "0")}` : "";
-    const modeLabel = funMachineMode === "auto_chord" ? `${primaryChord.name} ${primaryChord.quality.toUpperCase()} CHORD` : "SOLO LEAD NOTE";
-    elements.funMachineTelemetry.textContent = `${keyLabel} HELD · ${modeLabel} OVER ACCOMPANIMENT · ${activeFunProgression.summary}${punchInfo}`;
+    const modeLabel = funMachineMode === "auto_chord" ? "12-STEP CHORD PROGRESSION & MELODY" : "SOLO LEAD MELODY";
+    elements.funMachineTelemetry.textContent = `${keyLabel} ENGAGED · ${modeLabel} · ${activeFunProgression.summary}${punchInfo}`;
   }
 }
 
@@ -3683,6 +3749,11 @@ async function playScore(score) {
 
   // Antique Parlor Acoustics Space: Chamber Convolution Reverb & Horn Surface Crackle
   const parlorReverbSend = context.createGain();
+  const parlorReverbFilter = context.createBiquadFilter();
+  parlorReverbFilter.type = "highpass";
+  parlorReverbFilter.frequency.setValueAtTime(180, now);
+  parlorReverbFilter.Q.setValueAtTime(0.7, now);
+
   const parlorConvolver = context.createConvolver();
   try {
     parlorConvolver.normalize = false;
@@ -3695,12 +3766,10 @@ async function playScore(score) {
     // Ignore buffer creation errors
   }
   parlorReverbSend.gain.setValueAtTime(
-    parlorAcousticsEnabled && parlorReverbEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+    parlorAcousticsEnabled && parlorReverbEnabled ? 0.32 * parlorAcousticsLevel : 0.0001,
     now
   );
-  parlorReverbSend.connect(parlorConvolver).connect(output);
-
-  filter.connect(parlorReverbSend);
+  filter.connect(parlorReverbFilter).connect(parlorReverbSend).connect(parlorConvolver).connect(compressor).connect(output);
 
   let parlorCrackleSource = null;
   let parlorCrackleGain = null;
@@ -3710,7 +3779,7 @@ async function playScore(score) {
     parlorCrackleSource.loop = true;
     parlorCrackleGain = context.createGain();
     parlorCrackleGain.gain.setValueAtTime(
-      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.38 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
       now
     );
     parlorCrackleSource.connect(parlorCrackleGain).connect(output);
@@ -3759,21 +3828,46 @@ async function playScore(score) {
       scheduleChimeStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleChantStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleFungalBioStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
-      // Fun Machine: play sequenced custom chords when no manual live key is held
-      if (customProgression[currentStep % 12] && activeHeldFunKey === null && funMachineMode === "auto_chord") {
-        scheduleFunMachineChord(context, transport.funBus, customProgression[currentStep % 12], transport.nextNoteTime, soundingDuration);
-      }
 
-      // Punch-in recording: if REC is armed while a key is held, stamp the chord into passing beat steps
-      if (funMachineRec && activeHeldFunKey !== null && activeFunProgression) {
-        customProgression[currentStep % 12] = activeFunProgression.chords[0];
-        applyEnsembleConductor();
-        renderFunSequencerGrid();
-        const targetStep = currentStep % 12;
-        const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
-        window.setTimeout(() => {
-          flashSequencerStep(targetStep);
-        }, delayMs);
+      // Fun Machine: 12-step synchronized loop chord progression & overlay melody
+      const stepIndex = currentStep % 12;
+      const regIdx = Math.floor(stepIndex / 3) % 4;
+      const isRegStart = (stepIndex % 3 === 0);
+
+      if (activeHeldFunKey !== null && activeFunProgression) {
+        const activeChord = activeFunProgression.chords[regIdx];
+        const stepInfo = activeFunProgression.steps[stepIndex];
+
+        // One-finger chord accompaniment: sustained across the 3 steps of each region (no 16th-note jitter)
+        if (funMachineMode === "auto_chord" && isRegStart) {
+          const regionDuration = stepDuration * 3.0;
+          scheduleFunMachineChord(context, transport.funBus, activeChord, transport.nextNoteTime, regionDuration);
+        }
+
+        // Overlaying chord progression melody note on each tempo step
+        if (stepInfo?.melodyPitch !== undefined) {
+          scheduleFunMachineLeadNote(context, transport.funBus, stepInfo.melodyPitch, transport.nextNoteTime, soundingDuration);
+        }
+
+        // Punch-in recording: stamp passing beat steps with the active regional chord
+        if (funMachineRec) {
+          customProgression[stepIndex] = activeChord;
+          applyEnsembleConductor();
+          renderFunSequencerGrid();
+          const targetStep = stepIndex;
+          const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
+          window.setTimeout(() => {
+            flashSequencerStep(targetStep);
+          }, delayMs);
+        }
+      } else if (customProgression[stepIndex] && funMachineMode === "auto_chord") {
+        // Sequenced custom chords: play sustained regional chords or note transitions
+        const prevStepIndex = (stepIndex + 11) % 12;
+        const isNewChord = customProgression[stepIndex] !== customProgression[prevStepIndex];
+        if (isRegStart || isNewChord) {
+          const chordDuration = isRegStart ? stepDuration * 3.0 : soundingDuration;
+          scheduleFunMachineChord(context, transport.funBus, customProgression[stepIndex], transport.nextNoteTime, chordDuration);
+        }
       }
       if (parlorAcousticsEnabled && parlorTickEnabled) {
         scheduleClockworkTick(context, output, transport.nextNoteTime, currentStep, parlorAcousticsLevel);
@@ -4345,6 +4439,11 @@ async function exportSpecimenWav() {
 
     if (parlorAcousticsEnabled) {
       const parlorReverbSend = offlineCtx.createGain();
+      const parlorReverbFilter = offlineCtx.createBiquadFilter();
+      parlorReverbFilter.type = "highpass";
+      parlorReverbFilter.frequency.setValueAtTime(180, 0);
+      parlorReverbFilter.Q.setValueAtTime(0.7, 0);
+
       const parlorConvolver = offlineCtx.createConvolver();
       try {
         parlorConvolver.normalize = false;
@@ -4357,12 +4456,10 @@ async function exportSpecimenWav() {
         // Ignore buffer creation errors
       }
       parlorReverbSend.gain.setValueAtTime(
-        parlorReverbEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+        parlorReverbEnabled ? 0.32 * parlorAcousticsLevel : 0.0001,
         0
       );
-      parlorReverbSend.connect(parlorConvolver).connect(output);
-
-      filter.connect(parlorReverbSend);
+      filter.connect(parlorReverbFilter).connect(parlorReverbSend).connect(parlorConvolver).connect(compressor).connect(output);
 
       if (parlorCrackleEnabled) {
         try {
@@ -4370,7 +4467,7 @@ async function exportSpecimenWav() {
           crackle.buffer = ensureWaxCrackleBuffer(offlineCtx, 4.0);
           crackle.loop = true;
           const crackleGain = offlineCtx.createGain();
-          crackleGain.gain.setValueAtTime(0.38 * parlorAcousticsLevel, 0);
+          crackleGain.gain.setValueAtTime(0.42 * parlorAcousticsLevel, 0);
           crackle.connect(crackleGain).connect(output);
           crackle.start(0);
           crackle.stop(totalDuration);
@@ -4426,7 +4523,14 @@ async function exportSpecimenWav() {
       scheduleChantStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
       scheduleFungalBioStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration);
       if (customProgression[step % 12]) {
-        scheduleFunMachineChord(offlineCtx, funBus, customProgression[step % 12], stepTime, soundingDuration);
+        const stepIndex = step % 12;
+        const prevStepIndex = (stepIndex + 11) % 12;
+        const isNewChord = customProgression[stepIndex] !== customProgression[prevStepIndex];
+        const isRegStart = (stepIndex % 3 === 0);
+        if (isRegStart || isNewChord) {
+          const chordDuration = isRegStart ? stepDuration * 3.0 : soundingDuration;
+          scheduleFunMachineChord(offlineCtx, funBus, customProgression[stepIndex], stepTime, chordDuration);
+        }
       }
       if (parlorAcousticsEnabled && parlorTickEnabled) {
         scheduleClockworkTick(offlineCtx, output, stepTime, step, parlorAcousticsLevel);
@@ -4776,12 +4880,12 @@ elements.parlorAcousticsToggle?.addEventListener("click", () => {
   if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
     currentTransport.parlorReverbSend?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorReverbEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorReverbEnabled ? 0.32 * parlorAcousticsLevel : 0.0001,
       now,
       0.025,
     );
     currentTransport.parlorCrackleGain?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.38 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
       now,
       0.025,
     );
@@ -4797,12 +4901,12 @@ elements.parlorAcousticsLevel?.addEventListener("input", (e) => {
   if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
     currentTransport.parlorReverbSend?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorReverbEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorReverbEnabled ? 0.32 * parlorAcousticsLevel : 0.0001,
       now,
       0.025
     );
     currentTransport.parlorCrackleGain?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.38 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
       now,
       0.025
     );
@@ -4814,7 +4918,7 @@ elements.chipCrackle?.addEventListener("click", () => {
   if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
     currentTransport.parlorCrackleGain?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.38 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
       now,
       0.025
     );
@@ -4827,7 +4931,7 @@ elements.chipReverb?.addEventListener("click", () => {
   if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
     currentTransport.parlorReverbSend?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorReverbEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorReverbEnabled ? 0.32 * parlorAcousticsLevel : 0.0001,
       now,
       0.025
     );

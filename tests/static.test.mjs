@@ -275,6 +275,8 @@ test("the Kapellmeister console and antique parlor acoustics controls are wired 
   assert.match(app, /function scheduleClockworkTick\(/);
   assert.match(app, /function updateKapellmeisterUI\(/);
   assert.match(app, /parlorConvolver\.normalize\s*=\s*false/);
+  assert.match(app, /parlorReverbFilter/);
+  assert.match(app, /maxSpectralMag/);
   assert.match(app, /elements\.chipCrackle\?\.addEventListener/);
   assert.match(app, /elements\.chipReverb\?\.addEventListener/);
   assert.match(app, /elements\.chipTick\?\.addEventListener/);

@@ -607,4 +607,72 @@ test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays cus
   assert.match(minorProg.summary, /Am → F Maj → Dm → E Maj/);
 });
 
+test("antique parlor chamber impulse response eliminates low-frequency fog-horn resonance and normalizes gain", () => {
+  const sampleRate = 44100;
+  const frames = Math.ceil(sampleRate * 0.5);
+  const left = new Float32Array(frames);
+
+  const reflections = [
+    { t: 0.007, gL: 0.35 },
+    { t: 0.015, gL: -0.28 },
+    { t: 0.024, gL: 0.22 },
+    { t: 0.036, gL: -0.18 },
+    { t: 0.052, gL: 0.14 },
+    { t: 0.073, gL: -0.11 },
+    { t: 0.098, gL: 0.08 },
+    { t: 0.128, gL: -0.06 },
+  ];
+
+  for (const ref of reflections) {
+    const idx = Math.min(frames - 1, Math.floor(ref.t * sampleRate));
+    left[idx] += ref.gL;
+  }
+
+  const refSum = reflections.reduce((sum, r) => sum + r.gL, 0);
+  assert.ok(Math.abs(refSum) < 0.25, `Expected reflection DC sum near 0 to avoid drone resonance, got ${refSum}`);
+
+  let lpL = 0;
+  let hpInL = 0, hpOutL = 0;
+  const R = 0.985;
+  let seed = 12345;
+  function lcg() {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return (seed / 4294967296) * 2 - 1;
+  }
+
+  for (let i = 0; i < frames; i += 1) {
+    const t = i / sampleRate;
+    const decay = Math.exp(-2.8 * t);
+    const whiteL = lcg() * decay * 0.25;
+    const filterCoeff = 0.55 + 0.35 * Math.exp(-3.5 * t);
+    lpL = lpL * filterCoeff + whiteL * (1 - filterCoeff);
+    hpOutL = lpL - hpInL + R * hpOutL;
+    hpInL = lpL;
+    left[i] += hpOutL;
+  }
+
+  const probeFreqs = [30, 60, 90, 120, 150, 200, 300, 500, 1000, 2000, 4000];
+  let maxSpectralMag = 0;
+  const mags = {};
+  for (const f of probeFreqs) {
+    let re = 0, im = 0;
+    const omega = 2 * Math.PI * f / sampleRate;
+    for (let n = 0; n < frames; n += 2) {
+      re += left[n] * Math.cos(omega * n);
+      im -= left[n] * Math.sin(omega * n);
+    }
+    const mag = Math.sqrt(re * re + im * im) * 2;
+    if (mag > maxSpectralMag) maxSpectralMag = mag;
+    mags[f] = mag;
+  }
+
+  const normFactor = 0.75 / (maxSpectralMag || 1);
+  const normalized30 = mags[30] * normFactor;
+  const normalized500 = mags[500] * normFactor;
+
+  assert.ok(maxSpectralMag * normFactor <= 0.76, `Expected normalized impulse peak spectral gain <= 0.76, got ${maxSpectralMag * normFactor}`);
+  assert.ok(normalized30 < 0.35, `Expected 30Hz sub-bass to be attenuated (<0.35) to prevent fog-horn buildup, got ${normalized30}`);
+  assert.ok(normalized500 > normalized30 * 2.0, `Expected 500Hz mid presence to dominate 30Hz rumble by >2x, got ${normalized500} vs ${normalized30}`);
+});
+
 

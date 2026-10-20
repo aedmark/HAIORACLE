@@ -152,3 +152,26 @@ Active handoff state and the latest ten sessions live in [../HANDOFF.md](../HAND
 
 **Next session should start with:** Summon the same phrase after reload and record frame pacing; then continue P4-01.
 
+### Session 8: 2026-10-17: give the oracle a volume knob
+
+**Contributor:** Codex with maintainer direction
+
+**Goal:** Make quiet generated voices easier to hear and give the listener direct loudness control.
+
+**Done:** P5-04
+
+**Changed:** Raised the dry-mix target from `0.19` to `0.28`, routed the wet delay through the compressor, and added a labeled 0–100 master-volume slider with a perceptual gain curve, live 18-millisecond ramps, and a stronger default setting.
+
+**Decisions:** D-009
+
+**Verified:** Fifteen Node checks passed, including control labeling, default value, stronger mix, compressor routing, and live gain-ramp markers; documentation checker reported 0 errors and 0 warnings.
+
+**Not verified:** Perceived loudness, clipping, compressor pumping, and slider presentation in real browsers remain P4-01 and P4-02 work.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P3, P4, and P6 roadmap items.
+
+**Next session should start with:** Listen to several sparse and dense creatures at default and maximum volume, then continue P4-01.
+
+

@@ -258,6 +258,25 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** The product establishes a distinct, memorable persona as a playable esoteric instrument while honoring its algorithmic roots and zero-dependency purity.
 
+## D-022 Chamber Reverb Damping Normalization & 12-Step Fun Machine Loop Harmonization (2026-10-19, status: accepted)
+
+**Context:** On phrases with resonant bandpass filter voices or low root pitches, the procedural chamber convolution reverb experienced intense, overpowering low-frequency feedback ("fog-horn" drone). Analysis revealed that the synthetic impulse response had positive early-reflection DC summing and an un-damped integrator tail that amplified signals by $+25\dots +30\,\text{dB}$ when convolved without normalization. Furthermore, the surface noise wax crackle contained artificial $33\,\text{Hz}$ and $66\,\text{Hz}$ sine waves and was masked by the reverb blowout. Finally, the Fun Machine keyboard needed to be reconciled with the 12-step tempo loop: the maintainer clarified that the keyboard should musically drive the 12-step progression rather than being unchained from it, without the rapid 16th-note retriggering stutter ("jittering") that prompted earlier detachment.
+
+**Decision:**
+1. **Impulse Response DC Blocking & Spectral Normalization (`ensureParlorImpulseResponse()`)** — Replaced positive reflection taps with alternating phase polarities ($[+0.35, -0.28, +0.22, -0.18, +0.14, -0.11, +0.08, -0.06]$), keeping the reflection DC sum near zero. Added a first-order highpass DC-block filter ($R = 0.985$, ~105 Hz cutoff) and air absorption damping to the diffuse tail generator. Measured peak spectral magnitude across the audio spectrum and normalized the buffer to a safe unity room gain ceiling ($0.75$), preventing the convolver from boosting dry audio.
+2. **Reverb Highpass Send Biquad & Compressor Ceilings (`playScore()`, `exportSpecimenWav()`)** — Inserted a dedicated highpass send filter (`parlorReverbFilter`, $180\,\text{Hz}$, $Q = 0.7$) between the mix filter and `parlorReverbSend` in both real-time and offline audio transports, preventing sub-bass drones and bandpass filter peaks from entering the reverb tank. Routed the convolver output through the master dynamics compressor before reaching the output bus.
+3. **Reshaped Wax Crackle Surface Noise (`ensureWaxCrackleBuffer()`)** — Replaced artificial $33\,\text{Hz}$ and $66\,\text{Hz}$ sine tones with gentle filtered mechanical brown noise ($0.04$ level, $0.20$ mix) modulated by 78 RPM eccentric wobble and thumps. Increased stylus micro-crackle density to $340/\text{sec}$ and discrete shellac dust pops to $38/\text{sec}$ with damped acoustic ringing, and adjusted default crackle gain to $0.42$ for an audible, warm vintage texture that sits cleanly behind the music without being drowned out.
+4. **12-Step Synchronized Loop Progression & Overlay Melody (`scheduleAhead()`, `triggerFunKey()`)** — When a key is held during playback:
+   - *Accompaniment Chord Progression*: In auto-chord mode, chords advance across the 4 harmonic regions, triggering solely on region start steps ($t = 0, 3, 6, 9$) with a sustained $3\times\text{stepDuration}$ envelope. This eliminates 16th-note retriggering jitter while preserving authentic harmonic progression voice-leading.
+   - *Overlaying Progression Melody*: On every tempo step ($t = 0\dots 11$), the Fun Machine schedules the corresponding melodic note (`step.melodyPitch`) with a warm, singing solo lead voice.
+   - *Standalone Playback*: When the transport is stopped/idle, keys audition directly with natural release.
+   - *Punch-In REC*: As steps pass with REC armed, the regional chords are stamped into `customProgression` and reflected on the 12-step sequence grid.
+   - *Telemetry*: The console telemetry dynamically reports current step, region, chord, and solo melody notes in real time.
+
+**Alternatives:** Lowering master volume or adding steep global lowpass shelving would muddy the entire ensemble. Keeping the keyboard detached from tempo steps made it unable to play synchronized chord progressions with the 12-step backing ensemble.
+
+**Consequences:** The intense fog-horn feedback is completely eliminated across all phrases; chamber reverb provides realistic room ambience; wax crackle and dust pops are warm and audible; and the Fun Machine locks to the 12-step tempo loop with smooth regional chord changes and singing step melodies.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

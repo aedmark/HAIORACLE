@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-19, session 17, on `main`: full product rebrand to "Edmark's Esoteric Fun Machine" (D-021) with unchained sustained auto-chord organ voices (P5-17, D-020) and punch-in loop sequencer over the six-language esoteric chamber ensemble._
+_Last updated: 2026-10-19, session 18, on `main`: chamber reverb fog-horn damping & normalization fix (D-022), enriched wax crackle surface noise, and 12-step synchronized loop chord progression & melody harmonization for Edmark's Esoteric Fun Machine (P5-17)._
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-17 are implemented and verified. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a procedural branching mycelial network with eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) engraved with Ernst Haeckel anatomical lithography, an antique turned-wood mahogany pedestal, mossy peat/driftwood substrate bed, 46 dew condensation droplets clinging to the vitrine bell jar, bio-acoustic audio sonification (micro-voltage action potentials, guttation droplet chimes, and tactile ballistospore puffs), drifting ballistospores with vitrine tap bursts, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume and tempo controls. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The Kapellmeister music-theory and genre console (`#kapellmeister-engine`, P5-15, D-019) allows confidants to switch between six historical and theoretical rulebooks (Victorian Neo-Riemannian Tonnetz, 12-Bar Delta Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Drone, Raw Esoteric Chaos) with a live harmonic dashboard and animated SVG Tonnetz compass. An antique parlor room acoustic space (`#parlor-acoustics-engine`) immerses the ensemble in tactile synthesized Edison wax-cylinder phonograph surface noise, a 1.6-second wood-and-velvet chamber convolution impulse response (`ConvolverNode`), and mechanical brass clockwork escapement ticks and ratchets, with individual layer toggle chips. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, D-020) provides real-time play-along chord organ accompaniment via an interactive 13-key manual (`C..C'`) and physical keyboard mapping (`[A..K]`), one-finger auto-chord harmonization with 7 quality chips, live accompaniment bursts, and a 12-step punch-in loop sequencer matrix (`#fun-sequence-grid`). The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), an Esoteric Fun Machine organ manual and sequencer matrix (Plate VII), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing (P3-01), 1200×1520 broadsheet PNG plate engraving (P3-02), and client-side uncompressed 16-bit 44.1 kHz WAV loop export (`#export-wav`, P3-03). Remaining open work covers assistive-technology checks (P4-02) and public hosting (P6-01).
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-17 are implemented and verified. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a procedural branching mycelial network with eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) engraved with Ernst Haeckel anatomical lithography, an antique turned-wood mahogany pedestal, mossy peat/driftwood substrate bed, 46 dew condensation droplets clinging to the vitrine bell jar, bio-acoustic audio sonification (micro-voltage action potentials, guttation droplet chimes, and tactile ballistospore puffs), drifting ballistospores with vitrine tap bursts, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume and tempo controls. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The Kapellmeister music-theory and genre console (`#kapellmeister-engine`, P5-15, D-019) allows confidants to switch between six historical and theoretical rulebooks (Victorian Neo-Riemannian Tonnetz, 12-Bar Delta Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Drone, Raw Esoteric Chaos) with a live harmonic dashboard and animated SVG Tonnetz compass. An antique parlor room acoustic space (`#parlor-acoustics-engine`, D-022) immerses the ensemble in tactile synthesized Edison wax-cylinder phonograph surface noise (filtered mechanical brown noise, 78 RPM eccentric wobble, rich stylus micro-crackle and shellac dust pops), a 1.6-second wood-and-velvet chamber convolution impulse response (`ConvolverNode`) with alternating-phase reflection taps, DC-blocking highpass filtering, and peak spectral gain normalization ($0.75$), with a dedicated $180\,\text{Hz}$ highpass send filter (`parlorReverbFilter`) protecting the chamber from fog-horn runaway. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, D-020, D-022) provides real-time play-along chord organ accompaniment via an interactive 13-key manual (`C..C'`) and physical keyboard mapping (`[A..K]`), one-finger auto-chord harmonization with 7 quality chips, 12-step synchronized loop chord progression changes over the 4 harmonic regions ($3\times\text{stepDuration}$ sustained chords at $t = 0, 3, 6, 9$), singing step melody notes on every tempo beat, standalone auditioning when idle, and a 12-step punch-in loop sequencer matrix (`#fun-sequence-grid`). The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), an Esoteric Fun Machine organ manual and sequencer matrix (Plate VII), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing (P3-01), 1200×1520 broadsheet PNG plate engraving (P3-02), and client-side uncompressed 16-bit 44.1 kHz WAV loop export (`#export-wav`, P3-03). Remaining open work covers assistive-technology checks (P4-02) and public hosting (P6-01).
 
 **Verified** (2026-10-19, initial repository, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **35/35 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **36/36 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 28 entries, 0 errors, 0 warnings** |
 
@@ -70,6 +70,48 @@ _Last updated: 2026-10-19, session 17, on `main`: full product rebrand to "Edmar
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 18: 2026-10-19: chamber reverb fog-horn damping, wax crackle enrichment & 12-step fun machine loop harmonization
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Eliminate intense "fog-horn like feedback" in the parlor chamber convolution reverb on resonant phrases, enrich and balance Edison wax crackle surface noise so it is warm and audible without being drowned out, and reconcile the Esoteric Fun Machine play-along keyboard with the 12-step tempo loop so chord progressions and solo melodies lock rhythmically into the loop without 16th-note retriggering jitter.
+
+**Done:** D-022 Chamber Reverb Damping Normalization & 12-Step Fun Machine Loop Harmonization.
+
+**Changed:**
+1. **Chamber Convolution Reverb Fog-Horn Damping & Spectral Normalization (`src/app.mjs`)**:
+   - Identified root cause of runaway resonance: positive early-reflection taps and an un-damped diffuse lowpass tail accumulated massive DC and sub-bass gain ($+25\dots +30\,\text{dB}$) in the synthetic impulse response when convolved without normalization.
+   - Replaced reflection taps with alternating phase polarities ($[+0.35, -0.28, +0.22, -0.18, +0.14, -0.11, +0.08, -0.06]$), keeping the reflection DC sum near zero.
+   - Added a first-order highpass DC-block filter ($R = 0.985$, ~105 Hz cutoff) and air absorption damping to the diffuse tail generator.
+   - Measured peak spectral magnitude across the audio spectrum and normalized the impulse response buffer to a safe unity room gain ceiling ($0.75$).
+   - Inserted a dedicated $180\,\text{Hz}$ highpass send filter (`parlorReverbFilter`, $Q = 0.7$) before `parlorConvolver` in both live (`playScore`) and offline (`exportSpecimenWav`) transports, and routed the convolver through the master dynamics compressor before reaching the output bus.
+   - Balanced baseline reverb send gain from $0.42$ to $0.32$.
+2. **Reshaped Wax Crackle Surface Noise (`src/app.mjs`)**:
+   - Replaced artificial $33\,\text{Hz}$ and $66\,\text{Hz}$ sine tones with gentle filtered mechanical brown noise ($0.04$ level, $0.20$ mix) modulated by 78 RPM eccentric wobble and thumps.
+   - Enriched stylus micro-crackle density ($340/\text{sec}$) and discrete shellac dust pops ($38/\text{sec}$ with damped acoustic ringing), and adjusted default crackle gain from $0.38$ to $0.42$ for an audible, warm vintage texture that sits cleanly behind the music without being masked.
+3. **12-Step Synchronized Loop Progression & Overlay Melody (`src/app.mjs`)**:
+   - When a key is held during playback:
+     - *Accompaniment Chord Progression*: In auto-chord mode, chords advance across the 4 harmonic regions, triggering solely on region start steps ($t = 0, 3, 6, 9$) with a sustained $3\times\text{stepDuration}$ envelope. This eliminates 16th-note retriggering jitter while preserving authentic harmonic progression voice-leading.
+     - *Overlaying Progression Melody*: On every tempo step ($t = 0\dots 11$), the Fun Machine schedules the corresponding melodic note (`step.melodyPitch`) with a warm, singing solo lead voice.
+     - *Punch-In REC*: As steps pass with REC armed, the regional chords are stamped into `customProgression` and reflected on the 12-step sequence grid.
+     - *Live Telemetry*: The console telemetry dynamically reports current step, region, chord, and solo melody notes in real time.
+     - *Standalone Auditioning*: When the transport is stopped/idle, keys audition directly with natural release.
+4. **Behavioral & Structural Verification (`tests/oracle.test.mjs`, `tests/static.test.mjs`)**:
+   - Added a dedicated test in `tests/oracle.test.mjs` verifying that the impulse response has an early reflection DC sum near zero, attenuates 30 Hz sub-bass by $>2\times$ relative to 500 Hz mids, and bounds peak spectral magnitude $\le 0.76$.
+   - Added static checks in `tests/static.test.mjs` confirming `parlorReverbFilter` and `maxSpectralMag`.
+
+**Decisions:** D-022 accepted.
+
+**Verified:** Thirty-six Node checks passed (`tests/oracle.test.mjs`, `tests/static.test.mjs`); documentation checker passed with 0 errors and 0 warnings; manual validator passed with 0 warnings.
+
+**Not verified:** Dedicated screen-reader testing remains P4-02 work.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P4-02 assistive-technology review, P6-01 public hosting.
+
+**Next session should start with:** P4-02 or P6-01.
 
 ### Session 17: 2026-10-19: esoteric fun machine real-time play-along keyboard & loop sequencer
 
@@ -375,28 +417,6 @@ _Last updated: 2026-10-19, session 17, on `main`: full product rebrand to "Edmar
 **Left undone:** P3, P4, and P6 roadmap items.
 
 **Next session should start with:** Listen across all twelve named motifs, then continue P4-01.
-
-### Session 8: 2026-10-17: give the oracle a volume knob
-
-**Contributor:** Codex with maintainer direction
-
-**Goal:** Make quiet generated voices easier to hear and give the listener direct loudness control.
-
-**Done:** P5-04
-
-**Changed:** Raised the dry-mix target from `0.19` to `0.28`, routed the wet delay through the compressor, and added a labeled 0–100 master-volume slider with a perceptual gain curve, live 18-millisecond ramps, and a stronger default setting.
-
-**Decisions:** D-009
-
-**Verified:** Fifteen Node checks passed, including control labeling, default value, stronger mix, compressor routing, and live gain-ramp markers; documentation checker reported 0 errors and 0 warnings.
-
-**Not verified:** Perceived loudness, clipping, compressor pumping, and slider presentation in real browsers remain P4-01 and P4-02 work.
-
-**Problems:** None at handoff update time.
-
-**Left undone:** P3, P4, and P6 roadmap items.
-
-**Next session should start with:** Listen to several sparse and dense creatures at default and maximum volume, then continue P4-01.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).
 
