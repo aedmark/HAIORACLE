@@ -864,3 +864,25 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P5-23 phase 5; listening pass; P4-02; P6-01.
 
 **Next session should start with:** the maintainer's listen to the room, then P5-23 phase 5.
+
+### Session 35: 2026-10-20: the manual climbs like a keyboard
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Maintainer: "the C on the left hand side is the same octave as the one on the right. That's not how keyboards work."
+
+**Done:** D-036.
+
+**Changed:**
+1. `src/accompaniment.mjs`: `buildPerformance()` keeps the key's manual position as `lift` (0..12); `leadPitch` includes it; `padVoicing(chord, previous, lift)` and `arpeggioNotes(chord, step, subdivisions, lift)` raise their windows by it.
+2. `src/app.mjs`: held-key pads (region, bridge, and idle audition) and arpeggios pass `performance.lift`.
+3. `tests/accompaniment.test.mjs`: C' equals C plus an octave in every genre and style, and every key's pad and arpeggio sit in a window that rises a semitone per key.
+4. `index.html`: `ASSET_VERSION` restamped (`node tools/stamp_assets.mjs`, D-035) because `src/` changed.
+
+**Verified:** 106/106 Node checks. In the browser (served by `tools/serve.py`), C pads 48,55,60,64 and C' pads 60,67,72,76; keys 0, 4, 7, 11, and 12 climb in pad, arpeggio, and lead; holding C and then C' over the loop raised no console errors. The first browser run used a cached pre-D-035 `index.html`, which is the very problem D-035 prevents from now on.
+
+**Not verified:** Listening, especially how bright the top keys are.
+
+**Left undone:** P5-23 phase 5; listening passes (parlor room, manual); P4-02; P6-01.
+
+**Next session should start with:** the maintainer's listen, then P5-23 phase 5.

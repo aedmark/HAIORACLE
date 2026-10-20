@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 44, on `main`: songs are saved with presets and `.fun` files (sessions v4, P5-26 phase 4); session 43 built the loop strip._
+_Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, with songs exporting whole (P5-26). Low voices now fold by octaves instead of clamping onto wrong notes. Session 44 saved songs in sessions v4._
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-25 and P5-27 are implemented and verified; P5-26 is designed. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-27 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-20, session 39, local Linux environment)
+**Verified** (2026-10-20, session 45, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **117/117 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **126/126 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -86,6 +86,31 @@ _Last updated: 2026-10-20, session 44, on `main`: songs are saved with presets a
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 45: 2026-10-20: songs export whole (P5-26 complete)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-26 phase 5: WAV, stem, and MIDI exports render the whole song (D-039).
+
+**Done:** P5-26 (all five phases).
+
+**Changed:**
+1. `src/app.mjs`: `playSongLayers()` is factored out of the live scheduler and shared with `renderEnsembleLoop()`. The render covers `max(1, songPasses(song))` passes (at most 32). Each step re-follows the recorded leaders (`followSong()` on the offline transport, updating its conducted melody), schedules the band, and plays every layer; `restoreLiveConducting()` then hands the shared band state back to the live loop. The lead duck applies to any transport whose layer leads. `arrangementMarkers()` labels every pass ("LOOP 2 (1/2) · I · EXPOSITION GROOVE"), and the stem README describes the song's length.
+2. **Bug found while checking the export:** `scheduleBassStep()`, the organ, and the choir clamped pitches into range (`Math.max(28, …)`, 36–84, 40–82). On low-rooted creatures every bass note became E1, and the organ and choir hit their edges: wrong notes, live and exported, since P5-09. The new `foldIntoRange()` in `src/ensemble.mjs` moves notes by octaves instead, keeping the pitch class, and has a unit test. Creatures that hit the clamp now sound different; they are correct now.
+3. Tests: static checks for the song render, offline follow, layer playback, and the conducting hand-back; the fold rule.
+
+**Verified:** 126/126 Node checks. In the browser on "three pigeons" at 208 BPM:
+- With no song, the MIDI was 2,880 ticks with 5 markers and 0 Fun Machine notes. A two-loop song (the second at ×2) exported 8,640 ticks (×3.00) with 71 Fun Machine notes and loop-labelled markers. The WAV was 6.54 s.
+- The live band was unchanged after export.
+- After the fold fix, the exported bass matched the plate ("A♭ A♭ A♭ E E C♯"), and the choir varied ("B E C♯ E") instead of repeating E2. With the song, the bass followed the G take once the key was held ("… G E♭ E♭ C").
+- No console errors.
+
+**Not verified:** Listening to exported songs and to the corrected bass, organ, and choir pitches; DAW import of song-length MIDI.
+
+**Left undone:** The P4-02 screen-reader pass; P6-01.
+
+**Next session should start with:** the maintainer's listen (exported songs, corrected low voices), then P4-02 or P6-01.
 
 ### Session 44: 2026-10-20: songs are saved (P5-26 phase 4)
 
@@ -279,28 +304,6 @@ _Last updated: 2026-10-20, session 44, on `main`: songs are saved with presets a
 **Not verified:** Listening. If the accompaniment still feels quick at a steady tempo, the likely cause is the ARPEGGIO style's two notes per step (sixteenths against the band's eighth-note steps, D-029). That is a design choice to revisit, not this bug.
 
 **Left undone:** P5-23 phase 5; listening passes; P4-02; P6-01.
-
-**Next session should start with:** the maintainer's listen, then P5-23 phase 5.
-
-### Session 35: 2026-10-20: the manual climbs like a keyboard
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Maintainer: "the C on the left hand side is the same octave as the one on the right. That's not how keyboards work."
-
-**Done:** D-036.
-
-**Changed:**
-1. `src/accompaniment.mjs`: `buildPerformance()` keeps the key's manual position as `lift` (0..12); `leadPitch` includes it; `padVoicing(chord, previous, lift)` and `arpeggioNotes(chord, step, subdivisions, lift)` raise their windows by it.
-2. `src/app.mjs`: held-key pads (region, bridge, and idle audition) and arpeggios pass `performance.lift`.
-3. `tests/accompaniment.test.mjs`: C' equals C plus an octave in every genre and style, and every key's pad and arpeggio sit in a window that rises a semitone per key.
-4. `index.html`: `ASSET_VERSION` restamped (`node tools/stamp_assets.mjs`, D-035) because `src/` changed.
-
-**Verified:** 106/106 Node checks. In the browser (served by `tools/serve.py`), C pads 48,55,60,64 and C' pads 60,67,72,76; keys 0, 4, 7, 11, and 12 climb in pad, arpeggio, and lead; holding C and then C' over the loop raised no console errors. The first browser run used a cached pre-D-035 `index.html`, which is the very problem D-035 prevents from now on.
-
-**Not verified:** Listening, especially how bright the top keys are.
-
-**Left undone:** P5-23 phase 5; listening passes (parlor room, manual); P4-02; P6-01.
 
 **Next session should start with:** the maintainer's listen, then P5-23 phase 5.
 

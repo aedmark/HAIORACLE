@@ -18,6 +18,7 @@
 
 ### Fixed
 
+- Hear the right bass, organ, and choir notes on low-pitched creatures: notes outside a voice's range used to collapse onto its edge (every bass note an E1); they now move by octaves and keep their pitch. MIDI exports carry the corrected notes too.
 - Hear Raw Esoteric Chaos as intended: with no Fun Machine key held, the esoteric machines now play their own raw output instead of being quietly conducted. Holding a key still brings the band along.
 - Read the cabinet more easily: no text is smaller than 9.6 px, faint labels are brighter (at least 4.5:1 contrast), screen readers no longer announce every step of the loop, and reduced motion takes effect as soon as you turn it on.
 - Keep the echo in time when you move the tempo slider during play. The delay was timed once at the start of the loop, so afterwards the Fun Machine's pads, arpeggios, and lead (which all feed it) echoed at the old tempo and sounded rushed or dragging.
@@ -33,7 +34,7 @@
 
 ### Added
 
-- Record what you play: the Fun Machine's LOOP MACHINE records a pass of held keys as a loop, overdubs more layers on top, and plays the song back with the band following the newest layer; a live key always takes over. Arrange the song with loop tiles: pick a loop, set how many times it plays, move it earlier or later, undo its newest layer, or delete it. Songs are saved with presets and `.fun` files. (Exporting songs comes next.)
+- Record what you play: the Fun Machine's LOOP MACHINE records a pass of held keys as a loop, overdubs more layers on top, and plays the song back with the band following the newest layer; a live key always takes over. Arrange the song with loop tiles: pick a loop, set how many times it plays, move it earlier or later, undo its newest layer, or delete it. Songs are saved with presets and `.fun` files, and WAV, stem, and MIDI exports carry the whole song, with each loop marked on the MIDI timeline.
 - Discover the cabinet as you play: a first visit opens on the phrase, the vitrine, the transport, and the Fun Machine, and the Kapellmeister, Mix, Keep, and Band drawers open themselves when you reach for them. OPEN THE WHOLE CABINET lays every control bare, and your choice is remembered in this browser only.
 - Play Parlor Ragtime, a seventh Kapellmeister genre: Joplin-style changes (I · I7 · IV · ♯iv° · I · VI7 · II7 · V7), an oom-pah stride bass that climbs home, an organ "pah", sixth-chord melodies, and a "Parlor Rag" one-finger progression (I → I7 → IV → V7). It was written entirely in the Inform 7 rulebooks.
 - Overcome the ensemble's "wall of sound" using the Grand Conductor in INTERCAL 1972 (`src/conductor.i`, `src/intercal.mjs`). Evaluates statement politeness (22.9% P/N, adhering to ICL079/ICL099 limits), dynamically orchestrates channel breathing across Exposition, Antiphony, Tutti, and Breakdown regions with `PLEASE IGNORE` and `PLEASE REMEMBER`, and intercepts turnaround cadences at step 11 with `COME FROM (60)`.

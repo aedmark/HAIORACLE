@@ -74,6 +74,19 @@ export function delayTimeFor(score, bpm) {
   return Math.min(1.45, unit * DELAY_MULTIPLIERS[score.rhythm]);
 }
 
+/**
+ * Moves a MIDI note by whole octaves into [low, high], keeping its pitch
+ * class. Voices used to clamp instead, so a low-rooted creature's bass, organ,
+ * and choir collapsed onto the range edge (every bass note an E1) and played
+ * the wrong notes.
+ */
+export function foldIntoRange(midi, low, high = Infinity) {
+  let note = midi;
+  while (note < low) note += 12;
+  while (note > high && note - 12 >= low) note -= 12;
+  return note;
+}
+
 function midiToFrequency(note) {
   return 440 * (2 ** ((note - 69) / 12));
 }

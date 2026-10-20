@@ -383,7 +383,12 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   // Raw Esoteric Chaos is unfettered unless a key is held (P5-27): no empty spine stands in.
   assert.match(app, /const spineToUse = overrideProgression\n    \? overrideProgression\.map\([^\n]*\n    : null;/);
   // The LOLCODE lead steps back for a held key or a recorded layer that leads (D-029, D-039).
-  assert.match(app, /const duck = transport === currentTransport && \(activeHeldFunKey !== null \|\| transport\.songLeading\) \? LEAD_DUCK_GAIN : 1;/);
+  assert.match(app, /const duck = \(transport === currentTransport && activeHeldFunKey !== null\) \|\| transport\.songLeading \? LEAD_DUCK_GAIN : 1;/);
+  // Phase 5: exports render the whole song with the same layer playback and follow rule.
+  assert.match(app, /const passes = Math\.max\(1, songPasses\(song\)\);\n  const stepsCount = 12 \* passes;/);
+  assert.match(app, /followSong\(offlineTransport, loop, step % 12, null\);/);
+  assert.match(app, /playSongLayers\(offlineCtx, offlineTransport, score, step, loop,/);
+  assert.match(app, /if \(song\.loops\.length\) restoreLiveConducting\(\);/, "the render hands the band back to the live loop");
   // The loop machine (P5-26 phase 2): record, follow, and play every layer on the step grid.
   assert.match(html, /<div class="looper" id="looper" role="group" aria-label="Loop machine">/);
   for (const id of ["looper-record", "looper-overdub", "looper-clear"]) assert.match(html, new RegExp(`id="${id}"`));

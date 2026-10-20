@@ -576,7 +576,7 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Found in passing:** with no key held, the conductor has always received that truthy empty spine, so Raw Esoteric Chaos never took its "unfettered" early exit in the live app (D-019 intent). Fixed separately as P5-27 (2026-10-20): with no key held, `applyEnsembleConductor()` now passes no custom spine. Raw Chaos plays the VMs' own output; a held key still leads the band; fettered genres are unchanged.
 
-## D-039 The loop machine: a song of loops, each a stack of takes (2026-10-20, status: accepted; phases 1–4 built, song export pending)
+## D-039 The loop machine: a song of loops, each a stack of takes (2026-10-20, status: accepted; built)
 
 **Context:** The removed punch-in sequencer (D-038) was meant to be a loop machine. The maintainer chose the following design on 2026-10-20:
 - **A loop** is a take of what they play.

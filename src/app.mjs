@@ -35,7 +35,7 @@ import {
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
-import { PARLOR_CRACKLE_PER_LEVEL, PARLOR_REVERB_PER_LEVEL, SILENT_GAIN, buildEnsembleGraph, delayTimeFor, parlorSendLevels } from "./ensemble.mjs";
+import { PARLOR_CRACKLE_PER_LEVEL, PARLOR_REVERB_PER_LEVEL, SILENT_GAIN, buildEnsembleGraph, delayTimeFor, foldIntoRange, parlorSendLevels } from "./ensemble.mjs";
 import {
   ACCOMPANIMENT_CHANNEL_IDS,
   FADER_UNITY,
@@ -2277,7 +2277,7 @@ function scheduleNote(context, transport, score, step, at, duration) {
   const shiftedNote = score.root + transport.melody[(step + field.phaseStep) % transport.melody.length] + consonantInterval;
   const envelope = context.createGain();
   const attack = Math.min(0.055, duration * (0.2 + field.radius * 0.06));
-  const duck = transport === currentTransport && (activeHeldFunKey !== null || transport.songLeading) ? LEAD_DUCK_GAIN : 1;
+  const duck = (transport === currentTransport && activeHeldFunKey !== null) || transport.songLeading ? LEAD_DUCK_GAIN : 1;
   const peakGain = 0.3 * (1 + interaction.hold * 0.16) * duck;
   envelope.gain.setValueAtTime(0.0001, at);
   envelope.gain.exponentialRampToValueAtTime(peakGain, at + Math.max(0.01, attack));
@@ -2639,8 +2639,8 @@ function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration
 
   const nextStep = currentBass.steps[(stepIndex + 1) % currentBass.steps.length];
   const octaveShift = interaction.pitchBend > 0.45 ? 12 : (interaction.pitchBend < -0.45 ? -12 : 0);
-  const baseMidi = Math.max(28, score.root - (step.register > 0 ? 12 : 24) + step.interval + octaveShift);
-  const nextMidi = Math.max(28, score.root - ((nextStep?.register || 0) > 0 ? 12 : 24) + (nextStep?.interval || 0) + octaveShift);
+  const baseMidi = foldIntoRange(score.root - (step.register > 0 ? 12 : 24) + step.interval + octaveShift, 28);
+  const nextMidi = foldIntoRange(score.root - ((nextStep?.register || 0) > 0 ? 12 : 24) + (nextStep?.interval || 0) + octaveShift, 28);
   const freq = midiToFrequency(baseMidi);
   const glideFreq = midiToFrequency(nextMidi);
 
@@ -2710,7 +2710,7 @@ function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDurat
   const harmonyShift = interaction.pitchBend > 0.35 ? 7 : (interaction.pitchBend < -0.35 ? -5 : 0);
   for (const [voiceIndex, interval] of step.chord.entries()) {
     const noteStart = at + voiceIndex * strumSec;
-    const midi = Math.min(84, Math.max(36, score.root + interval + harmonyShift));
+    const midi = foldIntoRange(score.root + interval + harmonyShift, 36, 84);
     const freq = midiToFrequency(midi);
     logNote(transport, "harmony", midi, noteStart, duration, isSustained ? 1 : 0.75);
     const osc = context.createOscillator();
@@ -2813,7 +2813,7 @@ function scheduleChantStep(context, transport, score, stepIndex, at, stepDuratio
   const isSoliloquy = step.gate === 2;
   const duration = Math.max(0.24, stepDuration * (isSoliloquy ? 1.65 : 1.15));
   const chantShift = interaction.pitchBend > 0.35 ? 7 : (interaction.pitchBend < -0.35 ? -5 : 0);
-  const midi = Math.max(40, Math.min(82, score.root + step.registerOffset + step.interval + chantShift));
+  const midi = foldIntoRange(score.root + step.registerOffset + step.interval + chantShift, 40, 82);
   const baseFreq = midiToFrequency(midi);
   logNote(transport, "chant", midi, at, duration, isSoliloquy ? 1 : 0.75);
   const holdBoost = 1 + interaction.hold * 0.14;
@@ -3825,6 +3825,31 @@ function scheduleEnsembleStep(context, transport, score, step, at, stepDuration,
   }
 }
 
+// Plays every recorded layer of a loop on one step: a pad when a held key
+// begins (or a region starts), sustained while the same key is held within the
+// region, plus that style's arpeggio or lead. Shared by the live loop and the
+// offline song render, so an export carries exactly what the loop plays.
+function playSongLayers(context, transport, score, absoluteStep, loop, timing) {
+  const { stepIndex } = timing;
+  transport.layerVoices ??= [];
+  for (const { layerIndex, slot } of slotsAt(loop, stepIndex)) {
+    const take = loop.layers[layerIndex];
+    const previous = stepIndex > 0 ? take[stepIndex - 1] : null;
+    const starts = stepIndex % 3 === 0 || !sameSlot(previous, slot);
+    let padSteps = 0;
+    if (starts) {
+      do padSteps += 1;
+      while ((stepIndex + padSteps) % 3 !== 0 && sameSlot(take[stepIndex + padSteps], slot));
+    }
+    transport.layerVoices[layerIndex] ??= { voicing: null, leadMidi: null };
+    playPerformanceStep(context, transport, transport.layerVoices[layerIndex], performanceFor(slot), {
+      ...timing,
+      padDuration: starts ? padStepsDuration(score, absoluteStep, padSteps) : null,
+      releasable: false,
+    });
+  }
+}
+
 function liveVoiceOf(transport) {
   transport.liveVoice ??= { voicing: null, leadMidi: null };
   return transport.liveVoice;
@@ -3944,25 +3969,7 @@ async function playScore(score, { cursor = 0 } = {}) {
           const padDuration = activeFunPerformance.steps[stepIndex].isRegionStart ? padStepsDuration(score, currentStep, 3) : null;
           playPerformanceStep(context, transport, liveVoiceOf(transport), activeFunPerformance, { ...timing, padDuration });
         }
-        if (loop) {
-          transport.layerVoices ??= [];
-          for (const { layerIndex, slot } of slotsAt(loop, stepIndex)) {
-            const take = loop.layers[layerIndex];
-            const previous = stepIndex > 0 ? take[stepIndex - 1] : null;
-            const starts = stepIndex % 3 === 0 || !sameSlot(previous, slot);
-            let padSteps = 0;
-            if (starts) {
-              do padSteps += 1;
-              while ((stepIndex + padSteps) % 3 !== 0 && sameSlot(take[stepIndex + padSteps], slot));
-            }
-            transport.layerVoices[layerIndex] ??= { voicing: null, leadMidi: null };
-            playPerformanceStep(context, transport, transport.layerVoices[layerIndex], performanceFor(slot), {
-              ...timing,
-              padDuration: starts ? padStepsDuration(score, currentStep, padSteps) : null,
-              releasable: false,
-            });
-          }
-        }
+        if (loop) playSongLayers(context, transport, score, currentStep, loop, timing);
       }
       const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
       window.setTimeout(() => {
@@ -4645,7 +4652,10 @@ async function renderEnsembleLoop(score, {
   const bpm = activeTempoBpm || score.pulse;
   const unit = 60 / bpm / 2;
   const rhythm = RHYTHMS[score.rhythm];
-  const stepsCount = 12;
+  // With a loop-machine song the render is the whole song (D-039), at most
+  // MAX_SONG_PASSES passes; without one it is a single loop, as before.
+  const passes = Math.max(1, songPasses(song));
+  const stepsCount = 12 * passes;
   let loopDuration = 0;
   for (let step = 0; step < stepsCount; step += 1) {
     loopDuration += unit * rhythm[step % rhythm.length];
@@ -4672,12 +4682,30 @@ async function renderEnsembleLoop(score, {
     const stepDuration = unit * rhythm[step % rhythm.length];
     const gateRatio = Math.min(0.94, score.gate / 100);
     const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
+    const position = songPosition(song, step);
+    const loop = position ? song.loops[position.loopIndex] : null;
+    if (song.loops.length) {
+      followSong(offlineTransport, loop, step % 12, null);
+      offlineTransport.melody = currentConductedMelody || offlineTransport.melody;
+    }
     scheduleEnsembleStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration, soundingDuration);
+    if (loop && arrangementPlays("fun", step % 12)) {
+      playSongLayers(offlineCtx, offlineTransport, score, step, loop, { stepIndex: step % 12, at: stepTime, stepDuration, soundingDuration });
+    }
     stepTime += stepDuration;
   }
+  // Following the song re-conducted the shared band state; hand it back to
+  // the live loop (a held key, or the band's own score) before rendering.
+  if (song.loops.length) restoreLiveConducting();
 
   const buffer = render ? await offlineCtx.startRendering() : null;
-  return { buffer, noteLog: offlineTransport.noteLog || [], bpm, loopDuration, stepStarts };
+  return { buffer, noteLog: offlineTransport.noteLog || [], bpm, loopDuration, stepStarts, passes };
+}
+
+function restoreLiveConducting() {
+  if (activeHeldFunKey !== null && activeFunPerformance) applyEnsembleConductor(activeFunPerformance.steps.map((step) => step.chord));
+  else applyEnsembleConductor();
+  if (currentTransport) currentTransport.followedSlot = activeHeldFunKey !== null ? "live" : null;
 }
 
 async function exportSpecimenWav() {
@@ -4722,6 +4750,7 @@ async function exportSpecimenStems() {
     let loopDuration = 0;
     let bpm = 0;
     let stepStarts = [];
+    let passes = 1;
     for (const [index, [id, file]] of STEM_FILES.entries()) {
       elements.status.textContent = `RENDERING STEM ${index + 1}/9 · ${file.slice(3).toUpperCase()}`;
       const result = await renderEnsembleLoop(score, {
@@ -4730,7 +4759,7 @@ async function exportSpecimenStems() {
         clockTicks: false,
         engageAll: true,
       });
-      ({ loopDuration, bpm, stepStarts } = result);
+      ({ loopDuration, bpm, stepStarts, passes } = result);
       entries.push({ name: `${file}.wav`, data: await wavBytes(result.buffer) });
     }
     elements.status.textContent = "RENDERING STEM 9/9 · PARLOR ROOM";
@@ -4744,7 +4773,7 @@ async function exportSpecimenStems() {
         "",
         `Specimen: ${score.name}`,
         `Seed: 0x${seedHex}`,
-        `Tempo: ${bpm} BPM · one 12-step loop of ${loopDuration.toFixed(3)} s plus a ${LOOP_TAIL_SECONDS} s tail`,
+        `Tempo: ${bpm} BPM · ${passes > 1 ? `a song of ${passes} passes (12 steps each)` : "one 12-step loop"} lasting ${loopDuration.toFixed(3)} s plus a ${LOOP_TAIL_SECONDS} s tail`,
         `Format: 16-bit PCM WAV, 44.1 kHz stereo. Every stem starts at 0 s; the loop begins at ${LOOP_START_OFFSET} s.`,
         "",
         ...STEM_FILES.map(([, file, label]) => `${file}.wav  ${label}`),
@@ -4766,25 +4795,36 @@ async function exportSpecimenStems() {
 
 // The INTERCAL sections (and the COME FROM turnaround) as timeline markers,
 // seconds from the loop start. Empty when Raw Chaos unfetters the band.
+// The INTERCAL sections (and the COME FROM turnaround) as timeline markers,
+// seconds from the loop start, for every pass rendered. With a song, each
+// marker names its loop (and repeat), and loops are marked even under Raw Chaos.
 function arrangementMarkers(stepStarts) {
   const arrangement = activeArrangement();
-  if (!arrangement) return [];
-  const markers = arrangement.sections.map((section) => ({
-    at: stepStarts[section.steps[0]],
-    text: `${["I", "II", "III", "IV"][section.index]} · ${section.name}`,
-  }));
-  markers.push({ at: stepStarts[arrangement.turnaroundStep], text: "COME FROM (60) · TURNAROUND" });
-  return markers.sort((a, b) => a.at - b.at);
+  const passes = Math.floor(stepStarts.length / 12);
+  const markers = [];
+  for (let pass = 0; pass < passes; pass += 1) {
+    const base = pass * 12;
+    const position = songPosition(song, base);
+    const repeats = position ? song.loops[position.loopIndex].repeats : 1;
+    const loopLabel = position ? `LOOP ${position.loopIndex + 1}${repeats > 1 ? ` (${position.repeat + 1}/${repeats})` : ""}` : null;
+    const prefix = loopLabel ? `${loopLabel} · ` : "";
+    if (!arrangement) {
+      if (loopLabel) markers.push({ at: stepStarts[base], text: loopLabel });
+      continue;
+    }
+    for (const section of arrangement.sections) {
+      markers.push({ at: stepStarts[base + section.steps[0]], text: `${prefix}${["I", "II", "III", "IV"][section.index]} · ${section.name}` });
+    }
+    markers.push({ at: stepStarts[base + arrangement.turnaroundStep], text: `${prefix}COME FROM (60) · TURNAROUND` });
+  }
+  return markers.sort((x, y) => x.at - y.at);
 }
 
 function arrangementReadme(stepStarts) {
   const markers = arrangementMarkers(stepStarts);
   if (!markers.length) return ["Arrangement: RAW CHAOS · every voice plays every step.", ""];
-  return [
-    "Arrangement (INTERCAL conductor, seconds after the loop begins):",
-    ...markers.map(({ at, text }) => `  ${at.toFixed(3).padStart(7)} s  ${text}`),
-    "",
-  ];
+  const what = song.loops.length ? "Song and arrangement (loop machine and INTERCAL conductor, seconds after the song begins):" : "Arrangement (INTERCAL conductor, seconds after the loop begins):";
+  return [what, ...markers.map(({ at, text }) => `  ${at.toFixed(3).padStart(7)} s  ${text}`), ""];
 }
 
 // A Type 1 MIDI file of every pitched part in the loop, captured from the same

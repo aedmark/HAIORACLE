@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { CHANNEL_VOICING_DB, ENSEMBLE_BUS_GAINS, LEAD_DRY_TAP, SILENT_GAIN, buildEnsembleGraph, delayTimeFor, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
+import { CHANNEL_VOICING_DB, ENSEMBLE_BUS_GAINS, LEAD_DRY_TAP, SILENT_GAIN, buildEnsembleGraph, delayTimeFor, foldIntoRange, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "../src/transport.mjs";
 
 // A minimal AudioContext stand-in that records every node and connection, so
@@ -307,4 +307,16 @@ test("the echo is timed from the tempo, so a live tempo change can retime it", (
   assert.equal(delayTimeFor(SCORE, 120), 0.75 * 0.25);
   assert.equal(delayTimeFor(SCORE, 60), 2 * delayTimeFor(SCORE, 120), "half the tempo, twice the echo time");
   assert.equal(delayTimeFor({ rhythm: 3 }, 36), 1.45, "slow tempos stay inside the delay line");
+});
+
+test("voices fold notes into their range by octaves, keeping the pitch class", () => {
+  assert.equal(foldIntoRange(20, 28), 32, "a G♯0 bass note rises to G♯1, not to E1");
+  assert.equal(foldIntoRange(30, 28), 30, "notes already in range stay");
+  assert.equal(foldIntoRange(90, 36, 84), 78, "an organ note above the range drops an octave");
+  assert.equal(foldIntoRange(33, 40, 82), 45, "a choir note below the range rises an octave");
+  for (let midi = 0; midi < 128; midi += 1) {
+    const folded = foldIntoRange(midi, 40, 82);
+    assert.equal(folded % 12, midi % 12);
+    assert.ok(folded >= 40 && folded <= 82);
+  }
 });
