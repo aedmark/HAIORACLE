@@ -4178,7 +4178,7 @@ function showScore(score) {
     elements.chantName.textContent = CHANT_NAMES[score.chantMode];
   }
   if (conductorSource) {
-    currentArrangement = composeArrangement(conductorSource);
+    currentArrangement = composeArrangement(conductorSource, score);
   }
   updateArrangementDisplay(currentTransport?.audibleStep ?? null);
   applyEnsembleConductor();

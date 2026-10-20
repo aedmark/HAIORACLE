@@ -685,20 +685,27 @@ test("antique parlor chamber impulse response eliminates low-frequency fog-horn 
 });
 
 test("the INTERCAL 1972 conductor executes src/conductor.i deterministically with balanced politeness", () => {
-  const result = runIntercal(conductorSource);
-  assert.equal(result.statementsCount, 27);
-  assert.equal(result.politeCount, 6);
+  const word = 0b1_0110_1001;
+  const result = runIntercal(conductorSource, [word, word ^ 0xffff]);
+  assert.equal(result.statementsCount, 37);
+  assert.equal(result.politeCount, 8);
   assert.ok(result.politenessRatio >= 0.20 && result.politenessRatio <= 0.334);
   assert.equal(result.gaveUp, true);
-  assert.equal(result.stepsExecuted, 26, "COME FROM (100) skips the lead's exit after (60)");
+  assert.equal(result.stepsExecuted, 36, "COME FROM (100) skips the lead's exit after (60)");
   assert.deepEqual(result.ignoredVars, [":8"], "the Fun Machine register stays IGNOREd");
-  assert.deepEqual(result.vars32, { ":1": 1, ":2": 1, ":3": 1, ":4": 1, ":5": 1, ":6": 1, ":7": 1, ":8": 1 });
-  assert.equal(result.vars16[".1"], 4);
-  assert.equal(result.vars16[".3"], 11);
-  assert.deepEqual(result.trace.map((mark) => `${mark.target}=${mark.value}`), [".1=1", ".1=2", ".1=3", ".1=4", ".3=11"]);
+  // Bit 6 set: the lead carries the breakdown and the organ rests; bit 7 clear hushes the choir.
+  assert.deepEqual(result.vars32, { ":1": 1, ":2": 1, ":3": 1, ":4": 0, ":5": 1, ":6": 0, ":7": 1, ":8": 1 });
+  assert.equal(result.vars16[".5"], word, "WRITE IN reads the arrangement word");
+  assert.equal(result.vars16[".3"], 11, "#3 $ #1 mingles to binary 1011");
+  assert.deepEqual(
+    result.trace.filter((mark) => mark.target === ".1" || mark.target === ".3").map((mark) => `${mark.target}=${mark.value}`),
+    [".1=1", ".1=2", ".1=3", ".1=4", ".3=11"],
+  );
+  assert.throws(() => runIntercal(conductorSource, [word]), /ICL562/, "running out of input is an error");
 
   // INTERCAL bitwise operators
   assert.equal(intercalMingle(9, 3), 135);
+  assert.equal(intercalMingle(3, 0), 10);
   assert.equal(intercalSelect(0b1101, 0b1011), 0b101);
 });
 
@@ -730,80 +737,62 @@ PLEASE GIVE UP
   );
 });
 
-test("INTERCAL 1972 dynamic arrangement orchestrates sectional breathing and COME FROM turnarounds", () => {
-  const score = composeScore(source, "the moon owes me five dollars");
-  const arrangement = composeArrangement(conductorSource);
-  assert.equal(arrangement.sections.length, 4);
-  assert.equal(arrangement.channelMasks.length, 12);
-  assert.equal(arrangement.turnaroundStep, 11);
-  assert.match(arrangement.politenessPercentage, /22\.2%/);
-
-  // Region 0 (Exposition): Lead, Beat, Bass, Chimes active; Harmony and Choir rest to establish groove
-  for (let s = 0; s < 3; s += 1) {
-    const mask = arrangement.channelMasks[s];
-    assert.equal(mask.lead, true, `Step ${s} lead`);
-    assert.equal(mask.beat, true, `Step ${s} beat`);
-    assert.equal(mask.bass, true, `Step ${s} bass`);
-    assert.equal(mask.harmony, false, `Step ${s} harmony rested`);
-    assert.equal(mask.chant, false, `Step ${s} chant rested`);
-    assert.equal(mask.isTurnaround, false);
+test("INTERCAL 1972 dynamic arrangement varies per phrase within the conductor's musical guardrails", () => {
+  const forms = new Set();
+  for (let n = 0; n < 160; n += 1) {
+    const score = composeScore(source, `phrase number ${n}`);
+    const arrangement = composeArrangement(conductorSource, score);
+    assert.deepEqual(composeArrangement(conductorSource, score), arrangement, "the same phrase always gets the same form");
+    forms.add(JSON.stringify(arrangement.channelMasks));
+    const masks = arrangement.channelMasks;
+    assert.equal(masks.length, 12);
+    assert.deepEqual(arrangement.sections.map((section) => section.name), [...INTERCAL_SECTION_NAMES]);
+    assert.match(arrangement.politenessPercentage, /21\.6%/);
+    assert.ok([10, 11].includes(arrangement.turnaroundStep));
+    const section = (index) => masks[index * 3];
+    for (let step = 0; step < 12; step += 1) {
+      const anchor = step >= arrangement.turnaroundStep ? masks[arrangement.turnaroundStep] : masks[Math.floor(step / 3) * 3];
+      assert.deepEqual(masks[step], anchor, `step ${step} plays its section's mask`);
+      assert.equal(masks[step].fun, true, "the player is never rested");
+      assert.equal(masks[step].chime && masks[step].fungal, true, "chimes and fungal voices keep the room alive");
+      assert.equal(masks[step].isTurnaround, step >= arrangement.turnaroundStep);
+    }
+    // I: lead and pulse set out. II: the choir sings, answered by lead or organ, never both.
+    assert.ok(section(0).lead && section(0).beat);
+    assert.ok(section(1).chant && section(1).bass);
+    assert.notEqual(section(1).lead, section(1).harmony);
+    // III: tutti.
+    assert.ok(Object.values(section(2)).filter((on) => on === true).length === 8);
+    // IV: the pulse falls away; lead or organ carries the tune, never both.
+    assert.equal(masks[9].beat, false);
+    assert.notEqual(masks[9].lead, masks[9].harmony);
+    // Turnaround: pulse, bass, and lead come home.
+    assert.ok(masks[11].beat && masks[11].bass && masks[11].lead);
   }
+  assert.ok(forms.size >= 60, `${forms.size} distinct forms across 160 phrases`);
 
-  // Region 1 (Antiphony): Harmony and Choir take center stage; Lead breathes
-  for (let s = 3; s < 6; s += 1) {
-    const mask = arrangement.channelMasks[s];
-    assert.equal(mask.lead, false, `Step ${s} lead rested`);
-    assert.equal(mask.harmony, true, `Step ${s} harmony active`);
-    assert.equal(mask.chant, true, `Step ${s} chant active`);
-    assert.equal(mask.isTurnaround, false);
-  }
-
-  // Region 2 (Tutti): Full ensemble apotheosis
-  for (let s = 6; s < 9; s += 1) {
-    const mask = arrangement.channelMasks[s];
-    assert.equal(mask.lead, true, `Step ${s} lead active`);
-    assert.equal(mask.beat, true, `Step ${s} beat active`);
-    assert.equal(mask.bass, true, `Step ${s} bass active`);
-    assert.equal(mask.harmony, true, `Step ${s} harmony active`);
-    assert.equal(mask.chant, true, `Step ${s} chant active`);
-    assert.equal(mask.isTurnaround, false);
-  }
-
-  // Region 3 (Breakdown): Beat and Bass rest on steps 9-10
-  assert.equal(arrangement.channelMasks[9].beat, false);
-  assert.equal(arrangement.channelMasks[9].bass, false);
-  assert.equal(arrangement.channelMasks[10].beat, false);
-  assert.equal(arrangement.channelMasks[10].bass, false);
-
-  // Step 11: COME FROM (60) Turnaround resolution brings Beat and Bass back
-  assert.equal(arrangement.channelMasks[11].beat, true);
-  assert.equal(arrangement.channelMasks[11].bass, true);
-  assert.equal(arrangement.channelMasks[11].isTurnaround, true);
-
-  // The player's part is never rested: :8 is IGNOREd before the breakdown's DO :8 <- #0.
-  assert.ok(arrangement.channelMasks.every((mask) => mask.fun === true));
-  assert.deepEqual(arrangement.sections.map((section) => section.name), [...INTERCAL_SECTION_NAMES]);
-  assert.equal(arrangementSectionAt(arrangement, 4).section.name, "ANTIPHONAL CONVERSATION");
-  assert.equal(arrangementSectionAt(arrangement, 23).isTurnaround, true, "steps wrap into the 12-step loop");
+  assert.equal(arrangementSectionAt(composeArrangement(conductorSource, composeScore(source, "hai oracle")), 4).section.name, "ANTIPHONAL CONVERSATION");
 });
 
 test("the INTERCAL score, not the host, decides the arrangement, and malformed form is rejected", () => {
-  // Editing the program re-arranges the band: un-rest the choir in the exposition.
-  const choirFirst = conductorSource.replace("DO :6 <- #0", "DO :6 <- #1");
-  assert.equal(composeArrangement(choirFirst).channelMasks[0].chant, true);
-  // Without IGNORE, the breakdown's DO :8 <- #0 rests the Fun Machine on steps 9-10.
-  const rudeToPlayer = conductorSource.replace("PLEASE IGNORE :8", "PLEASE REMEMBER :8");
-  const hushed = composeArrangement(rudeToPlayer);
+  const pigeons = composeScore(source, "three pigeons in a borrowed coat");
+  const arrange = (program) => composeArrangement(program, pigeons);
+  // Editing the program re-arranges the band: the choir always opens the exposition.
+  assert.equal(arrange(conductorSource.replace("DO :6 <- .5 ~ #4", "DO :6 <- #1")).channelMasks[0].chant, true);
+  // Without IGNORE, the breakdown's DO :8 <- #0 rests the Fun Machine from step 9 on.
+  const hushed = arrange(conductorSource.replace("PLEASE IGNORE :8", "PLEASE REMEMBER :8"));
   assert.deepEqual(hushed.channelMasks.map((mask) => mask.fun), [...Array(9).fill(true), false, false, false]);
   // Moving the COME FROM target moves the turnaround.
-  assert.equal(composeArrangement(conductorSource.replace("DO .3 <- #11", "DO .3 <- #10")).turnaroundStep, 10);
+  assert.equal(arrange(conductorSource.replace("DO .3 <- #3 $ .7", "DO .3 <- #11")).turnaroundStep, 11);
+  assert.equal(arrange(conductorSource.replace("DO .3 <- #3 $ .7", "DO .3 <- #10")).turnaroundStep, 10);
 
-  const rejects = (program, pattern) => assert.throws(() => composeArrangement(program), pattern);
+  const rejects = (program, pattern) => assert.throws(() => arrange(program), pattern);
   rejects(conductorSource.replace("DO .1 <- #3", "DO .1 <- #5"), /expected section 3/);
-  rejects(conductorSource.replace("DO .3 <- #11", "DO .3 <- #12"), /outside the 12-step loop/);
+  rejects(conductorSource.replace("DO .3 <- #3 $ .7", "DO .3 <- #12"), /must fall on step 10 or 11/);
+  rejects(conductorSource.replace("DO .3 <- #3 $ .7", "DO .3 <- #9"), /must fall on step 10 or 11/);
   rejects(conductorSource.replace("DO :5 <- #1", "DO :5 <- #2"), /register :5 \(chime\) must hold #0 or #1/);
   rejects(conductorSource.replace("DO :7 <- #1\n", ""), /register :7 \(fungal\)/);
-  rejects(conductorSource.replace("(60) DO .3 <- #11", "(60) DO :5 <- #1"), /4 sections and a turnaround/);
+  rejects(conductorSource.replace("(60) DO .3 <- #3 $ .7", "(60) DO :5 <- #1"), /4 sections and a turnaround/);
   rejects(conductorSource.replace("PLEASE GIVE UP", "PLEASE DO :5 <- #1"), /GIVE UP/);
 });
 

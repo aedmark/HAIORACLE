@@ -400,7 +400,7 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** The keyboard plays an arrangement rather than single chords. Sequenced and punched chords sound as pads in the live loop and in WAV and stem exports, and are now labelled and conducted in the right key (the sequencer grid previously showed tonic-relative names for generated steps, such as "C MAJ9" for E♭maj9). The INTERCAL arrangement mask (D-028) gates only the band voices, so the player's part is never rested. Timbre and feel still need a listening pass.
 
-## D-030 The INTERCAL score's registers are the arrangement, and the workstation shows it (2026-10-20, status: accepted)
+## D-030 The INTERCAL score's registers are the arrangement, and the workstation shows it (2026-10-20, status: accepted; point 4 superseded by D-031)
 
 **Context:** The maintainer asked whether the INTERCAL conductor (D-028) was used in the DAW work and asked for an audit. The masks already gated the live loop, WAV, stems, MIDI capture, and meters through `scheduleEnsembleStep()`. But `composeArrangement()` hard-coded the four masks and read only the politeness ratio from the VM; run literally, `src/conductor.i` disagreed with them (its breakdown kept the beat, and `PLEASE IGNORE :1` froze the lead instead of resting it). Nothing displayed the arrangement, so a soloed voice could fall silent unexplained, and exports carried no section information.
 
@@ -413,6 +413,20 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 **Alternatives:** Keeping the hard-coded masks and treating the program as decoration would have left the INTERCAL VM unable to change the music. Seeding the arrangement from the score would vary the form per creature; deferred until someone wants it, since it changes every creature's sound.
 
 **Consequences:** Editing `src/conductor.i` re-arranges the band, and malformed form fails loudly at summon. Default sound is unchanged.
+
+## D-031 Each phrase gets its own arrangement, chosen by the INTERCAL score (2026-10-20, status: accepted)
+
+**Context:** After D-030 the maintainer asked that "the arrangements should vary per phrase".
+
+**Decision:**
+1. **The phrase whispers, the score chooses.** `arrangementWordFor(score)` avalanche-mixes the score seed into a 16-bit word so the form does not track the seed bits the other VMs read. The VM gains `WRITE IN`, and `composeArrangement(source, score)` writes in the word and then its complement; the score picks each choice with select (`.5 ~ #bit`), using the complement where two voices must alternate.
+2. **Guardrails live in the score.** Lead and pulse always open the exposition; bass, organ, and choir may each wait. The choir always sings the antiphony, answered by the lead or the organ but never both, and the pulse may step out. The third section is always tutti. The breakdown always drops the pulse, keeps exactly one of lead and organ, and may drop the bass and choir. The turnaround always brings pulse, bass, and lead home; it starts on step 10 or 11 (`#3 $ .7` mingles binary 11 with one more bit). Chimes, fungal voices, and the player never rest. That is nine binary choices; 272 distinct forms appeared across 400 sample phrases.
+3. **The turnaround is a span.** From its start step to the loop's end the band plays the registers at `GIVE UP`; the host rejects a start outside steps 10–11.
+4. **Same phrase, same form.** Determinism holds: the word derives only from the seed.
+
+**Alternatives:** Letting the host pick among hard-coded templates would put the choice back in JavaScript (the D-030 problem). Free per-voice random bits would allow forms with no pulse or no tune.
+
+**Consequences:** Every creature now has its own breathing pattern, so phrases sound more distinct; existing creatures' arrangements changed (shared links summon the same phrase but a different form than before this change). Sections keep their names. A listening pass across phrases is still owed.
 
 ## Open questions
 

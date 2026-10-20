@@ -80,8 +80,11 @@ export function intercalSelect(a, b) {
 }
 
 export class IntercalVM {
-  constructor(source) {
+  constructor(source, input = []) {
     this.source = String(source || "");
+    // WRITE IN reads from this queue. Real INTERCAL spells input digits out in
+    // English ("ONE TWO"); the host hands numbers over directly.
+    this.input = [...input];
     this.statements = [];
     this.labels = new Map();
     this.comeFroms = new Map();
@@ -138,6 +141,36 @@ export class IntercalVM {
     }
   }
 
+  operand(text, stmt) {
+    if (/^#\d+$/.test(text)) return parseInt(text.slice(1), 10);
+    if (/^:\d+$/.test(text)) return this.vars32.get(text) || 0;
+    if (/^\.\d+$/.test(text)) return this.vars16.get(text) || 0;
+    throw new Error(`INTERCAL line ${stmt.lineNum}: Unrecognized operand ${text} (ICL017)`);
+  }
+
+  // One binary operator at most: select (~) or mingle ($). Real INTERCAL
+  // groups deeper expressions with sparks and rabbit-ears; the score needs none.
+  expression(expr, stmt) {
+    const match = expr.match(/^(\S+)\s*([~$])\s*(\S+)$/);
+    if (!match) return this.operand(expr, stmt);
+    const left = this.operand(match[1], stmt);
+    const right = this.operand(match[3], stmt);
+    return match[2] === "~" ? intercalSelect(left, right) : intercalMingle(left, right);
+  }
+
+  assign(target, val, stmt) {
+    if (this.ignoredVars.has(target)) return;
+    if (target.startsWith(":")) {
+      this.vars32.set(target, val >>> 0);
+    } else if (target.startsWith(".")) {
+      if (val > 0xffff) throw new Error(`INTERCAL line ${stmt.lineNum}: ${val} does not fit a onespot variable (ICL275)`);
+      this.vars16.set(target, val);
+      // Onespot markers carry the arrangement's form, so each one keeps
+      // a snapshot of the twospot channel registers at that moment.
+      this.trace.push(Object.freeze({ target, value: val, registers: Object.freeze(Object.fromEntries(this.vars32)) }));
+    }
+  }
+
   evaluate() {
     const total = this.statements.length;
     if (total === 0) {
@@ -175,27 +208,13 @@ export class IntercalVM {
       } else if (/^REMEMBER\s+([.:]\d+)/i.test(body)) {
         const v = body.match(/^REMEMBER\s+([.:]\d+)/i)[1];
         this.ignoredVars.delete(v);
+      } else if (/^WRITE\s+IN\s+([.:]\d+)/i.test(body)) {
+        const target = body.match(/^WRITE\s+IN\s+([.:]\d+)/i)[1];
+        if (this.input.length === 0) throw new Error(`INTERCAL line ${stmt.lineNum}: Input exhausted (ICL562 I DO NOT COMPUTE)`);
+        this.assign(target, this.input.shift(), stmt);
       } else if (body.includes("<-")) {
-        const [target, expr] = body.split("<-").map((s) => s.trim());
-        let val = 0;
-        if (expr.startsWith("#")) {
-          val = parseInt(expr.slice(1), 10) || 0;
-        } else if (expr.startsWith(":")) {
-          val = this.vars32.get(expr) || 0;
-        } else if (expr.startsWith(".")) {
-          val = this.vars16.get(expr) || 0;
-        }
-
-        if (!this.ignoredVars.has(target)) {
-          if (target.startsWith(":")) {
-            this.vars32.set(target, val);
-          } else if (target.startsWith(".")) {
-            this.vars16.set(target, val);
-            // Onespot markers carry the arrangement's form, so each one keeps
-            // a snapshot of the twospot channel registers at that moment.
-            this.trace.push(Object.freeze({ target, value: val, registers: Object.freeze(Object.fromEntries(this.vars32)) }));
-          }
-        }
+        const [target, expr] = body.split("<-").map((part) => part.trim());
+        this.assign(target, this.expression(expr, stmt), stmt);
       }
 
       // Check COME FROM for the label of the statement just completed
@@ -222,8 +241,8 @@ export class IntercalVM {
   }
 }
 
-export function runIntercal(source) {
-  const vm = new IntercalVM(source);
+export function runIntercal(source, input = []) {
+  const vm = new IntercalVM(source, input);
   return vm.evaluate();
 }
 
@@ -232,8 +251,11 @@ export function runIntercal(source) {
 //    order; #1 plays and #0 rests;
 //  - `.1 <- #n` opens section n (1..4); a section plays the registers as they
 //    stand when the next section opens;
-//  - `.3 <- #s` names the turnaround step and closes section 4; the turnaround
-//    step plays the registers as they stand at GIVE UP.
+//  - `.3 <- #s` closes section 4 and starts the turnaround on step s, inside
+//    section 4 but after its first step; from s to the loop's end the band
+//    plays the registers as they stand at GIVE UP;
+//  - WRITE IN supplies the creature's 16-bit arrangement word, then its
+//    complement, so the score can choose per phrase with select (~).
 const SECTION_COUNT = 4;
 const STEPS_PER_SECTION = 3;
 
@@ -251,14 +273,26 @@ function channelMask(registers, where) {
 }
 
 /**
- * Composes the 12-step ensemble arrangement by running the INTERCAL conductor
- * score: four 3-step sections (Exposition, Antiphony, Tutti, Breakdown) plus a
- * COME FROM turnaround step. Every mask comes from the program's registers, so
- * editing src/conductor.i re-arranges the band; malformed form is rejected.
- * The arrangement is the band's form, so it is the same for every creature.
+ * The creature's 16-bit arrangement word: the score seed, avalanche-mixed so
+ * the form does not move in lockstep with the seed bits the other VMs read.
  */
-export function composeArrangement(source) {
-  const exec = runIntercal(source);
+export function arrangementWordFor(score) {
+  let x = (score?.seed ?? 0) >>> 0;
+  x = Math.imul(x ^ (x >>> 16), 0x45d9f3b) >>> 0;
+  x = Math.imul(x ^ (x >>> 16), 0x45d9f3b) >>> 0;
+  return (x ^ (x >>> 16)) & 0xffff;
+}
+
+/**
+ * Composes the 12-step ensemble arrangement by running the INTERCAL conductor
+ * score on the creature's arrangement word: four 3-step sections (Exposition,
+ * Antiphony, Tutti, Breakdown) plus a COME FROM turnaround. Every mask comes
+ * from the program's registers, so editing src/conductor.i re-arranges the
+ * band; malformed form is rejected. The same phrase always gets the same form.
+ */
+export function composeArrangement(source, score) {
+  const word = arrangementWordFor(score);
+  const exec = runIntercal(source, [word, word ^ 0xffff]);
   if (!exec.gaveUp) throw new RangeError("INTERCAL conductor: the score must end with GIVE UP");
   const politenessPct = (exec.politenessRatio * 100).toFixed(1);
 
@@ -276,8 +310,9 @@ export function composeArrangement(source) {
       if (openSection !== SECTION_COUNT || turnaroundStep !== null) {
         throw new RangeError("INTERCAL conductor: the turnaround .3 must follow section 4, once");
       }
-      if (!Number.isInteger(mark.value) || mark.value < 0 || mark.value >= SECTION_COUNT * STEPS_PER_SECTION) {
-        throw new RangeError(`INTERCAL conductor: turnaround step #${mark.value} is outside the 12-step loop`);
+      const lastSectionStart = (SECTION_COUNT - 1) * STEPS_PER_SECTION;
+      if (!Number.isInteger(mark.value) || mark.value <= lastSectionStart || mark.value >= SECTION_COUNT * STEPS_PER_SECTION) {
+        throw new RangeError(`INTERCAL conductor: turnaround step #${mark.value} must fall on step 10 or 11 of section 4`);
       }
       regionalMasks.push(channelMask(mark.registers, "the turnaround"));
       turnaroundStep = mark.value;
@@ -289,7 +324,7 @@ export function composeArrangement(source) {
   const turnaroundMask = channelMask(exec.vars32, "GIVE UP");
 
   const channelMasks = Array.from({ length: SECTION_COUNT * STEPS_PER_SECTION }, (_, step) => (
-    step === turnaroundStep
+    step >= turnaroundStep
       ? Object.freeze({ ...turnaroundMask, isTurnaround: true })
       : Object.freeze({ ...regionalMasks[Math.floor(step / STEPS_PER_SECTION)], isTurnaround: false })
   ));
@@ -304,6 +339,7 @@ export function composeArrangement(source) {
   const summary = `INTERCAL 1972 CONDUCTOR · 4 REGIONS · POLITENESS ${politenessPct}% (ICL BALANCED) · COME FROM @${turnaroundStep}`;
 
   return Object.freeze({
+    word,
     sections: Object.freeze(sections),
     channelMasks: Object.freeze(channelMasks),
     politeness: exec.politenessRatio,
@@ -318,5 +354,5 @@ export function composeArrangement(source) {
 export function arrangementSectionAt(arrangement, step) {
   const index = ((Math.trunc(step) % 12) + 12) % 12;
   const section = arrangement.sections[Math.floor(index / STEPS_PER_SECTION)];
-  return Object.freeze({ section, isTurnaround: index === arrangement.turnaroundStep, mask: arrangement.channelMasks[index] });
+  return Object.freeze({ section, isTurnaround: index >= arrangement.turnaroundStep, mask: arrangement.channelMasks[index] });
 }

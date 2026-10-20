@@ -807,8 +807,14 @@ h1 em {
   font-variant-numeric: tabular-nums;
 }
 
+/* Its own full-width line of fixed height: section names differ in length,
+   and the readout must never re-wrap the transport row as they change. */
 .transport-section {
+  display: block;
+  flex: 1 0 100%;
   min-width: 0;
+  height: 1.5em;
+  line-height: 1.5em;
   color: rgba(228, 215, 190, 0.72);
   font-size: 0.54rem;
   font-weight: 700;
@@ -1499,11 +1505,20 @@ h1 em {
   text-transform: uppercase;
 }
 
+/* Values change every step and some wrap on narrow screens ("G = 9
+   (Dissonant)"), so each always reserves two lines and the readout never
+   changes height mid-loop. */
 .readout-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5em;
+  overflow: hidden;
   margin-top: 0.2rem;
   font-family: var(--serif-display);
   font-size: 0.95rem;
   font-weight: 700;
+  line-height: 1.25;
   color: #faf3e6;
   letter-spacing: 0.04em;
 }
