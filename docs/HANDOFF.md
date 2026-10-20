@@ -103,7 +103,7 @@ _Last updated: 2026-10-20, session 28, on `main`: per-phrase arrangements keep a
 
 **Left undone:** P4-02; P6-01.
 
-**Next session should start with:** a listening pass on a few phrases to confirm no form sounds thin.
+**Next session should start with:** a listening pass on a few phrases to confirm no form sounds thin, then P5-23 (Inform 7 rulebooks, D-033), whose phase 1 golden fixture is the next step.
 
 ### Session 27: 2026-10-20: every phrase gets its own form
 

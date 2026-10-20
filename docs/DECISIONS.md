@@ -438,6 +438,69 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** Forms are fuller and closer to D-028's original densities, with less contrast between phrases than D-031. Arrangements of existing phrases changed again.
 
+## D-033 The Kapellmeister rulebooks move into an Inform 7 source file (2026-10-20, status: accepted)
+
+**Context:** The six genre rulebooks are the project's most-edited musical knowledge, but they live as `switch (genre)` branches scattered across `src/conductor.mjs`. These cover chord colours in `buildFunChord()`, progressions in `buildFunProgression()`, spines in the `build*Spine()` functions, melody snapping in `projectConsonantPitch()`, and bass walks, organ voicings, chime ratios, and bass gates in `conductEnsemble()`. Adding or retuning a genre means editing six functions. The maintainer asked for Inform 7, the natural-language interactive-fiction language, to take this over (2026-10-20). Inform 7's own core concepts are *kinds*, *properties*, *tables*, and *rulebooks*, which are the shape this knowledge already has.
+
+**Decision:**
+1. **A canonical source file, `src/rulebooks.ni`,** written in a strict subset of Inform 7 (`.ni` is Inform 7's source extension). It declares every genre, its chord spine, colouring rules, Fun Machine progressions, melody tones, bass walk, organ voicing, and chime ratios.
+2. **A purpose-built interpreter, `src/inform.mjs`,** fetched and run at load like every other band language. It parses the subset, rejects anything else with line numbers, evaluates every rulebook once over its whole input domain, and returns frozen, validated plain data (`compileRulebooks(source) → { genres }`). It runs no world model, no parser, and no turn loop. The conductor consumes the data and never sees Inform text.
+3. **Algorithms stay in JavaScript, named by the rulebooks.** The Tonnetz P/L/R walk, the Euler *Gradus* sieve, and counterpoint contrary motion remain `conductor.mjs` functions. A genre selects them through an enumerated kind of value (`The melody method of Victorian Tonnetz is Euler sieving.`), so the source can only choose from an allowlist.
+4. **Behaviour is preserved exactly.** Before migration, the current outputs are frozen into a golden fixture, and the compiled rulebooks must reproduce it bit for bit.
+5. **Genre codes are stable.** Each genre declares its existing code (`"smoky_jazz"`), so v1/v2 `.fun` sessions and presets keep validating against the same IDs.
+
+**The subset.** Every construct is real Inform 7 syntax, and the interpreter accepts only these:
+
+| Construct | Example |
+| --- | --- |
+| Bibliographic sentence and headings | `"The Kapellmeister's Rulebooks" by Edmark's Esoteric Fun Machine`; `Part 2 - Smoky Parlor Jazz` |
+| Kinds of thing and of value | `A genre is a kind of thing.` `Chord quality is a kind of value. The chord qualities are major, minor, dom7, maj9, min9, dom7alt, dim, modal open, phrygian, lydian and raw.` |
+| Properties, either/or properties, defaults | `A genre has some text called the motto.` `A genre can be insistent or patient. A genre is usually patient.` |
+| Instances and assertions | `Smoky Parlor Jazz is an insistent genre. The code of Smoky Parlor Jazz is "smoky_jazz".` |
+| Globals the host sets before evaluation | `The interval above the tonic is a number that varies.` |
+| Tables (tab-separated, `--` blank, `(continued)`) | `Table of Smoky Jazz Changes` with `region`, `degree`, `quality`, `label` columns |
+| Value-producing, genre-based rulebooks | `The colouring rules are a genre based rulebook producing a chord quality.` |
+| Rules with `when` conditions and a result | `Colouring rule for Smoky Parlor Jazz when the interval above the tonic is listed in {0, 5}: rule succeeds with result maj9.` |
+| Conditions | `is`, `is not`, `is at most`, `is at least`, `is listed in {…}`, `and` |
+
+An excerpt of what Smoky Parlor Jazz would look like:
+
+```inform7
+Smoky Parlor Jazz is an insistent genre. The code of Smoky Parlor Jazz is "smoky_jazz".
+The motto of Smoky Parlor Jazz is "ii-V-I progressions with rootless 3rd/7th/9th guide tones, swung overtones, and chromatic approaches."
+The changes of Smoky Parlor Jazz are the Table of Smoky Jazz Changes.
+The melody method of Smoky Parlor Jazz is extended snapping. The organ voicing of Smoky Parlor Jazz is guide tones.
+
+Colouring rule for Smoky Parlor Jazz when the interval above the tonic is listed in {0, 5}: rule succeeds with result maj9.
+Colouring rule for Smoky Parlor Jazz when the interval above the tonic is listed in {1, 6, 11}: rule succeeds with result dom7alt.
+Colouring rule for Smoky Parlor Jazz: rule succeeds with result min9.
+
+Table of Smoky Jazz Changes
+region	degree	quality	label
+1	0	maj9	"Imaj9"
+2	9	min9	"vi9"
+3	2	min9	"ii9"
+4	1	dom7alt	"♭II7alt"
+```
+
+**Known deviations from real Inform 7, documented in the interpreter:**
+- Rules fire in source order, first match wins. Real Inform sorts rules by specificity.
+- A spine table may use a `region` column (expanded to three steps) or a `step` column (twelve rows).
+- `.ni` files are read as UTF-8, so chord labels may use `♭` and `♯`.
+
+**Phases and acceptance:**
+1. **Freeze today.** Add `tests/fixtures/rulebooks-golden.json`, generated from the current `conductor.mjs`. It covers every genre × 12 keys × every chord quality for chord colours and progressions; every spine for a fixed set of sample scores; melody projection over every pitch and strictness 1–12; and `conductEnsemble()` output for the sample scores.
+2. **Interpret.** Add `src/inform.mjs` and `src/rulebooks.ni`. Tests cover each construct, rejection with line numbers for out-of-subset text (actions, `Instead of`, `To decide`, and unknown kinds or values), and determinism.
+3. **Migrate.** `conductor.mjs` reads compiled genres instead of branching on IDs, and the JavaScript tables are deleted. The golden fixture passes unchanged. `session.mjs` takes its genre allowlist from the compiled codes.
+4. **Surface.** The Kapellmeister `<select>`, title, and description come from the rulebooks, and the six options remain in today's order. Update ARCHITECTURE, the manual (a new `inform-rulebooks` entry), README, and the AGENTS map.
+5. **Prove the point.** A test compiles a seventh, fixture-only genre written purely in Inform 7, and the conductor plays it with no JavaScript change.
+
+**Alternatives:** JSON tables would be smaller to parse but would lose the readable English and the project's esoteric-language character. Shipping the real Inform 7 compiler to the browser is a large C toolchain and would break the zero-dependency boundary. Running a precompiled Z-machine story file would commit a generated binary and hide the source from the browser. A full rule-specificity sort would be more faithful, but it is hard to predict and test; source order is explicit.
+
+**Consequences:** Retuning or adding a genre becomes editing English prose and tables, and a second source of truth disappears from `conductor.mjs`. The page loads one more file and parses about 250 lines at startup. Determinism and the zero-dependency boundary are unchanged. The risk is a subtle behaviour change during migration, which the golden fixture is there to catch. No Inform 7 project code is copied; only its published syntax is followed.
+
+**Maintainer answers (2026-10-20):** Raw Esoteric Chaos stays a rulebook in the file (`Raw Esoteric Chaos is an unfettered genre.`). A seventh playable genre is a follow-up; P5-23 only proves it is possible, using the fixture-only genre in phase 5.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)
