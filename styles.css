@@ -244,9 +244,9 @@ footer {
   justify-content: center;
   gap: 0.7rem;
   color: var(--parchment-light);
-  font-size: clamp(1rem, 1.9vw, 1.32rem);
+  font-size: clamp(0.82rem, 1.55vw, 1.15rem);
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.16em;
   text-decoration: none;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.8);
 }
@@ -1674,8 +1674,8 @@ noscript {
 
   .wordmark {
     justify-self: start;
-    font-size: 0.92rem;
-    letter-spacing: 0.16em;
+    font-size: 0.78rem;
+    letter-spacing: 0.09em;
   }
 
   .wordmark .prompt-mark:last-child {

@@ -4030,11 +4030,11 @@ function renderSpecimenBroadsheetCanvas(score) {
   const seedHex = (score.seed >>> 0).toString(16).toUpperCase().padStart(8, "0");
   pctx.fillStyle = "#1b1512";
   pctx.font = '700 34px "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif';
-  pctx.fillText("HAI, ORACLE! — SPECIMEN BROADSHEET", width * 0.5, 146);
+  pctx.fillText("EDMARK'S ESOTERIC FUN MACHINE — SPECIMEN BROADSHEET", width * 0.5, 146);
 
   pctx.fillStyle = "#57483e";
   pctx.font = '600 14px "Courier New", Courier, monospace';
-  pctx.fillText(`FOLIO XVII · SEED 0x${seedHex} · DETERMINISTIC AUDIOVISUAL OMEN`, width * 0.5, 174);
+  pctx.fillText(`FOLIO XVII · SEED 0x${seedHex} · DETERMINISTIC AUDIOVISUAL OMEN & AUTO-CHORD ORGAN`, width * 0.5, 174);
 
   const vitrineX = 96;
   const vitrineY = 200;
@@ -4188,7 +4188,7 @@ function renderSpecimenBroadsheetCanvas(score) {
   pctx.fillStyle = "#4b382d";
   pctx.font = '700 13px "Courier New", Courier, monospace';
   pctx.fillText(
-    `SHARE SEAL: ${encodeOmenHash(score.phrase)} · ZERO-DEPENDENCY LOCAL BROWSER SYNTHESIS`,
+    `SHARE SEAL: ${encodeOmenHash(score.phrase)} · EDMARK'S ESOTERIC FUN MACHINE · ZERO-DEPENDENCY`,
     width * 0.5,
     height - 74,
   );

@@ -245,6 +245,20 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** HAI, ORACLE! transforms from an algorithmic spectator toy into a live esoteric jam instrument. Users can play along in real time, sequence custom chord progressions, and export deterministic WAV loops preserving their compositions.
 
+## D-021 Product Rebrand to Edmark's Esoteric Fun Machine (2026-10-19, status: accepted)
+
+**Context:** With the completion of real-time play-along chord organ functionality, live loop punch-in sequencing, and sustained keyboard accompaniment over the six-language chamber backing track, the application has evolved from a passive oracle toy into an active, performative synthesizer and parlor apparatus. The maintainer directed a full product rebrand to "Edmark's Esoteric Fun Machine", paying tribute to both kinetic sculptor John Edmark (whose algorithmic geometries inspire the deforming vitrine organisms) and vintage Baldwin home auto-chord organs.
+
+**Decision:**
+1. **Application Wordmark and Titles** — Rebrand the browser `<title>`, header wordmark (`EDMARK'S ESOTERIC FUN MACHINE`), Plate VII manual header, and technical documentation to "Edmark's Esoteric Fun Machine".
+2. **Oracle Engine Preservation** — Preserve *HAI, ORACLE!* and `src/oracle.lol` as the underlying LOLCODE 1.2 generative score engine that computes deterministic organism seeds, anatomical parameters, and motifs from inscribed phrases.
+3. **Specimen Broadsheet & Export Identity** — Engraved PNG broadsheet plates and exports celebrate "EDMARK'S ESOTERIC FUN MACHINE" while maintaining zero-dependency browser-native generation and deterministic offline audio rendering.
+
+**Alternatives:** Keeping the original name without acknowledging the interactive synthesizer transformation would undersell the play-along keyboard manual and jam machine features.
+
+**Consequences:** The product establishes a distinct, memorable persona as a playable esoteric instrument while honoring its algorithmic roots and zero-dependency purity.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)
+
