@@ -841,3 +841,26 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P5-23 phase 5 (fixture-only seventh genre); listening pass; P4-02; P6-01.
 
 **Next session should start with:** P5-23 phase 5.
+
+### Session 33: 2026-10-20: the parlor room, measured
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Maintainer: the reverb and clockwork escapement did not seem to do anything, and the crackle should be about half as loud.
+
+**Done:** D-034.
+
+**Measured (exported WAV loops, each layer toggled, repeat renders differ by −130 dB):** before the change, on "three pigeons", the reverb was −70.3 dBFS RMS (45 dB under the −25.4 dBFS mix), the escapement −50.3 RMS with −16.5 peaks, and the crackle −39.2 RMS. Cause of the silent reverb: it heard only the creature filter's output (plus choir and pad); bandpass creatures nearly silence that filter, and beat and bass never reached it.
+
+**Changed:**
+1. `src/ensemble.mjs`: the reverb hears lead, organ, chimes, choir, fungal, and pad post-fader, plus the pulse at half strength (`PARLOR_BEAT_SEND`); the bass stays dry. New constants `PARLOR_REVERB_PER_LEVEL` (0.32 → 1.0) and `PARLOR_CRACKLE_PER_LEVEL` (0.42 → 0.21).
+2. `src/app.mjs`: live ambience, toggles, and the vitrine glass boost use the constants; the escapement strike, case knock (now 70 ms), and ratchet are roughly doubled.
+3. `tests/transport.test.mjs`: the chamber hears every bus but the bass; the crackle is pinned at half.
+
+**Verified after:** reverb 14.2–21.2 dB under the mix on three creatures (pigeons −21.2, moon −14.2, hai oracle −15.6); escapement −42 RMS, peaks −9.7; crackle −45.3 RMS (−6 dB). Mix RMS and peaks unchanged. 101/101 Node checks.
+
+**Not verified:** Listening. Whether the room now sounds right, and whether "half as loud" should be −10 dB (perceived half) rather than this −6 dB.
+
+**Left undone:** P5-23 phase 5; listening pass; P4-02; P6-01.
+
+**Next session should start with:** the maintainer's listen to the room, then P5-23 phase 5.

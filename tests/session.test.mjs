@@ -47,8 +47,16 @@ function sampleSession(overrides = {}) {
     funMachine: { style: "arpeggio" },
     plates,
     mixer: channels,
+    song: { loops: [{ repeats: 2, layers: [[{ key: 7, style: "progression" }, ...Array(11).fill(null)], [null, null, { key: 12, style: "arpeggio" }, ...Array(9).fill(null)]] }] },
     ...overrides,
   };
+}
+
+// An older-format sample: versions before 4 carry no song.
+function olderSession(version, overrides = {}) {
+  const session = sampleSession({ version, ...overrides });
+  delete session.song;
+  return session;
 }
 
 function rejectsAt(value, path) {
@@ -69,7 +77,12 @@ test("session validation rejects anything outside the allowlist, naming the fiel
   delete missing.tempo;
   rejectsAt(missing, "session.tempo");
   rejectsAt(sampleSession({ format: "something-else" }), "session.format");
-  rejectsAt(sampleSession({ version: 4 }), "session.version");
+  rejectsAt(sampleSession({ version: 5 }), "session.version");
+  rejectsAt(sampleSession({ song: { loops: [{ repeats: 9, layers: [[{ key: 0, style: "swell" }, ...Array(11).fill(null)]] }] } }), "session.song.loops[0].repeats");
+  rejectsAt(sampleSession({ song: { loops: [{ repeats: 1, layers: [[{ key: 0, style: "organ" }, ...Array(11).fill(null)]] }] } }), "session.song.loops[0].layers[0][0].style");
+  const noSong = sampleSession();
+  delete noSong.song;
+  rejectsAt(noSong, "session.song");
   rejectsAt({ ...sampleSession(), funMachine: { style: "organ" } }, "session.funMachine.style");
   rejectsAt({ ...sampleSession(), funMachine: { style: "arpeggio", progression: Array(12).fill(null) } }, "session.funMachine.progression");
   rejectsAt(sampleSession({ tempo: 300 }), "session.tempo");
@@ -146,7 +159,7 @@ test("console state rebuilds from session channels", () => {
 });
 
 test("version 2 files still open: their punched progression is checked, then dropped (D-038)", () => {
-  const v2 = (progression) => ({ ...sampleSession({ version: 2 }), funMachine: { style: "swell", progression } });
+  const v2 = (progression) => ({ ...olderSession(2), funMachine: { style: "swell", progression } });
   const punched = [[7, "minor"], null, null, [0, "maj9"], null, null, null, null, null, null, null, null];
   const opened = validateSession(v2(punched));
   assert.equal(opened.version, SESSION_VERSION);
@@ -197,7 +210,7 @@ test("plate cells cycle independently, so per-cell counts replay any click order
 
 test("version 1 sessions upgrade: chord mode becomes a progression, lead solo an arpeggio", () => {
   const v1 = (mode) => {
-    const session = sampleSession({ version: 1 });
+    const session = olderSession(1);
     session.funMachine = { mode, quality: "maj9", progression: [[7, "minor"], ...Array(11).fill(null)] };
     return session;
   };
@@ -209,6 +222,20 @@ test("version 1 sessions upgrade: chord mode becomes a progression, lead solo an
   assert.equal(JSON.parse(serializeSession(upgraded)).version, SESSION_VERSION, "an upgraded session saves as the current version");
   const badMode = v1("theremin");
   assert.throws(() => validateSession(badMode), (error) => error.path === "session.funMachine.mode");
-  const v1WithStyle = sampleSession({ version: 1 });
+  const v1WithStyle = olderSession(1);
   assert.throws(() => validateSession(v1WithStyle), (error) => error.path === "session.funMachine.style");
+});
+
+test("version 3 files open with an empty song, and a v4 song round-trips with its loops and layers (D-039)", () => {
+  const v3 = sampleSession({ version: 3 });
+  delete v3.song;
+  const opened = validateSession(v3);
+  assert.deepEqual(opened.song, { loops: [] });
+  assert.equal(opened.version, SESSION_VERSION);
+  const withSong = validateSession(sampleSession());
+  assert.equal(withSong.song.loops[0].repeats, 2);
+  assert.deepEqual(withSong.song.loops[0].layers.map((take) => take.filter(Boolean).map((slot) => slot.key)), [[7], [12]]);
+  assert.deepEqual(parseSession(serializeSession(withSong)).song, withSong.song);
+  const v3WithSong = { ...sampleSession({ version: 3 }) };
+  rejectsAt(v3WithSong, "session.song");
 });

@@ -4208,6 +4208,7 @@ function showScore(score) {
   }
   updateArrangementDisplay(currentTransport?.audibleStep ?? null);
   applyEnsembleConductor();
+  renderLooper();
   updateBeatGrid();
   updateBassGrid();
   updateHarmonyGrid();
@@ -5236,6 +5237,7 @@ function captureSession() {
     funMachine: {
       style: funMachineStyle,
     },
+    song,
     plates: Object.fromEntries(PLATE_IDS.map((id) => [id, {
       mutation: plateMutation(id),
       cellCycles: [...plateCellCycles[id]],
@@ -5272,6 +5274,11 @@ function applySession(session) {
   activeGenre = session.genre;
   activeStrictness = session.strictness;
   funMachineStyle = session.funMachine.style;
+  // The loop machine's song travels with the session (v4); older files bring none.
+  song = session.song;
+  selectedLoop = clampSelection(song, song.loops.length - 1);
+  recorder = idleRecorder();
+  if (currentTransport) currentTransport.followedSlot = null;
   parlorAcousticsEnabled = session.acoustics.enabled;
   parlorAcousticsLevel = session.acoustics.level / 100;
   parlorCrackleEnabled = session.acoustics.crackle;
@@ -5302,6 +5309,7 @@ function applySession(session) {
   setMasterVolume(session.volume);
   syncSessionControls();
   updateMixer(mixerStateFromChannels(session.mixer));
+  renderLooper();
 
   if (transportState.state === TRANSPORT_STATES.PLAYING && !muted) {
     runTransportCommand("restart");

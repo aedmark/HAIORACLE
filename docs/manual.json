@@ -893,7 +893,7 @@
           "title": "Session Ledger: On-Device Presets & .fun Files",
           "summary": "Saves and restores the whole apparatus as named browser presets or portable session files.",
           "tags": ["sessions", "presets", "localstorage", "privacy", "boundary"],
-          "what": "The ledger (`#session-engine`) captures the phrase, every plate's mutation count and cell edits, the Fun Machine accompaniment style, the Kapellmeister rulebook and strictness, the parlor room, tempo, master volume, and the full mixing console. `SAVE PRESET` keeps it under a name in this browser only; `SAVE .FUN FILE` and `OPEN .FUN FILE` move it between machines.",
+          "what": "The ledger (`#session-engine`) captures the phrase, every plate's mutation count and cell edits, the Fun Machine accompaniment style and its loop-machine song (format v4), the Kapellmeister rulebook and strictness, the parlor room, tempo, master volume, and the full mixing console. `SAVE PRESET` keeps it under a name in this browser only; `SAVE .FUN FILE` and `OPEN .FUN FILE` move it between machines.",
           "how": {
             "lead": "`src/session.mjs` defines and validates the format; `captureSession()` and `applySession()` in `src/app.mjs` read and restore live state:",
             "points": [

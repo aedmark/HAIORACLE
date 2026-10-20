@@ -124,7 +124,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 | Phrase | user-controlled string | native length limit, normalization, empty check | never inserted as HTML or sent to a service |
 | Spell source | same-origin text file | interpreter syntax and closed program checks | unsupported instructions fail closed |
 | Spell output | line array | `parseScore()` allowlist, type, uniqueness, and ranges | no repair or best-effort coercion |
-| Session file | user-chosen `.fun` file, at most 64 KB | `parseSession()` allowlist, types, ranges, enums | rejected whole on the first bad field; never repaired |
+| Session file | user-chosen `.fun` file, at most 64 KB | `parseSession()` allowlist, types, ranges, enums; a v4 song through `validateSong()` (keys 0–12, three styles, 16 loops × 4 takes × 12 steps, 32 passes) | rejected whole on the first bad field; never repaired |
 | Stored presets | `localStorage` value on this origin | `parsePresetStore()` revalidates each preset on read | invalid entries dropped individually; storage errors degrade to files only |
 | Stored cabinet | `localStorage` value on this origin | `parseCabinetState()` exact-key allowlist | anything malformed starts discovery fresh |
 | Browser capabilities | Canvas and Web Audio APIs | feature use at runtime | a failure surfaces as status text and console detail |

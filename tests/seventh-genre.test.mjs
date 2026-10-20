@@ -91,6 +91,7 @@ test("saved sessions accept the new genre, and still refuse genres no rulebook n
     funMachine: { style: "progression" },
     plates: Object.fromEntries(["beat", "bass", "harmony", "chime", "chant"].map((id) => [id, { mutation: 0, cellCycles: Array(12).fill(0) }])),
     mixer: Object.fromEntries(["lead", "fun", "beat", "bass", "harmony", "chime", "chant", "fungal"].map((id) => [id, { fader: 80, pan: 0, muted: false, soloed: false }])),
+    song: { loops: [] },
   };
   assert.equal(validateSession(session).genre, CODE);
   assert.throws(() => validateSession({ ...session, genre: "polka" }), (error) => error.path === "session.genre");

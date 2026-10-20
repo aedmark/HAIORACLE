@@ -20,7 +20,7 @@ Until a public reporting address exists, contact the repository maintainer priva
 | LOLCODE source | malformed or expanded program | same-origin asset, narrow interpreter, unsupported syntax fails closed | interpreter |
 | Score output | unknown keys, duplicate fields, invalid values | allowlist, exact required set, integer and range checks | score parser |
 | Audio output | startling or persistent playback | user gesture, visible mute, low master gain, clean stop on mute or replacement | browser host |
-| Session files (`.fun`) | malformed, oversized, or hostile JSON | 64 KB limit, `parseSession()` allowlist with exact fields, integer ranges, and enums; rejected whole; values reach the page only as text or form values | session boundary |
+| Session files (`.fun`) | malformed, oversized, or hostile JSON | 64 KB limit, `parseSession()` allowlist with exact fields, integer ranges, and enums (the v4 loop-machine song is validated the same way by `validateSong()`); rejected whole; values reach the page only as text or form values | session boundary |
 | Stored presets | tampered or corrupt `localStorage` value; blocked storage | revalidated on every read, bad entries dropped, every access wrapped so failure falls back to files |
 | Stored cabinet | tampered or corrupt `localStorage` value; blocked storage | `parseCabinetState()` accepts only `{ mode, open, seen }` with known values, otherwise starts fresh; every access wrapped | session boundary |
 | User privacy | phrase disclosure | no outbound requests, logs, or analytics; presets stay on-device and are deleted with DELETE or by clearing site data; `.fun` files, PNG plates, and `#omen=` links contain the phrase and travel only where the player sends them | whole application |

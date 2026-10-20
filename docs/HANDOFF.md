@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 43, on `main`: the loop machine has its full strip: loop tiles, repeats, move, undo, and delete (P5-26 phase 3); session 42 made it record and play._
+_Last updated: 2026-10-20, session 44, on `main`: songs are saved with presets and `.fun` files (sessions v4, P5-26 phase 4); session 43 built the loop strip._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-25 and P5-27 are implemented and verified; P5-26 is designed. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
@@ -86,6 +86,23 @@ _Last updated: 2026-10-20, session 43, on `main`: the loop machine has its full 
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 44: 2026-10-20: songs are saved (P5-26 phase 4)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-26 phase 4: sessions v4 carry the loop machine's song (D-039).
+
+**Changed:**
+1. `src/session.mjs`: `SESSION_VERSION` 4, which adds a required `song` validated by `validateSong()` (a `SongError` becomes a `SessionError` with the same field path). v1–v3 open with an empty song, and v3 or v4 share `funMachine: { style }`. The version is checked before the keys, because it decides which keys belong.
+2. `src/app.mjs`: `captureSession()` stores the song; `applySession()` restores it, selects its last loop, resets the recorder, lets the band re-follow, and redraws the strip.
+3. Tests: v4 samples carry a two-layer song; v3 opens with an empty song; song errors name `session.song…` paths; v1 and v2 samples drop the song. Docs: ARCHITECTURE and SECURITY trust rows, the manual's ledger entry, ROADMAP, CHANGELOG, and D-039 status.
+
+**Verified:** 125/125 Node checks. In the browser, two recorded loops (the second at ×2) saved as a v4 preset. After CLEAR SONG and a page reload, loading the preset restored both tiles and the readout ("2 LOOPS · 3 PASSES"), and playback had the band following loop 1 (bass "G G G+ E♭~"). No console errors; the test preset was removed.
+
+**Left undone:** P5-26 phase 5 (whole-song WAV, stem, and MIDI export, capped at 32 passes); the P4-02 screen-reader pass; P6-01.
+
+**Next session should start with:** P5-26 phase 5.
 
 ### Session 43: 2026-10-20: the loop strip (P5-26 phase 3)
 
@@ -286,28 +303,5 @@ _Last updated: 2026-10-20, session 43, on `main`: the loop machine has its full 
 **Left undone:** P5-23 phase 5; listening passes (parlor room, manual); P4-02; P6-01.
 
 **Next session should start with:** the maintainer's listen, then P5-23 phase 5.
-
-### Session 33: 2026-10-20: the parlor room, measured
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Maintainer: the reverb and clockwork escapement did not seem to do anything, and the crackle should be about half as loud.
-
-**Done:** D-034.
-
-**Measured (exported WAV loops, each layer toggled, repeat renders differ by −130 dB):** before the change, on "three pigeons", the reverb was −70.3 dBFS RMS (45 dB under the −25.4 dBFS mix), the escapement −50.3 RMS with −16.5 peaks, and the crackle −39.2 RMS. Cause of the silent reverb: it heard only the creature filter's output (plus choir and pad); bandpass creatures nearly silence that filter, and beat and bass never reached it.
-
-**Changed:**
-1. `src/ensemble.mjs`: the reverb hears lead, organ, chimes, choir, fungal, and pad post-fader, plus the pulse at half strength (`PARLOR_BEAT_SEND`); the bass stays dry. New constants `PARLOR_REVERB_PER_LEVEL` (0.32 → 1.0) and `PARLOR_CRACKLE_PER_LEVEL` (0.42 → 0.21).
-2. `src/app.mjs`: live ambience, toggles, and the vitrine glass boost use the constants; the escapement strike, case knock (now 70 ms), and ratchet are roughly doubled.
-3. `tests/transport.test.mjs`: the chamber hears every bus but the bass; the crackle is pinned at half.
-
-**Verified after:** reverb 14.2–21.2 dB under the mix on three creatures (pigeons −21.2, moon −14.2, hai oracle −15.6); escapement −42 RMS, peaks −9.7; crackle −45.3 RMS (−6 dB). Mix RMS and peaks unchanged. 101/101 Node checks.
-
-**Not verified:** Listening. Whether the room now sounds right, and whether "half as loud" should be −10 dB (perceived half) rather than this −6 dB.
-
-**Left undone:** P5-23 phase 5; listening pass; P4-02; P6-01.
-
-**Next session should start with:** the maintainer's listen to the room, then P5-23 phase 5.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).
