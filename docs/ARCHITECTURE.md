@@ -1,6 +1,6 @@
 # Architecture
 
-HAI, ORACLE! is a static browser application. A phrase is normalized and hashed locally, the resulting seed enters a purpose-built LOLCODE interpreter, and `src/oracle.lol` emits a text score. The host validates every field before Canvas and Web Audio render a named looping creature. Nothing leaves the browser and the app retains no state after the page closes.
+Edmark's Esoteric Fun Machine is a static browser application; HAI, ORACLE! is its LOLCODE score engine. A phrase is normalized and hashed locally, the resulting seed enters a purpose-built LOLCODE interpreter, and `src/oracle.lol` emits a text score. The host validates every field before Canvas and Web Audio render a named looping creature. Nothing leaves the browser. The only state that survives the page is the session presets a player chooses to save on-device (D-026).
 
 Rationale lives in [DECISIONS.md](DECISIONS.md).
 
@@ -26,6 +26,7 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Shakespeare runtime | `src/shakespeare.mjs` | `runShakespeare()`, `composeChant()` | `src/chant.spl`, validated score, browser host |
 | Dramatic choir spell | `src/chant.spl` | 2001 Shakespeare Programming Language play | Shakespeare VM output |
 | Ensemble audio graph | `src/ensemble.mjs` | `buildEnsembleGraph()` | live `AudioContext` and offline WAV `OfflineAudioContext` in `src/app.mjs` |
+| Session boundary | `src/session.mjs` | `parseSession()`, `validateSession()`, `parsePresetStore()` | session ledger in `src/app.mjs`, `localStorage`, `.fun` files |
 | Export writers | `src/zip.mjs`, `src/midi.mjs` | `createStoredZip()`, `buildMidiFile()` | stem and MIDI exports in `src/app.mjs` |
 | Mixer model | `src/mixer.mjs` | `channelSettings()`, `isChannelAudible()`, `meterReading()` | mixing console and strips in `src/app.mjs`, `src/ensemble.mjs` |
 | Master transport | `src/transport.mjs` | `transportReduce()`, `transportCommandForKey()` | transport deck and hotkeys in `src/app.mjs` |
@@ -66,6 +67,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Offline render | `renderEnsembleLoop()` | WAV, stem, and MIDI exports | one 12-step loop through the shared graph starting at 0.04 s with a 1.35 s tail; overrides for strip levels, room levels, clockwork, muted plates, and note capture |
 | Stem bundle | `#export-stems` | browser download | STORED ZIP of `01-lead.wav` … `08-mycelium.wav` (each channel alone at its fader and pan, mute/solo ignored), `09-parlor-room.wav`, and `README.txt` |
 | MIDI score | `#export-midi`, scheduler `logNote()` calls | browser download | SMF Type 1, 480 PPQ; conductor track plus seven named parts on separate channels (drums on channel 10); notes clipped to the loop |
+| Session file / preset | `captureSession()` → `serializeSession()`; `.fun` file or `localStorage` → `parseSession()` / `parsePresetStore()` | `applySession()` | versioned JSON, every field required and range-checked; chords as `(root, quality)`, plate edits as per-cell click counts; restore re-summons the phrase then layers the rest |
 | Master transport | `#transport-deck` buttons, `Space`/`Esc` via `transportCommandForKey()` | `runTransportCommand()` | `stopped`/`playing`/`paused` with a raw step cursor; pause resumes after the last audible step; audio runs only while playing and unmuted |
 | Melody motif | `melodyFor()` | audio transport | exactly twelve frozen semitone offsets selected and rotated by validated score fields |
 | Master volume | range input | active transport output gain | session-local `0..100` value mapped through a bounded perceptual curve; changes ramp over 18 ms |
@@ -88,6 +90,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - Every ensemble bus passes through its own mixer strip (voicing trim → fader → pan), and the console opens at unity faders, centered, with default balance set only by `CHANNEL_VOICING_DB`. Enforced by `tests/transport.test.mjs`, `tests/mixer.test.mjs`, and D-024.
 - A plate's ENGAGE/SILENCE switch and its mixer mute are the same state. Enforced by `tests/static.test.mjs` and D-024.
 - WAV mix, stems, and MIDI all come from one offline scheduling path, and MIDI notes are recorded by the same scheduler calls that produce sound. Enforced by `tests/static.test.mjs` and D-025.
+- Session data crosses into the app only through `parseSession()` or `parsePresetStore()`, and every `localStorage` access is guarded. Enforced by `tests/session.test.mjs`, `tests/static.test.mjs`, and D-026.
 - Audio loops only while the transport is `playing` and the bell is unmuted; mute never changes transport state. Enforced by `runTransportCommand()` and D-023.
 - Master volume changes only the post-compressor output gain and never changes the deterministic creature score. Enforced structurally in `tests/static.test.mjs` (D-009).
 - Vitrine tap, hold, and drag gestures modulate transient visual morphing, pitch, intensity, and synthesized percussion and decay smoothly back to the immutable score on release. Enforced structurally in `tests/static.test.mjs` (D-012).
@@ -105,6 +108,8 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Phrase | user-controlled string | native length limit, normalization, empty check | never inserted as HTML or sent to a service |
 | Spell source | same-origin text file | interpreter syntax and closed program checks | unsupported instructions fail closed |
 | Spell output | line array | `parseScore()` allowlist, type, uniqueness, and ranges | no repair or best-effort coercion |
+| Session file | user-chosen `.fun` file, at most 64 KB | `parseSession()` allowlist, types, ranges, enums | rejected whole on the first bad field; never repaired |
+| Stored presets | `localStorage` value on this origin | `parsePresetStore()` revalidates each preset on read | invalid entries dropped individually; storage errors degrade to files only |
 | Browser capabilities | Canvas and Web Audio APIs | feature use at runtime | a failure surfaces as status text and console detail |
 
 ## Dependencies
@@ -121,9 +126,10 @@ The visual system uses locally installed old-style and transitional book serifs 
 | Audio graph and loop timer | browser audio context and window | `playScore()` | pause, stop, mute, replacement, reload, or tab close | no |
 | Mixer settings | browser memory | `updateMixer()` | RESET CONSOLE, reload, or tab close | no |
 | Transport state and cursor | browser memory | `runTransportCommand()` | stop, summon, reload, or tab close | no |
+| Session presets | `localStorage` key `edmark-fun-machine.presets.v1` | SAVE PRESET | DELETE, or clearing site data | no |
 | Static HTTP cache | browser-managed | browser | browser controls | no |
 
-The prototype uses no cookies, local storage, indexed database, analytics, or service worker.
+Session presets (D-026) are the only data that outlive the tab. They stay on the device. The app uses no cookies, `sessionStorage`, IndexedDB, analytics, or service worker, and makes no outbound requests.
 
 ## Failure modes and observability
 

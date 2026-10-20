@@ -239,3 +239,25 @@ Active handoff state and the latest ten sessions live in [../HANDOFF.md](../HAND
 **Left undone:** P5-15, P4-02, and P6-01 roadmap items.
 
 **Next session should start with:** P5-15, P4-02, or P6-01 when ready.
+
+### Session 12: 2026-10-18: the mycelium colonizes the parlor glass
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Introduce a procedural mycelial/fungal layer (P5-16, D-017) where the parlor specimen can "grow" branching mycelial networks (hyphae) and sprouting fungal fruiting bodies (sporophores) with ballistospore particle dispersion.
+
+**Done:** P5-16
+
+**Changed:** Added LOLCODE-owned `fungal_form`, `fungal_hyphae`, `fungal_spores`, and `fungal_bloom` score parameters to `src/oracle.lol` and validated in `src/score.mjs`. Implemented `buildMycelialNetwork()`, `buildFruitingBodies()`, `buildSporeSystem()`, `drawMycelium()`, `drawFruitingBodies()`, and `updateAndDrawSpores()` in `src/app.mjs`. Rendered eight distinct sporophore archetypes (`AGARIC CAP`, `BRACKET CONK`, `CORAL CLAVARIA`, `BIOLUMINESCENT BONNET`, `CUP PEZIZA`, `MOREL HONEYCOMB`, `GLOBULAR PUFFBALL`, `HYPHAL HYDRA`). Added spore burst on vitrine tap (`vision.burstSpores()`), mycelial growth acceleration on vitrine hold, `#score-fungal` catalog telemetry in `index.html` and `styles.css`, and broadsheet PNG plate metadata. Documented in `docs/manual.json` (entry 24) and rebuilt `manual.html`.
+
+**Decisions:** D-017
+
+**Verified:** Thirty-one Node checks passed, including all interpreter tests, conductor mathematics, and mycelial/fruiting body structural tests; documentation checker reported 0 errors and 0 warnings across 14 documents; 3x manual validator reported 6 sections, 24 entries, 0 warnings.
+
+**Not verified:** Dedicated assistive-technology and screen-reader testing remains P4-02 work.
+
+**Problems:** None at handoff update time.
+
+**Left undone:** P5-15, P4-02, and P6-01 roadmap items.
+
+**Next session should start with:** P5-15, P4-02, or P6-01 when ready.

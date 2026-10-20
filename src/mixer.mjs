@@ -169,3 +169,18 @@ export function silentSettings(state) {
   for (const id of MIXER_CHANNEL_IDS) settings[id] = { gain: 0, pan: state.channels[id].pan / PAN_RANGE };
   return settings;
 }
+
+// Rebuilds console state from plain per-channel settings (a loaded session),
+// clamping through the same setters the console uses.
+export function mixerStateFromChannels(channels) {
+  let state = createMixerState();
+  for (const id of MIXER_CHANNEL_IDS) {
+    const channel = channels[id];
+    if (!channel) continue;
+    state = setFader(state, id, channel.fader);
+    state = setPan(state, id, channel.pan);
+    state = setMuted(state, id, channel.muted);
+    if (Boolean(channel.soloed) !== state.channels[id].soloed) state = toggleSolo(state, id);
+  }
+  return state;
+}

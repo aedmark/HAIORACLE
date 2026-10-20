@@ -286,6 +286,43 @@
       <p class="mixer-legend">POST-FADER VU · DOUBLE-CLICK A FADER FOR UNITY OR A PAN FOR CENTER · PLATE ENGAGE/SILENCE SWITCHES ARE THESE MUTES</p>
     </section>
 
+    <section class="beat-engine session-engine" id="session-engine" aria-labelledby="session-heading">
+      <div class="beat-header">
+        <div class="beat-identity">
+          <p class="reading-label">SESSION LEDGER · PRESETS &amp; .FUN FILES</p>
+          <div class="beat-title-row">
+            <h3 id="session-heading">SAVE, RECALL &amp; SEND THE WHOLE APPARATUS</h3>
+            <span class="beat-telemetry" id="session-telemetry" role="status">PRESETS STAY IN THIS BROWSER · NOTHING IS SENT ANYWHERE</span>
+          </div>
+        </div>
+      </div>
+      <div class="session-body">
+        <div class="session-field">
+          <label for="session-preset-name">PRESET NAME</label>
+          <div class="session-row">
+            <input id="session-preset-name" type="text" maxlength="40" autocomplete="off" placeholder="the creature's own name">
+            <button class="beat-button" id="session-save-preset" type="button" disabled>SAVE PRESET <span aria-hidden="true">✚</span></button>
+          </div>
+        </div>
+        <div class="session-field">
+          <label for="session-preset-list">SAVED IN THIS BROWSER</label>
+          <div class="session-row">
+            <select id="session-preset-list" class="kapellmeister-select"></select>
+            <button class="beat-button" id="session-load-preset" type="button" disabled>LOAD</button>
+            <button class="beat-button" id="session-delete-preset" type="button" disabled>DELETE</button>
+          </div>
+        </div>
+        <div class="session-field session-files">
+          <span class="session-files-label">PORTABLE SESSION FILE</span>
+          <div class="session-row">
+            <button class="beat-button" id="session-save-file" type="button" disabled>SAVE .FUN FILE <span aria-hidden="true">⤓</span></button>
+            <button class="beat-button" id="session-open-file" type="button">OPEN .FUN FILE <span aria-hidden="true">⤒</span></button>
+            <input id="session-file-input" type="file" accept=".fun,application/json" hidden>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="beat-engine" id="beat-engine" aria-labelledby="beat-heading">
       <div class="beat-header">
         <div class="beat-identity">

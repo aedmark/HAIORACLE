@@ -26,6 +26,7 @@ import {
   ACCOMPANIMENT_CHANNEL_IDS,
   FADER_UNITY,
   MIXER_CHANNELS,
+  MIXER_CHANNEL_IDS,
   anySoloed,
   channelSettings,
   createMixerState,
@@ -35,6 +36,7 @@ import {
   isChannelAudible,
   meterFill,
   meterReading,
+  mixerStateFromChannels,
   resetChannel,
   setFader,
   setMuted,
@@ -44,6 +46,21 @@ import {
   toggleMute,
   toggleSolo,
 } from "./mixer.mjs";
+import {
+  MAX_SESSION_BYTES,
+  PLATE_IDS,
+  PRESET_STORAGE_KEY,
+  SESSION_FILE_EXTENSION,
+  SESSION_FORMAT,
+  SESSION_VERSION,
+  emptyPresetStore,
+  parsePresetStore,
+  parseSession,
+  removePreset,
+  serializePresetStore,
+  serializeSession,
+  upsertPreset,
+} from "./session.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
 
 const RHYTHMS = Object.freeze([
@@ -90,6 +107,15 @@ const elements = {
   mixerStrips: document.querySelector("#mixer-strips"),
   mixerTelemetry: document.querySelector("#mixer-telemetry"),
   mixerReset: document.querySelector("#mixer-reset"),
+  sessionTelemetry: document.querySelector("#session-telemetry"),
+  sessionPresetName: document.querySelector("#session-preset-name"),
+  sessionSavePreset: document.querySelector("#session-save-preset"),
+  sessionPresetList: document.querySelector("#session-preset-list"),
+  sessionLoadPreset: document.querySelector("#session-load-preset"),
+  sessionDeletePreset: document.querySelector("#session-delete-preset"),
+  sessionSaveFile: document.querySelector("#session-save-file"),
+  sessionOpenFile: document.querySelector("#session-open-file"),
+  sessionFileInput: document.querySelector("#session-file-input"),
   volume: document.querySelector("#master-volume"),
   volumeValue: document.querySelector("#volume-value"),
   tempo: document.querySelector("#tempo-bpm"),
@@ -3183,6 +3209,103 @@ function highlightBeatStep(stepIndex) {
   }
 }
 
+// --- Plate state shared by cell edits, mutations, and sessions (P5-20) -----
+
+// Clicks per cell since the plate was last composed. Cells cycle independently,
+// so these counts (not the click order) are enough to rebuild a plate.
+const plateCellCycles = {
+  beat: Array(12).fill(0),
+  bass: Array(12).fill(0),
+  harmony: Array(12).fill(0),
+  chime: Array(12).fill(0),
+  chant: Array(12).fill(0),
+};
+
+const PLATE_CELL_CYCLERS = Object.freeze({
+  beat: (step) => cycleBeatStep(step),
+  bass: (step) => cycleBassCell(step, melodyFor(currentScore)),
+  harmony: (step) => cycleHarmonyCell(step, currentScore),
+  chime: (step) => cycleChimeCell(step),
+  chant: (step) => cycleChantCell(step, currentScore),
+});
+
+function plateRaw(id) {
+  switch (id) {
+    case "beat": return rawBeat || currentBeat;
+    case "bass": return rawBass || currentBass;
+    case "harmony": return rawHarmony || currentHarmony;
+    case "chime": return rawChimes || currentChimes;
+    case "chant": return rawChant || currentChant;
+    default: return null;
+  }
+}
+
+function setPlateRaw(id, value) {
+  switch (id) {
+    case "beat": rawBeat = value; break;
+    case "bass": rawBass = value; break;
+    case "harmony": rawHarmony = value; break;
+    case "chime": rawChimes = value; break;
+    case "chant": rawChant = value; break;
+    default: break;
+  }
+}
+
+function applyCellCycle(id, index, times = 1) {
+  const base = plateRaw(id);
+  if (!base || times <= 0) return;
+  const nextSteps = [...base.steps];
+  for (let n = 0; n < times; n += 1) nextSteps[index] = PLATE_CELL_CYCLERS[id](nextSteps[index]);
+  setPlateRaw(id, Object.freeze({ ...base, steps: Object.freeze(nextSteps) }));
+}
+
+function cyclePlateCell(id, index) {
+  applyCellCycle(id, index);
+  plateCellCycles[id][index] += 1;
+}
+
+function plateMutation(id) {
+  return { beat: beatMutation, bass: bassMutation, harmony: harmonyMutation, chime: chimeMutation, chant: chantMutation }[id];
+}
+
+// Recomposes a plate from its VM at the current mutation count, discarding cell
+// edits, and refreshes its telemetry line.
+function recomposePlate(id) {
+  if (!currentScore) return;
+  plateCellCycles[id] = Array(12).fill(0);
+  if (id === "beat" && beatSource) {
+    rawBeat = composeBeat(beatSource, currentScore, beatMutation);
+    currentBeat = rawBeat;
+    if (elements.beatTelemetry && beatMutation > 0) {
+      elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · MUTATION #${beatMutation}`;
+    }
+  } else if (id === "bass" && bassSource) {
+    rawBass = composeBass(bassSource, currentScore, bassMutation);
+    currentBass = rawBass;
+    if (elements.bassTelemetry && bassMutation > 0) {
+      elements.bassTelemetry.textContent = `256-CELL TAPE · ${currentBass.stepsExecuted} OPS · SHIFT #${bassMutation}`;
+    }
+  } else if (id === "harmony" && harmonySource) {
+    rawHarmony = composeHarmony(harmonySource, currentScore, harmonyMutation);
+    currentHarmony = rawHarmony;
+    if (elements.harmonyTelemetry && harmonyMutation > 0) {
+      elements.harmonyTelemetry.textContent = `2D TORUS · ${currentHarmony.stepsExecuted} OPS · DEFLECTION #${harmonyMutation}`;
+    }
+  } else if (id === "chime" && pietSource && fractranSource) {
+    rawChimes = composeChimes(pietSource, fractranSource, currentScore, chimeMutation);
+    currentChimes = rawChimes;
+    if (elements.chimeTelemetry && chimeMutation > 0) {
+      elements.chimeTelemetry.textContent = `${currentChimes.pietStepsExecuted} CODELS · ${currentChimes.fractranStepsExecuted} RATIOS · REFRACTION #${chimeMutation}`;
+    }
+  } else if (id === "chant" && chantSource) {
+    rawChant = composeChant(chantSource, currentScore, chantMutation);
+    currentChant = rawChant;
+    if (elements.chantTelemetry && chantMutation > 0) {
+      elements.chantTelemetry.textContent = `3 ACTS · ${currentChant.statementsExecuted} CUES · RECAST #${chantMutation}`;
+    }
+  }
+}
+
 function updateBeatGrid() {
   if (!elements.beatGrid) return;
   const steps = currentBeat?.steps || [];
@@ -3223,13 +3346,7 @@ function renderBeatGrid() {
     `;
     button.addEventListener("click", () => {
       if (!currentBeat) return;
-      const baseBeat = rawBeat || currentBeat;
-      const nextSteps = [...baseBeat.steps];
-      nextSteps[index] = cycleBeatStep(nextSteps[index]);
-      rawBeat = Object.freeze({
-        ...baseBeat,
-        steps: Object.freeze(nextSteps),
-      });
+      cyclePlateCell("beat", index);
       applyEnsembleConductor();
       updateBeatGrid();
       if (audioContext && currentTransport && currentScore && !muted) {
@@ -3285,13 +3402,7 @@ function renderBassGrid() {
     `;
     button.addEventListener("click", () => {
       if (!currentBass || !currentScore) return;
-      const baseBass = rawBass || currentBass;
-      const nextSteps = [...baseBass.steps];
-      nextSteps[index] = cycleBassCell(nextSteps[index], melodyFor(currentScore));
-      rawBass = Object.freeze({
-        ...baseBass,
-        steps: Object.freeze(nextSteps),
-      });
+      cyclePlateCell("bass", index);
       applyEnsembleConductor();
       if (audioContext && currentTransport && !muted) {
         scheduleBassStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.24);
@@ -3347,13 +3458,7 @@ function renderHarmonyGrid() {
     `;
     button.addEventListener("click", () => {
       if (!currentHarmony || !currentScore) return;
-      const baseHarmony = rawHarmony || currentHarmony;
-      const nextSteps = [...baseHarmony.steps];
-      nextSteps[index] = cycleHarmonyCell(nextSteps[index], currentScore);
-      rawHarmony = Object.freeze({
-        ...baseHarmony,
-        steps: Object.freeze(nextSteps),
-      });
+      cyclePlateCell("harmony", index);
       applyEnsembleConductor();
       if (audioContext && currentTransport && !muted) {
         scheduleHarmonyStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.28);
@@ -3425,13 +3530,7 @@ function renderChimeGrid() {
     `;
     button.addEventListener("click", () => {
       if (!currentChimes || !currentScore) return;
-      const baseChimes = rawChimes || currentChimes;
-      const nextSteps = [...baseChimes.steps];
-      nextSteps[index] = cycleChimeCell(nextSteps[index]);
-      rawChimes = Object.freeze({
-        ...baseChimes,
-        steps: Object.freeze(nextSteps),
-      });
+      cyclePlateCell("chime", index);
       applyEnsembleConductor();
       if (audioContext && currentTransport && !muted) {
         scheduleChimeStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.3);
@@ -3495,13 +3594,7 @@ function renderChantGrid() {
     `;
     button.addEventListener("click", () => {
       if (!currentChant || !currentScore) return;
-      const baseChant = rawChant || currentChant;
-      const nextSteps = [...baseChant.steps];
-      nextSteps[index] = cycleChantCell(nextSteps[index], currentScore);
-      rawChant = Object.freeze({
-        ...baseChant,
-        steps: Object.freeze(nextSteps),
-      });
+      cyclePlateCell("chant", index);
       applyEnsembleConductor();
       if (audioContext && currentTransport && !muted) {
         scheduleChantStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.32);
@@ -3979,6 +4072,7 @@ function showScore(score) {
   chantMutation = 0;
   customProgression = Array(12).fill(null);
   selectedSequencerStep = null;
+  for (const id of Object.keys(plateCellCycles)) plateCellCycles[id] = Array(12).fill(0);
   if (beatSource) {
     rawBeat = composeBeat(beatSource, score, beatMutation);
     currentBeat = rawBeat;
@@ -4052,6 +4146,7 @@ function showScore(score) {
   if (elements.fungal) elements.fungal.textContent = score.fungalName;
   elements.replay.disabled = false;
   syncTransportUI();
+  syncSessionButtons();
   if (elements.shareLink) elements.shareLink.disabled = false;
   if (elements.exportPng) elements.exportPng.disabled = false;
   if (elements.exportWav) elements.exportWav.disabled = false;
@@ -4944,12 +5039,8 @@ elements.beatToggle?.addEventListener("click", () => {
 elements.beatMutate?.addEventListener("click", () => {
   if (!currentScore || !beatSource) return;
   beatMutation += 1;
-  rawBeat = composeBeat(beatSource, currentScore, beatMutation);
-  currentBeat = rawBeat;
+  recomposePlate("beat");
   applyEnsembleConductor();
-  if (elements.beatTelemetry) {
-    elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · MUTATION #${beatMutation}`;
-  }
   updateBeatGrid();
   updateBassGrid();
 });
@@ -4961,12 +5052,8 @@ elements.bassToggle?.addEventListener("click", () => {
 elements.bassMutate?.addEventListener("click", () => {
   if (!currentScore || !bassSource) return;
   bassMutation += 1;
-  rawBass = composeBass(bassSource, currentScore, bassMutation);
-  currentBass = rawBass;
+  recomposePlate("bass");
   applyEnsembleConductor();
-  if (elements.bassTelemetry) {
-    elements.bassTelemetry.textContent = `256-CELL TAPE · ${currentBass.stepsExecuted} OPS · SHIFT #${bassMutation}`;
-  }
   updateBassGrid();
 });
 
@@ -4977,12 +5064,8 @@ elements.harmonyToggle?.addEventListener("click", () => {
 elements.harmonyMutate?.addEventListener("click", () => {
   if (!currentScore || !harmonySource) return;
   harmonyMutation += 1;
-  rawHarmony = composeHarmony(harmonySource, currentScore, harmonyMutation);
-  currentHarmony = rawHarmony;
+  recomposePlate("harmony");
   applyEnsembleConductor();
-  if (elements.harmonyTelemetry) {
-    elements.harmonyTelemetry.textContent = `2D TORUS · ${currentHarmony.stepsExecuted} OPS · DEFLECTION #${harmonyMutation}`;
-  }
   updateHarmonyGrid();
   updateBassGrid();
   updateChimeGrid();
@@ -4996,12 +5079,8 @@ elements.chimeToggle?.addEventListener("click", () => {
 elements.chimeMutate?.addEventListener("click", () => {
   if (!currentScore || !pietSource || !fractranSource) return;
   chimeMutation += 1;
-  rawChimes = composeChimes(pietSource, fractranSource, currentScore, chimeMutation);
-  currentChimes = rawChimes;
+  recomposePlate("chime");
   applyEnsembleConductor();
-  if (elements.chimeTelemetry) {
-    elements.chimeTelemetry.textContent = `${currentChimes.pietStepsExecuted} CODELS · ${currentChimes.fractranStepsExecuted} RATIOS · REFRACTION #${chimeMutation}`;
-  }
   updateChimeGrid();
 });
 
@@ -5012,12 +5091,8 @@ elements.chantToggle?.addEventListener("click", () => {
 elements.chantMutate?.addEventListener("click", () => {
   if (!currentScore || !chantSource) return;
   chantMutation += 1;
-  rawChant = composeChant(chantSource, currentScore, chantMutation);
-  currentChant = rawChant;
+  recomposePlate("chant");
   applyEnsembleConductor();
-  if (elements.chantTelemetry) {
-    elements.chantTelemetry.textContent = `3 ACTS · ${currentChant.statementsExecuted} CUES · RECAST #${chantMutation}`;
-  }
   updateChantGrid();
 });
 
@@ -5027,6 +5102,260 @@ elements.mixerReset?.addEventListener("click", () => {
 
 renderMixerConsole();
 syncPlateToggles();
+
+
+// --- Session ledger: .fun files and on-device presets (P5-20, D-026) -------
+
+const funChordCache = new Map();
+
+// Rebuilds a punched chord from (root, quality). Equal pairs share one object,
+// so the sequencer's same-chord check still sees a held chord as held.
+function funChordFor(rootPc, quality) {
+  const key = `${rootPc}:${quality}`;
+  if (!funChordCache.has(key)) funChordCache.set(key, buildFunChord(rootPc, quality));
+  return funChordCache.get(key);
+}
+
+function captureSession() {
+  return {
+    format: SESSION_FORMAT,
+    version: SESSION_VERSION,
+    phrase: currentScore.phrase,
+    tempo: activeTempoBpm,
+    volume: Math.round(masterVolume),
+    genre: activeGenre,
+    strictness: activeStrictness,
+    acoustics: {
+      enabled: parlorAcousticsEnabled,
+      level: Math.round(parlorAcousticsLevel * 100),
+      crackle: parlorCrackleEnabled,
+      reverb: parlorReverbEnabled,
+      ticks: parlorTickEnabled,
+    },
+    funMachine: {
+      mode: funMachineMode,
+      quality: funMachineChordQuality,
+      progression: customProgression.map((chord) => (chord ? [chord.rootPc, chord.quality] : null)),
+    },
+    plates: Object.fromEntries(PLATE_IDS.map((id) => [id, {
+      mutation: plateMutation(id),
+      cellCycles: [...plateCellCycles[id]],
+    }])),
+    mixer: Object.fromEntries(MIXER_CHANNEL_IDS.map((id) => [id, { ...mixerState.channels[id] }])),
+  };
+}
+
+function syncSessionControls() {
+  if (elements.kapellmeisterGenre) elements.kapellmeisterGenre.value = activeGenre;
+  if (elements.kapellmeisterStrictness) {
+    elements.kapellmeisterStrictness.value = String(activeStrictness);
+    elements.kapellmeisterStrictness.dispatchEvent(new Event("input"));
+  }
+  if (elements.parlorAcousticsToggle) {
+    elements.parlorAcousticsToggle.setAttribute("aria-pressed", String(parlorAcousticsEnabled));
+    elements.parlorAcousticsToggle.textContent = parlorAcousticsEnabled ? "ACOUSTICS: ENGAGED" : "ACOUSTICS: SILENCED";
+  }
+  if (elements.parlorAcousticsLevel) elements.parlorAcousticsLevel.value = String(Math.round(parlorAcousticsLevel * 100));
+  if (elements.acousticsLevelVal) elements.acousticsLevelVal.textContent = `${Math.round(parlorAcousticsLevel * 100)}%`;
+  updateAcousticsStatus();
+  setFunMachineMode(funMachineMode);
+  setFunChordQuality(funMachineChordQuality);
+  if (elements.volume) elements.volume.value = String(Math.round(masterVolume));
+}
+
+/**
+ * Restores a validated session: summons its phrase, then layers the plates'
+ * mutations and cell edits, the punched progression, rulebook, room, tempo,
+ * volume, and console on top. A playing transport restarts on the new loop.
+ */
+function applySession(session) {
+  if (!oracleSource) throw new Error("Spell unavailable");
+  const score = composeScore(oracleSource, session.phrase);
+  activeGenre = session.genre;
+  activeStrictness = session.strictness;
+  funMachineMode = session.funMachine.mode;
+  funMachineChordQuality = session.funMachine.quality;
+  parlorAcousticsEnabled = session.acoustics.enabled;
+  parlorAcousticsLevel = session.acoustics.level / 100;
+  parlorCrackleEnabled = session.acoustics.crackle;
+  parlorReverbEnabled = session.acoustics.reverb;
+  parlorTickEnabled = session.acoustics.ticks;
+  elements.phrase.value = session.phrase;
+  showScore(score);
+
+  beatMutation = session.plates.beat.mutation;
+  bassMutation = session.plates.bass.mutation;
+  harmonyMutation = session.plates.harmony.mutation;
+  chimeMutation = session.plates.chime.mutation;
+  chantMutation = session.plates.chant.mutation;
+  for (const id of PLATE_IDS) {
+    recomposePlate(id);
+    session.plates[id].cellCycles.forEach((count, index) => applyCellCycle(id, index, count));
+    plateCellCycles[id] = [...session.plates[id].cellCycles];
+  }
+  customProgression = session.funMachine.progression.map((step) => (step ? funChordFor(step[0], step[1]) : null));
+
+  applyEnsembleConductor();
+  updateBeatGrid();
+  updateBassGrid();
+  updateHarmonyGrid();
+  updateChimeGrid();
+  updateChantGrid();
+  updateFunKeyboardChordLabels();
+  renderFunSequencerGrid();
+  setTempoBpm(session.tempo);
+  setMasterVolume(session.volume);
+  syncSessionControls();
+  updateMixer(mixerStateFromChannels(session.mixer));
+
+  if (transportState.state === TRANSPORT_STATES.PLAYING && !muted) {
+    runTransportCommand("restart");
+  } else {
+    stopCurrentSound();
+    transportState = createTransportState();
+    syncTransportUI();
+    highlightBeatStep(-1);
+    updateTransportPosition(null);
+  }
+}
+
+// localStorage can be missing, full, or blocked (private windows, previews);
+// every access is guarded and the ledger still works with files alone.
+function readPresetStore() {
+  try {
+    return parsePresetStore(window.localStorage.getItem(PRESET_STORAGE_KEY));
+  } catch {
+    return emptyPresetStore();
+  }
+}
+
+function writePresetStore(store) {
+  try {
+    if (store.presets.length) {
+      window.localStorage.setItem(PRESET_STORAGE_KEY, serializePresetStore(store));
+    } else {
+      window.localStorage.removeItem(PRESET_STORAGE_KEY);
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function setSessionTelemetry(text) {
+  if (elements.sessionTelemetry) elements.sessionTelemetry.textContent = text;
+  elements.status.textContent = text;
+}
+
+function renderPresetList(selectName = null) {
+  const list = elements.sessionPresetList;
+  if (!list) return;
+  const { presets } = readPresetStore();
+  list.replaceChildren();
+  if (!presets.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "— NO PRESETS IN THIS BROWSER —";
+    list.append(option);
+  }
+  for (const preset of presets) {
+    const option = document.createElement("option");
+    option.value = preset.name;
+    option.textContent = `${preset.name} · ${preset.session.phrase}`;
+    list.append(option);
+  }
+  if (selectName) list.value = selectName;
+  list.disabled = !presets.length;
+  if (elements.sessionLoadPreset) elements.sessionLoadPreset.disabled = !presets.length;
+  if (elements.sessionDeletePreset) elements.sessionDeletePreset.disabled = !presets.length;
+}
+
+function syncSessionButtons() {
+  const ready = Boolean(currentScore);
+  if (elements.sessionSavePreset) elements.sessionSavePreset.disabled = !ready;
+  if (elements.sessionSaveFile) elements.sessionSaveFile.disabled = !ready;
+}
+
+function describeSessionError(error) {
+  return error?.name === "SessionError" ? error.path.replace(/^session\.?/, "").toUpperCase() || "FILE" : "UNREADABLE";
+}
+
+elements.sessionSavePreset?.addEventListener("click", () => {
+  if (!currentScore) return;
+  const name = elements.sessionPresetName?.value.trim() || currentScore.name.slice(0, 40);
+  try {
+    const store = upsertPreset(readPresetStore(), name, captureSession(), new Date().toISOString());
+    if (!writePresetStore(store)) {
+      setSessionTelemetry("BROWSER STORAGE UNAVAILABLE · SAVE A .FUN FILE INSTEAD");
+      return;
+    }
+    renderPresetList(store.presets[0].name);
+    setSessionTelemetry(`PRESET SAVED IN THIS BROWSER · ${store.presets[0].name.toUpperCase()}`);
+  } catch (error) {
+    setSessionTelemetry(`PRESET NOT SAVED · ${describeSessionError(error)}`);
+  }
+});
+
+elements.sessionLoadPreset?.addEventListener("click", () => {
+  const name = elements.sessionPresetList?.value;
+  const preset = readPresetStore().presets.find((entry) => entry.name === name);
+  if (!preset) {
+    renderPresetList();
+    return;
+  }
+  try {
+    applySession(preset.session);
+    setSessionTelemetry(`PRESET LOADED · ${preset.name.toUpperCase()}`);
+  } catch (error) {
+    console.error(error);
+    setSessionTelemetry("PRESET COULD NOT BE LOADED");
+  }
+});
+
+elements.sessionDeletePreset?.addEventListener("click", () => {
+  const name = elements.sessionPresetList?.value;
+  if (!name || !window.confirm(`Delete the preset "${name}" from this browser?`)) return;
+  if (writePresetStore(removePreset(readPresetStore(), name))) {
+    renderPresetList();
+    setSessionTelemetry(`PRESET DELETED · ${name.toUpperCase()}`);
+  }
+});
+
+elements.sessionSaveFile?.addEventListener("click", () => {
+  if (!currentScore) return;
+  try {
+    const text = serializeSession(captureSession());
+    downloadBlob(new Blob([text], { type: "application/json" }), specimenFilenameFor(currentScore, SESSION_FILE_EXTENSION));
+    setSessionTelemetry("SESSION SEALED INTO A .FUN FILE");
+  } catch (error) {
+    setSessionTelemetry(`SESSION NOT SAVED · ${describeSessionError(error)}`);
+  }
+});
+
+elements.sessionOpenFile?.addEventListener("click", () => {
+  elements.sessionFileInput?.click();
+});
+
+elements.sessionFileInput?.addEventListener("change", async () => {
+  const input = elements.sessionFileInput;
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file) return;
+  if (file.size > MAX_SESSION_BYTES) {
+    setSessionTelemetry("SESSION REJECTED · FILE TOO LARGE");
+    return;
+  }
+  try {
+    applySession(parseSession(await file.text()));
+    setSessionTelemetry("SESSION RESTORED FROM .FUN FILE");
+  } catch (error) {
+    if (error?.name !== "SessionError") console.error(error);
+    setSessionTelemetry(`SESSION REJECTED · ${describeSessionError(error)}`);
+  }
+});
+
+renderPresetList();
+syncSessionButtons();
 
 elements.bandstandEngageAll?.addEventListener("click", () => {
   setBandPlayersEnabled(true);
@@ -5169,8 +5498,9 @@ elements.kapellmeisterStrictness?.addEventListener("input", (e) => {
   updateChantGrid();
 });
 
-elements.funMachineMode?.addEventListener("click", () => {
-  funMachineMode = funMachineMode === "auto_chord" ? "lead" : "auto_chord";
+function setFunMachineMode(mode) {
+  funMachineMode = mode;
+  if (!elements.funMachineMode) return;
   if (funMachineMode === "auto_chord") {
     elements.funMachineMode.textContent = "AUTO-CHORD: ONE-FINGER";
     elements.funMachineMode.setAttribute("aria-pressed", "true");
@@ -5184,6 +5514,10 @@ elements.funMachineMode?.addEventListener("click", () => {
       elements.funMachineStatus.textContent = "MANUAL LEAD SOLO ACTIVE · CHORDS BYPASS";
     }
   }
+}
+
+elements.funMachineMode?.addEventListener("click", () => {
+  setFunMachineMode(funMachineMode === "auto_chord" ? "lead" : "auto_chord");
 });
 
 elements.funMachineRec?.addEventListener("click", () => {
@@ -5215,16 +5549,20 @@ elements.funMachineReset?.addEventListener("click", () => {
   }
 });
 
+function setFunChordQuality(quality) {
+  funMachineChordQuality = quality;
+  for (const c of document.querySelectorAll(".fun-chip")) {
+    const active = c.dataset.quality === quality;
+    c.classList.toggle("is-active", active);
+    c.setAttribute("aria-pressed", String(active));
+  }
+}
+
 for (const chip of document.querySelectorAll(".fun-chip")) {
   chip.addEventListener("click", () => {
     const quality = chip.dataset.quality;
     if (!quality) return;
-    funMachineChordQuality = quality;
-    for (const c of document.querySelectorAll(".fun-chip")) {
-      const active = c === chip;
-      c.classList.toggle("is-active", active);
-      c.setAttribute("aria-pressed", String(active));
-    }
+    setFunChordQuality(quality);
     if (activeHeldFunKey !== null) {
       activeFunProgression = buildFunProgression(
         activeHeldFunKey,

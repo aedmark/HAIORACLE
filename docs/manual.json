@@ -809,6 +809,31 @@
             {"label": "Architecture Record D-025", "target": "docs/DECISIONS.md"}
           ],
           "related": ["deterministic-wav-export", "parlor-mixing-console", "master-transport"]
+        },
+        {
+          "id": "session-ledger",
+          "title": "Session Ledger: On-Device Presets & .fun Files",
+          "summary": "Saves and restores the whole apparatus as named browser presets or portable session files.",
+          "tags": ["sessions", "presets", "localstorage", "privacy", "boundary"],
+          "what": "The ledger (`#session-engine`) captures the phrase, every plate's mutation count and cell edits, the punched Fun Machine progression, mode and chord quality, the Kapellmeister rulebook and strictness, the parlor room, tempo, master volume, and the full mixing console. `SAVE PRESET` keeps it under a name in this browser only; `SAVE .FUN FILE` and `OPEN .FUN FILE` move it between machines.",
+          "how": {
+            "lead": "`src/session.mjs` defines and validates the format; `captureSession()` and `applySession()` in `src/app.mjs` read and restore live state:",
+            "points": [
+              "Sessions are versioned JSON; `validateSession()` requires every field, refuses unknown and prototype keys, range-checks integers, checks enums, and limits files to 64 KB, rejecting a bad file whole and naming the field.",
+              "Chords are stored as `(root, quality)` and rebuilt by `buildFunChord()`; plate edits are per-cell click counts replayed through each plate's cycler, since cells cycle independently.",
+              "Restoring re-summons the phrase through the normal score path, then layers plates, progression, rulebook, room, tempo, volume, and console, restarting a playing loop.",
+              "Presets live in one `localStorage` key, revalidated on every read; every storage call is wrapped so blocked storage falls back to files."
+            ]
+          },
+          "why": "A jam that vanishes with the tab is hard to build on (roadmap P5-20). Keeping presets on the device and moving everything else through player-held files preserves the client-only privacy model, and a strict allowlist keeps a shared file from steering the score, audio graph, or page (ADR D-026).",
+          "evidence": [
+            {"label": "Session format and validator", "target": "src/session.mjs"},
+            {"label": "Capture, restore, and ledger UI", "target": "src/app.mjs"},
+            {"label": "Session boundary tests", "target": "tests/session.test.mjs"},
+            {"label": "Architecture Record D-026", "target": "docs/DECISIONS.md"},
+            {"label": "Security boundaries", "target": "docs/SECURITY.md"}
+          ],
+          "related": ["client-url-sharing", "parlor-mixing-console", "stem-and-midi-export"]
         }
       ]
     }

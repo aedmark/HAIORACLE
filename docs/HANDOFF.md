@@ -4,17 +4,17 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-19, session 21, on `main`: nine-stem WAV ZIP and Type 1 MIDI export built on the shared graph, mixer, and live schedulers (P5-21, D-025); earlier today the transport (P5-18) and mixer (P5-19) landed._
+_Last updated: 2026-10-19, session 22, on `main`: Session Ledger with on-device presets and validated `.fun` files (P5-20, D-026). The DAW phase (P5-18 through P5-21) is complete._
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-19 and P5-21 are implemented and verified. The DAW phase has one item left, P5-20 (sessions), which needs a storage decision first. After that comes the design and layout pass. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a procedural branching mycelial network with eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) engraved with Ernst Haeckel anatomical lithography, an antique turned-wood mahogany pedestal, mossy peat/driftwood substrate bed, 46 dew condensation droplets clinging to the vitrine bell jar, bio-acoustic audio sonification (micro-voltage action potentials, guttation droplet chimes, and tactile ballistospore puffs), drifting ballistospores with vitrine tap bursts, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume and tempo controls. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The Kapellmeister music-theory and genre console (`#kapellmeister-engine`, P5-15, D-019) allows confidants to switch between six historical and theoretical rulebooks (Victorian Neo-Riemannian Tonnetz, 12-Bar Delta Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Drone, Raw Esoteric Chaos) with a live harmonic dashboard and animated SVG Tonnetz compass. An antique parlor room acoustic space (`#parlor-acoustics-engine`, D-022) immerses the ensemble in tactile synthesized Edison wax-cylinder phonograph surface noise (filtered mechanical brown noise, 78 RPM eccentric wobble, rich stylus micro-crackle and shellac dust pops), a 1.6-second wood-and-velvet chamber convolution impulse response (`ConvolverNode`) with alternating-phase reflection taps, DC-blocking highpass filtering, and peak spectral gain normalization ($0.75$), with a dedicated $180\,\text{Hz}$ highpass send filter (`parlorReverbFilter`) protecting the chamber from fog-horn runaway. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, D-020, D-022) provides real-time play-along chord organ accompaniment via an interactive 13-key manual (`C..C'`) and physical keyboard mapping (`[A..K]`), one-finger auto-chord harmonization with 7 quality chips, 12-step synchronized loop chord progression changes over the 4 harmonic regions ($3\times\text{stepDuration}$ sustained chords at $t = 0, 3, 6, 9$), singing step melody notes on every tempo beat, standalone auditioning when idle, and a 12-step punch-in loop sequencer matrix (`#fun-sequence-grid`). The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), an Esoteric Fun Machine organ manual and sequencer matrix (Plate VII), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing (P3-01), 1200×1520 broadsheet PNG plate engraving (P3-02), and client-side uncompressed 16-bit 44.1 kHz WAV loop export (`#export-wav`, P3-03). Remaining open work covers assistive-technology checks (P4-02) and public hosting (P6-01).
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-21 are implemented and verified, completing the DAW phase. Next comes the design and layout pass. A phrase deterministically drives a LOLCODE-generated score, one of twelve named repeating melody motifs, one of eight Malbolge ternary beat cadences, one of eight Brainfuck walking bass grooves, one of eight Befunge-93 2D mirror chord organs, one of eight Piet/FRACTRAN Just Intonation chime and codel chorus engines, one of eight Shakespeare Programming Language 3-formant vowel choir dramas, one of ten Canvas body families, one of eight bounded silhouette-flux grammars, one of eight internal kinetic systems, expressive composed eye anatomy, a procedural branching mycelial network with eight generative sporophore fruiting bodies (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) engraved with Ernst Haeckel anatomical lithography, an antique turned-wood mahogany pedestal, mossy peat/driftwood substrate bed, 46 dew condensation droplets clinging to the vitrine bell jar, bio-acoustic audio sonification (micro-voltage action potentials, guttation droplet chimes, and tactile ballistospore puffs), drifting ballistospores with vitrine tap bursts, a multi-template ceremonial name, and a continuously looping Web Audio composition with live master volume and tempo controls. An Euler-Tonnetz & Euclidean harmonic conductor (`src/conductor.mjs`, P5-14) harmonizes all six esoteric interpreters through Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) parsimonious voice-leading, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean rhythm hockets $E(k, 12)$. The Kapellmeister music-theory and genre console (`#kapellmeister-engine`, P5-15, D-019) allows confidants to switch between six historical and theoretical rulebooks (Victorian Neo-Riemannian Tonnetz, 12-Bar Delta Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Drone, Raw Esoteric Chaos) with a live harmonic dashboard and animated SVG Tonnetz compass. An antique parlor room acoustic space (`#parlor-acoustics-engine`, D-022) immerses the ensemble in tactile synthesized Edison wax-cylinder phonograph surface noise (filtered mechanical brown noise, 78 RPM eccentric wobble, rich stylus micro-crackle and shellac dust pops), a 1.6-second wood-and-velvet chamber convolution impulse response (`ConvolverNode`) with alternating-phase reflection taps, DC-blocking highpass filtering, and peak spectral gain normalization ($0.75$), with a dedicated $180\,\text{Hz}$ highpass send filter (`parlorReverbFilter`) protecting the chamber from fog-horn runaway. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, D-020, D-022) provides real-time play-along chord organ accompaniment via an interactive 13-key manual (`C..C'`) and physical keyboard mapping (`[A..K]`), one-finger auto-chord harmonization with 7 quality chips, 12-step synchronized loop chord progression changes over the 4 harmonic regions ($3\times\text{stepDuration}$ sustained chords at $t = 0, 3, 6, 9$), singing step melody notes on every tempo beat, standalone auditioning when idle, and a 12-step punch-in loop sequencer matrix (`#fun-sequence-grid`). The experience lives inside a bespoke, esoteric Victorian parlor cabinet and broadsheet with an interactive bell-jar central apparition vitrine (Plate I), a Malbolge 12-step ternary beat automaton (Plate II), a Brainfuck 12-cell walking tape bassline (Plate III), a Befunge-93 2D mirror chord organ (Plate IV), a Piet/FRACTRAN 12-step prime-ratio chime and codel chorus matrix (Plate V), a Shakespeare 12-scene formant vowel choir (Plate VI), an Esoteric Fun Machine organ manual and sequencer matrix (Plate VII), a Parlor Bandstand six-language ensemble console, client-only `#omen=...` URL sharing (P3-01), 1200×1520 broadsheet PNG plate engraving (P3-02), and client-side uncompressed 16-bit 44.1 kHz WAV loop export (`#export-wav`, P3-03). Remaining open work covers assistive-technology checks (P4-02) and public hosting (P6-01).
 
 **Verified** (2026-10-19, session 20, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **67/67 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **75/75 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 31 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 32 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -48,6 +48,7 @@ _Last updated: 2026-10-19, session 21, on `main`: nine-stem WAV ZIP and Type 1 M
 - A comprehensive 3x technical manual (`docs/manual.json`, `manual.html`, `tools/manual.py`) documents What, How, and Why across all 28 major systems, interpreters, and algorithms with 0 warnings.
 - Full interactive and audiovisual functionality verified in live browser review (P4-01).
 - The master transport (`#transport-deck`) plays, pauses at the last heard step, and stops-and-rewinds the loop; `Space` toggles play/pause and `Esc` stops from anywhere. Live playback and WAV export build one shared graph (`src/ensemble.mjs`), so exports render the routing the listener hears (P5-18, D-023).
+- The Session Ledger (`#session-engine`) saves the whole apparatus as named presets in this browser's `localStorage` or as portable `.fun` files, and restores it exactly; files and stored presets pass a strict validator first (P5-20, D-026).
 - `EXPORT 9 STEMS (ZIP)` downloads eight aligned channel stems, a parlor-room stem, and a README; `WRITE MIDI SCORE` downloads a Type 1 MIDI file with a tempo track and seven named parts captured from the live schedulers (P5-21, D-025).
 - The parlor mixing console (`#mixer-engine`) gives all eight voices a fader, pan, mute, solo, and live post-fader VU meter. Plate ENGAGE/SILENCE switches are the console's mutes, and WAV exports follow the mix. Default voicing trims lift the lead +6 dB and the choir +12 dB with faders still at unity, faders reach a further +12 dB, the choir bypasses the creature filter, and bandpass creatures blend a dry lead tap, so neither voice is buried by narrow bandpass creatures any more (P5-19, D-024).
 - Runtime assets are local and dependency-free (D-001).
@@ -56,6 +57,7 @@ _Last updated: 2026-10-19, session 21, on `main`: nine-stem WAV ZIP and Type 1 M
 
 - Dedicated assistive-technology and screen-reader testing remains P4-02 work.
 - No public hosting or domain exists.
+- Session presets have not been checked in a real private window or against a full storage quota. The blocked-storage path was simulated by making `localStorage` throw.
 - No DAW import has been tried: stems and MIDI were validated by independent parsers (Python `zipfile`, `unzip -t`, an in-page SMF reader), not by opening them in a DAW.
 - Nobody has listened to the mixer yet: hard-pan feel, the fader taper, and meter ballistics were checked by numbers, not by ear.
 - Nobody has listened to the transport changes yet. Pause/resume, the output fade, and WAV parity were checked structurally and in a live browser by state readouts and PCM statistics, not by ear.
@@ -70,16 +72,40 @@ _Last updated: 2026-10-19, session 21, on `main`: nine-stem WAV ZIP and Type 1 M
 
 1. Optional: on bandpass creatures (voices 1 and 5) the organ, chimes, and mycelium remain heavily filtered (pigeons organ −73.9 dB solo). The lead and choir are fixed (D-024 points 7–8).
 2. Exports render one 12-step loop, but rhythm patterns 2 and 3 have five cells, so their WAV, stems, and MIDI do not tile seamlessly (the live loop is unaffected). A 60-step render, or rounding those patterns to 12, would fix it; either is a determinism-adjacent choice for the maintainer.
-3. Layout pass: the reading section's action column now stacks six buttons on desktop; group the exports (WAV, stems, MIDI, PNG, link) when the design phase begins.
-4. P5-20 sessions need a decision first: browser preset storage contradicts the "no local storage" statement in ARCHITECTURE.md and SECURITY.md.
-5. Complete P4-02 with keyboard, reduced-motion, contrast, and screen-reader checks.
-6. Choose public hosting and domain (Q-001 / P6-01).
+3. Design and layout pass. Known pressure points: the reading section's action column stacks six buttons on desktop, the DAW controls (transport, mixer, ledger, exports) are spread between the reading strip and the plate stack, and the preset-name field renders tall at phone width.
+4. Complete P4-02 with keyboard, reduced-motion, contrast, and screen-reader checks.
+5. Choose public hosting and domain (Q-001 / P6-01).
 
 ## Open questions
 
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 22: 2026-10-19: the session ledger
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-20: on-device preset storage plus `.fun` session files, with the decision recorded and ARCHITECTURE and SECURITY updated (maintainer-approved storage boundary change).
+
+**Done:** P5-20, D-026.
+
+**Changed:**
+1. `src/session.mjs` (new): versioned session schema, strict validator, `.fun` parse/serialize, preset store parse/upsert/remove.
+2. `src/mixer.mjs`: `mixerStateFromChannels()`.
+3. `src/app.mjs`: per-cell edit counts (`plateCellCycles`, `cyclePlateCell()`), `recomposePlate()` shared by mutations and restore, `setFunMachineMode()` and `setFunChordQuality()`, `captureSession()`, `applySession()`, guarded preset storage, and ledger handlers.
+4. `index.html`, `styles.css`: `#session-engine` between the mixer and Plate II.
+5. ARCHITECTURE, SECURITY, README: the "no storage" promises now describe the one on-device store.
+
+**Verified:** 75/75 Node checks, including a new session suite (field-level rejection, prototype keys, size limit, preset corruption, exact chord rebuild, per-cell replay equivalence). Browser: changed plates, mutations, cell edits, a punched chord, rulebook, strictness, chord quality, mode, room, tempo, volume, and console, then saved a preset and a file. A fresh page restored the preset with zero differences across 18 UI readouts, and re-saving produced a byte-identical `.fun` file. Tampered files (bad tempo, injected quality, unknown key, non-JSON, 70 KB) were each rejected with the field named and the current creature left untouched. DELETE removed the storage key. With `localStorage` throwing, preset save reported it and file save still worked. No overflow at 375 px.
+
+**Not verified:** Real private-window and quota behavior; screen-reader pass over the ledger (P4-02).
+
+**Problems:** Plate cells do not return to an identical state after any cycle length, so edits are stored as exact per-cell counts rather than counts modulo a period.
+
+**Left undone:** P4-02, P6-01; the design and layout pass.
+
+**Next session should start with:** the design and layout pass.
 
 ### Session 21: 2026-10-19: stems and the MIDI score
 
@@ -405,28 +431,6 @@ _Last updated: 2026-10-19, session 21, on `main`: nine-stem WAV ZIP and Type 1 M
 **Decisions:** D-018
 
 **Verified:** Thirty-one Node unit and static tests passed; `tools/check_docs.py` passed with 0 errors and 0 warnings across 14 documents; `tools/manual.py` check passed with 6 sections, 25 entries, 0 warnings; `manual.html` rebuilt (121,532 bytes).
-
-**Not verified:** Dedicated assistive-technology and screen-reader testing remains P4-02 work.
-
-**Problems:** None at handoff update time.
-
-**Left undone:** P5-15, P4-02, and P6-01 roadmap items.
-
-**Next session should start with:** P5-15, P4-02, or P6-01 when ready.
-
-### Session 12: 2026-10-18: the mycelium colonizes the parlor glass
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Introduce a procedural mycelial/fungal layer (P5-16, D-017) where the parlor specimen can "grow" branching mycelial networks (hyphae) and sprouting fungal fruiting bodies (sporophores) with ballistospore particle dispersion.
-
-**Done:** P5-16
-
-**Changed:** Added LOLCODE-owned `fungal_form`, `fungal_hyphae`, `fungal_spores`, and `fungal_bloom` score parameters to `src/oracle.lol` and validated in `src/score.mjs`. Implemented `buildMycelialNetwork()`, `buildFruitingBodies()`, `buildSporeSystem()`, `drawMycelium()`, `drawFruitingBodies()`, and `updateAndDrawSpores()` in `src/app.mjs`. Rendered eight distinct sporophore archetypes (`AGARIC CAP`, `BRACKET CONK`, `CORAL CLAVARIA`, `BIOLUMINESCENT BONNET`, `CUP PEZIZA`, `MOREL HONEYCOMB`, `GLOBULAR PUFFBALL`, `HYPHAL HYDRA`). Added spore burst on vitrine tap (`vision.burstSpores()`), mycelial growth acceleration on vitrine hold, `#score-fungal` catalog telemetry in `index.html` and `styles.css`, and broadsheet PNG plate metadata. Documented in `docs/manual.json` (entry 24) and rebuilt `manual.html`.
-
-**Decisions:** D-017
-
-**Verified:** Thirty-one Node checks passed, including all interpreter tests, conductor mathematics, and mycelial/fruiting body structural tests; documentation checker reported 0 errors and 0 warnings across 14 documents; 3x manual validator reported 6 sections, 24 entries, 0 warnings.
 
 **Not verified:** Dedicated assistive-technology and screen-reader testing remains P4-02 work.
 

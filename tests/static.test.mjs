@@ -20,6 +20,7 @@ test("the static entry points exist", async () => {
     "src/mixer.mjs",
     "src/music.mjs",
     "src/score.mjs",
+    "src/session.mjs",
     "src/share.mjs",
     "src/shakespeare.mjs",
     "src/transport.mjs",
@@ -253,6 +254,7 @@ test("the application has no remote runtime assets", async () => {
     "src/mixer.mjs",
     "src/music.mjs",
     "src/score.mjs",
+    "src/session.mjs",
     "src/share.mjs",
     "src/shakespeare.mjs",
     "src/transport.mjs",
@@ -419,4 +421,34 @@ test("stem ZIP and MIDI exports are wired through the shared offline renderer", 
   for (const channel of ["lead", "beat", "bass", "harmony", "chime", "chant"]) {
     assert.match(app, new RegExp(`logNote\\(transport, "${channel}"`), channel);
   }
+});
+
+test("the session ledger saves presets on-device and .fun files through the validated boundary", async () => {
+  const [html, app] = await Promise.all([
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("src/app.mjs", root), "utf8"),
+  ]);
+  const mixerAt = html.indexOf('id="mixer-engine"');
+  const sessionAt = html.indexOf('id="session-engine"');
+  const beatAt = html.indexOf('id="beat-engine"');
+  assert.ok(mixerAt < sessionAt && sessionAt < beatAt);
+  for (const id of ["session-preset-name", "session-save-preset", "session-preset-list", "session-load-preset", "session-delete-preset", "session-save-file", "session-open-file", "session-file-input"]) {
+    assert.match(html, new RegExp(`id="${id}"`), id);
+  }
+  assert.match(html, /<label for="session-preset-name">/);
+  assert.match(html, /<label for="session-preset-list">/);
+  assert.match(html, /id="session-file-input" type="file" accept="\.fun,application\/json" hidden/);
+  assert.match(app, /function captureSession\(\)/);
+  assert.match(app, /function applySession\(session\)/);
+  assert.match(app, /applySession\(parseSession\(await file\.text\(\)\)\)/);
+  assert.match(app, /file\.size > MAX_SESSION_BYTES/);
+  // Every storage access is guarded.
+  const storageCalls = app.match(/window\.localStorage\.\w+/g) || [];
+  assert.ok(storageCalls.length >= 3);
+  for (const fn of ["readPresetStore", "writePresetStore"]) {
+    const body = app.slice(app.indexOf(`function ${fn}(`), app.indexOf("\n}\n", app.indexOf(`function ${fn}(`)));
+    assert.match(body, /try \{[\s\S]*window\.localStorage[\s\S]*\} catch \{/, fn);
+  }
+  assert.equal((app.match(/localStorage\./g) || []).length, storageCalls.length, "no unguarded storage access elsewhere");
+  assert.doesNotMatch(app, /sessionStorage|indexedDB|document\.cookie/);
 });

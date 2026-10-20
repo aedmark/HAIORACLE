@@ -7,6 +7,7 @@ Automated checks prove determinism, boundary validation, the required LOLCODE su
 | Suite | File | Proves | Does not prove | Needs |
 | --- | --- | --- | --- | --- |
 | Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/body/eye/scale/kinetic/melody/beat diversity, exact twelve-note arpeggio and chromatic motifs, Malbolge `crazy`/`rotr` ternary VM and `src/beat.mal` execution, negative LOLCODE and Malbolge interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
+| Session boundary | `tests/session.test.mjs` | `.fun` round-trip, field-level rejection, size and JSON limits, prototype-key refusal, preset ordering/capping/corruption recovery, console rebuild, exact chord rebuild, per-cell edit replay | browser storage behavior across real private windows or quotas | Node 20 or newer |
 | Export writers | `tests/export.test.mjs` | CRC-32 check value, ZIP round-trip and determinism, entry-name safety, MIDI VLQ examples, Type 1 structure, tempo, programs, drum channel, loop clipping, velocity scaling | that a DAW imports the files as intended | Node 20 or newer |
 | Mixer model | `tests/mixer.test.mjs` | channel list, fader taper and dB readout, pan clamping, mute/solo precedence, Bandstand group mutes, meter RMS/peak math | how the console sounds or feels to operate | Node 20 or newer |
 | Transport and graph | `tests/transport.test.mjs` | shared ensemble graph routing, mixer strips, meter taps, vitrine pan trim, and live/offline topology parity via a fake `AudioContext`, transport state transitions and cursor handling, `Space`/`Esc` focus rules | real audio output, timing under load, or how pause/resume sounds | Node 20 or newer |
@@ -52,19 +53,20 @@ Expected results from specific runs live in `HANDOFF.md`.
 
 1. Serve the repository and summon three phrases in current Chrome, Firefox, and Safari.
 2. Confirm sound starts only after a gesture, loops without an audible gap, mutes immediately, restarts, and is replaced cleanly by a new summon.
-3. Export stems and MIDI, import both into a DAW at the README tempo, and confirm the nine stems line up and loop, the MIDI parts land on their own tracks, and drums map to a GM kit.
-4. Ride each mixer fader, pan, mute, and solo during playback; confirm meters track each bandmate, a plate's ENGAGE/SILENCE switch and its mixer M button always agree, and a WAV export reflects the console.
-5. Play, pause, and resume mid-loop; confirm resume picks up on the next step without a skipped or doubled beat, Stop rewinds to step one, and `Space`/`Esc` work after clicking a plate button but `Space` still activates a button reached with Tab.
-6. Move master volume through zero, the default 82 percent, and maximum using pointer and keyboard; confirm live ramps are smooth and the loudest dense voice does not clip or pump.
-7. Listen to every named motif family; confirm each forms a recognizable twelve-note loop and that restarts return to its first note.
-8. Confirm repeated text produces identical metadata and creature structure.
-9. Summon enough creatures to inspect every eye silhouette, iris treatment, pupil geometry, and layout for clipping or illegibility.
-10. Inspect all eight kinetic cores and silhouette-flux families for distinct motion, boundary containment, legibility, and stable frame rate.
-11. Tap, press-and-hold, and hold-and-drag across the vitrine with mouse and touch; confirm percussive strikes, ratchet ticks, pitch bends, filter swells, eye tracking, and shape morphing respond smoothly and return to the resting creature on release.
-12. Use keyboard-only controls at desktop and narrow mobile widths.
-13. Confirm the cabinet remains bilaterally balanced, the apparition stays centered in its bell-jar vitrine, labels do not collide, and the serif and telegraph-monospace stacks remain legible at desktop and phone widths.
-14. Enable reduced motion and confirm the interface remains legible, calm, and frozen at a representative phase.
-15. Inspect the network panel for unexpected outbound requests.
+3. Change plates, progression, rulebook, room, tempo, and console; save a preset and a `.fun` file; reload; restore both and confirm everything returns. Repeat in a private window, where presets may be unavailable but files must still work.
+4. Export stems and MIDI, import both into a DAW at the README tempo, and confirm the nine stems line up and loop, the MIDI parts land on their own tracks, and drums map to a GM kit.
+5. Ride each mixer fader, pan, mute, and solo during playback; confirm meters track each bandmate, a plate's ENGAGE/SILENCE switch and its mixer M button always agree, and a WAV export reflects the console.
+6. Play, pause, and resume mid-loop; confirm resume picks up on the next step without a skipped or doubled beat, Stop rewinds to step one, and `Space`/`Esc` work after clicking a plate button but `Space` still activates a button reached with Tab.
+7. Move master volume through zero, the default 82 percent, and maximum using pointer and keyboard; confirm live ramps are smooth and the loudest dense voice does not clip or pump.
+8. Listen to every named motif family; confirm each forms a recognizable twelve-note loop and that restarts return to its first note.
+9. Confirm repeated text produces identical metadata and creature structure.
+10. Summon enough creatures to inspect every eye silhouette, iris treatment, pupil geometry, and layout for clipping or illegibility.
+11. Inspect all eight kinetic cores and silhouette-flux families for distinct motion, boundary containment, legibility, and stable frame rate.
+12. Tap, press-and-hold, and hold-and-drag across the vitrine with mouse and touch; confirm percussive strikes, ratchet ticks, pitch bends, filter swells, eye tracking, and shape morphing respond smoothly and return to the resting creature on release.
+13. Use keyboard-only controls at desktop and narrow mobile widths.
+14. Confirm the cabinet remains bilaterally balanced, the apparition stays centered in its bell-jar vitrine, labels do not collide, and the serif and telegraph-monospace stacks remain legible at desktop and phone widths.
+15. Enable reduced motion and confirm the interface remains legible, calm, and frozen at a representative phase.
+16. Inspect the network panel for unexpected outbound requests.
 
 ## Known pitfalls
 

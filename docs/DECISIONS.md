@@ -323,6 +323,21 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** Stems sum close to, not exactly to, the mix: the master compressor reacts to each stem separately and the wax crackle is random per render (measured −27 dB residual on "the moon owes me five dollars"). Just-intonation chimes round to the nearest equal-tempered note, and the mycelium voice is unpitched, so it is absent from MIDI. MIDI includes muted plates; stems include muted channels. A 9-stem bundle of a four-second loop is about 8.5 MB and renders in under two seconds on the test machine. The rhythm patterns with five cells still do not tile seamlessly at 12 steps (noted in HANDOFF since session 19).
 
+## D-026 Sessions persist on-device in localStorage presets and portable .fun files (2026-10-19, status: accepted)
+
+**Context:** P5-20 asks players to save and recall a whole jam: phrase, plate mutations and edits, punched progression, rulebook, room, tempo, volume, and console. Until now the app kept no state past the tab (D-001, D-015) and ARCHITECTURE and SECURITY promised no local storage. The maintainer approved on-device `localStorage` presets plus `.fun` file save/load on 2026-10-19.
+
+**Decision:**
+1. **Two stores, both on-device.** Presets live in one `localStorage` key (`edmark-fun-machine.presets.v1`, at most 24, newest first). `.fun` files are downloaded and opened by the player. Nothing is transmitted; there are still no cookies, `sessionStorage`, IndexedDB, analytics, or service worker.
+2. **Strict boundary (`src/session.mjs`).** A session is versioned JSON (`format: "edmark-fun-session"`, `version: 1`) validated against an allowlist: every field required, no unknown keys, integers in range, enums from fixed lists, phrase 1–72 characters without control characters, files at most 64 KB. A failing file is rejected whole and names the field; nothing is repaired. Presets are revalidated on every read, and a bad entry is dropped without hiding the rest.
+3. **Small values only.** Punched chords are stored as `(root, quality)` and rebuilt with `buildFunChord()` (verified identical across every genre, quality, and root). Plate cell edits are stored as click counts per cell, replayed through each plate's own cycler; cells cycle independently, so counts reproduce any click order (tested). Plates store their mutation counts, and the VMs recompose from the phrase.
+4. **Restoring** summons the phrase through the normal score path, then layers plates, progression, rulebook, room, tempo, volume, and console. A playing transport restarts on the restored loop; otherwise it stops.
+5. **Storage failure is ordinary.** Every `localStorage` access is wrapped; when storage is blocked (private windows, previews, full quota) preset saves report it and `.fun` files keep working.
+
+**Alternatives:** IndexedDB is heavier than a handful of small JSON records. Storing full VM step structures would push large, nested, label-bearing data across the boundary. Storing a click log instead of per-cell counts would grow without bound. A server or sync service would end the client-only privacy model.
+
+**Consequences:** Saved presets keep phrases on the device until the player deletes them (DELETE in the ledger, or clearing site data). A `.fun` file contains the phrase in plain text, like the PNG broadsheet and the `#omen=` link. The session format is now a compatibility surface: future fields need a version bump and a migration, and D-003-style determinism changes can make an old session summon a different creature.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)
