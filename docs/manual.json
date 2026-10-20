@@ -382,12 +382,12 @@
     },
     {
       "id": "esoteric-chamber-ensemble",
-      "title": "The Five Esoteric Accompaniment Plates (Plates II–VI)",
+      "title": "The Five Esoteric Accompaniment Plates (Plates I–V)",
       "description": "Authentic virtual machine execution across Malbolge, Brainfuck, Befunge-93, Piet, FRACTRAN, and Shakespeare Programming Language.",
       "entries": [
         {
           "id": "malbolge-percussion",
-          "title": "Plate II: Malbolge 1998 59,049-Word Ternary Beat Automaton",
+          "title": "Plate I: Malbolge 1998 59,049-Word Ternary Beat Automaton",
           "summary": "Executes authentic Malbolge code on a ternary tape to generate 12-step drum patterns.",
           "tags": ["esolang", "malbolge", "percussion"],
           "what": "Executes `src/beat.mal` inside a spec-compliant 1998 Malbolge virtual machine (`src/malbolge.mjs`). Decomposes 12 output bytes into a 12-step 3-trit matrix controlling a synthesized bellows kick, clockwork snare, and escapement chime across eight cadence families, with interactive step cycling and mutation controls.",
@@ -412,7 +412,7 @@
         },
         {
           "id": "brainfuck-bassline",
-          "title": "Plate III: Brainfuck 1993 256-Cell Walking Tape Bassline",
+          "title": "Plate II: Brainfuck 1993 256-Cell Walking Tape Bassline",
           "summary": "Drives a 12-cell walking sub-bass and acid-organ ostinato from an executed Brainfuck tape.",
           "tags": ["esolang", "brainfuck", "bass"],
           "what": "Executes `src/bass.bf` inside a 1993 Urban Müller Brainfuck interpreter (`src/brainfuck.mjs`). Uses pointer movement, cell addition/subtraction, and `[->+<]` transfer loops across 256 byte cells to generate a 12-cell bass ostinato across eight groove archetypes, featuring portamento slide, cell cycling, and tape-shift controls.",
@@ -436,7 +436,7 @@
         },
         {
           "id": "befunge-organ",
-          "title": "Plate IV: Befunge-93 2D Torus Mirror Chord Organ",
+          "title": "Plate III: Befunge-93 2D Torus Mirror Chord Organ",
           "summary": "Voices polyphonic 3-note organ triads from a 2D boustrophedon toroidal playfield.",
           "tags": ["esolang", "befunge", "harmony"],
           "what": "Executes `src/harmony.bfg` inside an 80×25 2D torus Befunge-93 interpreter (`src/befunge.mjs`). Employs directional arrows (`> < ^ v`), `#` bridges, arithmetic, and diagonal mirrors (`\\ / / \\`) to voice polyphonic 3-note reed-organ and glass-harp triads across eight organ archetypes, with live mirror cycling and deflection controls.",
@@ -460,7 +460,7 @@
         },
         {
           "id": "piet-fractran-chimes",
-          "title": "Plate V: Piet Codel Canvas & FRACTRAN Prime-Ratio Spectral Chimes",
+          "title": "Plate IV: Piet Codel Canvas & FRACTRAN Prime-Ratio Spectral Chimes",
           "summary": "Drives 7-limit Just Intonation bells and spectral chorus pads from 2D codels and prime fractions.",
           "tags": ["esolang", "piet", "fractran", "just-intonation"],
           "what": "Executes a 49-step 25×5 clockwise Piet 2001 codel canvas (`src/pad.piet`) across all 18 chromatic codels paired with a 12-step 1987 John Conway FRACTRAN prime-ratio program (`src/chimes.frac`) over $2^a 3^b 5^c 7^d 11^e 13^f$. Voices pure 5-limit and 7-limit Just Intonation overtone bells and synesthetic codel-filtered chorus pads across eight archetypes.",
@@ -485,7 +485,7 @@
         },
         {
           "id": "shakespeare-choir",
-          "title": "Plate VI: Shakespeare Programming Language 3-Act Formant Vowel Choir",
+          "title": "Plate V: Shakespeare Programming Language 3-Act Formant Vowel Choir",
           "summary": "Schedules a 3-formant vowel choir from an authentic Elizabethan tragedy script.",
           "tags": ["esolang", "shakespeare-spl", "formant-synthesis"],
           "what": "Executes `src/chant.spl` (`The Oracular Tragedy of the Parlor Glass.`), a 3-Act, 12-Scene Elizabethan drama with four dramatis personae (Hamlet Tenor, Ophelia Soprano, Prospero Basso, Hecate Alto) inside an SPL interpreter (`src/shakespeare.mjs`). Drives a 3-formant ($F_1, F_2, F_3$) parallel bandpass vowel choir across six distinct vowels (`/ɑ/`, `/ɛ/`, `/i/`, `/o/`, `/u/`, `/æ/`), with live scene cycling and recast mutation.",

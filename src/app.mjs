@@ -4019,10 +4019,12 @@ function applyEnsembleConductor() {
   if (!currentScore) return;
   const overrideProgression = arguments.length > 0 ? arguments[0] : null;
   // A held key's chords are absolute; the conductor works above the tonic.
-  // With no key held the spine stays an empty 12-step array, exactly as when
-  // the removed loop sequencer was empty (D-038), so the band sounds as before.
-  const spineToUse = (overrideProgression || Array(12).fill(null))
-    .map((chord) => (chord ? toTonicRelative(chord, currentScore.root) : null));
+  // With no key held there is no custom spine at all, so Raw Esoteric Chaos
+  // takes its unfettered path (P5-27). An empty array here used to be truthy
+  // and quietly conducted the raw VMs anyway; fettered genres are unaffected.
+  const spineToUse = overrideProgression
+    ? overrideProgression.map((chord) => (chord ? toTonicRelative(chord, currentScore.root) : null))
+    : null;
   const conducted = conductEnsemble({
     score: currentScore,
     melody: melodyFor(currentScore),

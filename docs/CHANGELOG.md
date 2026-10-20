@@ -18,6 +18,7 @@
 
 ### Fixed
 
+- Hear Raw Esoteric Chaos as intended: with no Fun Machine key held, the esoteric machines now play their own raw output instead of being quietly conducted. Holding a key still brings the band along.
 - Read the cabinet more easily: no text is smaller than 9.6 px, faint labels are brighter (at least 4.5:1 contrast), screen readers no longer announce every step of the loop, and reduced motion takes effect as soon as you turn it on.
 - Keep the echo in time when you move the tempo slider during play. The delay was timed once at the start of the loop, so afterwards the Fun Machine's pads, arpeggios, and lead (which all feed it) echoed at the old tempo and sounded rushed or dragging.
 - Play the Fun Machine manual like a keyboard: each key now sounds higher than the one to its left, and C' sounds an octave above C (they used to play in the same octave).

@@ -199,11 +199,11 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
     readFile(new URL("styles.css", root), "utf8"),
     readFile(new URL("src/app.mjs", root), "utf8"),
   ]);
-  assert.match(html, /PLATE II · MALBOLGE TERNARY BEAT GENERATOR/);
-  assert.match(html, /PLATE III · BRAINFUCK TAPE BASSLINE/);
-  assert.match(html, /PLATE IV · BEFUNGE-93 2D MIRROR CHORD ORGAN/);
-  assert.match(html, /PLATE V · PIET &amp; FRACTRAN SPECTRAL CHIMES/);
-  assert.match(html, /PLATE VI · SHAKESPEARE FORMANT VOWEL CHOIR/);
+  assert.match(html, /PLATE I · MALBOLGE TERNARY BEAT GENERATOR/);
+  assert.match(html, /PLATE II · BRAINFUCK TAPE BASSLINE/);
+  assert.match(html, /PLATE III · BEFUNGE-93 2D MIRROR CHORD ORGAN/);
+  assert.match(html, /PLATE IV · PIET &amp; FRACTRAN SPECTRAL CHIMES/);
+  assert.match(html, /PLATE V · SHAKESPEARE FORMANT VOWEL CHOIR/);
   assert.match(html, /PARLOR BANDSTAND · SIX-LANGUAGE ENSEMBLE CONSOLE/);
   assert.match(html, /href="src\/beat\.mal"/);
   assert.match(html, /href="src\/bass\.bf"/);
@@ -349,7 +349,6 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   // Markup: style chips replace the organ's mode switch and chord-quality chips (D-028).
   assert.match(html, /id="fun-machine-engine"/);
   assert.match(html, /id="fun-machine-status"/);
-  assert.match(html, /id="fun-machine-telemetry"/);
   assert.match(html, /id="fun-keyboard"/);
   assert.doesNotMatch(html, /id="fun-machine-rec"|id="fun-machine-reset"|id="fun-sequence-grid"|PUNCH-IN/);
   assert.match(html, /role="group" aria-label="Accompaniment style"/);
@@ -365,7 +364,7 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
 
   const funIdx = html.indexOf('id="fun-machine-engine"');
   const beatIdx = html.indexOf('id="beat-engine"');
-  assert.ok(funIdx > 0 && beatIdx > funIdx, "Fun Machine section must sit above Plate II beat-engine in the stack");
+  assert.ok(funIdx > 0 && beatIdx > funIdx, "Fun Machine section must sit above the beat plate in the stack");
 
   assert.match(styles, /\.fun-machine-engine/);
   assert.match(styles, /\.fun-keyboard/);
@@ -381,6 +380,8 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   assert.doesNotMatch(app, /scheduleFunMachineChord|scheduleFunMachineLeadNote|startFunMachineVoice|frequency\.setValueAtTime\(5\.5/);
   assert.match(app, /buildPerformance\(normSemi, funMachineStyle, activeGenre/);
   assert.match(app, /applyEnsembleConductor\(performance\.steps\.map\(\(step\) => step\.chord\)\)/);
+  // Raw Esoteric Chaos is unfettered unless a key is held (P5-27): no empty spine stands in.
+  assert.match(app, /const spineToUse = overrideProgression\n    \? overrideProgression\.map\([^\n]*\n    : null;/);
   assert.match(app, /const duck = transport === currentTransport && activeHeldFunKey !== null \? LEAD_DUCK_GAIN : 1;/);
   assert.match(app, /function updateFunKeyboardChordLabels\(/);
   assert.match(app, /async function triggerFunKey\(/);
@@ -413,7 +414,7 @@ test("the master transport deck exposes play, pause, stop, position, and hotkeys
   assert.doesNotMatch(app, /context\.createDynamicsCompressor\(\)|offlineCtx\.createDynamicsCompressor\(\)/);
 });
 
-test("the parlor mixing console sits after the Fun Machine and before Plate II and drives the strips", async () => {
+test("the parlor mixing console sits after the Fun Machine and before the beat plate and drives the strips", async () => {
   const [html, styles, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),

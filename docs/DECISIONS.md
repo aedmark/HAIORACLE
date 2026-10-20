@@ -567,14 +567,36 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Decision:**
 1. **Removed:** the punch-in REC and RESET PROGRESSION buttons, the 12-step grid, step targeting, live punch-in, and playback of punched chords (live, and in WAV, stem, and MIDI exports). Gone from code are `customProgression`, `selectedSequencerStep`, `funMachineRec`, `renderFunSequencerGrid()`, `flashSequencerStep()`, and `scheduleSequencedFunChord()`, plus 133 lines of CSS.
-2. **Kept:** held keys, the three styles, the band following the held chord through `customSpine`, the lead duck, and every other export. With no key held, `applyEnsembleConductor()` still passes an empty 12-step spine, so the band sounds exactly as before.
+2. **Kept:** held keys, the three styles, the band following the held chord through `customSpine`, the lead duck, and every other export. With no key held, `applyEnsembleConductor()` still passed an empty 12-step spine at first, so the band sounded exactly as before (changed by P5-27, below).
 3. **Sessions become v3:** `funMachine` holds only `{ style }`. v1 and v2 files and presets still open; their progression is still validated (malformed files are still rejected) and then dropped, and a re-save writes v3.
 
 **Alternatives:** Reserving an empty progression field for later would keep a field that does nothing; a future loop machine will want its own shape.
 
 **Consequences:** The Fun Machine is simpler: keys and styles only. Exports carry no Fun Machine notes, because held keys are live-only, so the MANUAL stem is silent and the MIDI MANUAL track empty until a loop machine records performances (P5-26). Punched chords in old presets are not restored.
 
-**Found in passing:** with no key held, the conductor has always received that truthy empty spine, so Raw Esoteric Chaos never took its "unfettered" early exit in the live app (D-019 intent). This was kept as-is here and is recorded for a separate fix.
+**Found in passing:** with no key held, the conductor has always received that truthy empty spine, so Raw Esoteric Chaos never took its "unfettered" early exit in the live app (D-019 intent). Fixed separately as P5-27 (2026-10-20): with no key held, `applyEnsembleConductor()` now passes no custom spine. Raw Chaos plays the VMs' own output; a held key still leads the band; fettered genres are unchanged.
+
+## D-039 The loop machine: a song of loops, each a stack of takes (2026-10-20, status: accepted design, not yet built)
+
+**Context:** The removed punch-in sequencer (D-038) was meant to be a loop machine. The maintainer chose the following design on 2026-10-20:
+- **A loop** is a take of what they play.
+- **Loops stack and chain:** "They should be able to stack as WELL as be sequenced into a series of loops."
+- **The band follows** the recording.
+- **The newest layer leads** when stacked layers disagree.
+- **Exports** carry the whole song.
+- **It lives** in the Fun Machine.
+
+**Decision (design):**
+1. **Shape.** A *song* is an ordered list of *loops* (at most 16). A loop is one 12-step pass of the band, repeated ×1–×8 before the next loop, and holds up to 4 stacked *layers*. A layer (take) is 12 slots, one per step, each either empty or `{ key, style }`: the manual position held (0–12, so C' stays an octave up, D-036) and the accompaniment style. Steps are the grain because the accompanist already plays on the step grid (pads at regions, arpeggios and leads per step), so a slot-per-step take replays exactly what was heard.
+2. **Recording.** RECORD NEW LOOP arms; the take starts at the next loop boundary (step 1), captures one full pass, and is appended as a new loop with one layer. OVERDUB arms a new layer on the selected loop: on that loop's next pass, the visitor plays over the existing layers. A take with no key held is discarded. Recording is announced through the status region.
+3. **Playback.** With a song present, the transport plays it: each loop for its repeats, then the next, then back to the first; STOP rewinds to loop 1. Every layer sounds. At each step the band follows the newest layer holding a key there, then older layers. A live key overrides every recording while held. Chords are derived at playback (`buildPerformance(key, style, genre, tonic)`), so a song re-harmonises when the rulebook changes. The INTERCAL arrangement (D-030/D-031) keeps shaping each pass.
+4. **The strip.** A compact strip under the Fun Machine keys holds RECORD NEW LOOP, OVERDUB, UNDO LAYER, and CLEAR SONG, plus a row of loop tiles. Each tile shows its number, layer count, and repeats (− / +), and can be selected, moved left or right, and deleted. The playing tile is marked. The strip is on the front panel, since it records what is played there; its controls are labelled buttons with `aria-pressed` where they toggle.
+5. **Sessions v4.** Sessions and presets store the song as `{ loops: [{ repeats, layers: [[slot × 12] …] }] }`, strictly validated: key 0–12, style in the three styles, and the limits above. v1–v3 still open with an empty song.
+6. **Exports.** With a song, WAV, stems, and MIDI render the whole song (loops × repeats), so the MANUAL stem and MIDI track carry the takes again. The total is capped at 32 passes to keep files bounded. Without a song, exports stay one loop.
+
+**Alternatives:** One chord per region would be simpler but loses the arpeggios and lead lines that make a take sound like playing. A clip launcher (slots A–D) suits live jamming more than building a song. A separate drawer would hide the recorder from what it records.
+
+**Consequences:** The Fun Machine gains a real arrangement surface. Exports grow with the song. Sessions change format again (v4). Build in phases (P5-26).
 
 ## Open questions
 
