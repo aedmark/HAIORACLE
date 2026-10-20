@@ -414,7 +414,7 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** Editing `src/conductor.i` re-arranges the band, and malformed form fails loudly at summon. Default sound is unchanged.
 
-## D-031 Each phrase gets its own arrangement, chosen by the INTERCAL score (2026-10-20, status: accepted)
+## D-031 Each phrase gets its own arrangement, chosen by the INTERCAL score (2026-10-20, status: accepted; guardrails in point 2 superseded by D-032)
 
 **Context:** After D-030 the maintainer asked that "the arrangements should vary per phrase".
 
@@ -427,6 +427,16 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 **Alternatives:** Letting the host pick among hard-coded templates would put the choice back in JavaScript (the D-030 problem). Free per-voice random bits would allow forms with no pulse or no tune.
 
 **Consequences:** Every creature now has its own breathing pattern, so phrases sound more distinct; existing creatures' arrangements changed (shared links summon the same phrase but a different form than before this change). Sections keep their names. A listening pass across phrases is still owed.
+
+## D-032 No arrangement falls below five band voices (2026-10-20, status: accepted)
+
+**Context:** In the listening pass, the maintainer said that everything "sounds pretty great" but some arrangements "definitely do sound thin". D-031 allowed steps with as few as three of the seven band voices, such as a breakdown with only organ, chimes, and fungal voices, or an exposition or antiphony with no bass or pulse.
+
+**Decision:** The conductor score guarantees at least five band voices on every step, and pulse and bass under the first three sections. Lead, pulse, and bass always open. The organ and choir may each colour the exposition. The choir always sings the antiphony over pulse and bass, answered by the lead or the organ; the chimes may breathe. The third section is tutti. The breakdown drops only the pulse: lead and organ carry the tune over either the bass or the choir. The turnaround brings pulse, bass, and lead home, and the choir may join. Seven choices remain, which yield 120 distinct forms across 400 sample phrases. A test asserts the floor on every step across 160 phrases.
+
+**Alternatives:** Keeping the D-031 choices but boosting levels in thin sections would hide sparse forms behind loudness. Dropping per-phrase variation would undo D-031.
+
+**Consequences:** Forms are fuller and closer to D-028's original densities, with less contrast between phrases than D-031. Arrangements of existing phrases changed again.
 
 ## Open questions
 

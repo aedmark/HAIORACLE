@@ -715,8 +715,8 @@
           "how": {
             "lead": "`src/intercal.mjs` and `src/conductor.i` execute genuine INTERCAL 1972 rules:",
             "points": [
-              "Statement Politeness Checking: enforces the INTERCAL 1972 politeness rule (0.20 <= P/N <= 0.334), rejecting impolite programs with ICL079 and groveling programs with ICL099. The conductor score executes with 8 polite statements out of 37 (21.6%).",
-              "Per-phrase form: the host avalanche-mixes the score seed into a 16-bit arrangement word, and `DO WRITE IN .5` / `.6` read it and its complement. Nine select (~) choices then decide who waits, who answers, and whether the turnaround (`#3 $ .7`, a mingle) starts on step 10 or 11, inside guardrails: lead and pulse open, the antiphony answers the choir with lead or organ, section III is tutti, the breakdown drops the pulse.",
+              "Statement Politeness Checking: enforces the INTERCAL 1972 politeness rule (0.20 <= P/N <= 0.334), rejecting impolite programs with ICL079 and groveling programs with ICL099. The conductor score executes with 8 polite statements out of 35 (22.9%).",
+              "Per-phrase form: the host avalanche-mixes the score seed into a 16-bit arrangement word, and `DO WRITE IN .5` / `.6` read it and its complement. Seven select (~) choices then decide who colours the opening, who answers the choir, what sits under the breakdown, and whether the turnaround (`#3 $ .7`, a mingle) starts on step 10 or 11. Guardrails keep at least five band voices on every step and pulse and bass under the first three sections (D-032).",
               "Registers are the arrangement: twospot registers :1..:8 hold one channel each (#1 plays, #0 rests), `.1 <- #n` opens section n (Exposition, Antiphony, Tutti, Breakdown), and the VM snapshots the registers at each marker, so the program itself decides who plays. Malformed form is rejected at summon.",
               "`PLEASE IGNORE :8` freezes the Fun Machine register, so the breakdown's `DO :8 <- #0` does nothing and the player is never rested.",
               "`COME FROM (60)` Turnaround Cadence: `.3` starts the turnaround on step 10 or 11 and COME FROM skips the lead's exit, so pulse, bass, and lead come home through the loop's end.",
@@ -729,7 +729,7 @@
             {"label": "INTERCAL conductor score", "target": "src/conductor.i"},
             {"label": "INTERCAL interpreter & arrangement", "target": "src/intercal.mjs"},
             {"label": "INTERCAL conductor tests", "target": "tests/oracle.test.mjs"},
-            {"label": "Architecture Records D-028, D-030, and D-031", "target": "docs/DECISIONS.md"}
+            {"label": "Architecture Records D-028, D-030, D-031, and D-032", "target": "docs/DECISIONS.md"}
           ],
           "related": ["esoteric-fun-machine", "kapellmeister-genre-console", "bandstand-console"]
         }

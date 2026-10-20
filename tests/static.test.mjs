@@ -250,6 +250,7 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.match(html, /<output class="transport-section" id="transport-section"/);
   assert.match(styles, /\.mixer-strip\.is-tacet \.mixer-tacet/);
   assert.match(styles, /\.transport-section \{[^}]*flex: 1 0 100%;[^}]*height: 1\.5em;[^}]*white-space: nowrap;/, "section names never re-wrap the transport row");
+  assert.match(styles, /\.transport-section \{[^}]*contain: inline-size;/, "section names never widen the transport row");
 });
 
 test("the application has no remote runtime assets", async () => {

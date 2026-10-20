@@ -6,7 +6,8 @@
 
 - Hear every phrase breathe its own way: the INTERCAL conductor reads each creature's arrangement word and chooses who waits, who answers, and when the turnaround lands, so arrangements now differ from creature to creature (existing creatures' arrangements changed).
 - See the INTERCAL conductor at work: the transport names the current section, console strips light **TACET** while the conductor rests them, MIDI exports mark each section on the DAW timeline, and the stem README lists section times. The conductor score's own registers now decide who plays, so editing `src/conductor.i` re-arranges the band.
-- Keep the layout still while the loop plays: the section readout and the Kapellmeister harmony readout no longer change height when their text gets longer.
+- Keep the layout still while the loop plays: the section readout and the Kapellmeister harmony readout no longer change size when their text gets longer, so on wide windows the volume controls no longer jump to a new line once per loop.
+- Keep every arrangement full: each step keeps at least five band voices, and the pulse and bass hold until the breakdown.
 - Find every control in one of four wings beneath the vitrine: **Perform** (transport with restart, volume, and tempo; the Fun Machine; the Kapellmeister rulebook), **Mix** (Bandstand, mixing console, parlor room), **Keep** (Session Ledger and a new export and share desk), and **The Band** (Plates II–VI). The reading strip now only names the creature, and the keyboard's tab order follows the wings.
 
 ### Fixed
@@ -19,7 +20,7 @@
 
 ### Added
 
-- Overcome the ensemble's "wall of sound" using the Grand Conductor in INTERCAL 1972 (`src/conductor.i`, `src/intercal.mjs`). Evaluates statement politeness (21.6% P/N, adhering to ICL079/ICL099 limits), dynamically orchestrates channel breathing across Exposition, Antiphony, Tutti, and Breakdown regions with `PLEASE IGNORE` and `PLEASE REMEMBER`, and intercepts turnaround cadences at step 11 with `COME FROM (60)`.
+- Overcome the ensemble's "wall of sound" using the Grand Conductor in INTERCAL 1972 (`src/conductor.i`, `src/intercal.mjs`). Evaluates statement politeness (22.9% P/N, adhering to ICL079/ICL099 limits), dynamically orchestrates channel breathing across Exposition, Antiphony, Tutti, and Breakdown regions with `PLEASE IGNORE` and `PLEASE REMEMBER`, and intercepts turnaround cadences at step 11 with `COME FROM (60)`.
 - Play the Esoteric Fun Machine as a one-finger accompanist: hold a key and a stereo synth pad plays a **Swell** (one chord), an **Arpeggio** (chord tones rippling in the band's rhythm), or a **Progression** (four chords with a singing lead line) while the band follows your chord and the LOLCODE lead steps back.
 - Enter a phrase to summon a deterministic named audiovisual creature.
 - Hear a continuously looping synthesized composition generated from the creature's LOLCODE score.

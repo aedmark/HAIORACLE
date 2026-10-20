@@ -808,11 +808,14 @@ h1 em {
 }
 
 /* Its own full-width line of fixed height: section names differ in length,
-   and the readout must never re-wrap the transport row as they change. */
+   and the readout must never re-wrap the transport row as they change.
+   `contain: inline-size` stops the text from widening the row it sits in,
+   which pushed the volume controls onto a new line once per loop. */
 .transport-section {
   display: block;
   flex: 1 0 100%;
   min-width: 0;
+  contain: inline-size;
   height: 1.5em;
   line-height: 1.5em;
   color: rgba(228, 215, 190, 0.72);

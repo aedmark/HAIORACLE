@@ -687,14 +687,15 @@ test("antique parlor chamber impulse response eliminates low-frequency fog-horn 
 test("the INTERCAL 1972 conductor executes src/conductor.i deterministically with balanced politeness", () => {
   const word = 0b1_0110_1001;
   const result = runIntercal(conductorSource, [word, word ^ 0xffff]);
-  assert.equal(result.statementsCount, 37);
+  assert.equal(result.statementsCount, 35);
   assert.equal(result.politeCount, 8);
   assert.ok(result.politenessRatio >= 0.20 && result.politenessRatio <= 0.334);
   assert.equal(result.gaveUp, true);
-  assert.equal(result.stepsExecuted, 36, "COME FROM (100) skips the lead's exit after (60)");
+  assert.equal(result.stepsExecuted, 34, "COME FROM (100) skips the lead's exit after (60)");
   assert.deepEqual(result.ignoredVars, [":8"], "the Fun Machine register stays IGNOREd");
-  // Bit 6 set: the lead carries the breakdown and the organ rests; bit 7 clear hushes the choir.
-  assert.deepEqual(result.vars32, { ":1": 1, ":2": 1, ":3": 1, ":4": 0, ":5": 1, ":6": 0, ":7": 1, ":8": 1 });
+  // Bit 5 set: the choir joins the turnaround, so every voice is home at GIVE UP.
+  assert.deepEqual(result.vars32, { ":1": 1, ":2": 1, ":3": 1, ":4": 1, ":5": 1, ":6": 1, ":7": 1, ":8": 1 });
+  assert.equal(runIntercal(conductorSource, [0, 0xffff]).vars32[":6"], 0, "bit 5 clear leaves the choir out of the turnaround");
   assert.equal(result.vars16[".5"], word, "WRITE IN reads the arrangement word");
   assert.equal(result.vars16[".3"], 11, "#3 $ #1 mingles to binary 1011");
   assert.deepEqual(
@@ -747,25 +748,29 @@ test("INTERCAL 1972 dynamic arrangement varies per phrase within the conductor's
     const masks = arrangement.channelMasks;
     assert.equal(masks.length, 12);
     assert.deepEqual(arrangement.sections.map((section) => section.name), [...INTERCAL_SECTION_NAMES]);
-    assert.match(arrangement.politenessPercentage, /21\.6%/);
+    assert.match(arrangement.politenessPercentage, /22\.9%/);
     assert.ok([10, 11].includes(arrangement.turnaroundStep));
     const section = (index) => masks[index * 3];
     for (let step = 0; step < 12; step += 1) {
       const anchor = step >= arrangement.turnaroundStep ? masks[arrangement.turnaroundStep] : masks[Math.floor(step / 3) * 3];
       assert.deepEqual(masks[step], anchor, `step ${step} plays its section's mask`);
       assert.equal(masks[step].fun, true, "the player is never rested");
-      assert.equal(masks[step].chime && masks[step].fungal, true, "chimes and fungal voices keep the room alive");
+      assert.equal(masks[step].fungal, true, "the fungal voice keeps the room alive");
+      const bandVoices = ["lead", "beat", "bass", "harmony", "chime", "chant", "fungal"].filter((id) => masks[step][id]).length;
+      assert.ok(bandVoices >= 5, `step ${step} keeps at least five band voices (found ${bandVoices})`);
       assert.equal(masks[step].isTurnaround, step >= arrangement.turnaroundStep);
     }
-    // I: lead and pulse set out. II: the choir sings, answered by lead or organ, never both.
-    assert.ok(section(0).lead && section(0).beat);
-    assert.ok(section(1).chant && section(1).bass);
+    // I: lead, pulse, and bass set out. II: the choir sings over pulse and bass,
+    // answered by lead or organ, never both.
+    assert.ok(section(0).lead && section(0).beat && section(0).bass);
+    assert.ok(section(1).chant && section(1).bass && section(1).beat);
     assert.notEqual(section(1).lead, section(1).harmony);
     // III: tutti.
     assert.ok(Object.values(section(2)).filter((on) => on === true).length === 8);
-    // IV: the pulse falls away; lead or organ carries the tune, never both.
+    // IV: the pulse falls away; lead and organ carry the tune over the bass or the choir.
     assert.equal(masks[9].beat, false);
-    assert.notEqual(masks[9].lead, masks[9].harmony);
+    assert.ok(masks[9].lead && masks[9].harmony);
+    assert.notEqual(masks[9].bass, masks[9].chant);
     // Turnaround: pulse, bass, and lead come home.
     assert.ok(masks[11].beat && masks[11].bass && masks[11].lead);
   }
