@@ -13,7 +13,7 @@
 - Enter a phrase to summon a deterministic named audiovisual creature.
 - Hear a continuously looping synthesized composition generated from the creature's LOLCODE score.
 - Use surprise, replay, and mute controls.
-- Hear the lead melody and Shakespeare choir sit higher in the default mix, with the choir no longer vanishing behind narrow bandpass creatures.
+- Hear the lead melody and Shakespeare choir sit higher in the default mix, with neither the choir nor the lead vanishing behind narrow bandpass creatures.
 - Mix the ensemble on an eight-channel parlor console with faders, stereo panning, mute and solo switches, and live VU meters; plate engage/silence switches now share the console's mutes, and WAV exports follow the mix.
 - Play, pause, and stop-and-rewind the loop from a master transport rail, or press `Space` to play/pause and `Esc` to stop. Pause resumes on the next unheard step.
 - Control a louder default mix and live ensemble pace with keyboard-accessible master-volume (`0..100%`) and tempo (`36..208` BPM) sliders.

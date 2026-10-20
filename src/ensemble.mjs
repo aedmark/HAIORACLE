@@ -38,6 +38,11 @@ export function voicingGain(id) {
   return 10 ** ((CHANNEL_VOICING_DB[id] ?? 0) / 20);
 }
 
+// Parallel unfiltered lead level by creature filter type. A narrow bandpass
+// tuned well above the melody buried the lead (D-024), so bandpass creatures
+// blend a dry copy under their filtered voice; lowpass creatures are unchanged.
+export const LEAD_DRY_TAP = Object.freeze({ lowpass: 0, bandpass: 0.5 });
+
 const FILTER_TYPES = Object.freeze(["lowpass", "bandpass", "lowpass", "lowpass", "lowpass", "bandpass"]);
 const DELAY_MULTIPLIERS = Object.freeze([1, 1.5, 0.75, 2, 1.25, 0.5]);
 const DRONE_INTERVALS = Object.freeze([-12, -5, 7]);
@@ -160,6 +165,11 @@ export function buildEnsembleGraph(context, score, {
   strips.fungal.out.connect(filter);
   strips.chant.out.connect(compressor);
   strips.chant.out.connect(delay);
+  const leadDry = context.createGain();
+  leadDry.gain.value = LEAD_DRY_TAP[filter.type] ?? 0;
+  strips.lead.out.connect(leadDry);
+  leadDry.connect(compressor);
+  leadDry.connect(delay);
   strips.beat.out.connect(compressor);
   strips.bass.out.connect(compressor);
   strips.fun.out.connect(output);
@@ -255,6 +265,7 @@ export function buildEnsembleGraph(context, score, {
     fungalBus,
     funBus,
     strips,
+    leadDry,
     filter,
     panner,
     compressor,

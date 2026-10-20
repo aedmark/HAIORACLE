@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { CHANNEL_VOICING_DB, ENSEMBLE_BUS_GAINS, SILENT_GAIN, buildEnsembleGraph, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
+import { CHANNEL_VOICING_DB, ENSEMBLE_BUS_GAINS, LEAD_DRY_TAP, SILENT_GAIN, buildEnsembleGraph, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "../src/transport.mjs";
 
 // A minimal AudioContext stand-in that records every node and connection, so
@@ -278,4 +278,19 @@ test("default voicing lifts the lead and choir while every other channel stays a
   for (const id of ["fun", "beat", "bass", "harmony", "chime", "fungal"]) assert.equal(voicingGain(id), 1);
   assert.ok(Math.abs(voicingGain("lead") - 1.9953) < 1e-4);
   assert.ok(Math.abs(voicingGain("chant") - 3.9811) < 1e-4);
+});
+
+test("bandpass creatures blend a dry lead tap under the filter; lowpass creatures get none", () => {
+  const bandpass = fakeContext();
+  const bandGraph = build(bandpass);
+  assert.equal(bandGraph.filter.type, "bandpass");
+  assert.equal(bandGraph.leadDry.gain.value, LEAD_DRY_TAP.bandpass);
+  assert.ok(bandpass.edges.some(([a, b]) => a === bandGraph.strips.lead.out.id && b === bandGraph.leadDry.id));
+  assert.ok(bandpass.edges.some(([a, b]) => a === bandGraph.leadDry.id && b === bandGraph.compressor.id));
+  assert.ok(bandpass.edges.some(([a, b]) => a === bandGraph.leadDry.id && b === bandGraph.delay.id));
+
+  const lowpass = fakeContext();
+  const lowGraph = buildEnsembleGraph(lowpass, { ...SCORE, voice: 4 }, { start: 0, unit: 0.25, outputGain: 1 });
+  assert.equal(lowGraph.filter.type, "lowpass");
+  assert.equal(lowGraph.leadDry.gain.value, 0);
 });
