@@ -109,6 +109,7 @@ Never force-push or rewrite shared history.
 | `docs/` | Architecture, decisions, tests, risks, and current state |
 | `tools/check_docs.py` | Documentation consistency checker |
 | `tools/manual.py` | 3x documentation manual validator and builder |
+| `tools/freeze_rulebooks.mjs` | One-time freezer for the Kapellmeister rulebook golden fixture (P5-23) |
 
 ## Engineering conventions
 
