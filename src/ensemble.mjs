@@ -20,6 +20,24 @@ export const ENSEMBLE_BUS_GAINS = Object.freeze({
   fun: 0.88,
 });
 
+// Default voicing balance, in dB, applied on each strip before its fader so
+// the console still opens at unity. Solo renders measured the lead about level
+// with the bass and the choir roughly 20 dB under it, so both are lifted.
+export const CHANNEL_VOICING_DB = Object.freeze({
+  lead: 6,
+  fun: 0,
+  beat: 0,
+  bass: 0,
+  harmony: 0,
+  chime: 0,
+  chant: 12,
+  fungal: 0,
+});
+
+export function voicingGain(id) {
+  return 10 ** ((CHANNEL_VOICING_DB[id] ?? 0) / 20);
+}
+
 const FILTER_TYPES = Object.freeze(["lowpass", "bandpass", "lowpass", "lowpass", "lowpass", "bandpass"]);
 const DELAY_MULTIPLIERS = Object.freeze([1, 1.5, 0.75, 2, 1.25, 0.5]);
 const DRONE_INTERVALS = Object.freeze([-12, -5, 7]);
@@ -99,7 +117,7 @@ export function buildEnsembleGraph(context, score, {
   feedback.gain.value = 0.14 + score.bloom / 650;
   output.gain.value = outputGain;
 
-  // Mixer strips: bus -> fader -> pan, with an optional analyser tap after the
+  // Mixer strips: bus -> voicing trim -> fader -> pan, with an optional analyser tap after the
   // pan so meters show what is heard. The fader upmixes mono voices to stereo
   // first, so a centered StereoPanner passes them at unity instead of applying
   // the -3 dB equal-power law it uses for mono input.
@@ -107,12 +125,14 @@ export function buildEnsembleGraph(context, score, {
   const strips = {};
   for (const { id, bus } of MIXER_CHANNELS) {
     const setting = channels[id] || { gain: 1, pan: 0 };
+    const trim = context.createGain();
+    trim.gain.value = voicingGain(id);
     const fader = context.createGain();
     fader.channelCount = 2;
     fader.channelCountMode = "explicit";
     fader.channelInterpretation = "speakers";
     fader.gain.setValueAtTime(setting.gain, now);
-    buses[bus].connect(fader);
+    buses[bus].connect(trim).connect(fader);
     let out = fader;
     let pan = null;
     if (typeof context.createStereoPanner === "function") {
@@ -126,7 +146,7 @@ export function buildEnsembleGraph(context, score, {
       analyser.fftSize = 1024;
       out.connect(analyser);
     }
-    strips[id] = { fader, pan, analyser, out };
+    strips[id] = { trim, fader, pan, analyser, out };
   }
 
   // Drums and bass skip the creature filter so they keep their weight; the Fun

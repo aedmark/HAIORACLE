@@ -59,6 +59,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Mycelial network | `buildMycelialNetwork()`, `buildFruitingBodies()` | Canvas renderer (`src/app.mjs`) | procedural branching hyphae, anastomotic fusion loops, eight generative sporophore archetypes, and drifting ballistospores growing over a 10-second envelope from creature perimeter into vitrine glass |
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
+| Channel voicing | `CHANNEL_VOICING_DB` in `src/ensemble.mjs` | each strip's trim node | fixed default balance in dB before the fader (lead +6, choir +12, others 0); never changed at runtime |
 | Ensemble graph | `buildEnsembleGraph()` | `playScore()`, `exportSpecimenWav()` | one node topology for live and offline audio; drums, bass, and Fun Machine bypass the creature filter, everything else passes through it; `stop` ends looping sources for offline renders |
 | Mixer console | `#mixer-engine` strips, plate ENGAGE/SILENCE switches, Bandstand buttons | `updateMixer()` → strip gains and pans in live and offline graphs | eight channels; fader `0..100` (80 = unity, 100 = +12 dB), pan `−100..100`, mute, solo; any solo isolates soloed channels and an explicit mute still wins; post-pan analyser drives VU meters live only |
 | Master transport | `#transport-deck` buttons, `Space`/`Esc` via `transportCommandForKey()` | `runTransportCommand()` | `stopped`/`playing`/`paused` with a raw step cursor; pause resumes after the last audible step; audio runs only while playing and unmuted |
@@ -80,7 +81,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - Rendering and sound share one immutable score. Enforced by the `showScore()` and `playScore()` call path.
 - Only one audio transport loops at a time. Enforced by `stopCurrentSound()` before every start.
 - Live playback and WAV export build the same node topology. Enforced by `tests/transport.test.mjs` and D-023.
-- Every ensemble bus passes through its own mixer strip, and a default console is transparent (unity gain, centered). Enforced by `tests/transport.test.mjs`, `tests/mixer.test.mjs`, and D-024.
+- Every ensemble bus passes through its own mixer strip (voicing trim → fader → pan), and the console opens at unity faders, centered, with default balance set only by `CHANNEL_VOICING_DB`. Enforced by `tests/transport.test.mjs`, `tests/mixer.test.mjs`, and D-024.
 - A plate's ENGAGE/SILENCE switch and its mixer mute are the same state. Enforced by `tests/static.test.mjs` and D-024.
 - Audio loops only while the transport is `playing` and the bell is unmuted; mute never changes transport state. Enforced by `runTransportCommand()` and D-023.
 - Master volume changes only the post-compressor output gain and never changes the deterministic creature score. Enforced structurally in `tests/static.test.mjs` (D-009).

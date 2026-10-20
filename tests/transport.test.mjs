@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { ENSEMBLE_BUS_GAINS, SILENT_GAIN, buildEnsembleGraph, parlorSendLevels } from "../src/ensemble.mjs";
+import { CHANNEL_VOICING_DB, ENSEMBLE_BUS_GAINS, SILENT_GAIN, buildEnsembleGraph, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "../src/transport.mjs";
 
 // A minimal AudioContext stand-in that records every node and connection, so
@@ -135,7 +135,12 @@ test("each bus passes through its own stereo mixer strip before the shared graph
     assert.ok(edges.some(([a, b]) => a === strip.fader.id && b === strip.pan.id), `${id} fader feeds its pan`);
     assert.equal(strip.analyser, null, "meters are off unless requested");
   }
-  assert.ok(edges.some(([a, b]) => a === graph.mix.id && b === graph.strips.lead.fader.id));
+  assert.ok(edges.some(([a, b]) => a === graph.mix.id && b === graph.strips.lead.trim.id));
+  for (const id of Object.keys(graph.strips)) {
+    const strip = graph.strips[id];
+    assert.ok(edges.some(([a, b]) => a === strip.trim.id && b === strip.fader.id), `${id} trim feeds its fader`);
+    assert.equal(strip.trim.gain.value, voicingGain(id));
+  }
   assert.ok(edges.some(([a, b]) => a === graph.strips.chime.pan.id && b === graph.filter.id));
   assert.ok(edges.some(([a, b]) => a === graph.strips.beat.pan.id && b === graph.compressor.id));
   assert.equal(edges.some(([a, b]) => a === graph.beatBus.id && b === graph.compressor.id), false, "no bus bypasses its strip");
@@ -263,4 +268,12 @@ test("Escape stops from anywhere and other keys are ignored", () => {
   assert.equal(transportCommandForKey({ key: "Escape", code: "Escape", ctrlKey: true, target: keyTarget("BODY") }), null);
   assert.equal(transportCommandForKey({ key: "a", code: "KeyA", target: keyTarget("BODY") }), null);
   assert.equal(transportCommandForKey(null), null);
+});
+
+test("default voicing lifts the lead and choir while every other channel stays at unity", () => {
+  assert.equal(CHANNEL_VOICING_DB.lead, 6);
+  assert.equal(CHANNEL_VOICING_DB.chant, 12);
+  for (const id of ["fun", "beat", "bass", "harmony", "chime", "fungal"]) assert.equal(voicingGain(id), 1);
+  assert.ok(Math.abs(voicingGain("lead") - 1.9953) < 1e-4);
+  assert.ok(Math.abs(voicingGain("chant") - 3.9811) < 1e-4);
 });

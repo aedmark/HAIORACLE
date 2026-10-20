@@ -48,7 +48,7 @@ _Last updated: 2026-10-19, session 20, on `main`: eight-channel parlor mixing co
 - A comprehensive 3x technical manual (`docs/manual.json`, `manual.html`, `tools/manual.py`) documents What, How, and Why across all 28 major systems, interpreters, and algorithms with 0 warnings.
 - Full interactive and audiovisual functionality verified in live browser review (P4-01).
 - The master transport (`#transport-deck`) plays, pauses at the last heard step, and stops-and-rewinds the loop; `Space` toggles play/pause and `Esc` stops from anywhere. Live playback and WAV export build one shared graph (`src/ensemble.mjs`), so exports render the routing the listener hears (P5-18, D-023).
-- The parlor mixing console (`#mixer-engine`) gives all eight voices a fader, pan, mute, solo, and live post-fader VU meter. Plate ENGAGE/SILENCE switches are the console's mutes, and WAV exports follow the mix. A default console renders a bit-identical level to the pre-mixer build, and faders reach +12 dB for lifting quiet voices (P5-19, D-024).
+- The parlor mixing console (`#mixer-engine`) gives all eight voices a fader, pan, mute, solo, and live post-fader VU meter. Plate ENGAGE/SILENCE switches are the console's mutes, and WAV exports follow the mix. Default voicing trims lift the lead +6 dB and the choir +12 dB with faders still at unity, and faders reach a further +12 dB (P5-19, D-024).
 - Runtime assets are local and dependency-free (D-001).
 
 **Not verified**
@@ -66,10 +66,11 @@ _Last updated: 2026-10-19, session 20, on `main`: eight-channel parlor mixing co
 
 ## Next steps
 
-1. P5-21 stems: render one solo pass per channel through the shared graph using `channelSettings()` with a single soloed channel, plus a ninth parlor-room stem. Note that rhythm patterns 2 and 3 have five cells, so a 12-step WAV does not tile seamlessly for those creatures (observed while building P5-18; the live loop is unaffected).
-2. P5-20 sessions need a decision first: browser preset storage contradicts the "no local storage" statement in ARCHITECTURE.md and SECURITY.md.
-3. Complete P4-02 with keyboard, reduced-motion, contrast, and screen-reader checks.
-4. Choose public hosting and domain (Q-001 / P6-01).
+1. Decide whether the choir (and possibly lead) should bypass the creature filter. On bandpass creatures (score voices 1 and 5) the filter buries every filtered channel: "three pigeons in a borrowed coat" solos its lead at −51 dB and its choir at −67 dB even after the D-024 trims. The choir already has its own formant filters.
+2. P5-21 stems: render one solo pass per channel through the shared graph using `channelSettings()` with a single soloed channel, plus a ninth parlor-room stem. Note that rhythm patterns 2 and 3 have five cells, so a 12-step WAV does not tile seamlessly for those creatures (observed while building P5-18; the live loop is unaffected).
+3. P5-20 sessions need a decision first: browser preset storage contradicts the "no local storage" statement in ARCHITECTURE.md and SECURITY.md.
+4. Complete P4-02 with keyboard, reduced-motion, contrast, and screen-reader checks.
+5. Choose public hosting and domain (Q-001 / P6-01).
 
 ## Open questions
 
