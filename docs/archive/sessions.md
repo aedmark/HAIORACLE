@@ -660,3 +660,27 @@ Older sessions: [archive/sessions.md](sessions.md).
 5. `tests/oracle.test.mjs`, `tests/static.test.mjs`: Added unit tests for INTERCAL execution, politeness validation (`ICL079`/`ICL099`), `COME FROM` turnaround, dynamic arrangement masks, and Fun Machine real-time ensemble following (79/79 tests passing).
 
 **Verified:** 79/79 Node tests passing; `python3 tools/check_docs.py` 0 errors, 0 warnings; `python3 tools/manual.py check docs/manual.json` 6 sections, 33 entries, 0 errors, 0 warnings.
+
+### Session 25: 2026-10-20: the one-finger accompanist
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Rework the Fun Machine so a held key plays a synth pad chord, arpeggio, or progression in the band's rhythm, with the band following "a composer playing the lead melody" rather than sounding like an organ. Maintainer choices: three style chips; the LOLCODE lead steps back.
+
+**Done:** D-029 (supersedes the Fun Machine voice in D-028 and parts of D-020).
+
+**Changed:**
+1. `src/accompaniment.mjs` (new): styles, `buildPerformance()`, voice-led `padVoicing()`, `arpeggioNotes()`, `leadMidi()`, `stepsToRegionBoundary()`, `toTonicRelative()`.
+2. `src/app.mjs`: `schedulePadChord()`, `scheduleArpNote()`, `scheduleFunLeadNote()`, and `releaseFunPads()` replace the organ voices; `triggerFunKey()` builds a performance, re-conducts the band, and bridges a pad to the next region; the scheduler plays pads, arpeggios, and lead notes on the step grid; the LOLCODE lead and drones duck while a key is held; the mode switch and quality chips are replaced by style chips; the conductor receives tonic-relative chords; sequencer labels name generated steps in absolute pitch.
+3. `src/ensemble.mjs`: the Fun Machine strip feeds the delay and chamber reverb. `src/midi.mjs`: the MANUAL track uses GM Warm Pad. `src/session.mjs`: session format v2 (`funMachine.style`) with a v1 upgrade path.
+4. `index.html`, `styles.css`: style chips and hint.
+
+**Verified:** 87/87 Node checks, including the new accompanist suite and a v1→v2 session upgrade test. In the browser, holding G in PROGRESSION on "the moon owes me five dollars" (E♭ tonic) conducted the band through G min → E♭ → C min → D; SWELL held G min; before the fix the same key conducted B♭ min. The lead meter fell about 13 dB in fill while held and recovered on release. The Fun Machine meter showed the accompanist in all three styles, and switching style mid-hold worked. No console errors.
+
+**Not verified:** Listening. Nobody has heard the new pad, arpeggio, or lead.
+
+**Problems:** This session's work landed in the same working tree as session 24's uncommitted INTERCAL and pad-overhaul edits; the pad overhaul is superseded, and the INTERCAL work is untouched.
+
+**Left undone:** Listening pass; P4-02; P6-01.
+
+**Next session should start with:** a listening pass on the accompanist.

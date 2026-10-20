@@ -14,6 +14,7 @@
 
 ### Fixed
 
+- Keep the echo in time when you move the tempo slider during play. The delay was timed once at the start of the loop, so afterwards the Fun Machine's pads, arpeggios, and lead (which all feed it) echoed at the old tempo and sounded rushed or dragging.
 - Play the Fun Machine manual like a keyboard: each key now sounds higher than the one to its left, and C' sounds an octave above C (they used to play in the same octave).
 - Load the new version after an update without a hard reload: every module and esoteric source URL carries a version stamp, so the browser can no longer run a fresh module against a cached old one ("does not provide an export named ..."). `python3 tools/serve.py` serves the page for local development without stale caching.
 - Hear the parlor room: the chamber reverb now hears every voice except the bass (it was nearly silent, especially for bandpass creatures), the clockwork escapement ticks clearly, and the wax crackle sits at half its old level so it no longer overpowers the band.

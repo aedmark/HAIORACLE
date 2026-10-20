@@ -259,6 +259,7 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.match(styles, /#fun-machine-telemetry \{[^}]*flex: 1 0 100%;[^}]*height: 3\.2em;[^}]*contain: inline-size;/);
   assert.match(styles, /\.fun-sequence-grid \{\n  display: grid;\n  grid-template-columns: repeat\(12, minmax\(0, 1fr\)\);/);
   assert.match(styles, /\.step-trits,\n\.beat-step \.cell-byte \{[^}]*height: 1\.3em;[^}]*white-space: nowrap;/);
+  assert.match(app, /function setTempoBpm\(value\) \{[\s\S]*?currentTransport\.delay\.delayTime\.setTargetAtTime\(delayTimeFor\(currentScore, activeTempoBpm\)/, "a live tempo change retimes the echo");
   assert.match(app, /async function triggerFunKey\(semitone, isKeyDown = true\) \{\n[^\n]*\n  if \(semitone === null \|\| semitone === undefined \|\| !rulebooksInstalled\(\)\) return;/);
   assert.match(app, /composeArrangement\(/);
   // The arrangement reaches the whole workstation, not only the scheduler.

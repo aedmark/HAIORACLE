@@ -64,6 +64,16 @@ export function parlorSendLevels({ enabled, reverbEnabled, crackleEnabled, level
   };
 }
 
+/**
+ * The echo time for a score at a tempo: a rhythm-dependent multiple of one
+ * loop step (an eighth note), capped by the delay line. The live loop calls
+ * this again whenever the tempo changes, so echoes stay on the beat.
+ */
+export function delayTimeFor(score, bpm) {
+  const unit = 60 / bpm / 2;
+  return Math.min(1.45, unit * DELAY_MULTIPLIERS[score.rhythm]);
+}
+
 function midiToFrequency(note) {
   return 440 * (2 ** ((note - 69) / 12));
 }
@@ -127,7 +137,7 @@ export function buildEnsembleGraph(context, score, {
   compressor.threshold.value = -18;
   compressor.knee.value = 18;
   compressor.ratio.value = 5;
-  delay.delayTime.value = Math.min(1.45, unit * DELAY_MULTIPLIERS[score.rhythm]);
+  delay.delayTime.value = delayTimeFor(score, 60 / (unit * 2));
   feedback.gain.value = 0.14 + score.bloom / 650;
   output.gain.value = outputGain;
 

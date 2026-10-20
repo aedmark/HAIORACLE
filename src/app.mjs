@@ -35,7 +35,7 @@ import {
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
-import { PARLOR_CRACKLE_PER_LEVEL, PARLOR_REVERB_PER_LEVEL, SILENT_GAIN, buildEnsembleGraph, parlorSendLevels } from "./ensemble.mjs";
+import { PARLOR_CRACKLE_PER_LEVEL, PARLOR_REVERB_PER_LEVEL, SILENT_GAIN, buildEnsembleGraph, delayTimeFor, parlorSendLevels } from "./ensemble.mjs";
 import {
   ACCOMPANIMENT_CHANNEL_IDS,
   FADER_UNITY,
@@ -325,6 +325,12 @@ function setTempoBpm(value) {
   if (elements.tempo) elements.tempo.value = String(activeTempoBpm);
   if (elements.tempoValue) elements.tempoValue.value = `${activeTempoBpm} BPM`;
   if (elements.pulse && currentScore) elements.pulse.textContent = String(activeTempoBpm);
+  // The echo was timed once when the loop started. Since the Fun Machine's
+  // pads, arpeggios, and lead feed it (D-029), a stale echo after a tempo
+  // change made the accompaniment sound faster or slower than the setting.
+  if (audioContext && currentTransport?.delay && currentScore) {
+    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, activeTempoBpm), audioContext.currentTime, 0.08);
+  }
 }
 
 function wrapHue(hue) {

@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 35, on `main`: the Fun Machine manual climbs like a keyboard, so C' sounds an octave above C (D-036); session 34 stamped every module and source URL with a content hash (D-035)._
+_Last updated: 2026-10-20, session 36, on `main`: the echo follows live tempo changes, so the accompaniment no longer drifts from the tempo setting; session 35 made the manual climb like a keyboard (D-036)._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-22 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
@@ -86,6 +86,24 @@ _Last updated: 2026-10-20, session 35, on `main`: the Fun Machine manual climbs 
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 36: 2026-10-20: the echo keeps the tempo
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Maintainer: the one-finger accompaniment seemed slightly faster than the tempo setting.
+
+**Found:** the accompanist itself plays on the band's step grid at the live tempo (`loopStepDuration()` and the scheduler both read `activeTempoBpm`). The delay, however, was timed once when the loop started (`unit × DELAY_MULTIPLIERS[score.rhythm]`) and never followed the tempo slider. Since D-029 the pad, arpeggio, and lead all feed that delay, so after a tempo change mid-loop their echoes ran at the old tempo.
+
+**Changed:** `src/ensemble.mjs` exports `delayTimeFor(score, bpm)` and uses it at build time; `setTempoBpm()` in `src/app.mjs` retimes the running loop's delay with a short glide. Tests cover the formula and the live retime. `ASSET_VERSION` restamped.
+
+**Verified:** 107/107 Node checks; in the browser, a normal reload picked up the new stamp, and moving the tempo 70 → 150 → 96 while holding a key raised no errors.
+
+**Not verified:** Listening. If the accompaniment still feels quick at a steady tempo, the likely cause is the ARPEGGIO style's two notes per step (sixteenths against the band's eighth-note steps, D-029). That is a design choice to revisit, not this bug.
+
+**Left undone:** P5-23 phase 5; listening passes; P4-02; P6-01.
+
+**Next session should start with:** the maintainer's listen, then P5-23 phase 5.
 
 ### Session 35: 2026-10-20: the manual climbs like a keyboard
 
@@ -286,30 +304,6 @@ _Last updated: 2026-10-20, session 35, on `main`: the Fun Machine manual climbs 
 **Not verified:** Listening (the masks are unchanged, so the sound should be identical); DAW display of the markers.
 
 **Left undone:** Listening pass on the accompanist; P4-02; P6-01.
-
-**Next session should start with:** a listening pass on the accompanist.
-
-### Session 25: 2026-10-20: the one-finger accompanist
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Rework the Fun Machine so a held key plays a synth pad chord, arpeggio, or progression in the band's rhythm, with the band following "a composer playing the lead melody" rather than sounding like an organ. Maintainer choices: three style chips; the LOLCODE lead steps back.
-
-**Done:** D-029 (supersedes the Fun Machine voice in D-028 and parts of D-020).
-
-**Changed:**
-1. `src/accompaniment.mjs` (new): styles, `buildPerformance()`, voice-led `padVoicing()`, `arpeggioNotes()`, `leadMidi()`, `stepsToRegionBoundary()`, `toTonicRelative()`.
-2. `src/app.mjs`: `schedulePadChord()`, `scheduleArpNote()`, `scheduleFunLeadNote()`, and `releaseFunPads()` replace the organ voices; `triggerFunKey()` builds a performance, re-conducts the band, and bridges a pad to the next region; the scheduler plays pads, arpeggios, and lead notes on the step grid; the LOLCODE lead and drones duck while a key is held; the mode switch and quality chips are replaced by style chips; the conductor receives tonic-relative chords; sequencer labels name generated steps in absolute pitch.
-3. `src/ensemble.mjs`: the Fun Machine strip feeds the delay and chamber reverb. `src/midi.mjs`: the MANUAL track uses GM Warm Pad. `src/session.mjs`: session format v2 (`funMachine.style`) with a v1 upgrade path.
-4. `index.html`, `styles.css`: style chips and hint.
-
-**Verified:** 87/87 Node checks, including the new accompanist suite and a v1→v2 session upgrade test. In the browser, holding G in PROGRESSION on "the moon owes me five dollars" (E♭ tonic) conducted the band through G min → E♭ → C min → D; SWELL held G min; before the fix the same key conducted B♭ min. The lead meter fell about 13 dB in fill while held and recovered on release. The Fun Machine meter showed the accompanist in all three styles, and switching style mid-hold worked. No console errors.
-
-**Not verified:** Listening. Nobody has heard the new pad, arpeggio, or lead.
-
-**Problems:** This session's work landed in the same working tree as session 24's uncommitted INTERCAL and pad-overhaul edits; the pad overhaul is superseded, and the INTERCAL work is untouched.
-
-**Left undone:** Listening pass; P4-02; P6-01.
 
 **Next session should start with:** a listening pass on the accompanist.
 

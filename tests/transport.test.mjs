@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { CHANNEL_VOICING_DB, ENSEMBLE_BUS_GAINS, LEAD_DRY_TAP, SILENT_GAIN, buildEnsembleGraph, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
+import { CHANNEL_VOICING_DB, ENSEMBLE_BUS_GAINS, LEAD_DRY_TAP, SILENT_GAIN, buildEnsembleGraph, delayTimeFor, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "../src/transport.mjs";
 
 // A minimal AudioContext stand-in that records every node and connection, so
@@ -298,4 +298,13 @@ test("bandpass creatures blend a dry lead tap under the filter; lowpass creature
   const lowGraph = buildEnsembleGraph(lowpass, { ...SCORE, voice: 4 }, { start: 0, unit: 0.25, outputGain: 1 });
   assert.equal(lowGraph.filter.type, "lowpass");
   assert.equal(lowGraph.leadDry.gain.value, 0);
+});
+
+test("the echo is timed from the tempo, so a live tempo change can retime it", () => {
+  // unit 0.25 s per step is 120 BPM; rhythm 2 echoes three quarters of a step later.
+  const graph = build(fakeContext());
+  assert.equal(graph.delay.delayTime.value, delayTimeFor(SCORE, 120));
+  assert.equal(delayTimeFor(SCORE, 120), 0.75 * 0.25);
+  assert.equal(delayTimeFor(SCORE, 60), 2 * delayTimeFor(SCORE, 120), "half the tempo, twice the echo time");
+  assert.equal(delayTimeFor({ rhythm: 3 }, 36), 1.45, "slow tempos stay inside the delay line");
 });
