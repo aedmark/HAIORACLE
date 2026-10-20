@@ -536,7 +536,7 @@
           "title": "Eight-Channel Parlor Mixing Console",
           "summary": "Gives each of the eight ensemble voices a fader, stereo pan, mute, solo, and live VU meter.",
           "tags": ["mixer", "audio", "metering", "accessibility"],
-          "what": "A console (`#mixer-engine`) between the Fun Machine and Plate II with eight strips: LEAD (LOLCODE), MANUAL (Fun Machine), PULSE (Malbolge), BASS (Brainfuck), ORGAN (Befunge), CHIMES (Piet/FRACTRAN), CHOIR (Shakespeare), and MYCELIUM (bio-acoustics). Each strip has a vertical fader with a dB readout, a pan slider, M and S switches, and a post-fader VU column with peak hold and clip warning. Plate ENGAGE/SILENCE switches are the same mutes, and WAV exports follow the mix.",
+          "what": "A console (`#mixer-engine`) in the Mix wing, between the Bandstand and the parlor room, with eight strips: LEAD (LOLCODE), MANUAL (Fun Machine), PULSE (Malbolge), BASS (Brainfuck), ORGAN (Befunge), CHIMES (Piet/FRACTRAN), CHOIR (Shakespeare), and MYCELIUM (bio-acoustics). Each strip has a vertical fader with a dB readout, a pan slider, M and S switches, and a post-fader VU column with peak hold and clip warning. Plate ENGAGE/SILENCE switches are the same mutes, and WAV exports follow the mix.",
           "how": {
             "lead": "`src/mixer.mjs` holds the pure console state; `buildEnsembleGraph()` in `src/ensemble.mjs` builds the strips; `updateMixer()` in `src/app.mjs` applies changes:",
             "points": [

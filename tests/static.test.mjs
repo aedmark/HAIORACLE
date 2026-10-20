@@ -378,7 +378,7 @@ test("the master transport deck exposes play, pause, stop, position, and hotkeys
   assert.doesNotMatch(app, /context\.createDynamicsCompressor\(\)|offlineCtx\.createDynamicsCompressor\(\)/);
 });
 
-test("the parlor mixing console sits between the Fun Machine and Plate II and drives the strips", async () => {
+test("the parlor mixing console sits after the Fun Machine and before Plate II and drives the strips", async () => {
   const [html, styles, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),
@@ -451,4 +451,46 @@ test("the session ledger saves presets on-device and .fun files through the vali
   }
   assert.equal((app.match(/localStorage\./g) || []).length, storageCalls.length, "no unguarded storage access elsewhere");
   assert.doesNotMatch(app, /sessionStorage|indexedDB|document\.cookie/);
+});
+
+test("the page groups the workstation into perform, mix, keep, and band wings (D-027)", async () => {
+  const [html, styles] = await Promise.all([
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("styles.css", root), "utf8"),
+  ]);
+  const at = (id) => {
+    const index = html.indexOf(`id="${id}"`);
+    assert.ok(index > 0, `missing #${id}`);
+    return index;
+  };
+  const wingOf = (id) => ["wing-band", "wing-keep", "wing-mix", "wing-perform"].find((wing) => at(wing) < at(id));
+  const order = ["reading", "wing-perform", "transport-deck", "fun-machine-engine", "kapellmeister-engine",
+    "wing-mix", "bandstand-engine", "mixer-engine", "parlor-acoustics-engine",
+    "wing-keep", "session-engine", "export-engine",
+    "wing-band", "beat-engine", "bass-engine", "harmony-engine", "chime-engine", "chant-engine"];
+  for (let i = 1; i < order.length; i += 1) {
+    assert.ok(at(order[i - 1]) < at(order[i]), `${order[i - 1]} must precede ${order[i]}`);
+  }
+  for (const wing of ["perform", "mix", "keep", "band"]) {
+    assert.match(html, new RegExp(`<section class="workstation-wing wing-${wing}" id="wing-${wing}" aria-labelledby="wing-${wing}-heading">`));
+    assert.match(html, new RegExp(`<h2 id="wing-${wing}-heading">`));
+  }
+
+  // The reading strip only reads: no control lives inside the live region.
+  const reading = html.slice(at("reading"), at("wing-perform"));
+  assert.doesNotMatch(reading, /<button|<input|<select/);
+  for (const id of ["transport-play", "replay", "master-volume", "tempo-bpm"]) {
+    assert.equal(wingOf(id), "wing-perform", id);
+    assert.ok(at(id) < at("fun-machine-engine"), `${id} belongs to the transport rail`);
+  }
+  for (const id of ["export-wav", "export-stems", "export-midi", "export-png", "share-link"]) {
+    assert.equal(wingOf(id), "wing-keep", id);
+    assert.ok(at(id) > at("export-engine"), `${id} belongs to the export desk`);
+  }
+
+  // The calling-slip look belongs to the phrase alone, so the preset field stays one line tall.
+  assert.doesNotMatch(styles, /input\[type="text"\]/);
+  assert.match(styles, /#phrase \{\n {4}min-height: 3\.8rem;/);
+  // Consoles never widen past the cabinet, which clips overflow instead of scrolling.
+  assert.match(styles, /\.beat-engine \{\n {2}display: grid;\n {2}grid-template-columns: minmax\(0, 1fr\);/);
 });

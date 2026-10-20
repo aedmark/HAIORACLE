@@ -291,7 +291,7 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** WAV exports now render the same routing as live playback, so they sound slightly different from earlier exports: chimes, choir, and fungal voices pass through the creature filter, with the panner and dry filter tap present. Lead-solo mode no longer renders sequenced chords into the WAV. A paused loop resumes with a fresh 160 ms drone fade-in instead of a frozen tail. P5-19 can add per-channel strips inside `buildEnsembleGraph()` once and get them in both live and offline audio.
 
-## D-024 Eight-channel parlor mixer built into the shared ensemble graph (2026-10-19, status: accepted)
+## D-024 Eight-channel parlor mixer built into the shared ensemble graph (2026-10-19, status: accepted; placement in point 5 superseded by D-027)
 
 **Context:** P5-19 asks for faders, stereo panning, a mute/solo matrix, and VU metering. The ensemble already had a second, partial mute system: each plate's ENGAGE/SILENCE switch skipped scheduling and ducked its bus with hard-coded levels repeated in a dozen places. A mixer added on top would have given each bandmate two mutes that could disagree.
 
@@ -337,6 +337,23 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 **Alternatives:** IndexedDB is heavier than a handful of small JSON records. Storing full VM step structures would push large, nested, label-bearing data across the boundary. Storing a click log instead of per-cell counts would grow without bound. A server or sync service would end the client-only privacy model.
 
 **Consequences:** Saved presets keep phrases on the device until the player deletes them (DELETE in the ledger, or clearing site data). A `.fun` file contains the phrase in plain text, like the PNG broadsheet and the `#omen=` link. The session format is now a compatibility surface: future fields need a version bump and a migration, and D-003-style determinism changes can make an old session summon a different creature.
+
+## D-027 The page is a four-wing workstation: perform, mix, keep, then the band (2026-10-19, status: accepted)
+
+**Context:** The DAW phase (D-023 through D-026) added its controls wherever there was room. The transport rail, master volume and tempo, restart, and five export buttons all sat in the reading strip, whose action column stacked six buttons on desktop. The mixer and Session Ledger sat between the Fun Machine and Plate II, while the Kapellmeister, Bandstand, and parlor room sat at the bottom of the page. A player had to scroll past the five VM plates to move between related controls. At phone width the preset-name field inherited the summon field's 3.8 rem height, and the Kapellmeister rulebook select and footer links overflowed into the cabinet's hidden overflow.
+
+**Decision:** The maintainer chose this layout on 2026-10-19.
+1. **The reading strip only reads.** It holds the creature name and score card and stays the polite live region. It has no buttons, so moving the sliders no longer re-announces the whole reading.
+2. **Wing I · Perform:** the transport rail (play, pause, stop, restart, step readout, master volume, tempo, hotkey legend), then the Fun Machine, then the Kapellmeister rulebook that colors its chords.
+3. **Wing II · Mix:** the Bandstand's group switches, the eight-channel console, and the parlor room, which is the ninth stem.
+4. **Wing III · Keep:** the Session Ledger, then an export and share desk (`#export-engine`) grouped as audio (WAV loop, nine stems), score (MIDI), and plate and link (PNG, copy omen link).
+5. **Wing IV · The Band:** Plates II–VI last, as the detailed editors behind the mix. Their ENGAGE/SILENCE switches are still the console's mutes (D-024).
+6. **Markup moves, ids stay.** Every id `src/app.mjs` and the tests use is unchanged. Each wing is a `<section>` with an `h2` drawer label on a parchment band, so the heading outline and the keyboard tab order both follow perform → mix → keep → band.
+7. **The transport rail stays in place,** not sticky. `Space` and `Esc` already work from anywhere, and a sticky rail would need the cabinet's `overflow: hidden` changed to `overflow: clip`. That is better done as its own change.
+
+**Alternatives:** Placing the plates inside Wing I would follow signal order literally, but it would push the mixer and the Keep wing about 1,300 px further down on desktop. Folding the exports into the Session Ledger would mix "save this jam" with "make files for elsewhere." A sticky transport was deferred, not rejected.
+
+**Consequences:** D-024 point 5 (mixer placement) is superseded. A new structural test in `tests/static.test.mjs` checks the wing order, that the reading strip holds no controls, and that the transport and export buttons sit in their wings. The older order checks (Fun Machine, then mixer, then ledger, then Plate II) still hold. Phrase identity, audio, and stored session formats are untouched.
 
 ## Open questions
 

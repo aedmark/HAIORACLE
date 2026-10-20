@@ -223,7 +223,6 @@ a:focus-visible {
 .reading-label,
 .score-card,
 .volume-heading,
-.replay-button,
 footer {
   font-size: 0.68rem;
   font-weight: 700;
@@ -258,8 +257,7 @@ footer {
 }
 
 .icon-button,
-.text-button,
-.replay-button {
+.text-button {
   border: 0;
   color: inherit;
   background: transparent;
@@ -542,7 +540,7 @@ h1 em {
     5px 5px 0 var(--ebony);
 }
 
-input[type="text"] {
+#phrase {
   min-width: 0;
   padding: 0.95rem 1.25rem;
   border: 0;
@@ -560,13 +558,13 @@ input[type="text"] {
   text-align: center;
 }
 
-input[type="text"]::placeholder {
+#phrase::placeholder {
   color: rgba(87, 72, 62, 0.52);
   font-style: italic;
   font-weight: 400;
 }
 
-input[type="text"]:focus {
+#phrase:focus {
   outline: 0;
   background-color: #faf3e6;
 }
@@ -634,10 +632,10 @@ input[type="text"]:focus {
 
 .reading {
   display: grid;
-  grid-template-columns: minmax(14rem, 1fr) auto minmax(8.5rem, 11.5rem) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: clamp(1.25rem, 2.8vw, 3rem);
-  min-height: 8.75rem;
+  min-height: 7.5rem;
   padding: 1.4rem clamp(1.1rem, 3vw, 2.8rem);
   border-top: 3px double var(--brass);
   border-bottom: 2px solid var(--brass);
@@ -669,7 +667,7 @@ input[type="text"]:focus {
 
 .score-card {
   display: grid;
-  grid-template-columns: repeat(2, minmax(6.5rem, auto));
+  grid-template-columns: repeat(3, minmax(6.5rem, auto));
   gap: 0.65rem 1.4rem;
   padding: 0.65rem 1rem;
   border: 1px solid var(--brass-dim);
@@ -691,10 +689,14 @@ input[type="text"]:focus {
   letter-spacing: 0.08em;
 }
 
+/* Volume and tempo sit side by side: each heading stacks over its slider. */
 .volume-control {
   display: grid;
-  gap: 0.38rem;
-  min-width: 9.5rem;
+  grid-template-rows: auto auto;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(8.5rem, 11.5rem);
+  align-items: center;
+  gap: 0.38rem 1.4rem;
 }
 
 .volume-heading {
@@ -704,10 +706,6 @@ input[type="text"]:focus {
   color: rgba(228, 215, 190, 0.78);
   font-family: var(--mono-ledger);
   font-size: 0.56rem;
-}
-
-.tempo-heading {
-  margin-top: 0.28rem;
 }
 
 .volume-heading output {
@@ -724,24 +722,26 @@ input[type="text"]:focus {
   cursor: pointer;
 }
 
-.reading-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.55rem;
-}
-
-/* Master transport (P5-18): a full-width brass rail beneath the reading. */
+/* Master transport (P5-18, D-027): the rail that opens Wing I. */
 .transport-deck {
   display: flex;
   flex-wrap: wrap;
-  grid-column: 1 / -1;
-  grid-row: 2;
   align-items: center;
-  gap: 0.55rem 0.75rem;
-  padding-top: 0.95rem;
-  border-top: 1px solid var(--brass-dim);
+  gap: 0.9rem 1.6rem;
+  padding: 1.1rem clamp(1.1rem, 3vw, 2.8rem);
+  border-bottom: 2px solid var(--brass);
+  color: var(--bone);
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(107, 31, 40, 0.2), transparent 55%),
+    linear-gradient(180deg, var(--ebony-raised) 0%, var(--ebony) 100%);
   font-family: var(--mono-ledger);
+}
+
+.transport-keys {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
 }
 
 .transport-button {
@@ -823,32 +823,70 @@ input[type="text"]:focus {
   font-size: inherit;
 }
 
-.replay-button {
-  padding: 0.72rem 0.95rem;
-  border: 1px solid var(--brass);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6);
-  color: var(--parchment-light);
-  background: linear-gradient(180deg, rgba(184, 146, 73, 0.16), rgba(15, 11, 10, 0.8));
-  font-family: var(--mono-ledger);
-  font-size: 0.56rem;
-  letter-spacing: 0.14em;
-  white-space: nowrap;
-  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+/* Workstation wings (D-027): parchment drawer labels between the ebony consoles. */
+.workstation-wing {
+  display: flex;
+  flex-direction: column;
 }
 
-.replay-button:not(:disabled):hover {
-  border-color: var(--brass-bright);
+.wing-header {
+  display: grid;
+  grid-template-columns: minmax(1.5rem, 1fr) auto minmax(1.5rem, 1fr);
+  align-items: center;
+  gap: clamp(0.75rem, 2.5vw, 2rem);
+  padding: 0.9rem clamp(1.1rem, 3vw, 2.8rem) 0.8rem;
+  border-bottom: 3px double var(--brass);
   color: var(--ink);
-  background: var(--brass-bright);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 248, 231, 0.55), transparent 70%),
+    var(--parchment);
+  text-align: center;
 }
 
-.replay-button:disabled {
-  cursor: default;
-  opacity: 0.38;
+.wing-rule {
+  height: 5px;
+  border-top: 1px solid var(--oxblood);
+  border-bottom: 1px solid var(--oxblood);
+  opacity: 0.55;
+}
+
+.wing-title {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.wing-numeral,
+.wing-dek {
+  margin: 0;
+  font-family: var(--mono-ledger);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.wing-numeral {
+  color: var(--oxblood);
+  font-size: 0.58rem;
+  letter-spacing: 0.32em;
+}
+
+.wing-header h2 {
+  margin: 0;
+  font-family: var(--serif-display);
+  font-size: clamp(1.15rem, 2.2vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  line-height: 1.1;
+}
+
+.wing-dek {
+  color: var(--ink-muted);
+  font-size: 0.52rem;
+  letter-spacing: 0.16em;
 }
 
 .beat-engine {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.95rem;
   padding: 1.15rem clamp(1.1rem, 3vw, 2.8rem) 1.35rem;
   border-bottom: 2px solid var(--brass);
@@ -1120,6 +1158,13 @@ input[type="text"]:focus {
   min-width: 0;
 }
 
+/* Export desk (D-027): groups sit at their natural width and wrap as units. */
+.export-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 2.2rem;
+}
+
 #session-preset-name,
 #session-preset-list {
   flex: 1 1 10rem;
@@ -1130,6 +1175,10 @@ input[type="text"]:focus {
   background: rgba(10, 8, 7, 0.7);
   font-family: var(--mono-ledger);
   font-size: 0.62rem;
+}
+
+#session-preset-name::placeholder {
+  color: rgba(228, 215, 190, 0.42);
 }
 
 #session-preset-name:focus-visible,
@@ -1347,12 +1396,16 @@ input[type="text"]:focus {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .kapellmeister-select-wrap {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .kapellmeister-label {
@@ -1364,6 +1417,8 @@ input[type="text"]:focus {
 }
 
 .kapellmeister-select {
+  min-width: 0;
+  max-width: 100%;
   padding: 0.45rem 0.85rem;
   border: 1.5px solid var(--brass);
   background: #17110e;
@@ -1385,7 +1440,7 @@ input[type="text"]:focus {
 
 .kapellmeister-body {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.85rem;
   padding: 0.85rem clamp(1.1rem, 3vw, 2.8rem) 0.5rem;
 }
@@ -1562,6 +1617,7 @@ input[type="text"]:focus {
 
 .fun-machine-body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.95rem;
   padding: 0.85rem clamp(1.1rem, 3vw, 2.8rem) 0.5rem;
 }
@@ -1649,6 +1705,7 @@ input[type="text"]:focus {
 
 .fun-key-white {
   flex: 1 1 0;
+  min-width: 0;
   position: relative;
   height: 100%;
   background: linear-gradient(180deg, #efe6d7 0%, #dcceaf 72%, #c9b78e 100%);
@@ -1898,6 +1955,8 @@ footer > span:first-child {
 
 .footer-links {
   display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 0.55rem;
   justify-self: end;
@@ -1931,28 +1990,24 @@ noscript {
 
 @media (max-width: 900px) {
   .reading {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .score-card {
-    grid-column: 1;
-    grid-row: 2;
-    grid-template-columns: repeat(4, auto);
+    grid-template-columns: repeat(5, auto);
     justify-content: start;
   }
 
-  .volume-control {
-    grid-column: 2;
-    grid-row: 2;
+  footer {
+    grid-template-columns: 1fr auto;
   }
 
-  .reading-actions {
-    grid-column: 2;
-    grid-row: 1;
+  footer > span:first-child {
+    grid-column: 1 / -1;
   }
 
-  .transport-deck {
-    grid-row: 3;
+  .footer-links {
+    justify-content: flex-end;
   }
 }
 
@@ -2033,7 +2088,7 @@ noscript {
     grid-template-columns: 1fr;
   }
 
-  input[type="text"] {
+  #phrase {
     min-height: 3.8rem;
   }
 
@@ -2047,18 +2102,8 @@ noscript {
     justify-content: center;
   }
 
-  .reading {
-    grid-template-columns: 1fr;
-  }
-
   .score-card {
-    grid-column: 1 / -1;
-    grid-row: 2;
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .transport-deck {
-    grid-row: 3;
   }
 
   .transport-hint {
@@ -2066,15 +2111,21 @@ noscript {
   }
 
   .volume-control {
-    grid-column: 1 / -1;
-    grid-row: 4;
-    width: min(16rem, 100%);
+    width: 100%;
+    grid-auto-columns: minmax(0, 1fr);
   }
 
-  .reading-actions {
-    grid-column: 1 / -1;
-    grid-row: 5;
-    justify-content: flex-start;
+  .kapellmeister-readout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fun-machine-body,
+  .kapellmeister-body {
+    padding-inline: 0;
+  }
+
+  .wing-dek {
+    letter-spacing: 0.1em;
   }
 
   .beat-grid {
@@ -2104,6 +2155,24 @@ noscript {
 
   .mixer-strip {
     scroll-snap-align: start;
+  }
+  /* Transport keys pair up so the rail stays one thumb-reach tall. */
+  .transport-keys {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .transport-button {
+    justify-content: center;
+    height: 100%;
+    padding-inline: 0.6rem;
+    white-space: normal;
+  }
+
+  .transport-position {
+    grid-column: 1 / -1;
+    text-align: center;
   }
 }
 

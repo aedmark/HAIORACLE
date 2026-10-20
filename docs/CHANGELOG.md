@@ -2,8 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- Find every control in one of four wings beneath the vitrine: **Perform** (transport with restart, volume, and tempo; the Fun Machine; the Kapellmeister rulebook), **Mix** (Bandstand, mixing console, parlor room), **Keep** (Session Ledger and a new export and share desk), and **The Band** (Plates II–VI). The reading strip now only names the creature, and the keyboard's tab order follows the wings.
+
 ### Fixed
 
+- Keep the preset-name field one line tall on phones, and stop the Kapellmeister rulebook, Fun Machine keyboard, and footer links from being cut off on narrow screens.
 - Render WAV exports through the same audio graph as live playback, so chimes, choir, and fungal voices are filtered and panned exactly as heard.
 - Remove audio-synchronous geometry scaling after screencast review exposed beat-periodic tearing and compression-like jumps.
 - Confine the large body-glow blur to one silhouette fill instead of applying it to every kinetic line, ring, and eye.

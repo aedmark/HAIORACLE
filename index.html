@@ -104,457 +104,521 @@
         <span><b id="score-melody">---</b> MOTIF</span>
         <span><b id="score-fungal">---</b> MYCELIUM</span>
       </div>
+    </section>
+
+    <section class="workstation-wing wing-perform" id="wing-perform" aria-labelledby="wing-perform-heading">
+      <header class="wing-header">
+        <span class="wing-rule" aria-hidden="true"></span>
+        <div class="wing-title">
+          <p class="wing-numeral">WING I</p>
+          <h2 id="wing-perform-heading">PERFORM</h2>
+          <p class="wing-dek">TRANSPORT · PLAY-ALONG MANUAL · RULEBOOK</p>
+        </div>
+        <span class="wing-rule" aria-hidden="true"></span>
+      </header>
       <div class="transport-deck" id="transport-deck" role="group" aria-label="Master transport" data-state="stopped">
-        <button class="transport-button" id="transport-play" type="button" aria-pressed="false" aria-keyshortcuts="Space" disabled>
-          <span class="transport-glyph" aria-hidden="true">▶</span> PLAY
-        </button>
-        <button class="transport-button" id="transport-pause" type="button" aria-pressed="false" aria-keyshortcuts="Space" disabled>
-          <span class="transport-glyph" aria-hidden="true">❚❚</span> PAUSE
-        </button>
-        <button class="transport-button" id="transport-stop" type="button" aria-keyshortcuts="Escape" disabled>
-          <span class="transport-glyph" aria-hidden="true">■</span> STOP · REWIND
-        </button>
-        <output class="transport-position" id="transport-position">STEP -- / 12</output>
+        <div class="transport-keys">
+          <button class="transport-button" id="transport-play" type="button" aria-pressed="false" aria-keyshortcuts="Space" disabled>
+            <span class="transport-glyph" aria-hidden="true">▶</span> PLAY
+          </button>
+          <button class="transport-button" id="transport-pause" type="button" aria-pressed="false" aria-keyshortcuts="Space" disabled>
+            <span class="transport-glyph" aria-hidden="true">❚❚</span> PAUSE
+          </button>
+          <button class="transport-button" id="transport-stop" type="button" aria-keyshortcuts="Escape" disabled>
+            <span class="transport-glyph" aria-hidden="true">■</span> STOP · REWIND
+          </button>
+          <button class="transport-button" id="replay" type="button" disabled>
+            <span class="transport-glyph" aria-hidden="true">↻</span> RESTART THE MELODY
+          </button>
+          <output class="transport-position" id="transport-position">STEP -- / 12</output>
+        </div>
+        <div class="volume-control">
+          <div class="volume-heading">
+            <label for="master-volume">MASTER VOLUME</label>
+            <output id="volume-value" for="master-volume">82%</output>
+          </div>
+          <input id="master-volume" type="range" min="0" max="100" value="82" step="1">
+          <div class="volume-heading tempo-heading">
+            <label for="tempo-bpm">TEMPO</label>
+            <output id="tempo-value" for="tempo-bpm">108 BPM</output>
+          </div>
+          <input id="tempo-bpm" type="range" min="36" max="208" value="108" step="1" title="Adjust ensemble tempo (double-click to restore native pulse)">
+        </div>
         <p class="transport-hint"><kbd>SPACE</kbd> PLAY / PAUSE · <kbd>ESC</kbd> STOP &amp; REWIND</p>
       </div>
-      <div class="volume-control">
-        <div class="volume-heading">
-          <label for="master-volume">MASTER VOLUME</label>
-          <output id="volume-value" for="master-volume">82%</output>
+
+      <section class="beat-engine fun-machine-engine" id="fun-machine-engine" aria-labelledby="fun-machine-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">EDMARK'S ESOTERIC FUN MACHINE · REAL-TIME CHORD ORGAN &amp; LOOP SEQUENCER</p>
+            <div class="beat-title-row">
+              <h3 id="fun-machine-heading"><span id="fun-machine-status">ONE-FINGER CHORD ACCOMPANIMENT ACTIVE</span></h3>
+              <span class="beat-telemetry" id="fun-machine-telemetry">EDMARK'S BALDWIN-STYLE ONE-FINGER AUTO-CHORD · PLAY-ALONG MANUAL · LIVE PUNCH-IN RECORD</span>
+            </div>
+          </div>
+          <div class="beat-actions fun-machine-actions">
+            <button class="beat-button" id="fun-machine-mode" type="button" aria-pressed="true">
+              AUTO-CHORD: ONE-FINGER
+            </button>
+            <button class="beat-button" id="fun-machine-rec" type="button" aria-pressed="false">
+              PUNCH-IN REC: OFF
+            </button>
+            <button class="beat-button" id="fun-machine-reset" type="button">
+              RESET PROGRESSION <span aria-hidden="true">↺</span>
+            </button>
+          </div>
         </div>
-        <input id="master-volume" type="range" min="0" max="100" value="82" step="1">
-        <div class="volume-heading tempo-heading">
-          <label for="tempo-bpm">TEMPO</label>
-          <output id="tempo-value" for="tempo-bpm">108 BPM</output>
+
+        <div class="fun-machine-body">
+          <div class="fun-quality-bar" role="toolbar" aria-label="Chord quality selector">
+            <span class="fun-quality-label">CHORD QUALITY:</span>
+            <div class="fun-quality-chips">
+              <button class="fun-chip is-active" id="chip-q-auto" data-quality="auto" type="button" aria-pressed="true">AUTO-GENRE</button>
+              <button class="fun-chip" id="chip-q-major" data-quality="major" type="button" aria-pressed="false">MAJOR</button>
+              <button class="fun-chip" id="chip-q-minor" data-quality="minor" type="button" aria-pressed="false">MINOR</button>
+              <button class="fun-chip" id="chip-q-dom7" data-quality="dom7" type="button" aria-pressed="false">DOM 7TH</button>
+              <button class="fun-chip" id="chip-q-maj9" data-quality="maj9" type="button" aria-pressed="false">MAJ 9TH</button>
+              <button class="fun-chip" id="chip-q-dim" data-quality="dim" type="button" aria-pressed="false">DIMINISHED</button>
+              <button class="fun-chip" id="chip-q-open5" data-quality="modal_open" type="button" aria-pressed="false">OPEN 5TH</button>
+            </div>
+          </div>
+
+          <div class="fun-keyboard-wrap">
+            <div class="fun-keyboard" id="fun-keyboard" role="group" aria-label="Edmark's Esoteric Fun Machine Real-Time Play-Along Keyboard Manual">
+              <button class="fun-key fun-key-white" data-semitone="0" data-key="KeyA" type="button" aria-label="Key C (shortcut A)">
+                <span class="fun-key-note">C</span>
+                <span class="fun-key-shortcut">[A]</span>
+                <span class="fun-key-chord" id="fun-chord-0">C Maj</span>
+              </button>
+              <button class="fun-key fun-key-black" data-semitone="1" data-key="KeyW" type="button" aria-label="Key C sharp (shortcut W)">
+                <span class="fun-key-note">C♯</span>
+                <span class="fun-key-shortcut">[W]</span>
+                <span class="fun-key-chord" id="fun-chord-1">C♯</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="2" data-key="KeyS" type="button" aria-label="Key D (shortcut S)">
+                <span class="fun-key-note">D</span>
+                <span class="fun-key-shortcut">[S]</span>
+                <span class="fun-key-chord" id="fun-chord-2">D min</span>
+              </button>
+              <button class="fun-key fun-key-black" data-semitone="3" data-key="KeyE" type="button" aria-label="Key D sharp (shortcut E)">
+                <span class="fun-key-note">D♯</span>
+                <span class="fun-key-shortcut">[E]</span>
+                <span class="fun-key-chord" id="fun-chord-3">E♭</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="4" data-key="KeyD" type="button" aria-label="Key E (shortcut D)">
+                <span class="fun-key-note">E</span>
+                <span class="fun-key-shortcut">[D]</span>
+                <span class="fun-key-chord" id="fun-chord-4">E min</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="5" data-key="KeyF" type="button" aria-label="Key F (shortcut F)">
+                <span class="fun-key-note">F</span>
+                <span class="fun-key-shortcut">[F]</span>
+                <span class="fun-key-chord" id="fun-chord-5">F Maj</span>
+              </button>
+              <button class="fun-key fun-key-black" data-semitone="6" data-key="KeyT" type="button" aria-label="Key F sharp (shortcut T)">
+                <span class="fun-key-note">F♯</span>
+                <span class="fun-key-shortcut">[T]</span>
+                <span class="fun-key-chord" id="fun-chord-6">F♯</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="7" data-key="KeyG" type="button" aria-label="Key G (shortcut G)">
+                <span class="fun-key-note">G</span>
+                <span class="fun-key-shortcut">[G]</span>
+                <span class="fun-key-chord" id="fun-chord-7">G Maj</span>
+              </button>
+              <button class="fun-key fun-key-black" data-semitone="8" data-key="KeyY" type="button" aria-label="Key G sharp (shortcut Y)">
+                <span class="fun-key-note">G♯</span>
+                <span class="fun-key-shortcut">[Y]</span>
+                <span class="fun-key-chord" id="fun-chord-8">A♭</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="9" data-key="KeyH" type="button" aria-label="Key A (shortcut H)">
+                <span class="fun-key-note">A</span>
+                <span class="fun-key-shortcut">[H]</span>
+                <span class="fun-key-chord" id="fun-chord-9">A min</span>
+              </button>
+              <button class="fun-key fun-key-black" data-semitone="10" data-key="KeyU" type="button" aria-label="Key A sharp (shortcut U)">
+                <span class="fun-key-note">A♯</span>
+                <span class="fun-key-shortcut">[U]</span>
+                <span class="fun-key-chord" id="fun-chord-10">B♭</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="11" data-key="KeyJ" type="button" aria-label="Key B (shortcut J)">
+                <span class="fun-key-note">B</span>
+                <span class="fun-key-shortcut">[J]</span>
+                <span class="fun-key-chord" id="fun-chord-11">B dim</span>
+              </button>
+              <button class="fun-key fun-key-white" data-semitone="12" data-key="KeyK" type="button" aria-label="Key C octave (shortcut K)">
+                <span class="fun-key-note">C′</span>
+                <span class="fun-key-shortcut">[K]</span>
+                <span class="fun-key-chord" id="fun-chord-12">C Maj</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="fun-sequence-wrap">
+            <div class="fun-sequence-header">
+              <span class="fun-sequence-title">12-STEP LOOP PROGRESSION &amp; PUNCH-IN MATRIX</span>
+              <span class="fun-sequence-hint">CLICK STEP TO TARGET · PLAY KEYS [A..K] TO PUNCH IN CHORDS · ARM REC FOR LIVE JAM</span>
+            </div>
+            <div class="fun-sequence-grid" id="fun-sequence-grid" role="group" aria-label="12-step chord progression sequence"></div>
+          </div>
         </div>
-        <input id="tempo-bpm" type="range" min="36" max="208" value="108" step="1" title="Adjust ensemble tempo (double-click to restore native pulse)">
-      </div>
-      <div class="reading-actions">
-        <button class="replay-button" id="replay" type="button" disabled>
-          RESTART THE MELODY <span aria-hidden="true">↻</span>
-        </button>
-        <button class="replay-button" id="share-link" type="button" disabled>
-          COPY OMEN LINK <span aria-hidden="true">⛓</span>
-        </button>
-        <button class="replay-button" id="export-png" type="button" disabled>
-          ENGRAVE PNG PLATE <span aria-hidden="true">▣</span>
-        </button>
-        <button class="replay-button" id="export-wav" type="button" disabled>
-          RECORD WAV LOOP <span aria-hidden="true">☊</span>
-        </button>
-        <button class="replay-button" id="export-stems" type="button" disabled>
-          EXPORT 9 STEMS (ZIP) <span aria-hidden="true">⧉</span>
-        </button>
-        <button class="replay-button" id="export-midi" type="button" disabled>
-          WRITE MIDI SCORE <span aria-hidden="true">♪</span>
-        </button>
-      </div>
+      </section>
+
+      <section class="beat-engine kapellmeister-engine" id="kapellmeister-engine" aria-labelledby="kapellmeister-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">KAPELLMEISTER CONSOLE · MUSIC-THEORY &amp; GENRE RULEBOOKS</p>
+            <div class="beat-title-row">
+              <h3 id="kapellmeister-heading"><span id="kapellmeister-genre-title">VICTORIAN NEO-RIEMANNIAN TONNETZ</span></h3>
+              <span class="beat-telemetry" id="kapellmeister-telemetry">EULER GRADUS SUAVITATIS · PARSIMONIOUS TONNETZ PROGRESSION</span>
+            </div>
+          </div>
+          <div class="beat-actions kapellmeister-actions">
+            <div class="kapellmeister-select-wrap">
+              <label for="kapellmeister-genre" class="kapellmeister-label">RULEBOOK</label>
+              <select id="kapellmeister-genre" class="kapellmeister-select" aria-label="Select Kapellmeister music-theory genre rulebook">
+                <option value="victorian_tonnetz" selected>VICTORIAN NEO-RIEMANNIAN TONNETZ</option>
+                <option value="blues_twelve_bar">12-BAR DELTA &amp; PARLOR BLUES</option>
+                <option value="smoky_jazz">SMOKY PARLOR JAZZ &amp; EXTENDED TONNETZ</option>
+                <option value="renaissance_counterpoint">PALESTRINA MODAL COUNTERPOINT</option>
+                <option value="modal_drone">MYSTIC BYZANTINE &amp; HIMALAYAN DRONE</option>
+                <option value="raw_chaos">RAW ESOTERIC CHAOS (UNFETTERED VMS)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="kapellmeister-body">
+          <div class="kapellmeister-readout" aria-live="polite">
+            <div class="readout-cell">
+              <span class="readout-label">STEP</span>
+              <span class="readout-value" id="harmonic-step">01 / 12</span>
+            </div>
+            <div class="readout-cell">
+              <span class="readout-label">ACTIVE CHORD</span>
+              <span class="readout-value" id="harmonic-chord">C Maj</span>
+            </div>
+            <div class="readout-cell">
+              <span class="readout-label">HARMONIC VECTOR</span>
+              <span class="readout-value" id="harmonic-vector">I (Tonic)</span>
+            </div>
+            <div class="readout-cell">
+              <span class="readout-label">EULER CONSONANCE</span>
+              <span class="readout-value" id="harmonic-euler">G = 4 (Sweet)</span>
+            </div>
+          </div>
+          <div class="kapellmeister-controls">
+            <div class="volume-heading">
+              <label for="kapellmeister-strictness">CONSONANCE SIEVE (EULER GRADUS)</label>
+              <output id="kapellmeister-strictness-val" for="kapellmeister-strictness">G ≤ 8 (Balanced)</output>
+            </div>
+            <input id="kapellmeister-strictness" type="range" min="3" max="14" value="8" step="1" title="Adjust Euler Gradus Suavitatis consonance threshold">
+          </div>
+          <div class="kapellmeister-compass" id="kapellmeister-compass" aria-hidden="true">
+            <svg viewBox="0 0 460 70" preserveAspectRatio="xMidYMid meet" class="tonnetz-compass-svg">
+              <line x1="30" y1="35" x2="430" y2="35" stroke="#8d6b32" stroke-width="1.5" stroke-dasharray="4,6" />
+              <g class="compass-region is-active" id="compass-reg-0" transform="translate(60, 35)">
+                <polygon points="0,-22 18,12 -18,12" class="tonnetz-tri" />
+                <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
+                <text x="0" y="4" class="tonnetz-node-text" id="node-text-0">I</text>
+              </g>
+              <g class="compass-region" id="compass-reg-1" transform="translate(170, 35)">
+                <polygon points="0,22 18,-12 -18,-12" class="tonnetz-tri" />
+                <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
+                <text x="0" y="4" class="tonnetz-node-text" id="node-text-1">R</text>
+              </g>
+              <g class="compass-region" id="compass-reg-2" transform="translate(280, 35)">
+                <polygon points="0,-22 18,12 -18,12" class="tonnetz-tri" />
+                <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
+                <text x="0" y="4" class="tonnetz-node-text" id="node-text-2">L</text>
+              </g>
+              <g class="compass-region" id="compass-reg-3" transform="translate(390, 35)">
+                <polygon points="0,22 18,-12 -18,-12" class="tonnetz-tri" />
+                <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
+                <text x="0" y="4" class="tonnetz-node-text" id="node-text-3">P</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
     </section>
 
-    <section class="beat-engine fun-machine-engine" id="fun-machine-engine" aria-labelledby="fun-machine-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">EDMARK'S ESOTERIC FUN MACHINE · REAL-TIME CHORD ORGAN &amp; LOOP SEQUENCER</p>
-          <div class="beat-title-row">
-            <h3 id="fun-machine-heading"><span id="fun-machine-status">ONE-FINGER CHORD ACCOMPANIMENT ACTIVE</span></h3>
-            <span class="beat-telemetry" id="fun-machine-telemetry">EDMARK'S BALDWIN-STYLE ONE-FINGER AUTO-CHORD · PLAY-ALONG MANUAL · LIVE PUNCH-IN RECORD</span>
+    <section class="workstation-wing wing-mix" id="wing-mix" aria-labelledby="wing-mix-heading">
+      <header class="wing-header">
+        <span class="wing-rule" aria-hidden="true"></span>
+        <div class="wing-title">
+          <p class="wing-numeral">WING II</p>
+          <h2 id="wing-mix-heading">MIX</h2>
+          <p class="wing-dek">ENSEMBLE SWITCHES · EIGHT-CHANNEL CONSOLE · PARLOR ROOM</p>
+        </div>
+        <span class="wing-rule" aria-hidden="true"></span>
+      </header>
+      <section class="beat-engine bandstand-engine" id="bandstand-engine" aria-labelledby="bandstand-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">PARLOR BANDSTAND · SIX-LANGUAGE ENSEMBLE CONSOLE</p>
+            <div class="beat-title-row">
+              <h3 id="bandstand-heading"><span id="bandstand-status">ALL SIX ESOTERIC PLAYERS ENGAGED</span></h3>
+              <span class="beat-telemetry" id="bandstand-telemetry">LOLCODE · MALBOLGE · BRAINFUCK · BEFUNGE · PIET/FRACTRAN · SHAKESPEARE</span>
+            </div>
+          </div>
+          <div class="beat-actions">
+            <button class="beat-button" id="bandstand-engage-all" type="button">
+              FULL ENSEMBLE
+            </button>
+            <button class="beat-button" id="bandstand-solo-lead" type="button">
+              SOLO ORACLE LEAD
+            </button>
+            <button class="beat-button" id="bandstand-mutate-all" type="button" disabled>
+              MUTATE ALL PLAYERS <span aria-hidden="true">✦</span>
+            </button>
           </div>
         </div>
-        <div class="beat-actions fun-machine-actions">
-          <button class="beat-button" id="fun-machine-mode" type="button" aria-pressed="true">
-            AUTO-CHORD: ONE-FINGER
-          </button>
-          <button class="beat-button" id="fun-machine-rec" type="button" aria-pressed="false">
-            PUNCH-IN REC: OFF
-          </button>
-          <button class="beat-button" id="fun-machine-reset" type="button">
-            RESET PROGRESSION <span aria-hidden="true">↺</span>
-          </button>
-        </div>
-      </div>
+      </section>
 
-      <div class="fun-machine-body">
-        <div class="fun-quality-bar" role="toolbar" aria-label="Chord quality selector">
-          <span class="fun-quality-label">CHORD QUALITY:</span>
-          <div class="fun-quality-chips">
-            <button class="fun-chip is-active" id="chip-q-auto" data-quality="auto" type="button" aria-pressed="true">AUTO-GENRE</button>
-            <button class="fun-chip" id="chip-q-major" data-quality="major" type="button" aria-pressed="false">MAJOR</button>
-            <button class="fun-chip" id="chip-q-minor" data-quality="minor" type="button" aria-pressed="false">MINOR</button>
-            <button class="fun-chip" id="chip-q-dom7" data-quality="dom7" type="button" aria-pressed="false">DOM 7TH</button>
-            <button class="fun-chip" id="chip-q-maj9" data-quality="maj9" type="button" aria-pressed="false">MAJ 9TH</button>
-            <button class="fun-chip" id="chip-q-dim" data-quality="dim" type="button" aria-pressed="false">DIMINISHED</button>
-            <button class="fun-chip" id="chip-q-open5" data-quality="modal_open" type="button" aria-pressed="false">OPEN 5TH</button>
+      <section class="beat-engine mixer-engine" id="mixer-engine" aria-labelledby="mixer-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">PARLOR MIXING CONSOLE · EIGHT BRASS CHANNELS</p>
+            <div class="beat-title-row">
+              <h3 id="mixer-heading">FADERS, PANNING &amp; THE MUTE/SOLO MATRIX</h3>
+              <span class="beat-telemetry" id="mixer-telemetry">8 CHANNELS · ALL OPEN</span>
+            </div>
+          </div>
+          <div class="beat-actions">
+            <button class="beat-button" id="mixer-reset" type="button">
+              RESET CONSOLE <span aria-hidden="true">↺</span>
+            </button>
           </div>
         </div>
+        <div class="mixer-strips" id="mixer-strips"></div>
+        <p class="mixer-legend">POST-FADER VU · DOUBLE-CLICK A FADER FOR UNITY OR A PAN FOR CENTER · PLATE ENGAGE/SILENCE SWITCHES ARE THESE MUTES</p>
+      </section>
 
-        <div class="fun-keyboard-wrap">
-          <div class="fun-keyboard" id="fun-keyboard" role="group" aria-label="Edmark's Esoteric Fun Machine Real-Time Play-Along Keyboard Manual">
-            <button class="fun-key fun-key-white" data-semitone="0" data-key="KeyA" type="button" aria-label="Key C (shortcut A)">
-              <span class="fun-key-note">C</span>
-              <span class="fun-key-shortcut">[A]</span>
-              <span class="fun-key-chord" id="fun-chord-0">C Maj</span>
-            </button>
-            <button class="fun-key fun-key-black" data-semitone="1" data-key="KeyW" type="button" aria-label="Key C sharp (shortcut W)">
-              <span class="fun-key-note">C♯</span>
-              <span class="fun-key-shortcut">[W]</span>
-              <span class="fun-key-chord" id="fun-chord-1">C♯</span>
-            </button>
-            <button class="fun-key fun-key-white" data-semitone="2" data-key="KeyS" type="button" aria-label="Key D (shortcut S)">
-              <span class="fun-key-note">D</span>
-              <span class="fun-key-shortcut">[S]</span>
-              <span class="fun-key-chord" id="fun-chord-2">D min</span>
-            </button>
-            <button class="fun-key fun-key-black" data-semitone="3" data-key="KeyE" type="button" aria-label="Key D sharp (shortcut E)">
-              <span class="fun-key-note">D♯</span>
-              <span class="fun-key-shortcut">[E]</span>
-              <span class="fun-key-chord" id="fun-chord-3">E♭</span>
-            </button>
-            <button class="fun-key fun-key-white" data-semitone="4" data-key="KeyD" type="button" aria-label="Key E (shortcut D)">
-              <span class="fun-key-note">E</span>
-              <span class="fun-key-shortcut">[D]</span>
-              <span class="fun-key-chord" id="fun-chord-4">E min</span>
-            </button>
-            <button class="fun-key fun-key-white" data-semitone="5" data-key="KeyF" type="button" aria-label="Key F (shortcut F)">
-              <span class="fun-key-note">F</span>
-              <span class="fun-key-shortcut">[F]</span>
-              <span class="fun-key-chord" id="fun-chord-5">F Maj</span>
-            </button>
-            <button class="fun-key fun-key-black" data-semitone="6" data-key="KeyT" type="button" aria-label="Key F sharp (shortcut T)">
-              <span class="fun-key-note">F♯</span>
-              <span class="fun-key-shortcut">[T]</span>
-              <span class="fun-key-chord" id="fun-chord-6">F♯</span>
-            </button>
-            <button class="fun-key fun-key-white" data-semitone="7" data-key="KeyG" type="button" aria-label="Key G (shortcut G)">
-              <span class="fun-key-note">G</span>
-              <span class="fun-key-shortcut">[G]</span>
-              <span class="fun-key-chord" id="fun-chord-7">G Maj</span>
-            </button>
-            <button class="fun-key fun-key-black" data-semitone="8" data-key="KeyY" type="button" aria-label="Key G sharp (shortcut Y)">
-              <span class="fun-key-note">G♯</span>
-              <span class="fun-key-shortcut">[Y]</span>
-              <span class="fun-key-chord" id="fun-chord-8">A♭</span>
-            </button>
-            <button class="fun-key fun-key-white" data-semitone="9" data-key="KeyH" type="button" aria-label="Key A (shortcut H)">
-              <span class="fun-key-note">A</span>
-              <span class="fun-key-shortcut">[H]</span>
-              <span class="fun-key-chord" id="fun-chord-9">A min</span>
-            </button>
-            <button class="fun-key fun-key-black" data-semitone="10" data-key="KeyU" type="button" aria-label="Key A sharp (shortcut U)">
-              <span class="fun-key-note">A♯</span>
-              <span class="fun-key-shortcut">[U]</span>
-              <span class="fun-key-chord" id="fun-chord-10">B♭</span>
-            </button>
-            <button class="fun-key fun-key-white" data-semitone="11" data-key="KeyJ" type="button" aria-label="Key B (shortcut J)">
-              <span class="fun-key-note">B</span>
-              <span class="fun-key-shortcut">[J]</span>
-              <span class="fun-key-chord" id="fun-chord-11">B dim</span>
-            </button>
-            <button class="fun-key fun-key-white" data-semitone="12" data-key="KeyK" type="button" aria-label="Key C octave (shortcut K)">
-              <span class="fun-key-note">C′</span>
-              <span class="fun-key-shortcut">[K]</span>
-              <span class="fun-key-chord" id="fun-chord-12">C Maj</span>
+      <section class="beat-engine parlor-acoustics-engine" id="parlor-acoustics-engine" aria-labelledby="acoustics-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">ANTIQUE PARLOR ACOUSTICS · 1890s WAX CYLINDER &amp; CHAMBER</p>
+            <div class="beat-title-row">
+              <h3 id="acoustics-heading"><span id="acoustics-status">CHAMBER REVERBERATION &amp; SURFACE CRACKLE ACTIVE</span></h3>
+              <span class="beat-telemetry" id="acoustics-telemetry">EDISON CYLINDER HORN · CONVOLUTION CHAMBER · CLOCKWORK TICK</span>
+            </div>
+          </div>
+          <div class="beat-actions">
+            <button class="beat-button" id="parlor-acoustics-toggle" type="button" aria-pressed="true">
+              ACOUSTICS: ENGAGED
             </button>
           </div>
         </div>
-
-        <div class="fun-sequence-wrap">
-          <div class="fun-sequence-header">
-            <span class="fun-sequence-title">12-STEP LOOP PROGRESSION &amp; PUNCH-IN MATRIX</span>
-            <span class="fun-sequence-hint">CLICK STEP TO TARGET · PLAY KEYS [A..K] TO PUNCH IN CHORDS · ARM REC FOR LIVE JAM</span>
-          </div>
-          <div class="fun-sequence-grid" id="fun-sequence-grid" role="group" aria-label="12-step chord progression sequence"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="beat-engine mixer-engine" id="mixer-engine" aria-labelledby="mixer-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">PARLOR MIXING CONSOLE · EIGHT BRASS CHANNELS</p>
-          <div class="beat-title-row">
-            <h3 id="mixer-heading">FADERS, PANNING &amp; THE MUTE/SOLO MATRIX</h3>
-            <span class="beat-telemetry" id="mixer-telemetry">8 CHANNELS · ALL OPEN</span>
-          </div>
-        </div>
-        <div class="beat-actions">
-          <button class="beat-button" id="mixer-reset" type="button">
-            RESET CONSOLE <span aria-hidden="true">↺</span>
-          </button>
-        </div>
-      </div>
-      <div class="mixer-strips" id="mixer-strips"></div>
-      <p class="mixer-legend">POST-FADER VU · DOUBLE-CLICK A FADER FOR UNITY OR A PAN FOR CENTER · PLATE ENGAGE/SILENCE SWITCHES ARE THESE MUTES</p>
-    </section>
-
-    <section class="beat-engine session-engine" id="session-engine" aria-labelledby="session-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">SESSION LEDGER · PRESETS &amp; .FUN FILES</p>
-          <div class="beat-title-row">
-            <h3 id="session-heading">SAVE, RECALL &amp; SEND THE WHOLE APPARATUS</h3>
-            <span class="beat-telemetry" id="session-telemetry" role="status">PRESETS STAY IN THIS BROWSER · NOTHING IS SENT ANYWHERE</span>
-          </div>
-        </div>
-      </div>
-      <div class="session-body">
-        <div class="session-field">
-          <label for="session-preset-name">PRESET NAME</label>
-          <div class="session-row">
-            <input id="session-preset-name" type="text" maxlength="40" autocomplete="off" placeholder="the creature's own name">
-            <button class="beat-button" id="session-save-preset" type="button" disabled>SAVE PRESET <span aria-hidden="true">✚</span></button>
-          </div>
-        </div>
-        <div class="session-field">
-          <label for="session-preset-list">SAVED IN THIS BROWSER</label>
-          <div class="session-row">
-            <select id="session-preset-list" class="kapellmeister-select"></select>
-            <button class="beat-button" id="session-load-preset" type="button" disabled>LOAD</button>
-            <button class="beat-button" id="session-delete-preset" type="button" disabled>DELETE</button>
-          </div>
-        </div>
-        <div class="session-field session-files">
-          <span class="session-files-label">PORTABLE SESSION FILE</span>
-          <div class="session-row">
-            <button class="beat-button" id="session-save-file" type="button" disabled>SAVE .FUN FILE <span aria-hidden="true">⤓</span></button>
-            <button class="beat-button" id="session-open-file" type="button">OPEN .FUN FILE <span aria-hidden="true">⤒</span></button>
-            <input id="session-file-input" type="file" accept=".fun,application/json" hidden>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="beat-engine" id="beat-engine" aria-labelledby="beat-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">PLATE II · MALBOLGE TERNARY BEAT GENERATOR</p>
-          <div class="beat-title-row">
-            <h3 id="beat-heading"><span id="score-beat">AUTOMATON STANDBY</span></h3>
-            <span class="beat-telemetry" id="beat-telemetry">3¹⁰ TAPE · 12-STEP CRAZY/ROTR</span>
-          </div>
-        </div>
-        <div class="beat-actions">
-          <button class="beat-button" id="beat-toggle" type="button" aria-pressed="true">
-            PULSE: ENGAGED
-          </button>
-          <button class="beat-button" id="beat-mutate" type="button" disabled>
-            RE-INCANT BEAT <span aria-hidden="true">☍</span>
-          </button>
-        </div>
-      </div>
-      <div class="beat-grid" id="beat-grid" role="group" aria-label="Malbolge 12-step ternary beat matrix"></div>
-    </section>
-
-    <section class="beat-engine bass-engine" id="bass-engine" aria-labelledby="bass-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">PLATE III · BRAINFUCK TAPE BASSLINE</p>
-          <div class="beat-title-row">
-            <h3 id="bass-heading"><span id="score-bass">TAPE LOOP STANDBY</span></h3>
-            <span class="beat-telemetry" id="bass-telemetry">256-CELL TAPE · 12-STEP [&gt;+&lt;-] SHUTTLE</span>
-          </div>
-        </div>
-        <div class="beat-actions">
-          <button class="beat-button" id="bass-toggle" type="button" aria-pressed="true">
-            BASS: ENGAGED
-          </button>
-          <button class="beat-button" id="bass-mutate" type="button" disabled>
-            SHIFT TAPE <span aria-hidden="true">⇄</span>
-          </button>
-        </div>
-      </div>
-      <div class="beat-grid bass-grid" id="bass-grid" role="group" aria-label="Brainfuck 12-cell walking bass tape"></div>
-    </section>
-
-    <section class="beat-engine harmony-engine" id="harmony-engine" aria-labelledby="harmony-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">PLATE IV · BEFUNGE-93 2D MIRROR CHORD ORGAN</p>
-          <div class="beat-title-row">
-            <h3 id="harmony-heading"><span id="score-harmony">PINBALL ORGAN STANDBY</span></h3>
-            <span class="beat-telemetry" id="harmony-telemetry">2D TORUS · 12-STEP /&bsol; MIRROR VOICINGS</span>
-          </div>
-        </div>
-        <div class="beat-actions">
-          <button class="beat-button" id="harmony-toggle" type="button" aria-pressed="true">
-            ORGAN: ENGAGED
-          </button>
-          <button class="beat-button" id="harmony-mutate" type="button" disabled>
-            DEFLECT MIRRORS <span aria-hidden="true">⤢</span>
-          </button>
-        </div>
-      </div>
-      <div class="beat-grid harmony-grid" id="harmony-grid" role="group" aria-label="Befunge-93 12-step 2D mirror chord matrix"></div>
-    </section>
-
-    <section class="beat-engine chime-engine" id="chime-engine" aria-labelledby="chime-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">PLATE V · PIET &amp; FRACTRAN SPECTRAL CHIMES</p>
-          <div class="beat-title-row">
-            <h3 id="chime-heading"><span id="score-chime">TONNETZ CARILLON STANDBY</span></h3>
-            <span class="beat-telemetry" id="chime-telemetry">2ᵃ3ᵇ5ᶜ7ᵈ PRIME RATIOS · 18-CODEL CHORUS</span>
-          </div>
-        </div>
-        <div class="beat-actions">
-          <button class="beat-button" id="chime-toggle" type="button" aria-pressed="true">
-            CHIMES: ENGAGED
-          </button>
-          <button class="beat-button" id="chime-mutate" type="button" disabled>
-            REFRACT CODELS <span aria-hidden="true">◈</span>
-          </button>
-        </div>
-      </div>
-      <div class="beat-grid chime-grid" id="chime-grid" role="group" aria-label="Piet and FRACTRAN 12-step prime-ratio chime matrix"></div>
-    </section>
-
-    <section class="beat-engine chant-engine" id="chant-engine" aria-labelledby="chant-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">PLATE VI · SHAKESPEARE FORMANT VOWEL CHOIR</p>
-          <div class="beat-title-row">
-            <h3 id="chant-heading"><span id="score-chant">DRAMATIS PERSONAE STANDBY</span></h3>
-            <span class="beat-telemetry" id="chant-telemetry">3 ACTS · 12 SCENES · A-E-I-O-U VODER</span>
-          </div>
-        </div>
-        <div class="beat-actions">
-          <button class="beat-button" id="chant-toggle" type="button" aria-pressed="true">
-            CHOIR: ENGAGED
-          </button>
-          <button class="beat-button" id="chant-mutate" type="button" disabled>
-            RECAST FOLIO <span aria-hidden="true">✧</span>
-          </button>
-        </div>
-      </div>
-      <div class="beat-grid chant-grid" id="chant-grid" role="group" aria-label="Shakespeare 12-scene formant vowel choir matrix"></div>
-    </section>
-
-    <section class="beat-engine kapellmeister-engine" id="kapellmeister-engine" aria-labelledby="kapellmeister-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">KAPELLMEISTER CONSOLE · MUSIC-THEORY &amp; GENRE RULEBOOKS</p>
-          <div class="beat-title-row">
-            <h3 id="kapellmeister-heading"><span id="kapellmeister-genre-title">VICTORIAN NEO-RIEMANNIAN TONNETZ</span></h3>
-            <span class="beat-telemetry" id="kapellmeister-telemetry">EULER GRADUS SUAVITATIS · PARSIMONIOUS TONNETZ PROGRESSION</span>
-          </div>
-        </div>
-        <div class="beat-actions kapellmeister-actions">
-          <div class="kapellmeister-select-wrap">
-            <label for="kapellmeister-genre" class="kapellmeister-label">RULEBOOK</label>
-            <select id="kapellmeister-genre" class="kapellmeister-select" aria-label="Select Kapellmeister music-theory genre rulebook">
-              <option value="victorian_tonnetz" selected>VICTORIAN NEO-RIEMANNIAN TONNETZ</option>
-              <option value="blues_twelve_bar">12-BAR DELTA &amp; PARLOR BLUES</option>
-              <option value="smoky_jazz">SMOKY PARLOR JAZZ &amp; EXTENDED TONNETZ</option>
-              <option value="renaissance_counterpoint">PALESTRINA MODAL COUNTERPOINT</option>
-              <option value="modal_drone">MYSTIC BYZANTINE &amp; HIMALAYAN DRONE</option>
-              <option value="raw_chaos">RAW ESOTERIC CHAOS (UNFETTERED VMS)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div class="kapellmeister-body">
-        <div class="kapellmeister-readout" aria-live="polite">
-          <div class="readout-cell">
-            <span class="readout-label">STEP</span>
-            <span class="readout-value" id="harmonic-step">01 / 12</span>
-          </div>
-          <div class="readout-cell">
-            <span class="readout-label">ACTIVE CHORD</span>
-            <span class="readout-value" id="harmonic-chord">C Maj</span>
-          </div>
-          <div class="readout-cell">
-            <span class="readout-label">HARMONIC VECTOR</span>
-            <span class="readout-value" id="harmonic-vector">I (Tonic)</span>
-          </div>
-          <div class="readout-cell">
-            <span class="readout-label">EULER CONSONANCE</span>
-            <span class="readout-value" id="harmonic-euler">G = 4 (Sweet)</span>
-          </div>
-        </div>
-        <div class="kapellmeister-controls">
+        <div class="acoustics-body">
           <div class="volume-heading">
-            <label for="kapellmeister-strictness">CONSONANCE SIEVE (EULER GRADUS)</label>
-            <output id="kapellmeister-strictness-val" for="kapellmeister-strictness">G ≤ 8 (Balanced)</output>
+            <label for="parlor-acoustics-level">PARLOR AMBIENCE LEVEL</label>
+            <output id="acoustics-level-val" for="parlor-acoustics-level">55%</output>
           </div>
-          <input id="kapellmeister-strictness" type="range" min="3" max="14" value="8" step="1" title="Adjust Euler Gradus Suavitatis consonance threshold">
+          <input id="parlor-acoustics-level" type="range" min="0" max="100" value="55" step="1" title="Adjust antique parlor surface crackle and room reverberation">
+          <div class="acoustics-indicators">
+            <button type="button" class="acoustics-chip chip-crackle is-active" id="chip-crackle" aria-pressed="true" title="Toggle wax cylinder surface noise and horn bandpass">WAX CRACKLE</button>
+            <button type="button" class="acoustics-chip chip-reverb is-active" id="chip-reverb" aria-pressed="true" title="Toggle 1890s Victorian wood-paneled chamber convolution reverb">CHAMBER REVERB</button>
+            <button type="button" class="acoustics-chip chip-tick is-active" id="chip-tick" aria-pressed="true" title="Toggle brass grandfather clock escapement tick">CLOCKWORK ESCAPEMENT</button>
+          </div>
         </div>
-        <div class="kapellmeister-compass" id="kapellmeister-compass" aria-hidden="true">
-          <svg viewBox="0 0 460 70" preserveAspectRatio="xMidYMid meet" class="tonnetz-compass-svg">
-            <line x1="30" y1="35" x2="430" y2="35" stroke="#8d6b32" stroke-width="1.5" stroke-dasharray="4,6" />
-            <g class="compass-region is-active" id="compass-reg-0" transform="translate(60, 35)">
-              <polygon points="0,-22 18,12 -18,12" class="tonnetz-tri" />
-              <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
-              <text x="0" y="4" class="tonnetz-node-text" id="node-text-0">I</text>
-            </g>
-            <g class="compass-region" id="compass-reg-1" transform="translate(170, 35)">
-              <polygon points="0,22 18,-12 -18,-12" class="tonnetz-tri" />
-              <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
-              <text x="0" y="4" class="tonnetz-node-text" id="node-text-1">R</text>
-            </g>
-            <g class="compass-region" id="compass-reg-2" transform="translate(280, 35)">
-              <polygon points="0,-22 18,12 -18,12" class="tonnetz-tri" />
-              <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
-              <text x="0" y="4" class="tonnetz-node-text" id="node-text-2">L</text>
-            </g>
-            <g class="compass-region" id="compass-reg-3" transform="translate(390, 35)">
-              <polygon points="0,22 18,-12 -18,-12" class="tonnetz-tri" />
-              <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
-              <text x="0" y="4" class="tonnetz-node-text" id="node-text-3">P</text>
-            </g>
-          </svg>
-        </div>
-      </div>
+      </section>
     </section>
 
-    <section class="beat-engine bandstand-engine" id="bandstand-engine" aria-labelledby="bandstand-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">PARLOR BANDSTAND · SIX-LANGUAGE ENSEMBLE CONSOLE</p>
-          <div class="beat-title-row">
-            <h3 id="bandstand-heading"><span id="bandstand-status">ALL SIX ESOTERIC PLAYERS ENGAGED</span></h3>
-            <span class="beat-telemetry" id="bandstand-telemetry">LOLCODE · MALBOLGE · BRAINFUCK · BEFUNGE · PIET/FRACTRAN · SHAKESPEARE</span>
+    <section class="workstation-wing wing-keep" id="wing-keep" aria-labelledby="wing-keep-heading">
+      <header class="wing-header">
+        <span class="wing-rule" aria-hidden="true"></span>
+        <div class="wing-title">
+          <p class="wing-numeral">WING III</p>
+          <h2 id="wing-keep-heading">KEEP</h2>
+          <p class="wing-dek">SESSION LEDGER · EXPORTS · SHARING</p>
+        </div>
+        <span class="wing-rule" aria-hidden="true"></span>
+      </header>
+      <section class="beat-engine session-engine" id="session-engine" aria-labelledby="session-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">SESSION LEDGER · PRESETS &amp; .FUN FILES</p>
+            <div class="beat-title-row">
+              <h3 id="session-heading">SAVE, RECALL &amp; SEND THE WHOLE APPARATUS</h3>
+              <span class="beat-telemetry" id="session-telemetry" role="status">PRESETS STAY IN THIS BROWSER · NOTHING IS SENT ANYWHERE</span>
+            </div>
           </div>
         </div>
-        <div class="beat-actions">
-          <button class="beat-button" id="bandstand-engage-all" type="button">
-            FULL ENSEMBLE
-          </button>
-          <button class="beat-button" id="bandstand-solo-lead" type="button">
-            SOLO ORACLE LEAD
-          </button>
-          <button class="beat-button" id="bandstand-mutate-all" type="button" disabled>
-            MUTATE ALL PLAYERS <span aria-hidden="true">✦</span>
-          </button>
+        <div class="session-body">
+          <div class="session-field">
+            <label for="session-preset-name">PRESET NAME</label>
+            <div class="session-row">
+              <input id="session-preset-name" type="text" maxlength="40" autocomplete="off" placeholder="the creature's own name">
+              <button class="beat-button" id="session-save-preset" type="button" disabled>SAVE PRESET <span aria-hidden="true">✚</span></button>
+            </div>
+          </div>
+          <div class="session-field">
+            <label for="session-preset-list">SAVED IN THIS BROWSER</label>
+            <div class="session-row">
+              <select id="session-preset-list" class="kapellmeister-select"></select>
+              <button class="beat-button" id="session-load-preset" type="button" disabled>LOAD</button>
+              <button class="beat-button" id="session-delete-preset" type="button" disabled>DELETE</button>
+            </div>
+          </div>
+          <div class="session-field session-files">
+            <span class="session-files-label">PORTABLE SESSION FILE</span>
+            <div class="session-row">
+              <button class="beat-button" id="session-save-file" type="button" disabled>SAVE .FUN FILE <span aria-hidden="true">⤓</span></button>
+              <button class="beat-button" id="session-open-file" type="button">OPEN .FUN FILE <span aria-hidden="true">⤒</span></button>
+              <input id="session-file-input" type="file" accept=".fun,application/json" hidden>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section class="beat-engine export-engine" id="export-engine" aria-labelledby="export-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">ENGRAVER'S DESK · EXPORTS &amp; SHARING</p>
+            <div class="beat-title-row">
+              <h3 id="export-heading">SEND THE SPECIMEN OUT INTO THE WORLD</h3>
+              <span class="beat-telemetry">EVERY FILE IS MADE IN THIS BROWSER</span>
+            </div>
+          </div>
+        </div>
+        <div class="session-body export-body">
+          <div class="session-field" role="group" aria-labelledby="export-audio-label">
+            <span class="session-files-label" id="export-audio-label">AUDIO FOR ANY DAW</span>
+            <div class="session-row">
+              <button class="beat-button" id="export-wav" type="button" disabled>RECORD WAV LOOP <span aria-hidden="true">☊</span></button>
+              <button class="beat-button" id="export-stems" type="button" disabled>EXPORT 9 STEMS (ZIP) <span aria-hidden="true">⧉</span></button>
+            </div>
+          </div>
+          <div class="session-field" role="group" aria-labelledby="export-score-label">
+            <span class="session-files-label" id="export-score-label">NOTATED SCORE</span>
+            <div class="session-row">
+              <button class="beat-button" id="export-midi" type="button" disabled>WRITE MIDI SCORE <span aria-hidden="true">♪</span></button>
+            </div>
+          </div>
+          <div class="session-field" role="group" aria-labelledby="export-share-label">
+            <span class="session-files-label" id="export-share-label">PLATE &amp; OMEN LINK</span>
+            <div class="session-row">
+              <button class="beat-button" id="export-png" type="button" disabled>ENGRAVE PNG PLATE <span aria-hidden="true">▣</span></button>
+              <button class="beat-button" id="share-link" type="button" disabled>COPY OMEN LINK <span aria-hidden="true">⛓</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
     </section>
 
-    <section class="beat-engine parlor-acoustics-engine" id="parlor-acoustics-engine" aria-labelledby="acoustics-heading">
-      <div class="beat-header">
-        <div class="beat-identity">
-          <p class="reading-label">ANTIQUE PARLOR ACOUSTICS · 1890s WAX CYLINDER &amp; CHAMBER</p>
-          <div class="beat-title-row">
-            <h3 id="acoustics-heading"><span id="acoustics-status">CHAMBER REVERBERATION &amp; SURFACE CRACKLE ACTIVE</span></h3>
-            <span class="beat-telemetry" id="acoustics-telemetry">EDISON CYLINDER HORN · CONVOLUTION CHAMBER · CLOCKWORK TICK</span>
+    <section class="workstation-wing wing-band" id="wing-band" aria-labelledby="wing-band-heading">
+      <header class="wing-header">
+        <span class="wing-rule" aria-hidden="true"></span>
+        <div class="wing-title">
+          <p class="wing-numeral">WING IV</p>
+          <h2 id="wing-band-heading">THE BAND</h2>
+          <p class="wing-dek">FIVE ESOTERIC MACHINES · EDIT, MUTATE, OR SILENCE EACH PLATE</p>
+        </div>
+        <span class="wing-rule" aria-hidden="true"></span>
+      </header>
+      <section class="beat-engine" id="beat-engine" aria-labelledby="beat-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">PLATE II · MALBOLGE TERNARY BEAT GENERATOR</p>
+            <div class="beat-title-row">
+              <h3 id="beat-heading"><span id="score-beat">AUTOMATON STANDBY</span></h3>
+              <span class="beat-telemetry" id="beat-telemetry">3¹⁰ TAPE · 12-STEP CRAZY/ROTR</span>
+            </div>
+          </div>
+          <div class="beat-actions">
+            <button class="beat-button" id="beat-toggle" type="button" aria-pressed="true">
+              PULSE: ENGAGED
+            </button>
+            <button class="beat-button" id="beat-mutate" type="button" disabled>
+              RE-INCANT BEAT <span aria-hidden="true">☍</span>
+            </button>
           </div>
         </div>
-        <div class="beat-actions">
-          <button class="beat-button" id="parlor-acoustics-toggle" type="button" aria-pressed="true">
-            ACOUSTICS: ENGAGED
-          </button>
+        <div class="beat-grid" id="beat-grid" role="group" aria-label="Malbolge 12-step ternary beat matrix"></div>
+      </section>
+
+      <section class="beat-engine bass-engine" id="bass-engine" aria-labelledby="bass-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">PLATE III · BRAINFUCK TAPE BASSLINE</p>
+            <div class="beat-title-row">
+              <h3 id="bass-heading"><span id="score-bass">TAPE LOOP STANDBY</span></h3>
+              <span class="beat-telemetry" id="bass-telemetry">256-CELL TAPE · 12-STEP [&gt;+&lt;-] SHUTTLE</span>
+            </div>
+          </div>
+          <div class="beat-actions">
+            <button class="beat-button" id="bass-toggle" type="button" aria-pressed="true">
+              BASS: ENGAGED
+            </button>
+            <button class="beat-button" id="bass-mutate" type="button" disabled>
+              SHIFT TAPE <span aria-hidden="true">⇄</span>
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="acoustics-body">
-        <div class="volume-heading">
-          <label for="parlor-acoustics-level">PARLOR AMBIENCE LEVEL</label>
-          <output id="acoustics-level-val" for="parlor-acoustics-level">55%</output>
+        <div class="beat-grid bass-grid" id="bass-grid" role="group" aria-label="Brainfuck 12-cell walking bass tape"></div>
+      </section>
+
+      <section class="beat-engine harmony-engine" id="harmony-engine" aria-labelledby="harmony-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">PLATE IV · BEFUNGE-93 2D MIRROR CHORD ORGAN</p>
+            <div class="beat-title-row">
+              <h3 id="harmony-heading"><span id="score-harmony">PINBALL ORGAN STANDBY</span></h3>
+              <span class="beat-telemetry" id="harmony-telemetry">2D TORUS · 12-STEP /&bsol; MIRROR VOICINGS</span>
+            </div>
+          </div>
+          <div class="beat-actions">
+            <button class="beat-button" id="harmony-toggle" type="button" aria-pressed="true">
+              ORGAN: ENGAGED
+            </button>
+            <button class="beat-button" id="harmony-mutate" type="button" disabled>
+              DEFLECT MIRRORS <span aria-hidden="true">⤢</span>
+            </button>
+          </div>
         </div>
-        <input id="parlor-acoustics-level" type="range" min="0" max="100" value="55" step="1" title="Adjust antique parlor surface crackle and room reverberation">
-        <div class="acoustics-indicators">
-          <button type="button" class="acoustics-chip chip-crackle is-active" id="chip-crackle" aria-pressed="true" title="Toggle wax cylinder surface noise and horn bandpass">WAX CRACKLE</button>
-          <button type="button" class="acoustics-chip chip-reverb is-active" id="chip-reverb" aria-pressed="true" title="Toggle 1890s Victorian wood-paneled chamber convolution reverb">CHAMBER REVERB</button>
-          <button type="button" class="acoustics-chip chip-tick is-active" id="chip-tick" aria-pressed="true" title="Toggle brass grandfather clock escapement tick">CLOCKWORK ESCAPEMENT</button>
+        <div class="beat-grid harmony-grid" id="harmony-grid" role="group" aria-label="Befunge-93 12-step 2D mirror chord matrix"></div>
+      </section>
+
+      <section class="beat-engine chime-engine" id="chime-engine" aria-labelledby="chime-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">PLATE V · PIET &amp; FRACTRAN SPECTRAL CHIMES</p>
+            <div class="beat-title-row">
+              <h3 id="chime-heading"><span id="score-chime">TONNETZ CARILLON STANDBY</span></h3>
+              <span class="beat-telemetry" id="chime-telemetry">2ᵃ3ᵇ5ᶜ7ᵈ PRIME RATIOS · 18-CODEL CHORUS</span>
+            </div>
+          </div>
+          <div class="beat-actions">
+            <button class="beat-button" id="chime-toggle" type="button" aria-pressed="true">
+              CHIMES: ENGAGED
+            </button>
+            <button class="beat-button" id="chime-mutate" type="button" disabled>
+              REFRACT CODELS <span aria-hidden="true">◈</span>
+            </button>
+          </div>
         </div>
-      </div>
+        <div class="beat-grid chime-grid" id="chime-grid" role="group" aria-label="Piet and FRACTRAN 12-step prime-ratio chime matrix"></div>
+      </section>
+
+      <section class="beat-engine chant-engine" id="chant-engine" aria-labelledby="chant-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">PLATE VI · SHAKESPEARE FORMANT VOWEL CHOIR</p>
+            <div class="beat-title-row">
+              <h3 id="chant-heading"><span id="score-chant">DRAMATIS PERSONAE STANDBY</span></h3>
+              <span class="beat-telemetry" id="chant-telemetry">3 ACTS · 12 SCENES · A-E-I-O-U VODER</span>
+            </div>
+          </div>
+          <div class="beat-actions">
+            <button class="beat-button" id="chant-toggle" type="button" aria-pressed="true">
+              CHOIR: ENGAGED
+            </button>
+            <button class="beat-button" id="chant-mutate" type="button" disabled>
+              RECAST FOLIO <span aria-hidden="true">✧</span>
+            </button>
+          </div>
+        </div>
+        <div class="beat-grid chant-grid" id="chant-grid" role="group" aria-label="Shakespeare 12-scene formant vowel choir matrix"></div>
+      </section>
     </section>
 
     <footer>
