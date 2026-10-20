@@ -230,7 +230,7 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** Confidants can sculpt the musicality and coherence of their summoned omen in real time, from smooth chamber jazz to raw avant-garde chaos, grounded in an authentic 1890s acoustic space.
 
-## D-020 Esoteric Fun Machine: Real-Time Play-Along Keyboard Manual, Auto-Chord Harmonization, and 12-Step Punch-In Loop Sequencer (2026-10-19, status: superseded in part by D-029)
+## D-020 Esoteric Fun Machine: Real-Time Play-Along Keyboard Manual, Auto-Chord Harmonization, and 12-Step Punch-In Loop Sequencer (2026-10-19, status: superseded in part by D-029; sequencer removed by D-038)
 
 **Context:** While confidants could summon algorithmic creatures, modulate parameters via vitrine dragging, and select Kapellmeister genre rulebooks, they could not actively play along or compose harmonic sequences in real time. Confidants requested a Baldwin Fun Machine-inspired auto-chord organ console with a physical/screen keyboard manual, one-finger chord accompaniment, loop punch-in recording, and seamless integration into playback and offline WAV exports.
 
@@ -560,6 +560,21 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 **Alternatives:** A fixed simple panel plus one switch would be easier to build but would never invite a visitor further. A guided tour hand-holds most and costs the most to maintain.
 
 **Consequences:** A first visit shows a small, playable instrument; the depth arrives as the visitor plays. A screen-reader pass with real assistive technology is still outstanding (P4-02 stays open).
+
+## D-038 Remove the 12-step punch-in sequencer (2026-10-20, status: accepted)
+
+**Context:** The maintainer found the Fun Machine's 12-step loop progression "fundamentally broken". They had intended a loop machine for recording a series of loops, and "some wires got crossed". They asked to remove it safely before building anything new, and chose to drop it from saved sessions while keeping old files openable.
+
+**Decision:**
+1. **Removed:** the punch-in REC and RESET PROGRESSION buttons, the 12-step grid, step targeting, live punch-in, and playback of punched chords (live, and in WAV, stem, and MIDI exports). Gone from code are `customProgression`, `selectedSequencerStep`, `funMachineRec`, `renderFunSequencerGrid()`, `flashSequencerStep()`, and `scheduleSequencedFunChord()`, plus 133 lines of CSS.
+2. **Kept:** held keys, the three styles, the band following the held chord through `customSpine`, the lead duck, and every other export. With no key held, `applyEnsembleConductor()` still passes an empty 12-step spine, so the band sounds exactly as before.
+3. **Sessions become v3:** `funMachine` holds only `{ style }`. v1 and v2 files and presets still open; their progression is still validated (malformed files are still rejected) and then dropped, and a re-save writes v3.
+
+**Alternatives:** Reserving an empty progression field for later would keep a field that does nothing; a future loop machine will want its own shape.
+
+**Consequences:** The Fun Machine is simpler: keys and styles only. Exports carry no Fun Machine notes, because held keys are live-only, so the MANUAL stem is silent and the MIDI MANUAL track empty until a loop machine records performances (P5-26). Punched chords in old presets are not restored.
+
+**Found in passing:** with no key held, the conductor has always received that truthy empty spine, so Raw Esoteric Chaos never took its "unfettered" early exit in the live app (D-019 intent). This was kept as-is here and is recorded for a separate fix.
 
 ## Open questions
 

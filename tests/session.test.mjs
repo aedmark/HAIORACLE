@@ -44,7 +44,7 @@ function sampleSession(overrides = {}) {
     genre: "smoky_jazz",
     strictness: 10,
     acoustics: { enabled: true, level: 40, crackle: false, reverb: true, ticks: true },
-    funMachine: { style: "arpeggio", progression: [[7, "minor"], null, null, [0, "maj9"], null, null, null, null, null, null, null, null] },
+    funMachine: { style: "arpeggio" },
     plates,
     mixer: channels,
     ...overrides,
@@ -69,8 +69,9 @@ test("session validation rejects anything outside the allowlist, naming the fiel
   delete missing.tempo;
   rejectsAt(missing, "session.tempo");
   rejectsAt(sampleSession({ format: "something-else" }), "session.format");
-  rejectsAt(sampleSession({ version: 3 }), "session.version");
-  rejectsAt({ ...sampleSession(), funMachine: { ...sampleSession().funMachine, style: "organ" } }, "session.funMachine.style");
+  rejectsAt(sampleSession({ version: 4 }), "session.version");
+  rejectsAt({ ...sampleSession(), funMachine: { style: "organ" } }, "session.funMachine.style");
+  rejectsAt({ ...sampleSession(), funMachine: { style: "arpeggio", progression: Array(12).fill(null) } }, "session.funMachine.progression");
   rejectsAt(sampleSession({ tempo: 300 }), "session.tempo");
   rejectsAt(sampleSession({ tempo: 96.5 }), "session.tempo");
   rejectsAt(sampleSession({ volume: "70" }), "session.volume");
@@ -80,15 +81,6 @@ test("session validation rejects anything outside the allowlist, naming the fiel
   rejectsAt(sampleSession({ phrase: "bell\u0007" }), "session.phrase");
   rejectsAt(sampleSession({ phrase: 42 }), "session.phrase");
 
-  const badChord = sampleSession();
-  badChord.funMachine.progression[1] = [12, "major"];
-  rejectsAt(badChord, "session.funMachine.progression[1][0]");
-  const badQuality = sampleSession();
-  badQuality.funMachine.progression[2] = [3, "<script>"];
-  rejectsAt(badQuality, "session.funMachine.progression[2][1]");
-  const shortProgression = sampleSession();
-  shortProgression.funMachine.progression.pop();
-  rejectsAt(shortProgression, "session.funMachine.progression");
 
   const badCycles = sampleSession();
   badCycles.plates.bass.cellCycles[4] = 1000;
@@ -153,19 +145,32 @@ test("console state rebuilds from session channels", () => {
   assert.deepEqual(muted.channels.beat, toggleMute(setPan(setFader(createMixerState(), "beat", 10), "beat", 50), "beat").channels.beat);
 });
 
-test("punched chords rebuild exactly from root and quality", () => {
+test("version 2 files still open: their punched progression is checked, then dropped (D-038)", () => {
+  const v2 = (progression) => ({ ...sampleSession({ version: 2 }), funMachine: { style: "swell", progression } });
+  const punched = [[7, "minor"], null, null, [0, "maj9"], null, null, null, null, null, null, null, null];
+  const opened = validateSession(v2(punched));
+  assert.equal(opened.version, SESSION_VERSION);
+  assert.deepEqual(opened.funMachine, { style: "swell" }, "only the style survives");
+  assert.equal(JSON.parse(serializeSession(opened)).funMachine.progression, undefined, "a re-save writes v3 without it");
   for (const genre of GENRES) {
-    for (const quality of ["auto", "major", "minor", "dom7", "maj9", "dim", "modal_open"]) {
-      for (let semitone = 0; semitone < 12; semitone += 1) {
-        for (const chord of buildFunProgression(semitone, quality, genre, 52).chords) {
-          assert.deepEqual(buildFunChord(chord.rootPc, chord.quality), chord);
-          const session = sampleSession();
-          session.funMachine.progression[0] = [chord.rootPc, chord.quality];
-          assert.doesNotThrow(() => validateSession(session), `${genre} ${quality} ${chord.quality}`);
-        }
+    for (let root = 0; root < 12; root += 1) {
+      for (const quality of ["major", "minor", "dom7", "maj9", "dim", "modal_open"]) {
+        const chord = buildFunProgression(root, quality, genre, 52).chords[0];
+        const steps = Array(12).fill(null);
+        steps[0] = [chord.rootPc, chord.quality];
+        assert.doesNotThrow(() => validateSession(v2(steps)), `${genre} ${quality}: every chord an old file could hold still opens`);
       }
     }
   }
+  const bad = (index, step, path) => {
+    const steps = Array(12).fill(null);
+    steps[index] = step;
+    rejectsAt(v2(steps), path);
+  };
+  bad(1, [12, "major"], "session.funMachine.progression[1][0]");
+  bad(2, [3, "<script>"], "session.funMachine.progression[2][1]");
+  rejectsAt(v2(Array(11).fill(null)), "session.funMachine.progression");
+  assert.equal(buildFunChord(0, "major").quality, "major");
 });
 
 test("plate cells cycle independently, so per-cell counts replay any click order", async () => {
@@ -193,15 +198,15 @@ test("plate cells cycle independently, so per-cell counts replay any click order
 test("version 1 sessions upgrade: chord mode becomes a progression, lead solo an arpeggio", () => {
   const v1 = (mode) => {
     const session = sampleSession({ version: 1 });
-    session.funMachine = { mode, quality: "maj9", progression: sampleSession().funMachine.progression };
+    session.funMachine = { mode, quality: "maj9", progression: [[7, "minor"], ...Array(11).fill(null)] };
     return session;
   };
   const upgraded = validateSession(v1("auto_chord"));
   assert.equal(upgraded.version, SESSION_VERSION);
   assert.equal(upgraded.funMachine.style, "progression");
   assert.equal(validateSession(v1("lead")).funMachine.style, "arpeggio");
-  assert.deepEqual(upgraded.funMachine.progression, validateSession(sampleSession()).funMachine.progression);
-  assert.equal(JSON.parse(serializeSession(upgraded)).version, 2, "an upgraded session saves as version 2");
+  assert.deepEqual(upgraded.funMachine, { style: "progression" }, "the old progression is dropped");
+  assert.equal(JSON.parse(serializeSession(upgraded)).version, SESSION_VERSION, "an upgraded session saves as the current version");
   const badMode = v1("theremin");
   assert.throws(() => validateSession(badMode), (error) => error.path === "session.funMachine.mode");
   const v1WithStyle = sampleSession({ version: 1 });

@@ -87,7 +87,6 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 | Tempo (BPM) | range input (`#tempo-bpm`) | active audio transport scheduler | session-local `36..208` BPM value initialized to `score.pulse` on summon (double-click restores native pulse); updates upcoming step durations in real time |
 | Vitrine gesture | pointer events on `#vision` | Canvas renderer and active audio transport | transient normalized coordinates, hold, tap, and drag velocity modulate shape morphing, gaze, harmonic phase shift, filter/mix intensity, and synthesized percussion without mutating the score |
 | Fun Machine accompanist | `triggerFunKey()` → `buildPerformance(key, style, genre, tonic)` | live scheduler, `applyEnsembleConductor()` | 13-key manual (`C..C'`) and `[A..K]` keys; a held key plays SWELL, ARPEGGIO, or PROGRESSION on the band's step grid (voice-led pad, two-per-step arpeggio, gliding lead), re-conducts the band onto its chords, and ducks the LOLCODE lead and drones by 10 dB; punch-in writes the chord under each step into `customProgression` |
-| Fun loop sequencer | `#fun-sequence-grid`, `#fun-machine-rec` | `conductEnsemble()`, `#export-wav` | 12-step progression matrix with step targeting, live punch-in recording, and progression reset; custom chords overlay the active genre spine and render into live audio and offline 16-bit WAV loops |
 
 ## Invariants
 
@@ -115,7 +114,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 - Kinetic family, speed, depth, tilt, and boundary-flux family originate in validated spell output. Enforced by required ranges and the 256-phrase coverage test (D-007).
 - Mycelial branching density, fruiting body archetype, and ballistospore emission originate in validated spell output (`fungal_form`, `fungal_hyphae`, `fungal_spores`, `fungal_bloom`). Enforced by required ranges and the phrase batch test (D-017).
 - Fun Machine chords are absolute pitch classes; they reach the conductor only through `toTonicRelative()`, so the band plays the same chord the pad plays. Enforced by `tests/accompaniment.test.mjs` and D-029.
-- Custom chords punched into the Esoteric Fun Machine overlay the active genre spine via `customSpine` without altering virtual machine state or native Lolcode score determinism. Enforced by `tests/oracle.test.mjs` and D-020.
+- A held Fun Machine key's chords overlay the active genre spine via `customSpine` without altering virtual machine state or native LOLCODE score determinism. Enforced by `tests/oracle.test.mjs` and D-029. (The 12-step punch-in sequencer that also used it was removed in D-038.)
 
 ## Boundaries
 

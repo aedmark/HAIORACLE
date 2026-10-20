@@ -733,10 +733,10 @@
         },
         {
           "id": "esoteric-fun-machine",
-          "title": "Edmark's Esoteric Fun Machine One-Finger Accompanist & Loop Sequencer",
+          "title": "Edmark's Esoteric Fun Machine One-Finger Accompanist",
           "summary": "Hold one key and a synth pad plays a swell, arpeggio, or progression in the band's rhythm while the band follows your chord.",
-          "tags": ["accompanist", "keyboard", "pad", "arpeggio", "sequencer", "punch-in", "fun-machine"],
-          "what": "A 13-key manual (`C..C'`) and computer keys (`[A..K]`) drive a one-finger accompanist inspired by Baldwin home organs, without sounding like one. Hold a key and choose a style chip: SWELL holds one pad chord on the key, ARPEGGIO ripples its tones two per step, PROGRESSION walks the genre's four-chord progression with a singing lead line. The band is re-conducted onto the chord while the LOLCODE lead steps back; a 12-step sequencer with punch-in recording keeps chords in the loop.",
+          "tags": ["accompanist", "keyboard", "pad", "arpeggio", "fun-machine"],
+          "what": "A 13-key manual (`C..C'`) and computer keys (`[A..K]`) drive a one-finger accompanist inspired by Baldwin home organs, without sounding like one. Hold a key and choose a style chip: SWELL holds one pad chord on the key, ARPEGGIO ripples its tones two per step, PROGRESSION walks the genre's four-chord progression with a singing lead line. The band is re-conducted onto the chord while the LOLCODE lead steps back. (A 12-step punch-in sequencer was removed in D-038; a loop machine is planned as P5-26.)",
           "how": {
             "lead": "`src/accompaniment.mjs` turns a key into a performance; `src/app.mjs` voices and schedules it on the band's grid:",
             "points": [
@@ -893,7 +893,7 @@
           "title": "Session Ledger: On-Device Presets & .fun Files",
           "summary": "Saves and restores the whole apparatus as named browser presets or portable session files.",
           "tags": ["sessions", "presets", "localstorage", "privacy", "boundary"],
-          "what": "The ledger (`#session-engine`) captures the phrase, every plate's mutation count and cell edits, the punched Fun Machine progression, mode and chord quality, the Kapellmeister rulebook and strictness, the parlor room, tempo, master volume, and the full mixing console. `SAVE PRESET` keeps it under a name in this browser only; `SAVE .FUN FILE` and `OPEN .FUN FILE` move it between machines.",
+          "what": "The ledger (`#session-engine`) captures the phrase, every plate's mutation count and cell edits, the Fun Machine accompaniment style, the Kapellmeister rulebook and strictness, the parlor room, tempo, master volume, and the full mixing console. `SAVE PRESET` keeps it under a name in this browser only; `SAVE .FUN FILE` and `OPEN .FUN FILE` move it between machines.",
           "how": {
             "lead": "`src/session.mjs` defines and validates the format; `captureSession()` and `applySession()` in `src/app.mjs` read and restore live state:",
             "points": [

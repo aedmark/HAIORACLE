@@ -257,7 +257,6 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.match(styles, /\.kapellmeister-motto \{[^}]*height: 4\.2em;[^}]*-webkit-line-clamp: 3;/);
   assert.match(styles, /#fun-machine-heading,\n#kapellmeister-heading \{[^}]*height: 2\.5em;/);
   assert.match(styles, /#fun-machine-telemetry \{[^}]*flex: 1 0 100%;[^}]*height: 3\.2em;[^}]*contain: inline-size;/);
-  assert.match(styles, /\.fun-sequence-grid \{\n  display: grid;\n  grid-template-columns: repeat\(12, minmax\(0, 1fr\)\);/);
   assert.match(styles, /\.step-trits,\n\.beat-step \.cell-byte \{[^}]*height: 1\.3em;[^}]*white-space: nowrap;/);
   assert.match(app, /function setTempoBpm\(value\) \{[\s\S]*?currentTransport\.delay\.delayTime\.setTargetAtTime\(delayTimeFor\(currentScore, activeTempoBpm\)/, "a live tempo change retimes the echo");
   assert.match(app, /async function triggerFunKey\(semitone, isKeyDown = true\) \{\n[^\n]*\n  if \(semitone === null \|\| semitone === undefined \|\| !rulebooksInstalled\(\)\) return;/);
@@ -340,7 +339,7 @@ test("the Kapellmeister console and antique parlor acoustics controls are wired 
   assert.match(app, /elements\.chipTick\?\.addEventListener/);
 });
 
-test("the Esoteric Fun Machine accompanist and loop punch-in sequencer are wired up", async () => {
+test("the Esoteric Fun Machine accompanist is wired up, and the removed loop sequencer is gone (D-038)", async () => {
   const [html, styles, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),
@@ -351,10 +350,8 @@ test("the Esoteric Fun Machine accompanist and loop punch-in sequencer are wired
   assert.match(html, /id="fun-machine-engine"/);
   assert.match(html, /id="fun-machine-status"/);
   assert.match(html, /id="fun-machine-telemetry"/);
-  assert.match(html, /id="fun-machine-rec"/);
-  assert.match(html, /id="fun-machine-reset"/);
   assert.match(html, /id="fun-keyboard"/);
-  assert.match(html, /id="fun-sequence-grid"/);
+  assert.doesNotMatch(html, /id="fun-machine-rec"|id="fun-machine-reset"|id="fun-sequence-grid"|PUNCH-IN/);
   assert.match(html, /role="group" aria-label="Accompaniment style"/);
   for (const style of ["swell", "arpeggio", "progression"]) {
     assert.match(html, new RegExp(`id="chip-style-${style}" data-style="${style}"`), style);
@@ -374,7 +371,7 @@ test("the Esoteric Fun Machine accompanist and loop punch-in sequencer are wired
   assert.match(styles, /\.fun-keyboard/);
   assert.match(styles, /\.fun-key-white/);
   assert.match(styles, /\.fun-key-black/);
-  assert.match(styles, /\.fun-sequence-grid/);
+  assert.doesNotMatch(styles, /\.fun-sequence|\.fun-step/);
 
   // Voices: a pad, an arpeggio pluck, and a gliding lead; no organ vibrato.
   assert.match(app, /function schedulePadChord\(/);
@@ -385,11 +382,9 @@ test("the Esoteric Fun Machine accompanist and loop punch-in sequencer are wired
   assert.match(app, /buildPerformance\(normSemi, funMachineStyle, activeGenre/);
   assert.match(app, /applyEnsembleConductor\(performance\.steps\.map\(\(step\) => step\.chord\)\)/);
   assert.match(app, /const duck = transport === currentTransport && activeHeldFunKey !== null \? LEAD_DUCK_GAIN : 1;/);
-  assert.match(app, /function renderFunSequencerGrid\(/);
   assert.match(app, /function updateFunKeyboardChordLabels\(/);
   assert.match(app, /async function triggerFunKey\(/);
-  assert.match(app, /elements\.funMachineRec\?\.addEventListener/);
-  assert.match(app, /elements\.funMachineReset\?\.addEventListener/);
+  assert.doesNotMatch(app, /customProgression|funMachineRec|funMachineReset|renderFunSequencerGrid|scheduleSequencedFunChord|selectedSequencerStep/);
 });
 
 

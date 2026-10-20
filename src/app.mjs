@@ -219,10 +219,7 @@ const elements = {
   funMachineEngine: document.querySelector("#fun-machine-engine"),
   funMachineStatus: document.querySelector("#fun-machine-status"),
   funMachineTelemetry: document.querySelector("#fun-machine-telemetry"),
-  funMachineRec: document.querySelector("#fun-machine-rec"),
-  funMachineReset: document.querySelector("#fun-machine-reset"),
   funKeyboard: document.querySelector("#fun-keyboard"),
-  funSequenceGrid: document.querySelector("#fun-sequence-grid"),
   status: document.querySelector("#status"),
 };
 
@@ -270,9 +267,6 @@ let parlorCrackleEnabled = true;
 let parlorReverbEnabled = true;
 let parlorTickEnabled = true;
 let funMachineStyle = DEFAULT_ACCOMPANIMENT_STYLE;
-let funMachineRec = false;
-let customProgression = Array(12).fill(null);
-let selectedSequencerStep = null;
 let funMachineDryGain = null;
 let activeHeldFunKey = null;
 let activeFunPerformance = null;
@@ -3180,12 +3174,6 @@ function highlightBeatStep(stepIndex) {
       button.classList.toggle("is-current", idx === normalized);
     }
   }
-  if (elements.funSequenceGrid) {
-    for (const button of elements.funSequenceGrid.querySelectorAll(".fun-step")) {
-      const idx = Number(button.dataset.step);
-      button.classList.toggle("is-current", idx === normalized);
-    }
-  }
 
   if (elements.harmonicStep) {
     elements.harmonicStep.textContent = normalized < 0 ? "-- / 12" : `${String(normalized + 1).padStart(2, "0")} / 12`;
@@ -3640,70 +3628,6 @@ function updateFunKeyboardChordLabels() {
   }
 }
 
-function flashSequencerStep(stepIndex) {
-  if (!elements.funSequenceGrid) return;
-  const button = elements.funSequenceGrid.querySelector(`.fun-step[data-step="${stepIndex}"]`);
-  if (!button) return;
-  button.classList.add("is-selected");
-  window.setTimeout(() => {
-    if (selectedSequencerStep !== stepIndex) {
-      button.classList.remove("is-selected");
-    }
-  }, 240);
-}
-
-function renderFunSequencerGrid() {
-  if (!elements.funSequenceGrid) return;
-  elements.funSequenceGrid.innerHTML = "";
-  for (let index = 0; index < 12; index += 1) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "fun-step";
-    button.dataset.step = String(index);
-
-    const isCustom = Boolean(customProgression[index]);
-    const chord = customProgression[index] || currentConductedSpine?.[index] || null;
-    const isCurrent = index === activeBeatStep;
-    const isSelected = index === selectedSequencerStep;
-
-    if (isCustom) button.classList.add("is-custom");
-    if (isCurrent) button.classList.add("is-current");
-    if (isSelected) button.classList.add("is-selected");
-
-    // Punched chords are absolute; conducted spine chords sit above the tonic.
-    const stepLabel = !chord ? "---" : isCustom ? chordText(chord) : chordLabelFor(chord, currentScore ? currentScore.root : 60);
-    const badgeText = isCustom ? "★ USER" : (chord?.op || "AUTO");
-
-    button.innerHTML = `
-      <span class="fun-step-num">@${String(index + 1).padStart(2, "0")}</span>
-      <span class="fun-step-chord">${stepLabel}</span>
-      <span class="fun-step-badge">${badgeText}</span>
-    `;
-
-    button.setAttribute(
-      "aria-label",
-      `Step ${index + 1}: ${stepLabel}${isCustom ? " (custom punched-in)" : ""}`,
-    );
-
-    button.addEventListener("click", () => {
-      if (selectedSequencerStep === index) {
-        selectedSequencerStep = null;
-        if (elements.funMachineTelemetry) {
-          elements.funMachineTelemetry.textContent = "STEP TARGET RELEASED · PLAY TO AUDITION OR ARM REC";
-        }
-      } else {
-        selectedSequencerStep = index;
-        if (elements.funMachineTelemetry) {
-          elements.funMachineTelemetry.textContent = `STEP @${String(index + 1).padStart(2, "0")} TARGETED · PLAY ANY KEY [A..K] TO PUNCH IN`;
-        }
-      }
-      renderFunSequencerGrid();
-    });
-
-    elements.funSequenceGrid.append(button);
-  }
-}
-
 // While a key is held the LOLCODE lead steps back so the player's part leads
 // and the band follows it (D-028).
 const LEAD_DUCK_GAIN = 10 ** (-10 / 20);
@@ -3754,24 +3678,10 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   activeFunPerformance = performance;
   unlockDrawer("held-key");
 
-  let targetStep = null;
-  if (selectedSequencerStep !== null) {
-    targetStep = selectedSequencerStep;
-  } else if (funMachineRec) {
-    targetStep = activeBeatStep >= 0 ? activeBeatStep : 0;
-  }
-  if (targetStep !== null && targetStep >= 0 && targetStep < 12) {
-    customProgression[targetStep] = performance.steps[targetStep].chord;
-    applyEnsembleConductor();
-    renderFunSequencerGrid();
-    flashSequencerStep(targetStep);
-  } else {
-    applyEnsembleConductor(performance.steps.map((step) => step.chord));
-  }
+  applyEnsembleConductor(performance.steps.map((step) => step.chord));
 
   if (elements.funMachineTelemetry) {
-    const punchInfo = targetStep !== null ? ` · PUNCHED INTO STEP @${String(targetStep + 1).padStart(2, "0")}` : " · THE BAND FOLLOWS";
-    elements.funMachineTelemetry.textContent = `${funKeyLabel(normSemi)} · ${STYLE_LABELS[performance.style]} · ${performance.summary}${punchInfo}`;
+    elements.funMachineTelemetry.textContent = `${funKeyLabel(normSemi)} · ${STYLE_LABELS[performance.style]} · ${performance.summary} · THE BAND FOLLOWS`;
   }
 
   if (muted) return;
@@ -3810,7 +3720,6 @@ renderBassGrid();
 renderHarmonyGrid();
 renderChimeGrid();
 renderChantGrid();
-renderFunSequencerGrid();
 updateFunKeyboardChordLabels();
 
 // Options shared by the live and offline graphs, read from the current session
@@ -3889,25 +3798,6 @@ function scheduleEnsembleStep(context, transport, score, step, at, stepDuration,
   }
   if (transport.clockTicks ?? (parlorAcousticsEnabled && parlorTickEnabled)) {
     scheduleClockworkTick(context, transport.output, at, step, parlorAcousticsLevel);
-  }
-}
-
-// Chords punched into the Fun Machine sequencer: sustained across each 3-step
-// region, re-struck mid-region only when the punched chord changes.
-function scheduleSequencedFunChord(context, transport, step, at, stepDuration, soundingDuration) {
-  const stepIndex = step % 12;
-  if (!customProgression[stepIndex] || !arrangementPlays("fun", stepIndex)) return;
-  const prevStepIndex = (stepIndex + 11) % 12;
-  const isRegStart = stepIndex % 3 === 0;
-  const isNewChord = customProgression[stepIndex] !== customProgression[prevStepIndex];
-  if (isRegStart || isNewChord) {
-    const chordDuration = isRegStart ? stepDuration * 3.0 : soundingDuration;
-    transport.funVoicing = padVoicing(customProgression[stepIndex], transport.funVoicing);
-    schedulePadChord(context, transport.funBus, customProgression[stepIndex], at, chordDuration, {
-      level: FUN_PAD_LEVEL.progression,
-      voicing: transport.funVoicing,
-      transport,
-    });
   }
 }
 
@@ -3996,18 +3886,6 @@ async function playScore(score, { cursor = 0 } = {}) {
           });
           transport.funLeadMidi = midi;
         }
-
-        // Punch-in recording stamps each passing step with the chord under it.
-        if (funMachineRec) {
-          customProgression[stepIndex] = stepInfo.chord;
-          applyEnsembleConductor();
-          renderFunSequencerGrid();
-          const targetStep = stepIndex;
-          const flashMs = Math.max(0, (at - context.currentTime) * 1000);
-          window.setTimeout(() => flashSequencerStep(targetStep), flashMs);
-        }
-      } else {
-        scheduleSequencedFunChord(context, transport, currentStep, transport.nextNoteTime, stepDuration, soundingDuration);
       }
       const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
       window.setTimeout(() => {
@@ -4140,8 +4018,10 @@ function updateKapellmeisterUI() {
 function applyEnsembleConductor() {
   if (!currentScore) return;
   const overrideProgression = arguments.length > 0 ? arguments[0] : null;
-  // Fun Machine chords are absolute; the conductor works above the tonic.
-  const spineToUse = (overrideProgression || customProgression)
+  // A held key's chords are absolute; the conductor works above the tonic.
+  // With no key held the spine stays an empty 12-step array, exactly as when
+  // the removed loop sequencer was empty (D-038), so the band sounds as before.
+  const spineToUse = (overrideProgression || Array(12).fill(null))
     .map((chord) => (chord ? toTonicRelative(chord, currentScore.root) : null));
   const conducted = conductEnsemble({
     score: currentScore,
@@ -4170,7 +4050,6 @@ function applyEnsembleConductor() {
   updateHarmonyGrid();
   updateChimeGrid();
   updateChantGrid();
-  renderFunSequencerGrid();
   highlightBeatStep(activeBeatStep);
 }
 
@@ -4181,8 +4060,6 @@ function showScore(score) {
   harmonyMutation = 0;
   chimeMutation = 0;
   chantMutation = 0;
-  customProgression = Array(12).fill(null);
-  selectedSequencerStep = null;
   for (const id of Object.keys(plateCellCycles)) plateCellCycles[id] = Array(12).fill(0);
   if (beatSource) {
     rawBeat = composeBeat(beatSource, score, beatMutation);
@@ -4250,7 +4127,6 @@ function showScore(score) {
   updateChimeGrid();
   updateChantGrid();
   updateFunKeyboardChordLabels();
-  renderFunSequencerGrid();
   if (elements.bandstandMutateAll) elements.bandstandMutateAll.disabled = false;
   updateBandstandStatus();
   elements.name.textContent = score.name;
@@ -4709,7 +4585,6 @@ async function renderEnsembleLoop(score, {
     const gateRatio = Math.min(0.94, score.gate / 100);
     const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
     scheduleEnsembleStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration, soundingDuration);
-    scheduleSequencedFunChord(offlineCtx, offlineTransport, step, stepTime, stepDuration, soundingDuration);
     stepTime += stepDuration;
   }
 
@@ -5255,16 +5130,6 @@ syncPlateToggles();
 
 // --- Session ledger: .fun files and on-device presets (P5-20, D-026) -------
 
-const funChordCache = new Map();
-
-// Rebuilds a punched chord from (root, quality). Equal pairs share one object,
-// so the sequencer's same-chord check still sees a held chord as held.
-function funChordFor(rootPc, quality) {
-  const key = `${rootPc}:${quality}`;
-  if (!funChordCache.has(key)) funChordCache.set(key, buildFunChord(rootPc, quality));
-  return funChordCache.get(key);
-}
-
 function captureSession() {
   return {
     format: SESSION_FORMAT,
@@ -5283,7 +5148,6 @@ function captureSession() {
     },
     funMachine: {
       style: funMachineStyle,
-      progression: customProgression.map((chord) => (chord ? [chord.rootPc, chord.quality] : null)),
     },
     plates: Object.fromEntries(PLATE_IDS.map((id) => [id, {
       mutation: plateMutation(id),
@@ -5339,7 +5203,6 @@ function applySession(session) {
     session.plates[id].cellCycles.forEach((count, index) => applyCellCycle(id, index, count));
     plateCellCycles[id] = [...session.plates[id].cellCycles];
   }
-  customProgression = session.funMachine.progression.map((step) => (step ? funChordFor(step[0], step[1]) : null));
 
   applyEnsembleConductor();
   updateBeatGrid();
@@ -5348,7 +5211,6 @@ function applySession(session) {
   updateChimeGrid();
   updateChantGrid();
   updateFunKeyboardChordLabels();
-  renderFunSequencerGrid();
   setTempoBpm(session.tempo);
   setMasterVolume(session.volume);
   syncSessionControls();
@@ -5621,10 +5483,10 @@ function noteLoopHeard() {
   if (loopsHeard >= LOOPS_BEFORE_BAND) unlockDrawer("band");
 }
 
-// Anything worth keeping (a rulebook, a fader, a plate edit, a punched step,
-// an accompaniment style) opens the Keep drawer; soloing or silencing a voice
+// Anything worth keeping (a rulebook, a fader, a plate edit, an
+// accompaniment style) opens the Keep drawer; soloing or silencing a voice
 // opens the band.
-const KEEPSAKE_AREAS = "#kapellmeister-engine, #wing-mix, #wing-band, #fun-sequence-grid, .fun-quality-chips";
+const KEEPSAKE_AREAS = "#kapellmeister-engine, #wing-mix, #wing-band, .fun-quality-chips";
 function noteVisitorChange(event) {
   const target = event.target;
   if (!(target instanceof Element) || target.closest(".drawer-toggle, #cabinet-switch")) return;
@@ -5761,7 +5623,6 @@ elements.kapellmeisterGenre?.addEventListener("change", (e) => {
   updateChimeGrid();
   updateChantGrid();
   updateFunKeyboardChordLabels();
-  renderFunSequencerGrid();
   updateArrangementDisplay(currentTransport?.audibleStep ?? null);
 });
 
@@ -5790,35 +5651,8 @@ function setFunStyle(style) {
     chip.classList.toggle("is-active", active);
     chip.setAttribute("aria-pressed", String(active));
   }
-  if (elements.funMachineStatus && !funMachineRec) elements.funMachineStatus.textContent = funStatusText();
+  if (elements.funMachineStatus) elements.funMachineStatus.textContent = funStatusText();
 }
-
-elements.funMachineRec?.addEventListener("click", () => {
-  funMachineRec = !funMachineRec;
-  if (funMachineRec) {
-    elements.funMachineRec.textContent = "PUNCH-IN REC: ARMED ●";
-    elements.funMachineRec.setAttribute("aria-pressed", "true");
-    if (elements.funMachineStatus) {
-      elements.funMachineStatus.textContent = "PUNCH-IN RECORD ARMED · LIVE JAM WILL OVERWRITE BEAT STEPS";
-    }
-  } else {
-    elements.funMachineRec.textContent = "PUNCH-IN REC: OFF";
-    elements.funMachineRec.setAttribute("aria-pressed", "false");
-    if (elements.funMachineStatus) {
-      elements.funMachineStatus.textContent = funStatusText();
-    }
-  }
-});
-
-elements.funMachineReset?.addEventListener("click", () => {
-  customProgression = Array(12).fill(null);
-  selectedSequencerStep = null;
-  applyEnsembleConductor();
-  renderFunSequencerGrid();
-  if (elements.funMachineTelemetry) {
-    elements.funMachineTelemetry.textContent = "CUSTOM PROGRESSION RESET · RESTORED KAPELLMEISTER GENRE CHORDS";
-  }
-});
 
 for (const chip of document.querySelectorAll(".fun-chip[data-style]")) {
   chip.addEventListener("click", () => {

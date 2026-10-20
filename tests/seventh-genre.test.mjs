@@ -88,7 +88,7 @@ test("saved sessions accept the new genre, and still refuse genres no rulebook n
   const session = {
     format: SESSION_FORMAT, version: SESSION_VERSION, phrase: "a barbershop tag", tempo: 96, volume: 70, genre: CODE, strictness: 8,
     acoustics: { enabled: true, level: 55, crackle: true, reverb: true, ticks: true },
-    funMachine: { style: "progression", progression: Array(12).fill(null) },
+    funMachine: { style: "progression" },
     plates: Object.fromEntries(["beat", "bass", "harmony", "chime", "chant"].map((id) => [id, { mutation: 0, cellCycles: Array(12).fill(0) }])),
     mixer: Object.fromEntries(["lead", "fun", "beat", "bass", "harmony", "chime", "chant", "fungal"].map((id) => [id, { fader: 80, pan: 0, muted: false, soloed: false }])),
   };

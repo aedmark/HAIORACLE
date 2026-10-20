@@ -16,7 +16,7 @@ import { MIXER_CHANNEL_IDS } from "./mixer.mjs";
 export const SESSION_FORMAT = "edmark-fun-session";
 // Version 2 (D-028) replaced the Fun Machine's mode and chord quality with an
 // accompaniment style. Version 1 files still open and are upgraded on read.
-export const SESSION_VERSION = 2;
+export const SESSION_VERSION = 3;
 export const SESSION_FILE_EXTENSION = "fun";
 export const MAX_SESSION_BYTES = 64 * 1024;
 export const MAX_PHRASE_LENGTH = 72;
@@ -98,7 +98,7 @@ export function validateSession(raw) {
     "acoustics", "funMachine", "plates", "mixer",
   ]);
   if (raw.format !== SESSION_FORMAT) throw new SessionError("session.format", `must be "${SESSION_FORMAT}"`);
-  if (raw.version !== SESSION_VERSION && raw.version !== 1) throw new SessionError("session.version", `must be 1 or ${SESSION_VERSION}`);
+  if (![1, 2, SESSION_VERSION].includes(raw.version)) throw new SessionError("session.version", `must be 1, 2, or ${SESSION_VERSION}`);
 
   expectKeys(raw.acoustics, "session.acoustics", ["enabled", "level", "crackle", "reverb", "ticks"]);
   const acoustics = Object.freeze({
@@ -109,30 +109,37 @@ export function validateSession(raw) {
     ticks: expectBool(raw.acoustics.ticks, "session.acoustics.ticks"),
   });
 
+  // v3 stores only the accompaniment style. Older files still open: v1's
+  // chord mode becomes PROGRESSION and its lead solo ARPEGGIO, and the 12-step
+  // progression that v1 and v2 stored is checked, then dropped, because the
+  // loop sequencer that played it was removed (D-038).
   let style;
-  if (raw.version === 1) {
-    // v1 → v2: one-finger chords become a progression, lead solo an arpeggio.
-    expectKeys(raw.funMachine, "session.funMachine", ["mode", "quality", "progression"]);
-    const mode = expectEnum(raw.funMachine.mode, "session.funMachine.mode", V1_FUN_MODES);
-    expectEnum(raw.funMachine.quality, "session.funMachine.quality", V1_FUN_QUALITIES);
-    style = mode === "lead" ? "arpeggio" : "progression";
-  } else {
-    expectKeys(raw.funMachine, "session.funMachine", ["style", "progression"]);
+  if (raw.version === SESSION_VERSION) {
+    expectKeys(raw.funMachine, "session.funMachine", ["style"]);
     style = expectEnum(raw.funMachine.style, "session.funMachine.style", FUN_STYLES);
-  }
-  const { progression } = raw.funMachine;
-  if (!Array.isArray(progression) || progression.length !== 12) {
-    throw new SessionError("session.funMachine.progression", "must list exactly 12 steps");
-  }
-  const funMachine = Object.freeze({
-    style,
-    progression: Object.freeze(progression.map((step, index) => {
+  } else {
+    if (raw.version === 1) {
+      expectKeys(raw.funMachine, "session.funMachine", ["mode", "quality", "progression"]);
+      const mode = expectEnum(raw.funMachine.mode, "session.funMachine.mode", V1_FUN_MODES);
+      expectEnum(raw.funMachine.quality, "session.funMachine.quality", V1_FUN_QUALITIES);
+      style = mode === "lead" ? "arpeggio" : "progression";
+    } else {
+      expectKeys(raw.funMachine, "session.funMachine", ["style", "progression"]);
+      style = expectEnum(raw.funMachine.style, "session.funMachine.style", FUN_STYLES);
+    }
+    const { progression } = raw.funMachine;
+    if (!Array.isArray(progression) || progression.length !== 12) {
+      throw new SessionError("session.funMachine.progression", "must list exactly 12 steps");
+    }
+    progression.forEach((step, index) => {
       const path = `session.funMachine.progression[${index}]`;
-      if (step === null) return null;
+      if (step === null) return;
       if (!Array.isArray(step) || step.length !== 2) throw new SessionError(path, "must be null or [root, quality]");
-      return Object.freeze([expectInt(step[0], `${path}[0]`, 0, 11), expectEnum(step[1], `${path}[1]`, CHORD_QUALITY_IDS)]);
-    })),
-  });
+      expectInt(step[0], `${path}[0]`, 0, 11);
+      expectEnum(step[1], `${path}[1]`, CHORD_QUALITY_IDS);
+    });
+  }
+  const funMachine = Object.freeze({ style });
 
   expectKeys(raw.plates, "session.plates", PLATE_IDS);
   const plates = {};

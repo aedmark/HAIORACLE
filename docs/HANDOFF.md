@@ -4,9 +4,9 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 39, on `main`: the cabinet starts in discovery, with drawers that open as you play and a switch for the whole cabinet, plus the first P4-02 accessibility fixes (D-037); session 38 shipped Parlor Ragtime._
+_Last updated: 2026-10-20, session 40, on `main`: the broken 12-step punch-in sequencer is removed, and sessions are format v3, with older files still opening (D-038); a loop machine is planned (P5-26); session 39 added discovery mode (D-037)._
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-24 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-25 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
 **Verified** (2026-10-20, session 39, local Linux environment)
 
@@ -86,6 +86,30 @@ _Last updated: 2026-10-20, session 39, on `main`: the cabinet starts in discover
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 40: 2026-10-20: the punch-in sequencer comes out
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Maintainer: the 12-step loop progression was "fundamentally broken". It was meant to be a loop machine for recording a series of loops. They asked to remove it safely before building anything else, and to drop it from saved sessions while keeping old files openable.
+
+**Done:** D-038 (P5-25).
+
+**Changed:**
+1. `index.html`: the REC and RESET PROGRESSION buttons and the 12-step grid are removed, and the telemetry text is updated.
+2. `src/app.mjs`: sequencer state, rendering, step targeting, punch-in (in `triggerFunKey()` and the scheduler), `scheduleSequencedFunChord()` (live and offline), and session capture and restore of the progression are removed. `applyEnsembleConductor()` keeps passing an empty 12-step spine with no key held, so the band is unchanged. The discovery Keep trigger no longer watches the grid.
+3. `src/session.mjs`: `SESSION_VERSION` 3, with `funMachine: { style }`. v1 and v2 still open; their progression is validated, then dropped.
+4. `styles.css`: 16 sequencer rules (133 lines) removed.
+5. Tests: session samples are v3; v2 files open with punched chords dropped and malformed ones still rejected; static checks assert the sequencer is gone.
+6. Docs: D-038 (D-020 marked), ARCHITECTURE, manual, README, CHANGELOG (Removed), ROADMAP (P5-25 done, P5-26 loop machine, P5-26 Raw Chaos).
+
+**Verified:** 117/117 Node checks. In the browser, there was no sequencer markup, and holding a key during play worked. A preset rewritten into the old v2 form with punched chords listed, loaded (status "PRESET LOADED", style ARPEGGIO), and re-saved as v3 with only the style. No console errors.
+
+**Found:** the truthy empty spine means Raw Esoteric Chaos is still conducted in the live app (P5-27). It is kept as-is for this change.
+
+**Left undone:** P5-26 loop machine design; P5-27; the P4-02 screen-reader pass; P6-01.
+
+**Next session should start with:** designing the loop machine (P5-26) with the maintainer.
 
 ### Session 39: 2026-10-20: discovery drawers and the accessibility audit
 
@@ -285,24 +309,5 @@ _Last updated: 2026-10-20, session 39, on `main`: the cabinet starts in discover
 **Left undone:** P5-23 phases 3–5; listening pass on the fuller forms; P4-02; P6-01.
 
 **Next session should start with:** P5-23 phase 3: have `conductor.mjs` read `compileRulebooks()` output, delete its genre tables and switches, fetch `src/rulebooks.ni` in the app, and keep `tests/rulebooks.test.mjs` passing unchanged.
-
-### Session 29: 2026-10-20: Inform 7 rulebooks, phase 1
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** The maintainer accepted D-033: the Kapellmeister genre rulebooks move into an Inform 7 subset. Raw Chaos stays a rulebook, and a seventh playable genre is a follow-up. They asked to start phase 1, freezing today's behaviour.
-
-**Done:** D-033 accepted; P5-23 phase 1.
-
-**Changed:**
-1. `tests/rulebook-capture.mjs`: captures every genre decision through the conductor's public functions. That covers chord colours (every quality; both tonics for auto), progressions, spines over six phrases and four mutations, melody projection over 48 pitches × 12 strictness × passing, and the conducted ensemble for six phrases × six genres × three strictness levels, with and without a punched spine. Chords are interned; progression steps are stored as tuples whose structural fields are checked rather than stored.
-2. `tests/fixtures/rulebooks-golden.json` (618 KB, one entry per line), written by `tools/freeze_rulebooks.mjs`, which refuses to overwrite it without `--rewrite`.
-3. `tests/rulebooks.test.mjs`: coverage check and exact-match guard with a line diff on failure.
-
-**Verified:** 91/91 Node checks. Changing one Smoky Jazz colour rule (`{0, 5}` to `{0}`) failed the guard with the two differing lines shown; reverting it passed.
-
-**Left undone:** P5-23 phases 2–5 (interpreter and `src/rulebooks.ni`, migration, surfaced menu, fixture-only seventh genre); listening pass on the fuller forms; P4-02; P6-01.
-
-**Next session should start with:** P5-23 phase 2, `src/inform.mjs` and `src/rulebooks.ni`, using the subset table in D-033.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).

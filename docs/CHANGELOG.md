@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Removed
+
+- Remove the Fun Machine's 12-step loop progression, punch-in recording, and RESET PROGRESSION. Holding keys works as before. Sessions and presets saved earlier still open; any punched chords in them are left out. A proper loop machine is planned.
+
 ### Changed
 
 - Read each Kapellmeister genre's motto under its title. The genres themselves (menu, chord colours, changes, progressions, bass walks, voicings, overtones) are now written in plain-English Inform 7 in `src/rulebooks.ni`; the music is unchanged.
