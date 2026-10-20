@@ -91,6 +91,7 @@ Never force-push or rewrite shared history.
 | `src/shakespeare.mjs` | Shakespeare Programming Language interpreter and 12-scene formant vowel choir engine |
 | `src/conductor.mjs` | Euler *Gradus Suavitatis*, Neo-Riemannian *Tonnetz*, and Euclidean rhythm ensemble conductor |
 | `src/ensemble.mjs` | Shared Web Audio ensemble graph for live playback and offline WAV export |
+| `src/mixer.mjs` | Eight-channel mixing console state, fader taper, solo rules, and VU meter math |
 | `src/transport.mjs` | Master transport state model and `Space`/`Esc` hotkey rules |
 | `src/score.mjs` | Phrase hashing, score validation, and naming |
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |

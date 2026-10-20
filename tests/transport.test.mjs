@@ -43,6 +43,7 @@ function fakeContext({ panner = true } = {}) {
     createConvolver: () => node("convolver", { normalize: true, buffer: null }),
     createBufferSource: () => source("bufferSource", { buffer: null, loop: false }),
     createOscillator: () => source("oscillator", { type: "sine", frequency: param(440), detune: param() }),
+    createAnalyser: () => node("analyser", { fftSize: 2048 }),
   };
   if (panner) context.createStereoPanner = () => node("panner", { pan: param() });
   return context;
@@ -121,16 +122,59 @@ test("engines without a stereo panner still route the filter to compressor and d
   assert.ok(context.edges.some(([a, b]) => a === graph.filter.id && b === graph.delay.id));
 });
 
-test("disabled bandmates and parlor layers start silent instead of disconnecting", () => {
+test("each bus passes through its own stereo mixer strip before the shared graph", () => {
   const context = fakeContext();
   const graph = build(context, {
-    enabled: { beat: false, bass: true, harmony: false, chime: true, chant: false },
+    channels: { beat: { gain: 0, pan: -0.5 }, chime: { gain: 1.2, pan: 0.25 } },
+  });
+  const { edges } = context;
+  for (const id of ["lead", "fun", "beat", "bass", "harmony", "chime", "chant", "fungal"]) {
+    const strip = graph.strips[id];
+    assert.equal(strip.fader.channelCount, 2, `${id} upmixes to stereo before panning`);
+    assert.equal(strip.fader.channelCountMode, "explicit");
+    assert.ok(edges.some(([a, b]) => a === strip.fader.id && b === strip.pan.id), `${id} fader feeds its pan`);
+    assert.equal(strip.analyser, null, "meters are off unless requested");
+  }
+  assert.ok(edges.some(([a, b]) => a === graph.mix.id && b === graph.strips.lead.fader.id));
+  assert.ok(edges.some(([a, b]) => a === graph.strips.chime.pan.id && b === graph.filter.id));
+  assert.ok(edges.some(([a, b]) => a === graph.strips.beat.pan.id && b === graph.compressor.id));
+  assert.equal(edges.some(([a, b]) => a === graph.beatBus.id && b === graph.compressor.id), false, "no bus bypasses its strip");
+  assert.equal(graph.strips.beat.fader.gain.value, 0);
+  assert.equal(graph.strips.beat.pan.pan.value, -0.5);
+  assert.equal(graph.strips.chime.fader.gain.value, 1.2);
+  assert.equal(graph.strips.bass.fader.gain.value, 1, "an unlisted channel sits at unity");
+  assert.equal(graph.beatBus.gain.value, ENSEMBLE_BUS_GAINS.beat, "bus voicing never carries mute");
+});
+
+test("live meters only add analyser taps and never change what is heard", () => {
+  const metered = fakeContext();
+  const plain = fakeContext();
+  const graph = build(metered, { meters: true });
+  build(plain, { meters: false });
+  const analyserIds = new Set(metered.nodes.filter((n) => n.kind === "analyser").map((n) => n.id));
+  assert.equal(analyserIds.size, 8);
+  for (const strip of Object.values(graph.strips)) {
+    assert.ok(metered.edges.some(([a, b]) => a === strip.pan.id && b === strip.analyser.id), "meter taps post-pan");
+    assert.equal(metered.edges.some(([a]) => a === strip.analyser.id), false, "analysers are sinks");
+  }
+  assert.deepEqual(metered.edges.filter(([, b]) => !analyserIds.has(b)), plain.edges);
+});
+
+test("the vitrine panner path is trimmed to keep the pre-mixer balance", () => {
+  const context = fakeContext();
+  const graph = build(context);
+  const trim = context.edges.find(([a]) => a === graph.panner.id);
+  const trimNode = context.nodes.find((n) => n.id === trim[1]);
+  assert.equal(trimNode.gain.value, Math.SQRT1_2);
+  assert.ok(context.edges.some(([a, b]) => a === trimNode.id && b === graph.compressor.id));
+  assert.ok(context.edges.some(([a, b]) => a === trimNode.id && b === graph.delay.id));
+});
+
+test("parlor layers start silent when switched off", () => {
+  const context = fakeContext();
+  const graph = build(context, {
     parlor: parlorSendLevels({ enabled: true, reverbEnabled: false, crackleEnabled: true, level: 0.5 }),
   });
-  assert.equal(graph.beatBus.gain.value, SILENT_GAIN);
-  assert.equal(graph.bassBus.gain.value, ENSEMBLE_BUS_GAINS.bass);
-  assert.equal(graph.harmonyBus.gain.value, SILENT_GAIN);
-  assert.equal(graph.chantBus.gain.value, SILENT_GAIN);
   assert.equal(graph.parlorReverbSend.gain.value, SILENT_GAIN);
   assert.equal(graph.parlorCrackleGain.gain.value, 0.42 * 0.5);
   assert.deepEqual(

@@ -927,6 +927,169 @@ input[type="text"]:focus {
   opacity: 0.38;
 }
 
+/* Parlor mixing console (P5-19): eight strips, VU column beside each fader. */
+.mixer-strips {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+
+.mixer-strip {
+  --level: 0;
+  --peak: 0;
+  display: grid;
+  justify-items: center;
+  gap: 0.42rem;
+  min-width: 0;
+  padding: 0.6rem 0.35rem 0.55rem;
+  border: 1px solid rgba(184, 146, 73, 0.34);
+  color: rgba(228, 215, 190, 0.82);
+  background: linear-gradient(180deg, rgba(31, 23, 19, 0.92) 0%, rgba(14, 10, 9, 0.95) 100%);
+  font-family: var(--mono-ledger);
+  transition: opacity 150ms ease, border-color 150ms ease;
+}
+
+.mixer-strip.is-silent {
+  opacity: 0.5;
+}
+
+.mixer-strip-label {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  margin: 0;
+  color: var(--brass-bright);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+
+.mixer-strip-source {
+  max-width: 100%;
+  overflow: hidden;
+  color: rgba(228, 215, 190, 0.55);
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mixer-fader-bay {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0.45rem;
+  height: 9.5rem;
+}
+
+.mixer-meter {
+  position: relative;
+  width: 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(184, 146, 73, 0.4);
+  background: rgba(5, 4, 3, 0.9);
+}
+
+/* Verdigris through brass into oxblood, revealed from the bottom by --level. */
+.mixer-meter-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, var(--verdigris) 0%, #6f8f5a 55%, var(--brass-bright) 80%, var(--oxblood-bright) 100%);
+  clip-path: inset(calc((1 - var(--level)) * 100%) 0 0 0);
+}
+
+.mixer-meter-peak {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: var(--parchment-light);
+  opacity: calc(var(--peak) * 4);
+  transform: translateY(calc(var(--peak) * -9.5rem));
+}
+
+.mixer-strip.is-clipping .mixer-meter {
+  border-color: var(--oxblood-bright);
+  box-shadow: 0 0 6px rgba(138, 42, 54, 0.8);
+}
+
+.mixer-fader {
+  width: 1.15rem;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--brass-bright);
+  cursor: pointer;
+  writing-mode: vertical-lr;
+  direction: rtl;
+}
+
+.mixer-db,
+.mixer-pan-value {
+  color: var(--parchment-light);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.mixer-pan {
+  width: 100%;
+  max-width: 5rem;
+  height: 0.9rem;
+  margin: 0;
+  accent-color: var(--brass);
+  cursor: pointer;
+}
+
+.mixer-switches {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.mixer-switch {
+  min-width: 1.6rem;
+  padding: 0.38rem 0.4rem;
+  border: 1px solid var(--brass-dim);
+  color: rgba(228, 215, 190, 0.7);
+  background: rgba(12, 9, 8, 0.7);
+  font-family: var(--mono-ledger);
+  font-size: 0.6rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mixer-switch:hover {
+  border-color: var(--brass-bright);
+}
+
+.mixer-mute[aria-pressed="true"] {
+  border-color: var(--oxblood-bright);
+  color: var(--parchment-light);
+  background: var(--oxblood);
+}
+
+.mixer-solo[aria-pressed="true"] {
+  border-color: var(--brass-bright);
+  color: var(--ink);
+  background: var(--brass-bright);
+}
+
+.mixer-fader:focus-visible,
+.mixer-pan:focus-visible,
+.mixer-switch:focus-visible {
+  outline: 2px solid var(--brass-bright);
+  outline-offset: 2px;
+}
+
+.mixer-legend {
+  margin: 0;
+  color: rgba(228, 215, 190, 0.5);
+  font-family: var(--mono-ledger);
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+}
+
 .beat-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -1661,6 +1824,7 @@ input[type="text"]:focus {
 }
 
 @media (max-width: 480px) {
+
   .fun-sequence-grid {
     grid-template-columns: repeat(4, 1fr);
   }
@@ -1869,8 +2033,29 @@ noscript {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
+  .mixer-strips {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   footer {
     grid-template-columns: 1fr auto;
+  }
+}
+
+/* After the 620px block so the rail wins on the narrowest phones. */
+@media (max-width: 480px) {
+  /* A scrolling rail of fixed-width strips, like a hardware console. */
+  .mixer-strips {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 5.4rem;
+    overflow-x: auto;
+    padding-bottom: 0.35rem;
+    scroll-snap-type: x proximity;
+  }
+
+  .mixer-strip {
+    scroll-snap-align: start;
   }
 }
 

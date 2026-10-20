@@ -530,6 +530,33 @@
             {"label": "Architecture Record D-014", "target": "docs/DECISIONS.md"}
           ],
           "related": ["tonnetz-spine", "lookahead-scheduler", "live-tempo-control"]
+        },
+        {
+          "id": "parlor-mixing-console",
+          "title": "Eight-Channel Parlor Mixing Console",
+          "summary": "Gives each of the eight ensemble voices a fader, stereo pan, mute, solo, and live VU meter.",
+          "tags": ["mixer", "audio", "metering", "accessibility"],
+          "what": "A console (`#mixer-engine`) between the Fun Machine and Plate II with eight strips: LEAD (LOLCODE), MANUAL (Fun Machine), PULSE (Malbolge), BASS (Brainfuck), ORGAN (Befunge), CHIMES (Piet/FRACTRAN), CHOIR (Shakespeare), and MYCELIUM (bio-acoustics). Each strip has a vertical fader with a dB readout, a pan slider, M and S switches, and a post-fader VU column with peak hold and clip warning. Plate ENGAGE/SILENCE switches are the same mutes, and WAV exports follow the mix.",
+          "how": {
+            "lead": "`src/mixer.mjs` holds the pure console state; `buildEnsembleGraph()` in `src/ensemble.mjs` builds the strips; `updateMixer()` in `src/app.mjs` applies changes:",
+            "points": [
+              "Each bus routes through a 2-channel `GainNode` fader and a `StereoPannerNode`; upmixing first lets a centered pan pass mono voices at unity.",
+              "`channelSettings()` turns faders, pans, mutes, and solos into per-strip gain and pan; any solo isolates the soloed channels, and an explicit mute still wins.",
+              "The fader taper is `(v / 80)²`, so 80 is unity and 100 is +3.9 dB; changes ramp over a 20 ms time constant.",
+              "Live strips carry a post-pan `AnalyserNode`; a `requestAnimationFrame` loop turns `meterReading()` RMS and peak into meter fills with fast attack, a slow fall, and a 0.9 s peak hold.",
+              "A fixed `Math.SQRT1_2` trim on the vitrine drag panner keeps the default console bit-identical in level to the pre-mixer mix."
+            ]
+          },
+          "why": "Players asked to balance the six-language band and hear one bandmate at a time (roadmap P5-19). Building the strips into the shared graph means live playback, WAV export, and the planned stem export (P5-21) all hear the same mix. Folding plate switches into mixer mutes leaves one mute per bandmate instead of two that could disagree (ADR D-024).",
+          "evidence": [
+            {"label": "Mixer state, taper, and meter math", "target": "src/mixer.mjs"},
+            {"label": "Channel strips in the shared graph", "target": "src/ensemble.mjs"},
+            {"label": "Console rendering and VU loop", "target": "src/app.mjs"},
+            {"label": "Mixer model tests", "target": "tests/mixer.test.mjs"},
+            {"label": "Strip routing tests", "target": "tests/transport.test.mjs"},
+            {"label": "Architecture Record D-024", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["bandstand-console", "master-transport", "deterministic-wav-export"]
         }
       ]
     },

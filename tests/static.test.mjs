@@ -16,6 +16,7 @@ test("the static entry points exist", async () => {
     "src/fractran.mjs",
     "src/lolcode.mjs",
     "src/malbolge.mjs",
+    "src/mixer.mjs",
     "src/music.mjs",
     "src/score.mjs",
     "src/share.mjs",
@@ -246,6 +247,7 @@ test("the application has no remote runtime assets", async () => {
     "src/fractran.mjs",
     "src/lolcode.mjs",
     "src/malbolge.mjs",
+    "src/mixer.mjs",
     "src/music.mjs",
     "src/score.mjs",
     "src/share.mjs",
@@ -368,4 +370,28 @@ test("the master transport deck exposes play, pause, stop, position, and hotkeys
   // Both transports build from the shared graph so a WAV renders what is heard.
   assert.equal(app.match(/buildEnsembleGraph\(/g).length, 2);
   assert.doesNotMatch(app, /context\.createDynamicsCompressor\(\)|offlineCtx\.createDynamicsCompressor\(\)/);
+});
+
+test("the parlor mixing console sits between the Fun Machine and Plate II and drives the strips", async () => {
+  const [html, styles, app] = await Promise.all([
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("styles.css", root), "utf8"),
+    readFile(new URL("src/app.mjs", root), "utf8"),
+  ]);
+  const funAt = html.indexOf('id="fun-machine-engine"');
+  const mixerAt = html.indexOf('id="mixer-engine"');
+  const beatAt = html.indexOf('id="beat-engine"');
+  assert.ok(funAt > 0 && funAt < mixerAt && mixerAt < beatAt);
+  assert.match(html, /id="mixer-strips"/);
+  assert.match(html, /id="mixer-telemetry"/);
+  assert.match(html, /id="mixer-reset"/);
+  assert.match(styles, /\.mixer-fader \{[\s\S]*writing-mode: vertical-lr/);
+  assert.match(styles, /\.mixer-meter-fill \{[\s\S]*var\(--level\)/);
+  assert.match(app, /function renderMixerConsole\(\)/);
+  assert.match(app, /function applyMixerToTransport\(\)/);
+  assert.match(app, /channels: channelSettings\(mixerState\)/);
+  assert.match(app, /getFloatTimeDomainData\(meterBuffer\)/);
+  // Plate switches are channel mutes; no parallel enable flags remain.
+  assert.doesNotMatch(app, /\b(beat|bass|harmony|chime|chant)Enabled\b/);
+  assert.match(app, /updateMixer\(toggleMute\(mixerState, "beat"\)\)/);
 });

@@ -3,11 +3,13 @@
 // routing the listener hears. Scheduling stays with the host; this module only
 // creates and wires nodes, which keeps it testable with a fake context in Node.
 
+import { MIXER_CHANNELS } from "./mixer.mjs";
+
 export const MIX_LEVEL = 0.28;
 export const SILENT_GAIN = 0.0001;
 
-// Resting bus levels. A disabled bandmate drops to SILENT_GAIN rather than
-// disconnecting, so toggles can ramp without rebuilding the graph.
+// Fixed voicing level of each bus before its mixer strip. Muting, soloing, and
+// fader moves happen on the strip, so these never change at runtime.
 export const ENSEMBLE_BUS_GAINS = Object.freeze({
   beat: 0.82,
   bass: 0.84,
@@ -22,10 +24,6 @@ const FILTER_TYPES = Object.freeze(["lowpass", "bandpass", "lowpass", "lowpass",
 const DELAY_MULTIPLIERS = Object.freeze([1, 1.5, 0.75, 2, 1.25, 0.5]);
 const DRONE_INTERVALS = Object.freeze([-12, -5, 7]);
 const DRONE_DETUNE = Object.freeze([-5, 4, -3]);
-
-export function busGainFor(name, enabled = true) {
-  return enabled ? ENSEMBLE_BUS_GAINS[name] : SILENT_GAIN;
-}
 
 export function parlorSendLevels({ enabled, reverbEnabled, crackleEnabled, level }) {
   return {
@@ -46,6 +44,9 @@ function midiToFrequency(note) {
  * `fadeIn` ramps the drone mix in for live starts; offline loops begin at level.
  * `impulseBuffer` and `crackleBuffer` are optional: a missing buffer leaves
  * that parlor layer silent instead of failing the whole graph.
+ * `channels` maps mixer channel ids to `{ gain, pan }` for their strips (a
+ * missing channel sits at unity, centered). `meters` adds an AnalyserNode tap to
+ * each strip for live VU metering; offline renders leave it off.
  */
 export function buildEnsembleGraph(context, score, {
   start,
@@ -53,7 +54,8 @@ export function buildEnsembleGraph(context, score, {
   fadeIn = true,
   unit,
   outputGain,
-  enabled = {},
+  channels = {},
+  meters = false,
   parlor = { reverb: SILENT_GAIN, crackle: SILENT_GAIN },
   impulseBuffer = null,
   crackleBuffer = null,
@@ -80,13 +82,13 @@ export function buildEnsembleGraph(context, score, {
   } else {
     mix.gain.setValueAtTime(MIX_LEVEL, now);
   }
-  beatBus.gain.setValueAtTime(busGainFor("beat", enabled.beat ?? true), now);
-  bassBus.gain.setValueAtTime(busGainFor("bass", enabled.bass ?? true), now);
-  harmonyBus.gain.setValueAtTime(busGainFor("harmony", enabled.harmony ?? true), now);
-  chimeBus.gain.setValueAtTime(busGainFor("chime", enabled.chime ?? true), now);
-  chantBus.gain.setValueAtTime(busGainFor("chant", enabled.chant ?? true), now);
-  fungalBus.gain.setValueAtTime(busGainFor("fungal"), now);
-  funBus.gain.setValueAtTime(busGainFor("fun"), now);
+  beatBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.beat, now);
+  bassBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.bass, now);
+  harmonyBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.harmony, now);
+  chimeBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.chime, now);
+  chantBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.chant, now);
+  fungalBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.fungal, now);
+  funBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.fun, now);
   filter.type = FILTER_TYPES[score.voice];
   filter.frequency.value = 720 + score.bloom * 20 + score.hueShift * 1.6;
   filter.Q.value = 1.6 + score.edge / 28;
@@ -97,23 +99,57 @@ export function buildEnsembleGraph(context, score, {
   feedback.gain.value = 0.14 + score.bloom / 650;
   output.gain.value = outputGain;
 
+  // Mixer strips: bus -> fader -> pan, with an optional analyser tap after the
+  // pan so meters show what is heard. The fader upmixes mono voices to stereo
+  // first, so a centered StereoPanner passes them at unity instead of applying
+  // the -3 dB equal-power law it uses for mono input.
+  const buses = { mix, beatBus, bassBus, harmonyBus, chimeBus, chantBus, fungalBus, funBus };
+  const strips = {};
+  for (const { id, bus } of MIXER_CHANNELS) {
+    const setting = channels[id] || { gain: 1, pan: 0 };
+    const fader = context.createGain();
+    fader.channelCount = 2;
+    fader.channelCountMode = "explicit";
+    fader.channelInterpretation = "speakers";
+    fader.gain.setValueAtTime(setting.gain, now);
+    buses[bus].connect(fader);
+    let out = fader;
+    let pan = null;
+    if (typeof context.createStereoPanner === "function") {
+      pan = context.createStereoPanner();
+      pan.pan.setValueAtTime(setting.pan, now);
+      out = fader.connect(pan);
+    }
+    let analyser = null;
+    if (meters && typeof context.createAnalyser === "function") {
+      analyser = context.createAnalyser();
+      analyser.fftSize = 1024;
+      out.connect(analyser);
+    }
+    strips[id] = { fader, pan, analyser, out };
+  }
+
   // Drums and bass skip the creature filter so they keep their weight; the Fun
   // Machine reaches the output both dry and compressed so it sits on top.
-  mix.connect(filter);
-  harmonyBus.connect(filter);
-  chimeBus.connect(filter);
-  chantBus.connect(filter);
-  fungalBus.connect(filter);
-  beatBus.connect(compressor);
-  bassBus.connect(compressor);
-  funBus.connect(output);
-  funBus.connect(compressor);
+  strips.lead.out.connect(filter);
+  strips.harmony.out.connect(filter);
+  strips.chime.out.connect(filter);
+  strips.chant.out.connect(filter);
+  strips.fungal.out.connect(filter);
+  strips.beat.out.connect(compressor);
+  strips.bass.out.connect(compressor);
+  strips.fun.out.connect(output);
+  strips.fun.out.connect(compressor);
 
   if (panner) {
+    // The vitrine panner used to receive mono and pass -3 dB at center; with
+    // stereo strips it passes unity, so this trim keeps the pre-mixer balance.
+    const pannerTrim = context.createGain();
+    pannerTrim.gain.value = Math.SQRT1_2;
     panner.pan.setValueAtTime(0, now);
-    filter.connect(panner);
-    panner.connect(compressor);
-    panner.connect(delay);
+    filter.connect(panner).connect(pannerTrim);
+    pannerTrim.connect(compressor);
+    pannerTrim.connect(delay);
   } else {
     filter.connect(compressor);
     filter.connect(delay);
@@ -193,6 +229,7 @@ export function buildEnsembleGraph(context, score, {
     chantBus,
     fungalBus,
     funBus,
+    strips,
     filter,
     panner,
     compressor,

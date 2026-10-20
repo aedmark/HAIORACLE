@@ -291,6 +291,21 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** WAV exports now render the same routing as live playback, so they sound slightly different from earlier exports: chimes, choir, and fungal voices pass through the creature filter, with the panner and dry filter tap present. Lead-solo mode no longer renders sequenced chords into the WAV. A paused loop resumes with a fresh 160 ms drone fade-in instead of a frozen tail. P5-19 can add per-channel strips inside `buildEnsembleGraph()` once and get them in both live and offline audio.
 
+## D-024 Eight-channel parlor mixer built into the shared ensemble graph (2026-10-19, status: accepted)
+
+**Context:** P5-19 asks for faders, stereo panning, a mute/solo matrix, and VU metering. The ensemble already had a second, partial mute system: each plate's ENGAGE/SILENCE switch skipped scheduling and ducked its bus with hard-coded levels repeated in a dozen places. A mixer added on top would have given each bandmate two mutes that could disagree.
+
+**Decision:**
+1. **One strip per bus, inside `buildEnsembleGraph()`.** Eight channels (`lead`, `fun`, `beat`, `bass`, `harmony`, `chime`, `chant`, `fungal`) each route bus → fader → `StereoPannerNode` before reaching the existing filter, compressor, and output paths. Live playback adds a post-pan `AnalyserNode` tap for meters; offline renders skip it. WAV export therefore honors every fader, pan, mute, and solo.
+2. **Faders upmix to stereo.** Each fader is an explicit 2-channel `GainNode`, so a centered panner passes mono voices at unity instead of the −3 dB it applies to mono input. The vitrine's drag panner, which now receives stereo, gets a fixed `Math.SQRT1_2` trim so its path keeps the pre-mixer balance. Measured: a default-console WAV of "the moon owes me five dollars" (parlor off) rendered −26.78 dB RMS and peak 14280 both before and after the change.
+3. **Plate switches are channel mutes.** The five `*Enabled` flags are gone. A plate's ENGAGE/SILENCE switch toggles its channel's mixer mute, and the Bandstand's ENGAGE FULL BAND and SOLO LOLCODE LEAD mute or unmute the five accompaniment channels. A muted plate still skips scheduling, as before. Bus voicing levels are now constant (`ENSEMBLE_BUS_GAINS`).
+4. **Pure state in `src/mixer.mjs`:** fader taper `(v / 80)²` (80 = unity, 100 = +3.9 dB), pan −100..100, and solo semantics where any solo isolates the soloed channels but an explicit mute still wins. Mixer settings are a session control like master volume (D-009): they persist across summons, never touch the score, and are not stored.
+5. **Placement:** between the Fun Machine and Plate II, as the roadmap item says. Below 480 px the strips become a horizontally scrolling rail instead of shrinking past legibility.
+
+**Alternatives:** Keeping plate switches separate from mixer mutes would leave two silencing controls per bandmate. A master-bus meter alone would not show which bandmate is hot. Building strips only in the live graph would let exports diverge from what is heard (the problem D-023 fixed).
+
+**Consequences:** Hard-panning a channel puts its full level on one side (+3 dB acoustic power versus center), which is standard balance behavior for a stereo source. The Fun Machine strip applies only while the transport is running; idle keyboard auditioning still uses its direct path. The parlor room (reverb, crackle, ticks) keeps its own console and is the ninth stem planned for P5-21.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

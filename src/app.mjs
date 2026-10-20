@@ -20,6 +20,26 @@ import { composeScore, WAVEFORMS } from "./score.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { buildEnsembleGraph, parlorSendLevels } from "./ensemble.mjs";
+import {
+  ACCOMPANIMENT_CHANNEL_IDS,
+  FADER_UNITY,
+  MIXER_CHANNELS,
+  anySoloed,
+  channelSettings,
+  createMixerState,
+  faderDb,
+  formatDb,
+  formatPan,
+  isChannelAudible,
+  meterFill,
+  meterReading,
+  resetChannel,
+  setFader,
+  setMuted,
+  setPan,
+  toggleMute,
+  toggleSolo,
+} from "./mixer.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
 
 const RHYTHMS = Object.freeze([
@@ -61,6 +81,9 @@ const elements = {
   transportPause: document.querySelector("#transport-pause"),
   transportStop: document.querySelector("#transport-stop"),
   transportPosition: document.querySelector("#transport-position"),
+  mixerStrips: document.querySelector("#mixer-strips"),
+  mixerTelemetry: document.querySelector("#mixer-telemetry"),
+  mixerReset: document.querySelector("#mixer-reset"),
   volume: document.querySelector("#master-volume"),
   volumeValue: document.querySelector("#volume-value"),
   tempo: document.querySelector("#tempo-bpm"),
@@ -155,11 +178,7 @@ let rawBass = null;
 let rawHarmony = null;
 let rawChimes = null;
 let rawChant = null;
-let beatEnabled = true;
-let bassEnabled = true;
-let harmonyEnabled = true;
-let chimeEnabled = true;
-let chantEnabled = true;
+let mixerState = createMixerState();
 let beatMutation = 0;
 let bassMutation = 0;
 let harmonyMutation = 0;
@@ -2425,7 +2444,7 @@ function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55
 
 
 function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration) {
-  if (!beatEnabled || !currentBeat || !transport.beatBus) return;
+  if (!channelEngaged("beat") || !currentBeat || !transport.beatBus) return;
   const step = currentBeat.steps[stepIndex % currentBeat.steps.length];
   if (!step) return;
 
@@ -2500,7 +2519,7 @@ function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration
 }
 
 function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration) {
-  if (!bassEnabled || !currentBass || !transport.bassBus) return;
+  if (!channelEngaged("bass") || !currentBass || !transport.bassBus) return;
   const step = currentBass.steps[stepIndex % currentBass.steps.length];
   if (!step || step.gate === 0) return;
 
@@ -2558,7 +2577,7 @@ function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration
 }
 
 function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDuration) {
-  if (!harmonyEnabled || !currentHarmony || !transport.harmonyBus) return;
+  if (!channelEngaged("harmony") || !currentHarmony || !transport.harmonyBus) return;
   const step = currentHarmony.steps[stepIndex % currentHarmony.steps.length];
   if (!step || step.gate === 0) return;
 
@@ -2598,7 +2617,7 @@ function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDurat
 }
 
 function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuration) {
-  if (!chimeEnabled || !currentChimes || !transport.chimeBus) return;
+  if (!channelEngaged("chime") || !currentChimes || !transport.chimeBus) return;
   const step = currentChimes.steps[stepIndex % currentChimes.steps.length];
   if (!step || step.gate === 0) return;
 
@@ -2669,7 +2688,7 @@ function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuratio
 }
 
 function scheduleChantStep(context, transport, score, stepIndex, at, stepDuration) {
-  if (!chantEnabled || !currentChant || !transport.chantBus) return;
+  if (!channelEngaged("chant") || !currentChant || !transport.chantBus) return;
   const step = currentChant.steps[stepIndex % currentChant.steps.length];
   if (!step || step.gate === 0) return;
 
@@ -3466,16 +3485,11 @@ function renderChantGrid() {
 
 function updateBandstandStatus() {
   if (!elements.bandstandStatus) return;
-  const activeCount =
-    1 +
-    (beatEnabled ? 1 : 0) +
-    (bassEnabled ? 1 : 0) +
-    (harmonyEnabled ? 1 : 0) +
-    (chimeEnabled ? 1 : 0) +
-    (chantEnabled ? 1 : 0);
+  const players = ["lead", ...ACCOMPANIMENT_CHANNEL_IDS];
+  const activeCount = players.filter(channelEngaged).length;
   if (activeCount === 6) {
     elements.bandstandStatus.textContent = "ALL SIX ESOTERIC PLAYERS ENGAGED";
-  } else if (activeCount === 1) {
+  } else if (activeCount === 1 && channelEngaged("lead")) {
     elements.bandstandStatus.textContent = "SOLO LOLCODE BANDLEADER · ACCOMPANIMENT SILENCED";
   } else {
     elements.bandstandStatus.textContent = `${activeCount} OF 6 ESOTERIC PLAYERS ENGAGED`;
@@ -3666,7 +3680,7 @@ updateFunKeyboardChordLabels();
 
 // Options shared by the live and offline graphs, read from the current session
 // controls so an export captures exactly what the listener has dialed in.
-function ensembleGraphOptions(context, { start, unit, fadeIn, stop = null }) {
+function ensembleGraphOptions(context, { start, unit, fadeIn, stop = null, meters = false }) {
   let impulseBuffer = null;
   let crackleBuffer = null;
   try {
@@ -3685,13 +3699,8 @@ function ensembleGraphOptions(context, { start, unit, fadeIn, stop = null }) {
     unit,
     fadeIn,
     outputGain: masterGainFor(masterVolume),
-    enabled: {
-      beat: beatEnabled,
-      bass: bassEnabled,
-      harmony: harmonyEnabled,
-      chime: chimeEnabled,
-      chant: chantEnabled,
-    },
+    channels: channelSettings(mixerState),
+    meters,
     parlor: parlorSendLevels({
       enabled: parlorAcousticsEnabled,
       reverbEnabled: parlorReverbEnabled,
@@ -3752,6 +3761,7 @@ async function playScore(score, { cursor = 0 } = {}) {
     start: now,
     unit: initialUnit,
     fadeIn: true,
+    meters: true,
   }));
   const transport = {
     ...graph,
@@ -3827,6 +3837,7 @@ async function playScore(score, { cursor = 0 } = {}) {
 
   scheduleAhead();
   transport.timer = window.setInterval(scheduleAhead, 90);
+  startMeters();
   elements.status.textContent = "OMEN LOOPING";
 }
 
@@ -4534,53 +4545,228 @@ elements.canvas.addEventListener("pointerup", endVitrineInteraction);
 elements.canvas.addEventListener("pointercancel", endVitrineInteraction);
 elements.canvas.addEventListener("lostpointercapture", endVitrineInteraction);
 
-function setBandPlayersEnabled(nextState) {
-  beatEnabled = nextState;
-  bassEnabled = nextState;
-  harmonyEnabled = nextState;
-  chimeEnabled = nextState;
-  chantEnabled = nextState;
-  if (elements.beatToggle) {
-    elements.beatToggle.setAttribute("aria-pressed", String(beatEnabled));
-    elements.beatToggle.textContent = beatEnabled ? "PULSE: ENGAGED" : "PULSE: SILENCED";
-  }
-  if (elements.bassToggle) {
-    elements.bassToggle.setAttribute("aria-pressed", String(bassEnabled));
-    elements.bassToggle.textContent = bassEnabled ? "BASS: ENGAGED" : "BASS: SILENCED";
-  }
-  if (elements.harmonyToggle) {
-    elements.harmonyToggle.setAttribute("aria-pressed", String(harmonyEnabled));
-    elements.harmonyToggle.textContent = harmonyEnabled ? "ORGAN: ENGAGED" : "ORGAN: SILENCED";
-  }
-  if (elements.chimeToggle) {
-    elements.chimeToggle.setAttribute("aria-pressed", String(chimeEnabled));
-    elements.chimeToggle.textContent = chimeEnabled ? "CHIMES: ENGAGED" : "CHIMES: SILENCED";
-  }
-  if (elements.chantToggle) {
-    elements.chantToggle.setAttribute("aria-pressed", String(chantEnabled));
-    elements.chantToggle.textContent = chantEnabled ? "CHOIR: ENGAGED" : "CHOIR: SILENCED";
-  }
-  if (audioContext && currentTransport) {
-    const now = audioContext.currentTime;
-    currentTransport.beatBus?.gain.setTargetAtTime(beatEnabled ? 0.82 : 0.0001, now, 0.025);
-    currentTransport.bassBus?.gain.setTargetAtTime(bassEnabled ? 0.84 : 0.0001, now, 0.025);
-    currentTransport.harmonyBus?.gain.setTargetAtTime(harmonyEnabled ? 0.78 : 0.0001, now, 0.025);
-    currentTransport.chimeBus?.gain.setTargetAtTime(chimeEnabled ? 0.8 : 0.0001, now, 0.025);
-    currentTransport.chantBus?.gain.setTargetAtTime(chantEnabled ? 0.82 : 0.0001, now, 0.025);
-  }
+// --- Parlor mixing console (P5-19) ---------------------------------------
+
+const PLATE_TOGGLE_LABELS = Object.freeze({
+  beat: "PULSE",
+  bass: "BASS",
+  harmony: "ORGAN",
+  chime: "CHIMES",
+  chant: "CHOIR",
+});
+const mixerStripElements = {};
+const meterDisplay = {};
+let meterBuffer = null;
+let meterFrame = 0;
+
+// A plate's engage/silence toggle is its mixer mute: one switch, two places.
+function channelEngaged(id) {
+  return !mixerState.channels[id].muted;
+}
+
+function updateMixer(nextState) {
+  mixerState = nextState;
+  applyMixerToTransport();
+  syncMixerConsole();
+  syncPlateToggles();
   updateBandstandStatus();
 }
 
-elements.beatToggle?.addEventListener("click", () => {
-  beatEnabled = !beatEnabled;
-  elements.beatToggle.setAttribute("aria-pressed", String(beatEnabled));
-  elements.beatToggle.textContent = beatEnabled ? "PULSE: ENGAGED" : "PULSE: SILENCED";
-  if (audioContext && currentTransport?.beatBus) {
-    const now = audioContext.currentTime;
-    currentTransport.beatBus.gain.cancelScheduledValues(now);
-    currentTransport.beatBus.gain.setTargetAtTime(beatEnabled ? 0.82 : 0.0001, now, 0.025);
+function applyMixerToTransport() {
+  if (!audioContext || !currentTransport?.strips) return;
+  const now = audioContext.currentTime;
+  const settings = channelSettings(mixerState);
+  for (const { id } of MIXER_CHANNELS) {
+    const strip = currentTransport.strips[id];
+    if (!strip) continue;
+    strip.fader.gain.cancelScheduledValues(now);
+    strip.fader.gain.setTargetAtTime(settings[id].gain, now, 0.02);
+    if (strip.pan) {
+      strip.pan.pan.cancelScheduledValues(now);
+      strip.pan.pan.setTargetAtTime(settings[id].pan, now, 0.02);
+    }
   }
-  updateBandstandStatus();
+}
+
+function syncPlateToggles() {
+  const toggles = {
+    beat: elements.beatToggle,
+    bass: elements.bassToggle,
+    harmony: elements.harmonyToggle,
+    chime: elements.chimeToggle,
+    chant: elements.chantToggle,
+  };
+  for (const [id, toggle] of Object.entries(toggles)) {
+    if (!toggle) continue;
+    const engaged = channelEngaged(id);
+    toggle.setAttribute("aria-pressed", String(engaged));
+    toggle.textContent = `${PLATE_TOGGLE_LABELS[id]}: ${engaged ? "ENGAGED" : "SILENCED"}`;
+  }
+}
+
+function syncMixerConsole() {
+  const soloActive = anySoloed(mixerState);
+  let mutedCount = 0;
+  let soloCount = 0;
+  for (const { id, label } of MIXER_CHANNELS) {
+    const refs = mixerStripElements[id];
+    const channel = mixerState.channels[id];
+    if (channel.muted) mutedCount += 1;
+    if (channel.soloed) soloCount += 1;
+    if (!refs) continue;
+    const db = formatDb(faderDb(channel.fader));
+    const pan = formatPan(channel.pan);
+    refs.fader.value = String(channel.fader);
+    refs.fader.setAttribute("aria-valuetext", db);
+    refs.db.value = db;
+    refs.pan.value = String(channel.pan);
+    refs.pan.setAttribute("aria-valuetext", pan === "C" ? "Center" : pan.replace("L", "Left ").replace("R", "Right "));
+    refs.panValue.value = pan;
+    refs.mute.setAttribute("aria-pressed", String(channel.muted));
+    refs.solo.setAttribute("aria-pressed", String(channel.soloed));
+    refs.strip.classList.toggle("is-silent", !isChannelAudible(mixerState, id));
+    refs.strip.title = `${label}: ${isChannelAudible(mixerState, id) ? "audible" : "silent"}`;
+  }
+  if (elements.mixerTelemetry) {
+    const parts = [`${MIXER_CHANNELS.length} CHANNELS`];
+    if (soloActive) parts.push(`${soloCount} SOLO`);
+    if (mutedCount) parts.push(`${mutedCount} MUTED`);
+    if (!soloActive && !mutedCount) parts.push("ALL OPEN");
+    elements.mixerTelemetry.textContent = parts.join(" · ");
+  }
+}
+
+function renderMixerConsole() {
+  if (!elements.mixerStrips) return;
+  elements.mixerStrips.replaceChildren();
+  for (const { id, label, source } of MIXER_CHANNELS) {
+    const strip = document.createElement("div");
+    strip.className = "mixer-strip";
+    strip.dataset.channel = id;
+    strip.setAttribute("role", "group");
+    strip.setAttribute("aria-label", `${label} channel`);
+
+    const name = document.createElement("p");
+    name.className = "mixer-strip-label";
+    name.textContent = label;
+    const sourceTag = document.createElement("span");
+    sourceTag.className = "mixer-strip-source";
+    sourceTag.textContent = source;
+    name.append(sourceTag);
+
+    const bay = document.createElement("div");
+    bay.className = "mixer-fader-bay";
+    const meter = document.createElement("div");
+    meter.className = "mixer-meter";
+    meter.setAttribute("aria-hidden", "true");
+    const fill = document.createElement("span");
+    fill.className = "mixer-meter-fill";
+    const peak = document.createElement("span");
+    peak.className = "mixer-meter-peak";
+    meter.append(fill, peak);
+    const fader = document.createElement("input");
+    fader.type = "range";
+    fader.className = "mixer-fader";
+    fader.id = `mixer-fader-${id}`;
+    fader.min = "0";
+    fader.max = "100";
+    fader.step = "1";
+    fader.setAttribute("aria-label", `${label} level`);
+    fader.title = "Drag to set level (double-click for unity)";
+    bay.append(meter, fader);
+
+    const db = document.createElement("output");
+    db.className = "mixer-db";
+    db.htmlFor = fader.id;
+
+    const pan = document.createElement("input");
+    pan.type = "range";
+    pan.className = "mixer-pan";
+    pan.id = `mixer-pan-${id}`;
+    pan.min = "-100";
+    pan.max = "100";
+    pan.step = "1";
+    pan.setAttribute("aria-label", `${label} pan`);
+    pan.title = "Drag to pan (double-click to center)";
+    const panValue = document.createElement("output");
+    panValue.className = "mixer-pan-value";
+    panValue.htmlFor = pan.id;
+
+    const switches = document.createElement("div");
+    switches.className = "mixer-switches";
+    const mute = document.createElement("button");
+    mute.type = "button";
+    mute.className = "mixer-switch mixer-mute";
+    mute.textContent = "M";
+    mute.setAttribute("aria-label", `Mute ${label}`);
+    const solo = document.createElement("button");
+    solo.type = "button";
+    solo.className = "mixer-switch mixer-solo";
+    solo.textContent = "S";
+    solo.setAttribute("aria-label", `Solo ${label}`);
+    switches.append(mute, solo);
+
+    fader.addEventListener("input", () => updateMixer(setFader(mixerState, id, fader.value)));
+    fader.addEventListener("dblclick", () => updateMixer(setFader(mixerState, id, FADER_UNITY)));
+    pan.addEventListener("input", () => updateMixer(setPan(mixerState, id, pan.value)));
+    pan.addEventListener("dblclick", () => updateMixer(setPan(mixerState, id, 0)));
+    mute.addEventListener("click", () => updateMixer(toggleMute(mixerState, id)));
+    solo.addEventListener("click", () => updateMixer(toggleSolo(mixerState, id)));
+
+    strip.append(name, bay, db, pan, panValue, switches);
+    elements.mixerStrips.append(strip);
+    mixerStripElements[id] = { strip, fader, db, pan, panValue, mute, solo };
+  }
+  syncMixerConsole();
+}
+
+// VU meters read each strip's post-fader analyser once per frame: fast attack,
+// ~1.2 s fall, and a peak marker that holds for 0.9 s. The loop stops once the
+// transport is gone and every meter has fallen to rest.
+function drawMeters(timestamp) {
+  meterFrame = 0;
+  const strips = currentTransport?.strips;
+  let moving = false;
+  for (const { id } of MIXER_CHANNELS) {
+    const display = (meterDisplay[id] ||= { level: 0, peak: 0, peakAt: 0, clipUntil: 0 });
+    const analyser = strips?.[id]?.analyser;
+    let reading = null;
+    if (analyser) {
+      if (!meterBuffer || meterBuffer.length !== analyser.fftSize) meterBuffer = new Float32Array(analyser.fftSize);
+      analyser.getFloatTimeDomainData(meterBuffer);
+      reading = meterReading(meterBuffer);
+    }
+    const level = reading ? meterFill(reading.rmsDb) : 0;
+    const peak = reading ? meterFill(reading.peakDb) : 0;
+    display.level = level >= display.level ? level : Math.max(level, display.level - 0.014);
+    if (peak >= display.peak) {
+      display.peak = peak;
+      display.peakAt = timestamp;
+    } else if (timestamp - display.peakAt > 900) {
+      display.peak = Math.max(peak, display.peak - 0.012);
+    }
+    if (reading && reading.peak >= 0.99) display.clipUntil = timestamp + 1200;
+    const refs = mixerStripElements[id];
+    if (refs) {
+      refs.strip.style.setProperty("--level", display.level.toFixed(3));
+      refs.strip.style.setProperty("--peak", display.peak.toFixed(3));
+      refs.strip.classList.toggle("is-clipping", timestamp < display.clipUntil);
+    }
+    if (display.level > 0.002 || display.peak > 0.002) moving = true;
+  }
+  if (currentTransport || moving) meterFrame = window.requestAnimationFrame(drawMeters);
+}
+
+function startMeters() {
+  if (!meterFrame) meterFrame = window.requestAnimationFrame(drawMeters);
+}
+
+function setBandPlayersEnabled(nextState) {
+  updateMixer(setMuted(mixerState, ACCOMPANIMENT_CHANNEL_IDS, !nextState));
+}
+
+elements.beatToggle?.addEventListener("click", () => {
+  updateMixer(toggleMute(mixerState, "beat"));
 });
 
 elements.beatMutate?.addEventListener("click", () => {
@@ -4597,15 +4783,7 @@ elements.beatMutate?.addEventListener("click", () => {
 });
 
 elements.bassToggle?.addEventListener("click", () => {
-  bassEnabled = !bassEnabled;
-  elements.bassToggle.setAttribute("aria-pressed", String(bassEnabled));
-  elements.bassToggle.textContent = bassEnabled ? "BASS: ENGAGED" : "BASS: SILENCED";
-  if (audioContext && currentTransport?.bassBus) {
-    const now = audioContext.currentTime;
-    currentTransport.bassBus.gain.cancelScheduledValues(now);
-    currentTransport.bassBus.gain.setTargetAtTime(bassEnabled ? 0.84 : 0.0001, now, 0.025);
-  }
-  updateBandstandStatus();
+  updateMixer(toggleMute(mixerState, "bass"));
 });
 
 elements.bassMutate?.addEventListener("click", () => {
@@ -4621,15 +4799,7 @@ elements.bassMutate?.addEventListener("click", () => {
 });
 
 elements.harmonyToggle?.addEventListener("click", () => {
-  harmonyEnabled = !harmonyEnabled;
-  elements.harmonyToggle.setAttribute("aria-pressed", String(harmonyEnabled));
-  elements.harmonyToggle.textContent = harmonyEnabled ? "ORGAN: ENGAGED" : "ORGAN: SILENCED";
-  if (audioContext && currentTransport?.harmonyBus) {
-    const now = audioContext.currentTime;
-    currentTransport.harmonyBus.gain.cancelScheduledValues(now);
-    currentTransport.harmonyBus.gain.setTargetAtTime(harmonyEnabled ? 0.78 : 0.0001, now, 0.025);
-  }
-  updateBandstandStatus();
+  updateMixer(toggleMute(mixerState, "harmony"));
 });
 
 elements.harmonyMutate?.addEventListener("click", () => {
@@ -4648,15 +4818,7 @@ elements.harmonyMutate?.addEventListener("click", () => {
 });
 
 elements.chimeToggle?.addEventListener("click", () => {
-  chimeEnabled = !chimeEnabled;
-  elements.chimeToggle.setAttribute("aria-pressed", String(chimeEnabled));
-  elements.chimeToggle.textContent = chimeEnabled ? "CHIMES: ENGAGED" : "CHIMES: SILENCED";
-  if (audioContext && currentTransport?.chimeBus) {
-    const now = audioContext.currentTime;
-    currentTransport.chimeBus.gain.cancelScheduledValues(now);
-    currentTransport.chimeBus.gain.setTargetAtTime(chimeEnabled ? 0.8 : 0.0001, now, 0.025);
-  }
-  updateBandstandStatus();
+  updateMixer(toggleMute(mixerState, "chime"));
 });
 
 elements.chimeMutate?.addEventListener("click", () => {
@@ -4672,15 +4834,7 @@ elements.chimeMutate?.addEventListener("click", () => {
 });
 
 elements.chantToggle?.addEventListener("click", () => {
-  chantEnabled = !chantEnabled;
-  elements.chantToggle.setAttribute("aria-pressed", String(chantEnabled));
-  elements.chantToggle.textContent = chantEnabled ? "CHOIR: ENGAGED" : "CHOIR: SILENCED";
-  if (audioContext && currentTransport?.chantBus) {
-    const now = audioContext.currentTime;
-    currentTransport.chantBus.gain.cancelScheduledValues(now);
-    currentTransport.chantBus.gain.setTargetAtTime(chantEnabled ? 0.82 : 0.0001, now, 0.025);
-  }
-  updateBandstandStatus();
+  updateMixer(toggleMute(mixerState, "chant"));
 });
 
 elements.chantMutate?.addEventListener("click", () => {
@@ -4694,6 +4848,13 @@ elements.chantMutate?.addEventListener("click", () => {
   }
   updateChantGrid();
 });
+
+elements.mixerReset?.addEventListener("click", () => {
+  updateMixer(createMixerState());
+});
+
+renderMixerConsole();
+syncPlateToggles();
 
 elements.bandstandEngageAll?.addEventListener("click", () => {
   setBandPlayersEnabled(true);
