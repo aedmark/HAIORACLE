@@ -8,6 +8,7 @@
 
 ### Fixed
 
+- Make the band follow a held or punched Fun Machine chord in the right key; it previously played the chord transposed by the creature's tonic. The sequencer grid also names generated steps correctly now.
 - Keep the preset-name field one line tall on phones, and stop the Kapellmeister rulebook, Fun Machine keyboard, and footer links from being cut off on narrow screens.
 - Render WAV exports through the same audio graph as live playback, so chimes, choir, and fungal voices are filtered and panned exactly as heard.
 - Remove audio-synchronous geometry scaling after screencast review exposed beat-periodic tearing and compression-like jumps.
@@ -15,6 +16,8 @@
 
 ### Added
 
+- Overcome the ensemble's "wall of sound" using the Grand Conductor in INTERCAL 1972 (`src/conductor.i`, `src/intercal.mjs`). Evaluates statement politeness (22.2% P/N, adhering to ICL079/ICL099 limits), dynamically orchestrates channel breathing across Exposition, Antiphony, Tutti, and Breakdown regions with `PLEASE IGNORE` and `PLEASE REMEMBER`, and intercepts turnaround cadences at step 11 with `COME FROM (60)`.
+- Play the Esoteric Fun Machine as a one-finger accompanist: hold a key and a stereo synth pad plays a **Swell** (one chord), an **Arpeggio** (chord tones rippling in the band's rhythm), or a **Progression** (four chords with a singing lead line) while the band follows your chord and the LOLCODE lead steps back.
 - Enter a phrase to summon a deterministic named audiovisual creature.
 - Hear a continuously looping synthesized composition generated from the creature's LOLCODE score.
 - Use surprise, replay, and mute controls.
@@ -36,5 +39,5 @@
 - Copy a privacy-preserving `#omen=...` link (`COPY OMEN LINK`) or engrave a 1200×1520 Victorian broadsheet PNG (`ENGRAVE PNG PLATE`) containing the creature portrait, specimen name, confided phrase, hexadecimal seed, and six-language ensemble ledger.
 - Inspect the canonical LOLCODE spell, Malbolge beat tape, Brainfuck bass tape, Befunge torus playfield, Piet codel canvas, FRACTRAN prime fractions, and Shakespeare tragedy directly from the application.
 - Explore a comprehensive, standalone 3x technical manual (`manual.html` generated from `docs/manual.json` via `tools/manual.py`) documenting What, How, and Why for all twenty core components, visual grammars, esoteric engines, and harmonic conduction layers.
-- Play along in real time using the Esoteric Fun Machine (`#fun-machine-engine`), an authentic 1970s Baldwin-inspired auto-chord organ console featuring an interactive 13-key manual (`C..C'`) and physical keyboard mapping (`[A..K]`). In One-Finger Auto-Chord mode, striking a key fires a dual-oscillator reed-organ voice with 5.5 Hz parlor vibrato and triggers matching accompaniment bursts across the ensemble, with quick chord quality chips (`AUTO-GENRE`, `MAJOR`, `MINOR`, `DOM 7TH`, `MAJ 9TH`, `DIMINISHED`, `OPEN 5TH`). A 12-step punch-in loop sequencer matrix (`#fun-sequence-grid`) lets users punch chords into the loop on the fly or target steps, re-conducting the entire ensemble and rendering custom progressions into live playback and offline 16-bit WAV downloads.
+- Punch chords into the Fun Machine's 12-step loop sequencer (`#fun-sequence-grid`) on the fly or by targeting steps; punched chords re-conduct the band and play in live audio and WAV and stem exports.
 

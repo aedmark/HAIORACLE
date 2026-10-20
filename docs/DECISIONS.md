@@ -230,7 +230,7 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** Confidants can sculpt the musicality and coherence of their summoned omen in real time, from smooth chamber jazz to raw avant-garde chaos, grounded in an authentic 1890s acoustic space.
 
-## D-020 Esoteric Fun Machine: Real-Time Play-Along Keyboard Manual, Auto-Chord Harmonization, and 12-Step Punch-In Loop Sequencer (2026-10-19, status: accepted)
+## D-020 Esoteric Fun Machine: Real-Time Play-Along Keyboard Manual, Auto-Chord Harmonization, and 12-Step Punch-In Loop Sequencer (2026-10-19, status: superseded in part by D-029)
 
 **Context:** While confidants could summon algorithmic creatures, modulate parameters via vitrine dragging, and select Kapellmeister genre rulebooks, they could not actively play along or compose harmonic sequences in real time. Confidants requested a Baldwin Fun Machine-inspired auto-chord organ console with a physical/screen keyboard manual, one-finger chord accompaniment, loop punch-in recording, and seamless integration into playback and offline WAV exports.
 
@@ -354,6 +354,51 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 **Alternatives:** Placing the plates inside Wing I would follow signal order literally, but it would push the mixer and the Keep wing about 1,300 px further down on desktop. Folding the exports into the Session Ledger would mix "save this jam" with "make files for elsewhere." A sticky transport was deferred, not rejected.
 
 **Consequences:** D-024 point 5 (mixer placement) is superseded. A new structural test in `tests/static.test.mjs` checks the wing order, that the reading strip holds no controls, and that the transport and export buttons sit in their wings. The older order checks (Fun Machine, then mixer, then ledger, then Plate II) still hold. Phrase identity, audio, and stored session formats are untouched.
+
+## D-028 INTERCAL 1972 Grand Ensemble Conductor and Lush Synth Pad Fun Machine Overhaul (2026-10-20, status: accepted; Fun Machine voice superseded by D-029)
+
+**Context:** The ensemble previously suffered from a continuous "wall of sound" where all seven instruments fired unconditionally on every 16th-note step across the 12-step loop without dynamic arrangement, musical breathing, or sectional contrast. Furthermore, the one-finger chord organ had critical sonic and interactive issues: it used a harsh wheezy reed combo-organ tone (two sawteeth with rapid 5.5 Hz vibrato into a buzzy 2400 Hz resonant filter) and an abrasive duplicate lead note on every step, and when keys were pushed during play-along, the rest of the band failed to modulate with the user's chords. The maintainer directed: "INTERCAL it is. Let's overcome the wall of sound *first*. I have issues with the one-finger chord organ right now."
+
+**Decision:**
+1. **Canonical INTERCAL (1972) Conductor (`src/conductor.i`, `src/intercal.mjs`):**
+   - Employs genuine INTERCAL 1972 semantics (Don Woods & James M. Lyon, Princeton University).
+   - Enforces the INTERCAL Politeness Quotient: Statement politeness ratio is strictly checked ($0.20 \le P \le 0.334$). Rude programs fail with `ICL079`; groveling programs fail with `ICL099`. The canonical conductor score executes with 6 polite statements out of 27 ($22.2\%$, balanced consonance).
+   - Sectional Dynamic Arrangement: Uses `PLEASE IGNORE` and `PLEASE REMEMBER` to dynamically orchestrate channel breathing across 4 musical regions:
+     - Region 0 (Steps 0..2): Exposition Groove (Lead, Beat, Bass, Chimes, Fungal, Fun active; Harmony and Choir rest to establish the groove).
+     - Region 1 (Steps 3..5): Antiphonal Conversation (`PLEASE IGNORE :1` rests the Lead; Befunge chord organ and Shakespeare formant choir step forward into the spotlight).
+     - Region 2 (Steps 6..8): Grand Tutti Apotheosis (`PLEASE REMEMBER :1`; all instruments join together in full dynamic climax).
+     - Region 3 (Steps 9..11): Hypogeal Breakdown & Cadence Turnaround (Beat and Bass rest on steps 9-10; `(100) PLEASE COME FROM (60)` intercepts step 11 to resolve the turnaround cadence into the next cycle).
+   - In `RAW ESOTERIC CHAOS (UNFETTERED VMS)`, arrangement breathing is bypassed and all VMs output continuously.
+2. **Lush Synth Pad Fun Machine Overhaul:**
+   - Replaces the harsh combo reed organ with a warm, lush, cinematic analog-style synth pad & singing lead:
+     - Dual detuned oscillators (warm triangle at 65% + soft detuned saw at 35% with $\pm 4.5$ cents detuning).
+     - Deep pure sine sub-oscillator (1 octave down at 20% gain) for analog weight.
+     - Slow, silky 0.35 Hz stereo chorus shimmer LFO (5 cents depth) replacing rapid 5.5 Hz vibrato.
+     - Warm 24dB / smooth resonant lowpass filter (720 Hz attack swell $\to$ 1150 Hz $\to$ 920 Hz resting, Q = 0.85).
+     - Silky ADSR envelope with gentle 65ms attack and 180ms velvety exponential release.
+3. **Real-Time Ensemble Following:**
+   - Striking or holding a key on the Fun Machine manual (`triggerFunKey`) actively re-conducts the entire ensemble in real time: Brainfuck walking bass, Befunge chord organ, Piet chimes, Shakespeare choir, and LOLCODE lead immediately modulate to accompany the user's chord.
+   - Releasing the key restores the baseline Kapellmeister / custom progression.
+   - Eliminates duplicate lead collision: in `auto_chord` mode, only the sustained chord pad sounds across regions; `scheduleFunMachineLeadNote` only sounds when `funMachineMode === 'lead'`.
+
+**Alternatives:** Adding manual mute automation curves would complicate session format and mixer state. Keeping the 5.5 Hz vibrato combo reed organ clashed with the antique chamber and modern lead synthesis.
+
+**Consequences:** The ensemble breathes naturally with call-and-response and sectional dynamics instead of a continuous wall of sound. The Fun Machine sounds rich, warm, and cinematic, and live play-along feels like jamming with a responsive backing band that modulates on the fly. 79/79 tests pass with zero external dependencies.
+
+## D-029 The Fun Machine is a one-finger accompanist the band follows (2026-10-20, status: accepted)
+
+**Context:** After D-028's pad overhaul, the maintainer said the one-finger accompaniment still did not work as intended: it should be *inspired by* a Baldwin Fun Machine, not sound like a synth organ. A held key should make a synth pad lead play a natural chord, arpeggio, or progression that fits the band's rhythm and instrumentation, "like the band is following a composer playing the lead melody." Investigation found the organ character came from a saw-and-triangle tone with a 65 ms attack re-struck as block chords, a melody note on every step competing with the LOLCODE lead, and no reverb or delay send. It also found a real bug: Fun Machine chords name absolute pitch classes, but the conductor reads spine chords as intervals above the creature's tonic, so the band played a transposed chord under the pad (G held on an E♭ creature conducted B♭ minor). The maintainer chose three selectable styles and a lead that steps back (2026-10-20).
+
+**Decision:**
+1. **Style chips replace the mode switch and chord-quality chips.** SWELL holds one genre-coloured pad chord on the key and the band settles onto it; ARPEGGIO adds chord tones rippling two per step in the band's own rhythm; PROGRESSION walks the genre's four-chord progression from the key with a singing lead line. The genre still picks chord colours (`buildFunChord(key, "auto", genre, tonic)`). Pure logic lives in `src/accompaniment.mjs`.
+2. **Three non-organ voices.** A stereo pad (two saws detuned ±8 cents panned wide plus a triangle, one slow chorus LFO, a lowpass that opens over an attack scaled to the chord's length, and a 0.9 s release that crossfades into the next chord); a soft pluck for arpeggios (triangle with a quiet pulse through a closing filter, ping-ponged); and a lead with glide between notes and vibrato that arrives only after the note settles. Pads are voice-led (each upper voice takes the nearest octave) with the root kept low.
+3. **The band's grid, the band's room.** Pads strike at region starts and arpeggios and lead notes on loop steps, using each step's real duration from the score's rhythm and live tempo. A key pressed mid-region bridges with a pad to the next region start. The Fun Machine strip now feeds the delay and chamber reverb.
+4. **The band follows; the lead steps back.** A held key re-conducts the band onto the performance's chords, now converted to the conductor's tonic-relative frame (`toTonicRelative()`), so bass, organ, chimes, and choir play the chord the pad plays. The LOLCODE lead melody and its tonic drones duck by 10 dB while a key is held and return on release. Pads from a previous key fade instead of ringing under the new chord.
+5. **Session format v2.** Sessions store `funMachine.style` instead of `mode` and `quality`; v1 files still open (chord mode becomes PROGRESSION, lead solo becomes ARPEGGIO).
+
+**Alternatives:** Keeping chord-quality chips beside style chips would double the choices on a toy meant for one finger. Muting the LOLCODE lead outright would leave the band without its voice while auditioning; keeping it at full level kept two melodies colliding. Fixing the key mismatch by making the pad tonic-relative would have made the C key play something other than C.
+
+**Consequences:** The keyboard plays an arrangement rather than single chords. Sequenced and punched chords sound as pads in the live loop and in WAV and stem exports, and are now labelled and conducted in the right key (the sequencer grid previously showed tonic-relative names for generated steps, such as "C MAJ9" for E♭maj9). The INTERCAL arrangement mask (D-028) gates only the band voices, so the player's part is never rested. Timbre and feel still need a listening pass.
 
 ## Open questions
 

@@ -10,11 +10,11 @@ export const DRUM_CHANNEL = 9;
 export const GM_DRUMS = Object.freeze({ kick: 36, snare: 38, hat: 42, openHat: 46 });
 
 // Track layout. Programs are zero-based General MIDI numbers chosen as the
-// nearest stock timbre: square lead, drawbar organ, synth bass, church organ,
+// nearest stock timbre: square lead, warm pad, synth bass, church organ,
 // tubular bells, choir aahs.
 export const MIDI_TRACKS = Object.freeze([
   Object.freeze({ id: "lead", name: "LEAD · LOLCODE", channel: 0, program: 80 }),
-  Object.freeze({ id: "fun", name: "MANUAL · FUN MACHINE", channel: 1, program: 16 }),
+  Object.freeze({ id: "fun", name: "MANUAL · FUN MACHINE", channel: 1, program: 89 }),
   Object.freeze({ id: "beat", name: "PULSE · MALBOLGE", channel: DRUM_CHANNEL, program: null }),
   Object.freeze({ id: "bass", name: "BASS · BRAINFUCK", channel: 2, program: 38 }),
   Object.freeze({ id: "harmony", name: "ORGAN · BEFUNGE", channel: 3, program: 19 }),

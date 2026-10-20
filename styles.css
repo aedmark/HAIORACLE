@@ -1641,6 +1641,14 @@ h1 em {
   letter-spacing: 0.12em;
 }
 
+.fun-style-hint {
+  margin-left: auto;
+  color: rgba(228, 215, 190, 0.55);
+  font-family: var(--mono-ledger);
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+}
+
 .fun-quality-chips {
   display: flex;
   align-items: center;

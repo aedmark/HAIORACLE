@@ -174,6 +174,9 @@ export function buildEnsembleGraph(context, score, {
   strips.bass.out.connect(compressor);
   strips.fun.out.connect(output);
   strips.fun.out.connect(compressor);
+  // The accompanist's pad needs space to bloom: send it to the delay too, and
+  // (below) into the chamber reverb (D-028).
+  strips.fun.out.connect(delay);
 
   if (panner) {
     // The vitrine panner used to receive mono and pass -3 dB at center; with
@@ -217,6 +220,7 @@ export function buildEnsembleGraph(context, score, {
   parlorReverbSend.gain.setValueAtTime(parlor.reverb, now);
   filter.connect(parlorReverbFilter).connect(parlorReverbSend).connect(parlorConvolver).connect(compressor);
   strips.chant.out.connect(parlorReverbFilter);
+  strips.fun.out.connect(parlorReverbFilter);
 
   let parlorCrackleSource = null;
   let parlorCrackleGain = null;

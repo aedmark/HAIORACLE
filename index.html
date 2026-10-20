@@ -150,16 +150,13 @@
       <section class="beat-engine fun-machine-engine" id="fun-machine-engine" aria-labelledby="fun-machine-heading">
         <div class="beat-header">
           <div class="beat-identity">
-            <p class="reading-label">EDMARK'S ESOTERIC FUN MACHINE · REAL-TIME CHORD ORGAN &amp; LOOP SEQUENCER</p>
+            <p class="reading-label">EDMARK'S ESOTERIC FUN MACHINE · ONE-FINGER ACCOMPANIST &amp; LOOP SEQUENCER</p>
             <div class="beat-title-row">
-              <h3 id="fun-machine-heading"><span id="fun-machine-status">ONE-FINGER CHORD ACCOMPANIMENT ACTIVE</span></h3>
-              <span class="beat-telemetry" id="fun-machine-telemetry">EDMARK'S BALDWIN-STYLE ONE-FINGER AUTO-CHORD · PLAY-ALONG MANUAL · LIVE PUNCH-IN RECORD</span>
+              <h3 id="fun-machine-heading"><span id="fun-machine-status">ONE-FINGER ACCOMPANIST · PROGRESSION</span></h3>
+              <span class="beat-telemetry" id="fun-machine-telemetry">BALDWIN-INSPIRED ONE-FINGER PLAY-ALONG · THE BAND FOLLOWS YOUR KEY · LIVE PUNCH-IN RECORD</span>
             </div>
           </div>
           <div class="beat-actions fun-machine-actions">
-            <button class="beat-button" id="fun-machine-mode" type="button" aria-pressed="true">
-              AUTO-CHORD: ONE-FINGER
-            </button>
             <button class="beat-button" id="fun-machine-rec" type="button" aria-pressed="false">
               PUNCH-IN REC: OFF
             </button>
@@ -170,17 +167,14 @@
         </div>
 
         <div class="fun-machine-body">
-          <div class="fun-quality-bar" role="toolbar" aria-label="Chord quality selector">
-            <span class="fun-quality-label">CHORD QUALITY:</span>
+          <div class="fun-quality-bar" role="group" aria-label="Accompaniment style">
+            <span class="fun-quality-label">ACCOMPANIMENT STYLE:</span>
             <div class="fun-quality-chips">
-              <button class="fun-chip is-active" id="chip-q-auto" data-quality="auto" type="button" aria-pressed="true">AUTO-GENRE</button>
-              <button class="fun-chip" id="chip-q-major" data-quality="major" type="button" aria-pressed="false">MAJOR</button>
-              <button class="fun-chip" id="chip-q-minor" data-quality="minor" type="button" aria-pressed="false">MINOR</button>
-              <button class="fun-chip" id="chip-q-dom7" data-quality="dom7" type="button" aria-pressed="false">DOM 7TH</button>
-              <button class="fun-chip" id="chip-q-maj9" data-quality="maj9" type="button" aria-pressed="false">MAJ 9TH</button>
-              <button class="fun-chip" id="chip-q-dim" data-quality="dim" type="button" aria-pressed="false">DIMINISHED</button>
-              <button class="fun-chip" id="chip-q-open5" data-quality="modal_open" type="button" aria-pressed="false">OPEN 5TH</button>
+              <button class="fun-chip" id="chip-style-swell" data-style="swell" type="button" aria-pressed="false" title="One soft pad chord on your key; the band settles onto it">SWELL</button>
+              <button class="fun-chip" id="chip-style-arpeggio" data-style="arpeggio" type="button" aria-pressed="false" title="A pad with chord tones rippling in the band's rhythm">ARPEGGIO</button>
+              <button class="fun-chip is-active" id="chip-style-progression" data-style="progression" type="button" aria-pressed="true" title="A pad walking the genre's four-chord progression from your key, with a singing lead line">PROGRESSION</button>
             </div>
+            <span class="fun-style-hint">HOLD A KEY · THE BAND FOLLOWS YOU · GENRE PICKS THE CHORD COLOURS</span>
           </div>
 
           <div class="fun-keyboard-wrap">

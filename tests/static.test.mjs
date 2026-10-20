@@ -11,6 +11,7 @@ test("the static entry points exist", async () => {
     "src/app.mjs",
     "src/befunge.mjs",
     "src/brainfuck.mjs",
+    "src/accompaniment.mjs",
     "src/conductor.mjs",
     "src/ensemble.mjs",
     "src/fractran.mjs",
@@ -23,6 +24,7 @@ test("the static entry points exist", async () => {
     "src/session.mjs",
     "src/share.mjs",
     "src/shakespeare.mjs",
+    "src/intercal.mjs",
     "src/transport.mjs",
     "src/zip.mjs",
     "src/oracle.lol",
@@ -32,6 +34,7 @@ test("the static entry points exist", async () => {
     "src/pad.piet",
     "src/chimes.frac",
     "src/chant.spl",
+    "src/conductor.i",
     "manual.html",
     "docs/manual.json",
     "tools/manual.py",
@@ -236,6 +239,8 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.match(app, /fetch\("src\/pad\.piet"\)/);
   assert.match(app, /fetch\("src\/chimes\.frac"\)/);
   assert.match(app, /fetch\("src\/chant\.spl"\)/);
+  assert.match(app, /fetch\("src\/conductor\.i"\)/);
+  assert.match(app, /composeArrangement\(/);
 });
 
 test("the application has no remote runtime assets", async () => {
@@ -245,6 +250,7 @@ test("the application has no remote runtime assets", async () => {
     "src/app.mjs",
     "src/befunge.mjs",
     "src/brainfuck.mjs",
+    "src/accompaniment.mjs",
     "src/conductor.mjs",
     "src/ensemble.mjs",
     "src/fractran.mjs",
@@ -257,6 +263,7 @@ test("the application has no remote runtime assets", async () => {
     "src/session.mjs",
     "src/share.mjs",
     "src/shakespeare.mjs",
+    "src/intercal.mjs",
     "src/transport.mjs",
     "src/zip.mjs",
   ].map((path) => readFile(new URL(path, root), "utf8")));
@@ -299,59 +306,54 @@ test("the Kapellmeister console and antique parlor acoustics controls are wired 
   assert.match(app, /elements\.chipTick\?\.addEventListener/);
 });
 
-test("the Esoteric Fun Machine play-along organ and loop punch-in sequencer are wired up", async () => {
+test("the Esoteric Fun Machine accompanist and loop punch-in sequencer are wired up", async () => {
   const [html, styles, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),
     readFile(new URL("src/app.mjs", root), "utf8"),
   ]);
 
-  // Markup
+  // Markup: style chips replace the organ's mode switch and chord-quality chips (D-028).
   assert.match(html, /id="fun-machine-engine"/);
   assert.match(html, /id="fun-machine-status"/);
   assert.match(html, /id="fun-machine-telemetry"/);
-  assert.match(html, /id="fun-machine-mode"/);
   assert.match(html, /id="fun-machine-rec"/);
   assert.match(html, /id="fun-machine-reset"/);
   assert.match(html, /id="fun-keyboard"/);
   assert.match(html, /id="fun-sequence-grid"/);
-  assert.match(html, /data-quality="auto"/);
-  assert.match(html, /data-quality="major"/);
-  assert.match(html, /data-quality="minor"/);
-  assert.match(html, /data-quality="dom7"/);
-  assert.match(html, /data-quality="maj9"/);
-  assert.match(html, /data-quality="dim"/);
-  assert.match(html, /data-quality="modal_open"/);
+  assert.match(html, /role="group" aria-label="Accompaniment style"/);
+  for (const style of ["swell", "arpeggio", "progression"]) {
+    assert.match(html, new RegExp(`id="chip-style-${style}" data-style="${style}"`), style);
+  }
+  assert.doesNotMatch(html, /id="fun-machine-mode"|data-quality=/);
 
   // Keyboard keys [A..K]
   assert.match(html, /data-semitone="0"\s+data-key="KeyA"/);
   assert.match(html, /data-semitone="1"\s+data-key="KeyW"/);
   assert.match(html, /data-semitone="12"\s+data-key="KeyK"/);
 
-  // Plate ordering: Fun Machine is at the top of the plates stack immediately above Malbolge Plate II
   const funIdx = html.indexOf('id="fun-machine-engine"');
   const beatIdx = html.indexOf('id="beat-engine"');
   assert.ok(funIdx > 0 && beatIdx > funIdx, "Fun Machine section must sit above Plate II beat-engine in the stack");
 
-  // Styles
   assert.match(styles, /\.fun-machine-engine/);
   assert.match(styles, /\.fun-keyboard/);
   assert.match(styles, /\.fun-key-white/);
   assert.match(styles, /\.fun-key-black/);
   assert.match(styles, /\.fun-sequence-grid/);
 
-  assert.match(app, /function scheduleFunMachineChord\(/);
-  assert.match(app, /function scheduleFunMachineLeadNote\(/);
-  assert.match(app, /linearRampToValueAtTime\(peak, noteStart \+ attack\)/);
-  assert.match(app, /buildFunProgression\(/);
-  assert.match(app, /function startFunMachineVoice\(/);
-  assert.match(app, /function stopFunMachineVoice\(/);
-  assert.match(app, /activeHeldFunKey/);
-  assert.match(app, /sustainLevel/);
+  // Voices: a pad, an arpeggio pluck, and a gliding lead; no organ vibrato.
+  assert.match(app, /function schedulePadChord\(/);
+  assert.match(app, /function scheduleArpNote\(/);
+  assert.match(app, /function scheduleFunLeadNote\(/);
+  assert.match(app, /function releaseFunPads\(/);
+  assert.doesNotMatch(app, /scheduleFunMachineChord|scheduleFunMachineLeadNote|startFunMachineVoice|frequency\.setValueAtTime\(5\.5/);
+  assert.match(app, /buildPerformance\(normSemi, funMachineStyle, activeGenre/);
+  assert.match(app, /applyEnsembleConductor\(performance\.steps\.map\(\(step\) => step\.chord\)\)/);
+  assert.match(app, /const duck = transport === currentTransport && activeHeldFunKey !== null \? LEAD_DUCK_GAIN : 1;/);
   assert.match(app, /function renderFunSequencerGrid\(/);
   assert.match(app, /function updateFunKeyboardChordLabels\(/);
   assert.match(app, /async function triggerFunKey\(/);
-  assert.match(app, /elements\.funMachineMode\?\.addEventListener/);
   assert.match(app, /elements\.funMachineRec\?\.addEventListener/);
   assert.match(app, /elements\.funMachineReset\?\.addEventListener/);
 });

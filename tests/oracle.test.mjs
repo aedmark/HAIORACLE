@@ -27,8 +27,15 @@ import { MELODY_NAMES, melodyFor } from "../src/music.mjs";
 import { FUNGAL_NAMES, composeScore, hashPhrase, parseScore } from "../src/score.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "../src/share.mjs";
 import { CHANT_NAMES, FORMANT_VOWELS, PERSONA_ROLES, composeChant, cycleChantCell, runShakespeare } from "../src/shakespeare.mjs";
+import {
+  INTERCAL_SECTION_NAMES,
+  composeArrangement,
+  intercalMingle,
+  intercalSelect,
+  runIntercal,
+} from "../src/intercal.mjs";
 
-const [source, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource] = await Promise.all([
+const [source, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource, conductorSource] = await Promise.all([
   readFile(new URL("../src/oracle.lol", import.meta.url), "utf8"),
   readFile(new URL("../src/beat.mal", import.meta.url), "utf8"),
   readFile(new URL("../src/bass.bf", import.meta.url), "utf8"),
@@ -36,6 +43,7 @@ const [source, beatSource, bassSource, harmonySource, pietSource, fractranSource
   readFile(new URL("../src/pad.piet", import.meta.url), "utf8"),
   readFile(new URL("../src/chimes.frac", import.meta.url), "utf8"),
   readFile(new URL("../src/chant.spl", import.meta.url), "utf8"),
+  readFile(new URL("../src/conductor.i", import.meta.url), "utf8"),
 ]);
 
 test("the LOLCODE spell produces every required score field", () => {
@@ -674,5 +682,103 @@ test("antique parlor chamber impulse response eliminates low-frequency fog-horn 
   assert.ok(normalized30 < 0.35, `Expected 30Hz sub-bass to be attenuated (<0.35) to prevent fog-horn buildup, got ${normalized30}`);
   assert.ok(normalized500 > normalized30 * 2.0, `Expected 500Hz mid presence to dominate 30Hz rumble by >2x, got ${normalized500} vs ${normalized30}`);
 });
+
+test("the INTERCAL 1972 conductor executes src/conductor.i deterministically with balanced politeness", () => {
+  const result = runIntercal(conductorSource);
+  assert.equal(result.statementsCount, 27);
+  assert.equal(result.politeCount, 6);
+  assert.ok(result.politenessRatio >= 0.20 && result.politenessRatio <= 0.334);
+  assert.equal(result.gaveUp, true);
+  assert.equal(result.stepsExecuted, 27);
+  assert.deepEqual(result.ignoredVars, [":2"]);
+  assert.equal(result.vars32[":1"], 1);
+  assert.equal(result.vars32[":4"], 1);
+  assert.equal(result.vars32[":6"], 1);
+  assert.equal(result.vars16[".1"], 4);
+
+  // INTERCAL bitwise operators
+  assert.equal(intercalMingle(9, 3), 135);
+  assert.equal(intercalSelect(0b1101, 0b1011), 0b101);
+});
+
+test("INTERCAL 1972 rejects insufficiently polite or overly polite programs with line numbers", () => {
+  const rudeProgram = `
+DO :1 <- #1
+DO :2 <- #1
+DO :3 <- #1
+DO :4 <- #1
+DO :5 <- #1
+DO :6 <- #1
+DO GIVE UP
+`;
+  assert.throws(
+    () => runIntercal(rudeProgram),
+    /INTERCAL line \d+: Insufficiently polite \(ICL079/,
+  );
+
+  const grovelingProgram = `
+PLEASE DO :1 <- #1
+PLEASE DO :2 <- #1
+PLEASE DO :3 <- #1
+PLEASE DO :4 <- #1
+PLEASE GIVE UP
+`;
+  assert.throws(
+    () => runIntercal(grovelingProgram),
+    /INTERCAL line \d+: Overly polite \(ICL099/,
+  );
+});
+
+test("INTERCAL 1972 dynamic arrangement orchestrates sectional breathing and COME FROM turnarounds", () => {
+  const score = composeScore(source, "the moon owes me five dollars");
+  const arrangement = composeArrangement(conductorSource, score);
+  assert.equal(arrangement.sections.length, 4);
+  assert.equal(arrangement.channelMasks.length, 12);
+  assert.equal(arrangement.turnaroundStep, 11);
+  assert.match(arrangement.politenessPercentage, /22\.2%/);
+
+  // Region 0 (Exposition): Lead, Beat, Bass, Chimes active; Harmony and Choir rest to establish groove
+  for (let s = 0; s < 3; s += 1) {
+    const mask = arrangement.channelMasks[s];
+    assert.equal(mask.lead, true, `Step ${s} lead`);
+    assert.equal(mask.beat, true, `Step ${s} beat`);
+    assert.equal(mask.bass, true, `Step ${s} bass`);
+    assert.equal(mask.harmony, false, `Step ${s} harmony rested`);
+    assert.equal(mask.chant, false, `Step ${s} chant rested`);
+    assert.equal(mask.isTurnaround, false);
+  }
+
+  // Region 1 (Antiphony): Harmony and Choir take center stage; Lead breathes
+  for (let s = 3; s < 6; s += 1) {
+    const mask = arrangement.channelMasks[s];
+    assert.equal(mask.lead, false, `Step ${s} lead rested`);
+    assert.equal(mask.harmony, true, `Step ${s} harmony active`);
+    assert.equal(mask.chant, true, `Step ${s} chant active`);
+    assert.equal(mask.isTurnaround, false);
+  }
+
+  // Region 2 (Tutti): Full ensemble apotheosis
+  for (let s = 6; s < 9; s += 1) {
+    const mask = arrangement.channelMasks[s];
+    assert.equal(mask.lead, true, `Step ${s} lead active`);
+    assert.equal(mask.beat, true, `Step ${s} beat active`);
+    assert.equal(mask.bass, true, `Step ${s} bass active`);
+    assert.equal(mask.harmony, true, `Step ${s} harmony active`);
+    assert.equal(mask.chant, true, `Step ${s} chant active`);
+    assert.equal(mask.isTurnaround, false);
+  }
+
+  // Region 3 (Breakdown): Beat and Bass rest on steps 9-10
+  assert.equal(arrangement.channelMasks[9].beat, false);
+  assert.equal(arrangement.channelMasks[9].bass, false);
+  assert.equal(arrangement.channelMasks[10].beat, false);
+  assert.equal(arrangement.channelMasks[10].bass, false);
+
+  // Step 11: COME FROM (60) Turnaround resolution brings Beat and Bass back
+  assert.equal(arrangement.channelMasks[11].beat, true);
+  assert.equal(arrangement.channelMasks[11].bass, true);
+  assert.equal(arrangement.channelMasks[11].isTurnaround, true);
+});
+
 
 

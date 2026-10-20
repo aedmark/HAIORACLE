@@ -43,7 +43,7 @@ function sampleSession(overrides = {}) {
     genre: GENRE_RULEBOOKS.SMOKY_JAZZ,
     strictness: 10,
     acoustics: { enabled: true, level: 40, crackle: false, reverb: true, ticks: true },
-    funMachine: { mode: "auto_chord", quality: "auto", progression: [[7, "minor"], null, null, [0, "maj9"], null, null, null, null, null, null, null, null] },
+    funMachine: { style: "arpeggio", progression: [[7, "minor"], null, null, [0, "maj9"], null, null, null, null, null, null, null, null] },
     plates,
     mixer: channels,
     ...overrides,
@@ -68,7 +68,8 @@ test("session validation rejects anything outside the allowlist, naming the fiel
   delete missing.tempo;
   rejectsAt(missing, "session.tempo");
   rejectsAt(sampleSession({ format: "something-else" }), "session.format");
-  rejectsAt(sampleSession({ version: 2 }), "session.version");
+  rejectsAt(sampleSession({ version: 3 }), "session.version");
+  rejectsAt({ ...sampleSession(), funMachine: { ...sampleSession().funMachine, style: "organ" } }, "session.funMachine.style");
   rejectsAt(sampleSession({ tempo: 300 }), "session.tempo");
   rejectsAt(sampleSession({ tempo: 96.5 }), "session.tempo");
   rejectsAt(sampleSession({ volume: "70" }), "session.volume");
@@ -186,4 +187,22 @@ test("plate cells cycle independently, so per-cell counts replay any click order
     counts.forEach((count, index) => { for (let n = 0; n < count; n += 1) replayed[index] = cycle(replayed[index]); });
     assert.deepEqual(replayed, interleaved);
   }
+});
+
+test("version 1 sessions upgrade: chord mode becomes a progression, lead solo an arpeggio", () => {
+  const v1 = (mode) => {
+    const session = sampleSession({ version: 1 });
+    session.funMachine = { mode, quality: "maj9", progression: sampleSession().funMachine.progression };
+    return session;
+  };
+  const upgraded = validateSession(v1("auto_chord"));
+  assert.equal(upgraded.version, SESSION_VERSION);
+  assert.equal(upgraded.funMachine.style, "progression");
+  assert.equal(validateSession(v1("lead")).funMachine.style, "arpeggio");
+  assert.deepEqual(upgraded.funMachine.progression, validateSession(sampleSession()).funMachine.progression);
+  assert.equal(JSON.parse(serializeSession(upgraded)).version, 2, "an upgraded session saves as version 2");
+  const badMode = v1("theremin");
+  assert.throws(() => validateSession(badMode), (error) => error.path === "session.funMachine.mode");
+  const v1WithStyle = sampleSession({ version: 1 });
+  assert.throws(() => validateSession(v1WithStyle), (error) => error.path === "session.funMachine.style");
 });

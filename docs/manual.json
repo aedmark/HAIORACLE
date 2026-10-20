@@ -8,7 +8,7 @@
   },
   "manual": {
     "title": "{{project.name}} Manual",
-    "subtitle": "Deterministic Esoteric Parlor Orchestration, Apparition Vitrine & Auto-Chord Organ",
+    "subtitle": "Deterministic Esoteric Parlor Orchestration, Apparition Vitrine & One-Finger Accompanist",
     "description": "Comprehensive 3x technical manual documenting what each component does, how its execution and audio/visual mechanisms operate, and why it is designed under strict zero-dependency and esoteric computation invariants.",
     "badges": [
       "Version {{project.version}}",
@@ -683,27 +683,52 @@
         },
         {
           "id": "esoteric-fun-machine",
-          "title": "Edmark's Esoteric Fun Machine Real-Time Chord Organ & Loop Sequencer",
-          "summary": "Baldwin-style auto-chord organ console with an interactive 13-key manual, physical keyboard mapping, and 12-step punch-in loop sequencer.",
-          "tags": ["organ", "keyboard", "auto-chord", "sequencer", "punch-in", "fun-machine"],
-          "what": "Provides an interactive 13-key manual (`C..C'`) and physical computer keyboard mapping (`[A..K]`) for Edmark's Esoteric Fun Machine (`#fun-machine-engine`), inspired by vintage Baldwin Fun Machine auto-chord organs. In One-Finger Auto-Chord mode, striking a key starts a dedicated sustained dual-oscillator reed-organ voice with 5.5 Hz parlor vibrato that plays continuously over top of the accompaniment. A 12-step punch-in matrix allows users to sequence custom chord progressions on the fly or audition harmonies.",
+          "title": "Edmark's Esoteric Fun Machine One-Finger Accompanist & Loop Sequencer",
+          "summary": "Hold one key and a synth pad plays a swell, arpeggio, or progression in the band's rhythm while the band follows your chord.",
+          "tags": ["accompanist", "keyboard", "pad", "arpeggio", "sequencer", "punch-in", "fun-machine"],
+          "what": "A 13-key manual (`C..C'`) and computer keys (`[A..K]`) drive a one-finger accompanist inspired by Baldwin home organs, without sounding like one. Hold a key and choose a style chip: SWELL holds one pad chord on the key, ARPEGGIO ripples its tones two per step, PROGRESSION walks the genre's four-chord progression with a singing lead line. The band is re-conducted onto the chord while the LOLCODE lead steps back; a 12-step sequencer with punch-in recording keeps chords in the loop.",
           "how": {
-            "lead": "`src/conductor.mjs` and `src/app.mjs` coordinate real-time playing and loop sequencing:",
+            "lead": "`src/accompaniment.mjs` turns a key into a performance; `src/app.mjs` voices and schedules it on the band's grid:",
             "points": [
-              "`FUN_KEY_MAP` and `FUN_KEY_BY_CODE` map 13 ivory and ebony keys (`C` through `C'`) to keyboard shortcuts (`KeyA`..`KeyK`), with active press states and dynamic chord preview labels.",
-              "`buildFunChord()` resolves chord pitch classes across seven quality chips (`AUTO-GENRE`, `MAJOR`, `MINOR`, `DOM 7TH`, `MAJ 9TH`, `DIMINISHED`, `OPEN 5TH`), automatically adapting to the active Kapellmeister genre rulebook.",
-              "`scheduleFunMachineChord()` synthesizes vintage parlor reed-organ tones using a sawtooth generator, sub-octave triangle foundation, 5.5 Hz vibrato LFO, a 2200 Hz formant filter, and a 12ms manual strum stagger.",
-              "When punch-in recording (`#fun-machine-rec`) is armed or a step is selected, striking any key writes that chord into `customProgression[step]`, dynamically overlaying `customSpine` in `conductEnsemble()` during live playback and offline 16-bit WAV rendering."
+              "`buildPerformance(key, style, genre, tonic)` returns four region chords and twelve steps; the genre colours each chord through `buildFunChord(key, \"auto\", …)`.",
+              "`schedulePadChord()` builds a stereo pad from two saws detuned ±8 cents and a triangle under a slowly opening lowpass, with an attack scaled to the chord's length and a release that crossfades into the next; `padVoicing()` voice-leads each change.",
+              "`scheduleArpNote()` plucks `arpeggioNotes()` two per step in each step's real duration; `scheduleFunLeadNote()` glides between progression notes with late-arriving vibrato. The Fun Machine strip feeds the delay and chamber reverb.",
+              "A held key calls `applyEnsembleConductor()` with the performance's chords converted by `toTonicRelative()`, so the band plays the pad's chord in the right key, and ducks the LOLCODE lead and drones by 10 dB until release."
             ]
           },
-          "why": "Allowing users to actively play along, trigger chord changes on demand, and sequence custom progressions transforms the parlor cabinet into an expressive, interactive esoteric jam instrument—Edmark's Esoteric Fun Machine—without sacrificing zero-dependency purity (ADR D-020, D-021).",
+          "why": "The maintainer wanted pressing a key to feel like a composer leading a band, not like playing a combo organ. Playing on the band's own rhythm and room, re-conducting the band to the held chord, and letting the lead step back makes the player's part the lead (ADR D-029).",
           "evidence": [
-            {"label": "Fun chord & key mapping", "target": "src/conductor.mjs"},
-            {"label": "Fun Machine audio & UI", "target": "src/app.mjs"},
-            {"label": "Fun Machine tests", "target": "tests/oracle.test.mjs"},
-            {"label": "Architecture Record D-020", "target": "docs/DECISIONS.md"}
+            {"label": "Accompanist styles, voicing, arpeggios", "target": "src/accompaniment.mjs"},
+            {"label": "Fun Machine voices, keys, and scheduler", "target": "src/app.mjs"},
+            {"label": "Accompanist tests", "target": "tests/accompaniment.test.mjs"},
+            {"label": "Architecture Record D-020", "target": "docs/DECISIONS.md"},
+            {"label": "Architecture Record D-029", "target": "docs/DECISIONS.md"}
           ],
-          "related": ["kapellmeister-genre-console", "tonnetz-spine", "bandstand-console"]
+          "related": ["kapellmeister-genre-console", "tonnetz-spine", "bandstand-console", "intercal-grand-conductor"]
+        },
+        {
+          "id": "intercal-grand-conductor",
+          "title": "INTERCAL 1972 Grand Ensemble Conductor & Dynamic Arrangement Orchestrator",
+          "summary": "Master conductor virtual machine executing src/conductor.i to orchestrate dynamic sectional breathing, politeness-checked consonance, and COME FROM turnaround cadences.",
+          "tags": ["intercal", "conductor", "arrangement", "politeness", "come-from", "breathing"],
+          "what": "Overcomes the ensemble's continuous wall of sound by executing a purpose-built 1972 INTERCAL interpreter across the 12-step loop. Uses canonical Woods & Lyon mechanics (PLEASE DO politeness quotient, PLEASE IGNORE / REMEMBER variable masks, and COME FROM cadence interceptions) to dynamically orchestrate channel breathing across Exposition, Antiphony, Tutti, and Breakdown sections.",
+          "how": {
+            "lead": "`src/intercal.mjs` and `src/conductor.i` execute genuine INTERCAL 1972 rules:",
+            "points": [
+              "Statement Politeness Checking: enforces the INTERCAL 1972 politeness rule (0.20 <= P/N <= 0.334), rejecting impolite programs with ICL079 and groveling programs with ICL099. The conductor score executes with 6 polite statements out of 27 (22.2%).",
+              "Sectional Dynamic Arrangement: `PLEASE IGNORE` and `PLEASE REMEMBER` mask and unmask instrument registers (:1..:8) across 4 musical regions: Region 0 (Exposition groove: Lead, Beat, Bass, Chimes active; Harmony and Choir rest), Region 1 (Antiphony: Lead rests while Chords and Choir converse), Region 2 (Tutti: full 8-voice climax), and Region 3 (Breakdown: Beat and Bass rest on steps 9-10).",
+              "`COME FROM (60)` Turnaround Cadence: intercepts the loop turnaround at step 11, bringing Beat and Bass back with decisive cadence resolution into the next loop cycle.",
+              "IntercalVM bitwise operations: supports authentic 16-bit and 32-bit registers, bitwise mingle ($) and select (~), statement labels, and GIVE UP termination."
+            ]
+          },
+          "why": "In real ensemble performance, musicality requires breathing space, call-and-response dynamics, and sectional contrast rather than an unceasing wall of sound where every instrument blasts at maximum density on every step (ADR D-028).",
+          "evidence": [
+            {"label": "INTERCAL conductor score", "target": "src/conductor.i"},
+            {"label": "INTERCAL interpreter & arrangement", "target": "src/intercal.mjs"},
+            {"label": "INTERCAL conductor tests", "target": "tests/oracle.test.mjs"},
+            {"label": "Architecture Record D-028", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["esoteric-fun-machine", "kapellmeister-genre-console", "bandstand-console"]
         }
       ]
     },

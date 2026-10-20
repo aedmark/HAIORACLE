@@ -96,6 +96,8 @@ test("every ensemble bus reaches the destination with its documented routing", (
   assert.ok(reaches(edges, graph.filter.id, graph.parlorReverbSend.id));
   assert.ok(reaches(edges, graph.chantBus.id, graph.parlorReverbSend.id), "the choir still reaches the chamber reverb");
   assert.ok(reaches(edges, graph.chantBus.id, graph.delay.id), "the choir still reaches the delay");
+  assert.ok(reaches(edges, graph.funBus.id, graph.parlorReverbSend.id), "the accompanist pad blooms in the chamber reverb");
+  assert.ok(reaches(edges, graph.funBus.id, graph.delay.id), "the accompanist reaches the delay");
   assert.ok(reaches(edges, graph.parlorReverbSend.id, graph.compressor.id));
   assert.ok(reaches(edges, graph.parlorCrackleSource.id, graph.output.id));
   assert.equal(graph.drones.length, 3);

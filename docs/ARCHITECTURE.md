@@ -25,9 +25,11 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Codel & fraction spells | `src/pad.piet`, `src/chimes.frac` | 2001 Piet codel canvas & 1987 FRACTRAN fractions | Piet and FRACTRAN VM output |
 | Shakespeare runtime | `src/shakespeare.mjs` | `runShakespeare()`, `composeChant()` | `src/chant.spl`, validated score, browser host |
 | Dramatic choir spell | `src/chant.spl` | 2001 Shakespeare Programming Language play | Shakespeare VM output |
+| Master arrangement conductor | `src/intercal.mjs`, `src/conductor.i` | `composeArrangement()`, `runIntercal()` | live scheduler and offline exports in `src/app.mjs` |
 | Ensemble audio graph | `src/ensemble.mjs` | `buildEnsembleGraph()` | live `AudioContext` and offline WAV `OfflineAudioContext` in `src/app.mjs` |
 | Session boundary | `src/session.mjs` | `parseSession()`, `validateSession()`, `parsePresetStore()` | session ledger in `src/app.mjs`, `localStorage`, `.fun` files |
 | Export writers | `src/zip.mjs`, `src/midi.mjs` | `createStoredZip()`, `buildMidiFile()` | stem and MIDI exports in `src/app.mjs` |
+| Fun Machine accompanist | `src/accompaniment.mjs` | `buildPerformance()`, `padVoicing()`, `arpeggioNotes()`, `toTonicRelative()` | Fun Machine voices and scheduler in `src/app.mjs` |
 | Mixer model | `src/mixer.mjs` | `channelSettings()`, `isChannelAudible()`, `meterReading()` | mixing console and strips in `src/app.mjs`, `src/ensemble.mjs` |
 | Master transport | `src/transport.mjs` | `transportReduce()`, `transportCommandForKey()` | transport deck and hotkeys in `src/app.mjs` |
 | Harmonic conductor | `src/conductor.mjs` | `conductEnsemble()`, `eulerGradus()`, `buildTonnetzSpine()`, `bjorklund()` | all 6 esoteric engines, `src/app.mjs` |
@@ -65,6 +67,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 | Befunge harmony | `composeHarmony()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-step polyphonic organ sequence (`raw`, `gate`, `mirror`, `chord`, `degreeIndex`, `strumMs`, `label`) produced by executing `src/harmony.bfg` on an 80×25 2D torus |
 | Piet/FRACTRAN chimes | `composeChimes()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-step Just Intonation chime and codel pad sequence (`gate`, `codelCode`, `hueIndex`, `lightnessIndex`, `fraction`, `exponents`, `ratioLabel`, `ratioValue`, `label`) produced by executing `src/pad.piet` and `src/chimes.frac` |
 | Shakespeare choir | `composeChant()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-scene formant vowel choir sequence (`gate`, `act`, `scene`, `speaker`, `addressee`, `personaShort`, `voiceType`, `vowelCode`, `vowelIpa`, `f1`, `f2`, `f3`, `interval`, `label`) produced by executing `src/chant.spl` |
+| INTERCAL arrangement | `composeArrangement()` | `scheduleEnsembleStep()` in `src/app.mjs` | 12-step dynamic channel breathing masks across 4 musical regions with `COME FROM` turnaround cadence at step 11, evaluated from canonical INTERCAL score `src/conductor.i` |
 | Ensemble conductor | `conductEnsemble()` | `src/app.mjs` | harmonizes the 12-step lead motif, bass tape, Befunge triads, Piet/FRACTRAN overtone ratios, and Shakespeare choir onto a 4-region Neo-Riemannian *Tonnetz* progression (`P`, `L`, `R`), Euler *Gradus Suavitatis* consonance sieve, and Bjorklund Euclidean hocket $E(k, 12)$ |
 | Mycelial network | `buildMycelialNetwork()`, `buildFruitingBodies()` | Canvas renderer (`src/app.mjs`) | procedural branching hyphae, anastomotic fusion loops, eight generative sporophore archetypes, and drifting ballistospores growing over a 10-second envelope from creature perimeter into vitrine glass |
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
@@ -81,7 +84,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 | Master volume | range input | active transport output gain | session-local `0..100` value mapped through a bounded perceptual curve; changes ramp over 18 ms |
 | Tempo (BPM) | range input (`#tempo-bpm`) | active audio transport scheduler | session-local `36..208` BPM value initialized to `score.pulse` on summon (double-click restores native pulse); updates upcoming step durations in real time |
 | Vitrine gesture | pointer events on `#vision` | Canvas renderer and active audio transport | transient normalized coordinates, hold, tap, and drag velocity modulate shape morphing, gaze, harmonic phase shift, filter/mix intensity, and synthesized percussion without mutating the score |
-| Fun Machine keyboard | `triggerFunKey()`, `buildFunChord()` | `src/app.mjs`, active audio transport | interactive 13-key manual (`C..C'`) and `[A..K]` physical keyboard mapping; plays 5.5 Hz vibrato reed organ chord, triggers accompaniment burst, and punches chords into `customSpine` |
+| Fun Machine accompanist | `triggerFunKey()` → `buildPerformance(key, style, genre, tonic)` | live scheduler, `applyEnsembleConductor()` | 13-key manual (`C..C'`) and `[A..K]` keys; a held key plays SWELL, ARPEGGIO, or PROGRESSION on the band's step grid (voice-led pad, two-per-step arpeggio, gliding lead), re-conducts the band onto its chords, and ducks the LOLCODE lead and drones by 10 dB; punch-in writes the chord under each step into `customProgression` |
 | Fun loop sequencer | `#fun-sequence-grid`, `#fun-machine-rec` | `conductEnsemble()`, `#export-wav` | 12-step progression matrix with step targeting, live punch-in recording, and progression reset; custom chords overlay the active genre spine and render into live audio and offline 16-bit WAV loops |
 
 ## Invariants
@@ -108,6 +111,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 - Every silhouette stays within a radius envelope of `0.38..1.08`, and every kinetic core is clipped to the current deforming body path. Enforced structurally in `tests/static.test.mjs` (D-007).
 - Kinetic family, speed, depth, tilt, and boundary-flux family originate in validated spell output. Enforced by required ranges and the 256-phrase coverage test (D-007).
 - Mycelial branching density, fruiting body archetype, and ballistospore emission originate in validated spell output (`fungal_form`, `fungal_hyphae`, `fungal_spores`, `fungal_bloom`). Enforced by required ranges and the phrase batch test (D-017).
+- Fun Machine chords are absolute pitch classes; they reach the conductor only through `toTonicRelative()`, so the band plays the same chord the pad plays. Enforced by `tests/accompaniment.test.mjs` and D-029.
 - Custom chords punched into the Esoteric Fun Machine overlay the active genre spine via `customSpine` without altering virtual machine state or native Lolcode score determinism. Enforced by `tests/oracle.test.mjs` and D-020.
 
 ## Boundaries

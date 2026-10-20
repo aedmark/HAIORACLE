@@ -1,14 +1,12 @@
 import { HARMONY_NAMES, composeHarmony, cycleHarmonyCell } from "./befunge.mjs";
 import { BASS_NAMES, composeBass, cycleBassCell } from "./brainfuck.mjs";
 import {
-  CHORD_QUALITIES,
   FUN_KEY_BY_CODE,
   FUN_KEY_BY_KEY,
   FUN_KEY_MAP,
   GENRE_NAMES,
   GENRE_RULEBOOKS,
   buildFunChord,
-  buildFunProgression,
   chordLabelFor,
   conductEnsemble,
   semitoneGradus,
@@ -19,8 +17,21 @@ import { MELODY_NAMES, melodyFor } from "./music.mjs";
 import { composeScore, WAVEFORMS } from "./score.mjs";
 import { GM_DRUMS, MIDI_TRACKS, buildMidiFile, ticksForSeconds, velocitiesFor } from "./midi.mjs";
 import { createStoredZip } from "./zip.mjs";
+import {
+  ACCOMPANIMENT_STYLES,
+  DEFAULT_ACCOMPANIMENT_STYLE,
+  STYLE_LABELS,
+  arpeggioNotes,
+  buildPerformance,
+  chordText,
+  leadMidi,
+  padVoicing,
+  stepsToRegionBoundary,
+  toTonicRelative,
+} from "./accompaniment.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
+import { INTERCAL_SECTION_NAMES, composeArrangement } from "./intercal.mjs";
 import { SILENT_GAIN, buildEnsembleGraph, parlorSendLevels } from "./ensemble.mjs";
 import {
   ACCOMPANIMENT_CHANNEL_IDS,
@@ -184,7 +195,6 @@ const elements = {
   funMachineEngine: document.querySelector("#fun-machine-engine"),
   funMachineStatus: document.querySelector("#fun-machine-status"),
   funMachineTelemetry: document.querySelector("#fun-machine-telemetry"),
-  funMachineMode: document.querySelector("#fun-machine-mode"),
   funMachineRec: document.querySelector("#fun-machine-rec"),
   funMachineReset: document.querySelector("#fun-machine-reset"),
   funKeyboard: document.querySelector("#fun-keyboard"),
@@ -199,7 +209,9 @@ let harmonySource = "";
 let pietSource = "";
 let fractranSource = "";
 let chantSource = "";
+let conductorSource = "";
 let currentScore = null;
+let currentArrangement = null;
 let currentBeat = null;
 let currentBass = null;
 let currentHarmony = null;
@@ -232,15 +244,13 @@ let parlorAcousticsLevel = 0.55;
 let parlorCrackleEnabled = true;
 let parlorReverbEnabled = true;
 let parlorTickEnabled = true;
-let funMachineMode = "auto_chord";
+let funMachineStyle = DEFAULT_ACCOMPANIMENT_STYLE;
 let funMachineRec = false;
-let funMachineChordQuality = "auto";
 let customProgression = Array(12).fill(null);
 let selectedSequencerStep = null;
 let funMachineDryGain = null;
 let activeHeldFunKey = null;
-let activeFunProgression = null;
-let activeFunVoice = null;
+let activeFunPerformance = null;
 
 
 const interaction = {
@@ -2054,7 +2064,9 @@ function updateAudioInteraction() {
   const subWeight = 0.085 * (1 + Math.max(0, -interaction.pitchBend) * 0.55 * interaction.hold);
   const fifthWeight = 0.035 + field.radius * 0.065 * (0.5 - 0.5 * Math.cos(field.angle * 2));
   const shimmerWeight = field.radius * 0.058 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5));
-  const targetDroneGains = [subWeight, fifthWeight, shimmerWeight];
+  // The tonic drones step back with the lead while the band follows a held key.
+  const leadDuck = activeHeldFunKey !== null ? LEAD_DUCK_GAIN : 1;
+  const targetDroneGains = [subWeight * leadDuck, fifthWeight * leadDuck, shimmerWeight * leadDuck];
 
   for (const [index, drone] of transport.drones.entries()) {
     const baseDetune = [-5, 4, -3][index] || 0;
@@ -2158,9 +2170,7 @@ function triggerSporePuff(strength = 1, atTime = null) {
 // null when nothing was playing. Steps already queued in the look-ahead window
 // are cut by fading the whole output, not just the drone mix.
 function stopCurrentSound() {
-  if (activeFunVoice) {
-    stopFunMachineVoice(null, true);
-  }
+  releaseFunPads(audioContext, 0.25);
   if (!currentTransport || !audioContext) return null;
   const transport = currentTransport;
   currentTransport = null;
@@ -2215,7 +2225,8 @@ function scheduleNote(context, transport, score, step, at, duration) {
   const shiftedNote = score.root + transport.melody[(step + field.phaseStep) % transport.melody.length] + consonantInterval;
   const envelope = context.createGain();
   const attack = Math.min(0.055, duration * (0.2 + field.radius * 0.06));
-  const peakGain = 0.3 * (1 + interaction.hold * 0.16);
+  const duck = transport === currentTransport && activeHeldFunKey !== null ? LEAD_DUCK_GAIN : 1;
+  const peakGain = 0.3 * (1 + interaction.hold * 0.16) * duck;
   envelope.gain.setValueAtTime(0.0001, at);
   envelope.gain.exponentialRampToValueAtTime(peakGain, at + Math.max(0.01, attack));
   envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
@@ -2897,236 +2908,203 @@ function getFunMachineDirectDestination(context) {
   return funMachineDryGain;
 }
 
-function scheduleFunMachineChord(context, destination, chord, at, duration, transport = null) {
-  if (!chord || !chord.pitchClasses || chord.pitchClasses.length === 0) return;
-  const strumSec = 0.010;
-  const holdBoost = 1 + interaction.hold * 0.2;
-  const basePeak = 0.28 * holdBoost;
-  const baseOctave = 48;
-  const rootPc = chord.rootPc ?? 0;
-  const soundingTime = Math.max(0.24, duration || 0.45);
-  const now = context.currentTime;
-  const baseStart = Math.max(now + 0.015, (at || now));
+// --- Fun Machine accompanist voices (D-028) ---------------------------------
+//
+// Three synth voices, none of them an organ: a slow-blooming stereo pad for the
+// chords, a soft plucked arpeggio, and a singing lead with glide and delayed
+// vibrato. All of them land on the band's own step grid and run through the
+// Fun Machine strip, which feeds the delay and chamber reverb.
 
-  for (const [idx, pc] of chord.pitchClasses.entries()) {
-    const noteStart = baseStart + idx * strumSec;
-    let midi = baseOctave + pc;
-    if (idx > 0 && midi < baseOctave + rootPc) {
-      midi += 12;
-    }
-    const freq = midiToFrequency(midi);
-    if (transport) logNote(transport, "fun", midi, noteStart, soundingTime, basePeak);
+// Pads still sounding (or scheduled) from held keys, so a key change or release
+// can fade them instead of letting an old chord ring under a new one.
+const funPadHandles = new Set();
 
-    const oscReed = context.createOscillator();
-    oscReed.type = "sawtooth";
-    oscReed.frequency.setValueAtTime(freq, noteStart);
+/**
+ * Schedules one pad chord. Two saws detuned ±8 cents sit hard left and right
+ * with a triangle in the middle, under one slowly opening lowpass and one
+ * envelope whose attack scales with the chord's length. The release overlaps
+ * the next chord so changes crossfade. Returns a handle for releaseFunPads().
+ */
+function schedulePadChord(context, destination, chord, at, duration, { level = 1, voicing = null, transport = null } = {}) {
+  if (!chord) return null;
+  const notes = voicing || padVoicing(chord);
+  const start = Math.max(context.currentTime + 0.01, at);
+  const sounding = Math.max(0.3, duration);
+  const attack = Math.min(0.7, Math.max(0.16, sounding * 0.32));
+  const release = 0.9;
+  const end = start + sounding;
+  const peak = 0.34 * level * (1 + interaction.hold * 0.15) / Math.sqrt(notes.length);
 
-    const oscBody = context.createOscillator();
-    oscBody.type = "triangle";
-    oscBody.frequency.setValueAtTime(midiToFrequency(midi - 12), noteStart);
+  const env = context.createGain();
+  env.gain.setValueAtTime(0.0001, start);
+  env.gain.linearRampToValueAtTime(peak, start + attack);
+  env.gain.setTargetAtTime(peak * 0.82, start + attack, 0.4);
+  env.gain.setTargetAtTime(0.0001, end, release / 4);
 
-    const lfo = context.createOscillator();
-    const lfoGain = context.createGain();
-    lfo.type = "sine";
-    lfo.frequency.setValueAtTime(5.5, noteStart);
-    lfoGain.gain.setValueAtTime(10, noteStart);
-    lfo.connect(lfoGain);
-    lfoGain.connect(oscReed.detune);
-    lfoGain.connect(oscBody.detune);
-
-    const filter = context.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(2400, noteStart);
-    filter.Q.setValueAtTime(2.0, noteStart);
-
-    const voiceGain = context.createGain();
-    const peak = basePeak / Math.sqrt(chord.pitchClasses.length);
-    const attack = 0.022;
-    const releaseTime = Math.min(0.08, soundingTime * 0.25);
-    const sustainLevel = peak * 0.85;
-
-    voiceGain.gain.setValueAtTime(0.0001, noteStart);
-    voiceGain.gain.linearRampToValueAtTime(peak, noteStart + attack);
-    voiceGain.gain.setValueAtTime(sustainLevel, noteStart + soundingTime - releaseTime);
-    voiceGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + soundingTime);
-
-    oscReed.connect(filter);
-    oscBody.connect(filter);
-    filter.connect(voiceGain).connect(destination);
-
-    lfo.start(noteStart);
-    oscReed.start(noteStart);
-    oscBody.start(noteStart);
-
-    const stopTime = noteStart + soundingTime + 0.06;
-    lfo.stop(stopTime);
-    oscReed.stop(stopTime);
-    oscBody.stop(stopTime);
-  }
-}
-
-function scheduleFunMachineLeadNote(context, destination, semitone, at, duration = 0.45) {
-  const now = context.currentTime;
-  const startTime = Math.max(now + 0.015, (at || now));
-  const midi = 60 + semitone;
-  const freq = midiToFrequency(midi);
-  const oscLead = context.createOscillator();
-  const oscSub = context.createOscillator();
-  const lfo = context.createOscillator();
-  const lfoGain = context.createGain();
   const filter = context.createBiquadFilter();
-  const voiceGain = context.createGain();
-
-  oscLead.type = "sawtooth";
-  oscLead.frequency.setValueAtTime(freq, startTime);
-  oscSub.type = "triangle";
-  oscSub.frequency.setValueAtTime(midiToFrequency(midi - 12), startTime);
-
-  lfo.type = "sine";
-  lfo.frequency.setValueAtTime(5.5, startTime);
-  lfoGain.gain.setValueAtTime(12, startTime);
-  lfo.connect(lfoGain);
-  lfoGain.connect(oscLead.detune);
-  lfoGain.connect(oscSub.detune);
-
   filter.type = "lowpass";
-  filter.frequency.setValueAtTime(2800, startTime);
-  filter.Q.setValueAtTime(2.2, startTime);
+  filter.Q.setValueAtTime(0.6, start);
+  filter.frequency.setValueAtTime(420, start);
+  filter.frequency.exponentialRampToValueAtTime(1750, start + attack);
+  filter.frequency.setTargetAtTime(1250, start + attack, 0.5);
+  filter.connect(env).connect(destination);
 
-  const holdBoost = 1 + interaction.hold * 0.2;
-  const peak = 0.28 * holdBoost;
-  const attack = 0.020;
-  const soundingTime = Math.max(0.12, Math.min(0.65, duration || 0.35));
-  const releaseTime = Math.min(0.08, soundingTime * 0.25);
-  const sustainLevel = peak * 0.85;
+  const left = context.createStereoPanner ? context.createStereoPanner() : null;
+  const right = context.createStereoPanner ? context.createStereoPanner() : null;
+  left?.pan.setValueAtTime(-0.55, start);
+  right?.pan.setValueAtTime(0.55, start);
+  left?.connect(filter);
+  right?.connect(filter);
 
-  voiceGain.gain.setValueAtTime(0.0001, startTime);
-  voiceGain.gain.linearRampToValueAtTime(peak, startTime + attack);
-  voiceGain.gain.setValueAtTime(sustainLevel, startTime + soundingTime - releaseTime);
-  voiceGain.gain.exponentialRampToValueAtTime(0.0001, startTime + soundingTime);
+  // One slow chorus LFO breathes across every saw in the chord.
+  const lfo = context.createOscillator();
+  const lfoDepth = context.createGain();
+  lfo.frequency.setValueAtTime(0.23, start);
+  lfoDepth.gain.setValueAtTime(6, start);
+  lfo.connect(lfoDepth);
 
-  oscLead.connect(filter);
-  oscSub.connect(filter);
-  filter.connect(voiceGain).connect(destination);
-
-  lfo.start(startTime);
-  oscLead.start(startTime);
-  oscSub.start(startTime);
-  const stopTime = startTime + soundingTime + 0.06;
-  lfo.stop(stopTime);
-  oscLead.stop(stopTime);
-  oscSub.stop(stopTime);
-}
-
-function startFunMachineVoice(context, destination, chord, semitone, mode = "auto_chord") {
-  const now = context.currentTime;
-  if (activeFunVoice) {
-    stopFunMachineVoice(activeFunVoice.semitone, true);
-  }
-
-  const pitchClasses = mode === "auto_chord" && chord?.pitchClasses?.length
-    ? chord.pitchClasses
-    : [semitone % 12];
-  const rootPc = chord?.rootPc ?? (semitone % 12);
-  const baseOctave = 48;
-  const strumSec = 0.008;
-  const holdBoost = 1 + interaction.hold * 0.2;
-  const basePeak = 0.32 * holdBoost;
-  const notePeak = basePeak / Math.sqrt(pitchClasses.length);
-  const attack = 0.024;
-  const sustainLevel = notePeak * 0.88;
-
-  const voiceGain = context.createGain();
-  voiceGain.gain.setValueAtTime(0.0001, now);
-  voiceGain.gain.linearRampToValueAtTime(1.0, now + attack);
-  voiceGain.connect(destination);
-
-  const nodesToStop = [];
-
-  for (const [idx, pc] of pitchClasses.entries()) {
-    const noteStart = now + idx * strumSec;
-    let midi = baseOctave + pc;
-    if (idx > 0 && midi < baseOctave + rootPc) {
-      midi += 12;
-    }
+  const stopAt = end + release * 1.6;
+  const oscillators = [lfo];
+  for (const [index, midi] of notes.entries()) {
     const freq = midiToFrequency(midi);
-
-    const oscReed = context.createOscillator();
-    oscReed.type = "sawtooth";
-    oscReed.frequency.setValueAtTime(freq, noteStart);
-
-    const oscBody = context.createOscillator();
-    oscBody.type = "triangle";
-    oscBody.frequency.setValueAtTime(midiToFrequency(midi - 12), noteStart);
-
-    const lfo = context.createOscillator();
-    const lfoGain = context.createGain();
-    lfo.type = "sine";
-    lfo.frequency.setValueAtTime(5.5, noteStart);
-    lfoGain.gain.setValueAtTime(9, noteStart);
-    lfo.connect(lfoGain);
-    lfoGain.connect(oscReed.detune);
-    lfoGain.connect(oscBody.detune);
-
-    const filter = context.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(2400, noteStart);
-    filter.Q.setValueAtTime(1.8, noteStart);
-
-    const noteGain = context.createGain();
-    noteGain.gain.setValueAtTime(0.0001, noteStart);
-    noteGain.gain.linearRampToValueAtTime(notePeak, noteStart + attack);
-    noteGain.gain.setValueAtTime(sustainLevel, noteStart + attack + 0.01);
-
-    oscReed.connect(filter);
-    oscBody.connect(filter);
-    filter.connect(noteGain).connect(voiceGain);
-
-    lfo.start(noteStart);
-    oscReed.start(noteStart);
-    oscBody.start(noteStart);
-
-    nodesToStop.push(lfo, oscReed, oscBody);
+    const isRoot = index === 0;
+    const voices = isRoot
+      ? [{ type: "triangle", detune: 0, gain: 0.55, out: filter }]
+      : [
+        { type: "sawtooth", detune: -8, gain: 0.3, out: left || filter },
+        { type: "sawtooth", detune: 8, gain: 0.3, out: right || filter },
+        { type: "triangle", detune: 0, gain: 0.32, out: filter },
+      ];
+    for (const voice of voices) {
+      const osc = context.createOscillator();
+      const gain = context.createGain();
+      osc.type = voice.type;
+      osc.frequency.setValueAtTime(freq, start);
+      osc.detune.setValueAtTime(voice.detune, start);
+      if (voice.type === "sawtooth") lfoDepth.connect(osc.detune);
+      gain.gain.setValueAtTime(voice.gain, start);
+      osc.connect(gain).connect(voice.out);
+      osc.start(start);
+      osc.stop(stopAt);
+      oscillators.push(osc);
+    }
+    if (transport) logNote(transport, "fun", midi, start, sounding, peak);
   }
+  lfo.start(start);
+  lfo.stop(stopAt);
 
-  activeFunVoice = {
-    semitone,
-    voiceGain,
-    nodesToStop,
-    startTime: now,
-    context,
-  };
+  const handle = { env, oscillators, stopAt };
+  // Only live pads can be released; offline renders keep their own clock.
+  if (context === audioContext) {
+    funPadHandles.add(handle);
+    window.setTimeout(() => funPadHandles.delete(handle), Math.max(0, (stopAt - context.currentTime) * 1000) + 200);
+  }
+  return handle;
 }
 
-function stopFunMachineVoice(semitone = null, immediateCrossfade = false) {
-  if (!activeFunVoice) return;
-  if (semitone !== null && semitone !== undefined && activeFunVoice.semitone !== semitone) return;
-
-  const voice = activeFunVoice;
-  activeFunVoice = null;
-  const context = voice.context;
+// Fades every live pad (including ones scheduled a moment ahead) over `fade`.
+function releaseFunPads(context, fade = 0.5) {
+  if (!context) return;
   const now = context.currentTime;
-
-  if (immediateCrossfade) {
-    voice.voiceGain.gain.cancelScheduledValues(now);
-    voice.voiceGain.gain.setValueAtTime(voice.voiceGain.gain.value || 0.8, now);
-    voice.voiceGain.gain.linearRampToValueAtTime(0.0001, now + 0.040);
-    const stopTime = now + 0.050;
-    for (const node of voice.nodesToStop) {
-      try { node.stop(stopTime); } catch {}
-    }
-  } else {
-    const minHold = 0.40;
-    const releaseStart = Math.max(now, voice.startTime + minHold);
-    const releaseDuration = 0.20;
-    voice.voiceGain.gain.cancelScheduledValues(releaseStart);
-    voice.voiceGain.gain.setValueAtTime(voice.voiceGain.gain.value || 0.8, releaseStart);
-    voice.voiceGain.gain.exponentialRampToValueAtTime(0.0001, releaseStart + releaseDuration);
-    const stopTime = releaseStart + releaseDuration + 0.06;
-    for (const node of voice.nodesToStop) {
-      try { node.stop(stopTime); } catch {}
+  for (const handle of funPadHandles) {
+    handle.env.gain.cancelScheduledValues(now);
+    handle.env.gain.setTargetAtTime(0.0001, now, fade / 4);
+    for (const osc of handle.oscillators) {
+      try {
+        osc.stop(now + fade * 1.5);
+      } catch {
+        // Already stopped.
+      }
     }
   }
+  funPadHandles.clear();
+}
+
+// A soft pluck: triangle plus a quiet pulse through a closing lowpass.
+function scheduleArpNote(context, destination, midi, at, duration, { accent = false, pan = 0, transport = null } = {}) {
+  const start = Math.max(context.currentTime + 0.005, at);
+  const decay = Math.min(0.55, Math.max(0.14, duration * 1.6));
+  const peak = (accent ? 0.15 : 0.11) * (1 + interaction.hold * 0.15);
+  const freq = midiToFrequency(midi);
+
+  const env = context.createGain();
+  env.gain.setValueAtTime(0.0001, start);
+  env.gain.linearRampToValueAtTime(peak, start + 0.006);
+  env.gain.exponentialRampToValueAtTime(0.0001, start + decay);
+
+  const filter = context.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.Q.setValueAtTime(1.2, start);
+  filter.frequency.setValueAtTime(accent ? 3600 : 3000, start);
+  filter.frequency.exponentialRampToValueAtTime(700, start + decay);
+
+  const panner = context.createStereoPanner ? context.createStereoPanner() : null;
+  panner?.pan.setValueAtTime(pan, start);
+  filter.connect(env);
+  (panner ? env.connect(panner) : env).connect(destination);
+
+  const body = context.createOscillator();
+  body.type = "triangle";
+  body.frequency.setValueAtTime(freq, start);
+  const edge = context.createOscillator();
+  edge.type = "square";
+  edge.frequency.setValueAtTime(freq, start);
+  edge.detune.setValueAtTime(4, start);
+  const edgeGain = context.createGain();
+  edgeGain.gain.setValueAtTime(0.18, start);
+  body.connect(filter);
+  edge.connect(edgeGain).connect(filter);
+  for (const osc of [body, edge]) {
+    osc.start(start);
+    osc.stop(start + decay + 0.05);
+  }
+  if (transport) logNote(transport, "fun", midi, start, decay, peak);
+}
+
+// The composer's line: sine and triangle with a quiet octave, gliding from the
+// previous note, with vibrato that only arrives once the note has settled.
+function scheduleFunLeadNote(context, destination, midi, at, duration, { glideFrom = null, transport = null } = {}) {
+  const start = Math.max(context.currentTime + 0.01, at);
+  const sounding = Math.max(0.14, duration);
+  const freq = midiToFrequency(midi);
+  const fromFreq = glideFrom ? midiToFrequency(glideFrom) : freq;
+  const peak = 0.2 * (1 + interaction.hold * 0.15);
+
+  const env = context.createGain();
+  env.gain.setValueAtTime(0.0001, start);
+  env.gain.linearRampToValueAtTime(peak, start + 0.035);
+  env.gain.setTargetAtTime(peak * 0.8, start + 0.035, 0.2);
+  env.gain.setTargetAtTime(0.0001, start + sounding, 0.06);
+
+  const filter = context.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(2600, start);
+  filter.Q.setValueAtTime(0.7, start);
+  filter.connect(env).connect(destination);
+
+  const vibrato = context.createOscillator();
+  const vibratoDepth = context.createGain();
+  vibrato.frequency.setValueAtTime(5.2, start);
+  vibratoDepth.gain.setValueAtTime(0, start);
+  vibratoDepth.gain.linearRampToValueAtTime(9, start + Math.min(0.45, sounding * 0.6));
+  vibrato.connect(vibratoDepth);
+
+  const stopAt = start + sounding + 0.3;
+  for (const [type, ratio, gain] of [["sine", 1, 0.6], ["triangle", 1, 0.32], ["sine", 2, 0.08]]) {
+    const osc = context.createOscillator();
+    const level = context.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(fromFreq * ratio, start);
+    osc.frequency.exponentialRampToValueAtTime(freq * ratio, start + (glideFrom ? 0.07 : 0.005));
+    vibratoDepth.connect(osc.detune);
+    level.gain.setValueAtTime(gain, start);
+    osc.connect(level).connect(filter);
+    osc.start(start);
+    osc.stop(stopAt);
+  }
+  vibrato.start(start);
+  vibrato.stop(stopAt);
+  if (transport) logNote(transport, "fun", midi, start, sounding, peak);
 }
 
 // A negative step clears every plate's playhead (transport stopped).
@@ -3199,13 +3177,9 @@ function highlightBeatStep(stepIndex) {
     });
   }
 
-  if (normalized >= 0 && elements.funMachineTelemetry && activeHeldFunKey !== null && activeFunProgression) {
-    const regIdx = Math.floor(normalized / 3) % 4;
-    const currentChord = activeFunProgression.chords[regIdx];
-    const currentMelody = activeFunProgression.steps[normalized]?.melodyNote || "—";
-    const keyInfo = FUN_KEY_MAP[activeHeldFunKey];
-    const keyLabel = keyInfo ? `[${keyInfo.displayKey}]` : "";
-    elements.funMachineTelemetry.textContent = `${keyLabel} PLAYING · STEP @${String(normalized + 1).padStart(2, "0")} · REGION ${regIdx + 1} (${currentChord.name} ${currentChord.quality.toUpperCase()}) · SOLO NOTE [${currentMelody}]`;
+  if (normalized >= 0 && elements.funMachineTelemetry && activeHeldFunKey !== null && activeFunPerformance) {
+    const stepInfo = activeFunPerformance.steps[normalized];
+    elements.funMachineTelemetry.textContent = `${funKeyLabel(activeHeldFunKey)} · ${STYLE_LABELS[activeFunPerformance.style]} · STEP @${String(normalized + 1).padStart(2, "0")} · ${chordText(stepInfo.chord)} · THE BAND FOLLOWS`;
   }
 }
 
@@ -3621,16 +3595,7 @@ function updateFunKeyboardChordLabels() {
   for (let semitone = 0; semitone <= 12; semitone += 1) {
     const el = document.querySelector(`#fun-chord-${semitone}`);
     if (!el) continue;
-    const chord = buildFunChord(
-      semitone,
-      funMachineChordQuality,
-      activeGenre,
-      currentScore ? currentScore.root : 0
-    );
-    const qualityLabel = chord.quality === "major" ? "Maj"
-      : chord.quality === "minor" ? "min"
-      : chord.quality.toUpperCase();
-    el.textContent = `${chord.name} ${qualityLabel}`;
+    el.textContent = chordText(buildFunChord(semitone, "auto", activeGenre, currentScore ? currentScore.root : 0));
   }
 }
 
@@ -3664,20 +3629,19 @@ function renderFunSequencerGrid() {
     if (isCurrent) button.classList.add("is-current");
     if (isSelected) button.classList.add("is-selected");
 
-    const chordText = chord
-      ? `${chord.name} ${chord.quality === "major" ? "Maj" : chord.quality === "minor" ? "min" : chord.quality.toUpperCase()}`
-      : "---";
+    // Punched chords are absolute; conducted spine chords sit above the tonic.
+    const stepLabel = !chord ? "---" : isCustom ? chordText(chord) : chordLabelFor(chord, currentScore ? currentScore.root : 60);
     const badgeText = isCustom ? "★ USER" : (chord?.op || "AUTO");
 
     button.innerHTML = `
       <span class="fun-step-num">@${String(index + 1).padStart(2, "0")}</span>
-      <span class="fun-step-chord">${chordText}</span>
+      <span class="fun-step-chord">${stepLabel}</span>
       <span class="fun-step-badge">${badgeText}</span>
     `;
 
     button.setAttribute(
       "aria-label",
-      `Step ${index + 1}: ${chordText}${isCustom ? " (custom punched-in)" : ""}`,
+      `Step ${index + 1}: ${stepLabel}${isCustom ? " (custom punched-in)" : ""}`,
     );
 
     button.addEventListener("click", () => {
@@ -3699,54 +3663,53 @@ function renderFunSequencerGrid() {
   }
 }
 
+// While a key is held the LOLCODE lead steps back so the player's part leads
+// and the band follows it (D-028).
+const LEAD_DUCK_GAIN = 10 ** (-10 / 20);
+const FUN_PAD_LEVEL = Object.freeze({ swell: 1, arpeggio: 0.55, progression: 0.8 });
+
+function loopStepDuration(score, step) {
+  const rhythm = RHYTHMS[score.rhythm];
+  return (60 / (activeTempoBpm || score.pulse) / 2) * rhythm[((step % rhythm.length) + rhythm.length) % rhythm.length];
+}
+
+function funKeyLabel(semitone) {
+  const keyInfo = FUN_KEY_MAP[semitone];
+  return keyInfo ? `[${keyInfo.displayKey}] ${keyInfo.note}` : `KEY #${semitone}`;
+}
+
+/**
+ * A held key becomes a performance in the selected style. The band is
+ * re-conducted onto its chords at once; with the loop running, a pad bridges
+ * to the next region start, where the scheduler takes over in the band's
+ * rhythm. With the loop stopped, the key auditions a sustained pad.
+ */
 async function triggerFunKey(semitone, isKeyDown = true) {
   if (semitone === null || semitone === undefined) return;
   const normSemi = ((Math.trunc(semitone) % 13) + 13) % 13;
   const keyBtn = elements.funKeyboard?.querySelector(`.fun-key[data-semitone="${normSemi}"]`);
 
   if (!isKeyDown) {
-    if (activeHeldFunKey === normSemi) {
-      activeHeldFunKey = null;
-      if (keyBtn) keyBtn.classList.remove("is-pressed");
-      stopFunMachineVoice(normSemi);
-      if (elements.funMachineTelemetry && activeFunProgression) {
-        const keyInfo = FUN_KEY_MAP[normSemi];
-        const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${normSemi}`;
-        elements.funMachineTelemetry.textContent = `${keyLabel} RELEASED · PROGRESSION ARMED: ${activeFunProgression.summary}`;
-      }
+    if (activeHeldFunKey !== normSemi) return;
+    activeHeldFunKey = null;
+    keyBtn?.classList.remove("is-pressed");
+    releaseFunPads(audioContext, 0.9);
+    if (currentTransport) currentTransport.funLeadMidi = null;
+    applyEnsembleConductor();
+    if (elements.funMachineTelemetry) {
+      elements.funMachineTelemetry.textContent = `${funKeyLabel(normSemi)} RELEASED · THE BAND RETURNS TO ITS OWN SCORE`;
     }
     return;
   }
 
-  if (activeHeldFunKey === normSemi) {
-    return; // Already held, ignore autorepeat
-  }
-
+  if (activeHeldFunKey === normSemi) return; // key repeat
+  const changingKey = activeHeldFunKey !== null;
   activeHeldFunKey = normSemi;
-  if (keyBtn) {
-    for (const other of elements.funKeyboard?.querySelectorAll(".fun-key.is-pressed") || []) {
-      other.classList.remove("is-pressed");
-    }
-    keyBtn.classList.add("is-pressed");
-  }
+  for (const other of elements.funKeyboard?.querySelectorAll(".fun-key.is-pressed") || []) other.classList.remove("is-pressed");
+  keyBtn?.classList.add("is-pressed");
 
-  if (muted) return;
-
-  const context = await ensureAudioContext();
-  if (context.state === "suspended") {
-    try {
-      await context.resume();
-    } catch {
-      // AudioContext resume might fail if no gesture has occurred yet
-    }
-  }
-
-  activeFunProgression = buildFunProgression(
-    normSemi,
-    funMachineChordQuality,
-    activeGenre,
-    currentScore ? currentScore.root : 0
-  );
+  const performance = buildPerformance(normSemi, funMachineStyle, activeGenre, currentScore ? currentScore.root : 0);
+  activeFunPerformance = performance;
 
   let targetStep = null;
   if (selectedSequencerStep !== null) {
@@ -3754,40 +3717,47 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   } else if (funMachineRec) {
     targetStep = activeBeatStep >= 0 ? activeBeatStep : 0;
   }
-
   if (targetStep !== null && targetStep >= 0 && targetStep < 12) {
-    customProgression[targetStep] = activeFunProgression.chords[0];
+    customProgression[targetStep] = performance.steps[targetStep].chord;
     applyEnsembleConductor();
     renderFunSequencerGrid();
     flashSequencerStep(targetStep);
-  }
-
-  // 12-Step Fun Machine progression & solo voice handling
-  const primaryChord = activeFunProgression.chords[0];
-  if (currentTransport && currentTransport.funBus) {
-    const stepIndex = (currentTransport.step || 0) % 12;
-    const regIdx = Math.floor(stepIndex / 3) % 4;
-    const immediateChord = activeFunProgression.chords[regIdx];
-    const progStep = activeFunProgression.steps[stepIndex];
-    const now = context.currentTime;
-    if (funMachineMode === "auto_chord") {
-      scheduleFunMachineChord(context, currentTransport.funBus, immediateChord, now, 0.45);
-    }
-    if (progStep?.melodyPitch !== undefined) {
-      scheduleFunMachineLeadNote(context, currentTransport.funBus, progStep.melodyPitch, now, 0.35);
-    }
   } else {
-    // Engine stopped / idle: audition voice directly
-    const dest = getFunMachineDirectDestination(context);
-    startFunMachineVoice(context, dest, primaryChord, normSemi, funMachineMode);
+    applyEnsembleConductor(performance.steps.map((step) => step.chord));
   }
 
   if (elements.funMachineTelemetry) {
-    const keyInfo = FUN_KEY_MAP[normSemi];
-    const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${normSemi}`;
-    const punchInfo = targetStep !== null ? ` · PUNCHED INTO STEP @${String(targetStep + 1).padStart(2, "0")}` : "";
-    const modeLabel = funMachineMode === "auto_chord" ? "12-STEP CHORD PROGRESSION & MELODY" : "SOLO LEAD MELODY";
-    elements.funMachineTelemetry.textContent = `${keyLabel} ENGAGED · ${modeLabel} · ${activeFunProgression.summary}${punchInfo}`;
+    const punchInfo = targetStep !== null ? ` · PUNCHED INTO STEP @${String(targetStep + 1).padStart(2, "0")}` : " · THE BAND FOLLOWS";
+    elements.funMachineTelemetry.textContent = `${funKeyLabel(normSemi)} · ${STYLE_LABELS[performance.style]} · ${performance.summary}${punchInfo}`;
+  }
+
+  if (muted) return;
+  const context = await ensureAudioContext();
+  if (context.state === "suspended") {
+    try {
+      await context.resume();
+    } catch {
+      // Resume can fail before any user gesture; the next gesture retries.
+    }
+  }
+  if (activeHeldFunKey !== normSemi) return; // released or changed while the context woke
+  releaseFunPads(context, changingKey ? 0.25 : 0.4);
+
+  const transport = currentTransport;
+  const level = FUN_PAD_LEVEL[performance.style];
+  if (transport?.funBus && currentScore) {
+    const nextStep = transport.step;
+    const stepsUntilRegion = stepsToRegionBoundary(nextStep) % 3;
+    let regionStart = transport.nextNoteTime;
+    for (let k = 0; k < stepsUntilRegion; k += 1) regionStart += loopStepDuration(currentScore, nextStep + k);
+    const bridge = regionStart - context.currentTime;
+    if (bridge > 0.12) {
+      const chord = performance.steps[nextStep % 12].chord;
+      transport.funVoicing = padVoicing(chord, transport.funVoicing);
+      schedulePadChord(context, transport.funBus, chord, context.currentTime, bridge + 0.2, { level, voicing: transport.funVoicing });
+    }
+  } else {
+    schedulePadChord(context, getFunMachineDirectDestination(context), performance.chords[0], context.currentTime, 30, { level });
   }
 }
 
@@ -3835,15 +3805,34 @@ function ensembleGraphOptions(context, { start, unit, fadeIn, stop = null, meter
 
 // Every voice that sounds on a loop step, for both the live scheduler and the
 // offline render. Live-only behavior (held Fun Machine keys, punch-in) stays
-// in the live scheduler.
+// in the live scheduler. The INTERCAL 1972 dynamic arrangement mask controls
+// channel breathing across Exposition, Antiphony, Tutti, and Breakdown.
 function scheduleEnsembleStep(context, transport, score, step, at, stepDuration, soundingDuration) {
-  scheduleNote(context, transport, score, step, at, soundingDuration);
-  scheduleBeatStep(context, transport, score, step, at, stepDuration);
-  scheduleBassStep(context, transport, score, step, at, stepDuration);
-  scheduleHarmonyStep(context, transport, score, step, at, stepDuration);
-  scheduleChimeStep(context, transport, score, step, at, stepDuration);
-  scheduleChantStep(context, transport, score, step, at, stepDuration);
-  scheduleFungalBioStep(context, transport, score, step, at, stepDuration);
+  const stepIdx = step % 12;
+  const mask = currentArrangement?.channelMasks?.[stepIdx];
+  const bypassArrangement = activeGenre === GENRE_RULEBOOKS.RAW_CHAOS || !mask;
+
+  if (bypassArrangement || mask.lead) {
+    scheduleNote(context, transport, score, step, at, soundingDuration);
+  }
+  if (bypassArrangement || mask.beat) {
+    scheduleBeatStep(context, transport, score, step, at, stepDuration);
+  }
+  if (bypassArrangement || mask.bass) {
+    scheduleBassStep(context, transport, score, step, at, stepDuration);
+  }
+  if (bypassArrangement || mask.harmony) {
+    scheduleHarmonyStep(context, transport, score, step, at, stepDuration);
+  }
+  if (bypassArrangement || mask.chime) {
+    scheduleChimeStep(context, transport, score, step, at, stepDuration);
+  }
+  if (bypassArrangement || mask.chant) {
+    scheduleChantStep(context, transport, score, step, at, stepDuration);
+  }
+  if (bypassArrangement || mask.fungal) {
+    scheduleFungalBioStep(context, transport, score, step, at, stepDuration);
+  }
   if (transport.clockTicks ?? (parlorAcousticsEnabled && parlorTickEnabled)) {
     scheduleClockworkTick(context, transport.output, at, step, parlorAcousticsLevel);
   }
@@ -3853,13 +3842,18 @@ function scheduleEnsembleStep(context, transport, score, step, at, stepDuration,
 // region, re-struck mid-region only when the punched chord changes.
 function scheduleSequencedFunChord(context, transport, step, at, stepDuration, soundingDuration) {
   const stepIndex = step % 12;
-  if (!customProgression[stepIndex] || funMachineMode !== "auto_chord") return;
+  if (!customProgression[stepIndex]) return;
   const prevStepIndex = (stepIndex + 11) % 12;
   const isRegStart = stepIndex % 3 === 0;
   const isNewChord = customProgression[stepIndex] !== customProgression[prevStepIndex];
   if (isRegStart || isNewChord) {
     const chordDuration = isRegStart ? stepDuration * 3.0 : soundingDuration;
-    scheduleFunMachineChord(context, transport.funBus, customProgression[stepIndex], at, chordDuration, transport);
+    transport.funVoicing = padVoicing(customProgression[stepIndex], transport.funVoicing);
+    schedulePadChord(context, transport.funBus, customProgression[stepIndex], at, chordDuration, {
+      level: FUN_PAD_LEVEL.progression,
+      voicing: transport.funVoicing,
+      transport,
+    });
   }
 }
 
@@ -3912,34 +3906,48 @@ async function playScore(score, { cursor = 0 } = {}) {
 
       // Fun Machine: 12-step synchronized loop chord progression & overlay melody
       const stepIndex = currentStep % 12;
-      const regIdx = Math.floor(stepIndex / 3) % 4;
-      const isRegStart = (stepIndex % 3 === 0);
 
-      if (activeHeldFunKey !== null && activeFunProgression) {
-        const activeChord = activeFunProgression.chords[regIdx];
-        const stepInfo = activeFunProgression.steps[stepIndex];
-
-        // One-finger chord accompaniment: sustained across the 3 steps of each region (no 16th-note jitter)
-        if (funMachineMode === "auto_chord" && isRegStart) {
-          const regionDuration = stepDuration * 3.0;
-          scheduleFunMachineChord(context, transport.funBus, activeChord, transport.nextNoteTime, regionDuration);
+      if (activeHeldFunKey !== null && activeFunPerformance) {
+        // The accompanist plays on the band's own step grid.
+        const performance = activeFunPerformance;
+        const stepInfo = performance.steps[stepIndex];
+        const at = transport.nextNoteTime;
+        if (stepInfo.isRegionStart) {
+          let regionDuration = 0;
+          for (let k = 0; k < 3; k += 1) regionDuration += loopStepDuration(score, currentStep + k);
+          transport.funVoicing = padVoicing(stepInfo.chord, transport.funVoicing);
+          schedulePadChord(context, transport.funBus, stepInfo.chord, at, regionDuration, {
+            level: FUN_PAD_LEVEL[performance.style],
+            voicing: transport.funVoicing,
+            transport,
+          });
+        }
+        if (performance.style === "arpeggio") {
+          const half = stepDuration / 2;
+          arpeggioNotes(stepInfo.chord, stepIndex, 2).forEach((midi, k) => {
+            scheduleArpNote(context, transport.funBus, midi, at + k * half, half, {
+              accent: stepInfo.isRegionStart && k === 0,
+              pan: k === 0 ? -0.3 : 0.3,
+              transport,
+            });
+          });
+        } else if (performance.style === "progression" && stepInfo.leadPitch !== null) {
+          const midi = leadMidi(stepInfo.leadPitch);
+          scheduleFunLeadNote(context, transport.funBus, midi, at, Math.max(soundingDuration, stepDuration * 0.92), {
+            glideFrom: transport.funLeadMidi ?? null,
+            transport,
+          });
+          transport.funLeadMidi = midi;
         }
 
-        // Overlaying chord progression melody note on each tempo step
-        if (stepInfo?.melodyPitch !== undefined) {
-          scheduleFunMachineLeadNote(context, transport.funBus, stepInfo.melodyPitch, transport.nextNoteTime, soundingDuration);
-        }
-
-        // Punch-in recording: stamp passing beat steps with the active regional chord
+        // Punch-in recording stamps each passing step with the chord under it.
         if (funMachineRec) {
-          customProgression[stepIndex] = activeChord;
+          customProgression[stepIndex] = stepInfo.chord;
           applyEnsembleConductor();
           renderFunSequencerGrid();
           const targetStep = stepIndex;
-          const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
-          window.setTimeout(() => {
-            flashSequencerStep(targetStep);
-          }, delayMs);
+          const flashMs = Math.max(0, (at - context.currentTime) * 1000);
+          window.setTimeout(() => flashSequencerStep(targetStep), flashMs);
         }
       } else {
         scheduleSequencedFunChord(context, transport, currentStep, transport.nextNoteTime, stepDuration, soundingDuration);
@@ -4032,6 +4040,10 @@ function updateKapellmeisterUI() {
 
 function applyEnsembleConductor() {
   if (!currentScore) return;
+  const overrideProgression = arguments.length > 0 ? arguments[0] : null;
+  // Fun Machine chords are absolute; the conductor works above the tonic.
+  const spineToUse = (overrideProgression || customProgression)
+    .map((chord) => (chord ? toTonicRelative(chord, currentScore.root) : null));
   const conducted = conductEnsemble({
     score: currentScore,
     melody: melodyFor(currentScore),
@@ -4043,7 +4055,7 @@ function applyEnsembleConductor() {
     mutation: harmonyMutation + bassMutation + chimeMutation + chantMutation,
     genre: activeGenre,
     consonanceStrictness: activeStrictness,
-    customSpine: customProgression,
+    customSpine: spineToUse,
   });
   currentConductedSpine = conducted.spine;
   currentConductedMelody = conducted.melody;
@@ -4127,6 +4139,9 @@ function showScore(score) {
     if (elements.chantMutate) elements.chantMutate.disabled = false;
   } else if (elements.chantName) {
     elements.chantName.textContent = CHANT_NAMES[score.chantMode];
+  }
+  if (conductorSource) {
+    currentArrangement = composeArrangement(conductorSource, score);
   }
   applyEnsembleConductor();
   updateBeatGrid();
@@ -5133,8 +5148,7 @@ function captureSession() {
       ticks: parlorTickEnabled,
     },
     funMachine: {
-      mode: funMachineMode,
-      quality: funMachineChordQuality,
+      style: funMachineStyle,
       progression: customProgression.map((chord) => (chord ? [chord.rootPc, chord.quality] : null)),
     },
     plates: Object.fromEntries(PLATE_IDS.map((id) => [id, {
@@ -5158,8 +5172,7 @@ function syncSessionControls() {
   if (elements.parlorAcousticsLevel) elements.parlorAcousticsLevel.value = String(Math.round(parlorAcousticsLevel * 100));
   if (elements.acousticsLevelVal) elements.acousticsLevelVal.textContent = `${Math.round(parlorAcousticsLevel * 100)}%`;
   updateAcousticsStatus();
-  setFunMachineMode(funMachineMode);
-  setFunChordQuality(funMachineChordQuality);
+  setFunStyle(funMachineStyle);
   if (elements.volume) elements.volume.value = String(Math.round(masterVolume));
 }
 
@@ -5173,8 +5186,7 @@ function applySession(session) {
   const score = composeScore(oracleSource, session.phrase);
   activeGenre = session.genre;
   activeStrictness = session.strictness;
-  funMachineMode = session.funMachine.mode;
-  funMachineChordQuality = session.funMachine.quality;
+  funMachineStyle = session.funMachine.style;
   parlorAcousticsEnabled = session.acoustics.enabled;
   parlorAcousticsLevel = session.acoustics.level / 100;
   parlorCrackleEnabled = session.acoustics.crackle;
@@ -5498,27 +5510,19 @@ elements.kapellmeisterStrictness?.addEventListener("input", (e) => {
   updateChantGrid();
 });
 
-function setFunMachineMode(mode) {
-  funMachineMode = mode;
-  if (!elements.funMachineMode) return;
-  if (funMachineMode === "auto_chord") {
-    elements.funMachineMode.textContent = "AUTO-CHORD: ONE-FINGER";
-    elements.funMachineMode.setAttribute("aria-pressed", "true");
-    if (elements.funMachineStatus) {
-      elements.funMachineStatus.textContent = "ONE-FINGER CHORD ACCOMPANIMENT ACTIVE";
-    }
-  } else {
-    elements.funMachineMode.textContent = "LEAD SOLO: MANUAL NOTE";
-    elements.funMachineMode.setAttribute("aria-pressed", "false");
-    if (elements.funMachineStatus) {
-      elements.funMachineStatus.textContent = "MANUAL LEAD SOLO ACTIVE · CHORDS BYPASS";
-    }
-  }
+function funStatusText() {
+  return `ONE-FINGER ACCOMPANIST · ${STYLE_LABELS[funMachineStyle]}`;
 }
 
-elements.funMachineMode?.addEventListener("click", () => {
-  setFunMachineMode(funMachineMode === "auto_chord" ? "lead" : "auto_chord");
-});
+function setFunStyle(style) {
+  funMachineStyle = ACCOMPANIMENT_STYLES.includes(style) ? style : DEFAULT_ACCOMPANIMENT_STYLE;
+  for (const chip of document.querySelectorAll(".fun-chip[data-style]")) {
+    const active = chip.dataset.style === funMachineStyle;
+    chip.classList.toggle("is-active", active);
+    chip.setAttribute("aria-pressed", String(active));
+  }
+  if (elements.funMachineStatus && !funMachineRec) elements.funMachineStatus.textContent = funStatusText();
+}
 
 elements.funMachineRec?.addEventListener("click", () => {
   funMachineRec = !funMachineRec;
@@ -5532,9 +5536,7 @@ elements.funMachineRec?.addEventListener("click", () => {
     elements.funMachineRec.textContent = "PUNCH-IN REC: OFF";
     elements.funMachineRec.setAttribute("aria-pressed", "false");
     if (elements.funMachineStatus) {
-      elements.funMachineStatus.textContent = funMachineMode === "auto_chord"
-        ? "ONE-FINGER CHORD ACCOMPANIMENT ACTIVE"
-        : "MANUAL LEAD SOLO ACTIVE";
+      elements.funMachineStatus.textContent = funStatusText();
     }
   }
 });
@@ -5549,35 +5551,17 @@ elements.funMachineReset?.addEventListener("click", () => {
   }
 });
 
-function setFunChordQuality(quality) {
-  funMachineChordQuality = quality;
-  for (const c of document.querySelectorAll(".fun-chip")) {
-    const active = c.dataset.quality === quality;
-    c.classList.toggle("is-active", active);
-    c.setAttribute("aria-pressed", String(active));
-  }
-}
-
-for (const chip of document.querySelectorAll(".fun-chip")) {
+for (const chip of document.querySelectorAll(".fun-chip[data-style]")) {
   chip.addEventListener("click", () => {
-    const quality = chip.dataset.quality;
-    if (!quality) return;
-    setFunChordQuality(quality);
-    if (activeHeldFunKey !== null) {
-      activeFunProgression = buildFunProgression(
-        activeHeldFunKey,
-        funMachineChordQuality,
-        activeGenre,
-        currentScore ? currentScore.root : 0
-      );
-      if (audioContext && !muted) {
-        const dest = getFunMachineDirectDestination(audioContext);
-        startFunMachineVoice(audioContext, dest, activeFunProgression.chords[0], activeHeldFunKey, funMachineMode);
-      }
-    }
-    updateFunKeyboardChordLabels();
+    setFunStyle(chip.dataset.style);
     if (elements.funMachineTelemetry) {
-      elements.funMachineTelemetry.textContent = `CHORD QUALITY SET TO: ${chip.textContent.trim()}`;
+      elements.funMachineTelemetry.textContent = `STYLE: ${STYLE_LABELS[funMachineStyle]} · HOLD A KEY AND THE BAND FOLLOWS`;
+    }
+    // A held key switches style on the spot.
+    if (activeHeldFunKey !== null) {
+      const held = activeHeldFunKey;
+      activeHeldFunKey = null;
+      triggerFunKey(held, true);
     }
   });
 }
@@ -5763,7 +5747,7 @@ elements.tempo?.addEventListener("dblclick", () => {
 });
 
 try {
-  const [oracleResponse, beatResponse, bassResponse, harmonyResponse, pietResponse, fractranResponse, chantResponse] = await Promise.all([
+  const [oracleResponse, beatResponse, bassResponse, harmonyResponse, pietResponse, fractranResponse, chantResponse, conductorResponse] = await Promise.all([
     fetch("src/oracle.lol"),
     fetch("src/beat.mal"),
     fetch("src/bass.bf"),
@@ -5771,6 +5755,7 @@ try {
     fetch("src/pad.piet"),
     fetch("src/chimes.frac"),
     fetch("src/chant.spl"),
+    fetch("src/conductor.i"),
   ]);
   if (!oracleResponse.ok) throw new Error(`Oracle source returned ${oracleResponse.status}`);
   if (!beatResponse.ok) throw new Error(`Malbolge source returned ${beatResponse.status}`);
@@ -5779,7 +5764,8 @@ try {
   if (!pietResponse.ok) throw new Error(`Piet source returned ${pietResponse.status}`);
   if (!fractranResponse.ok) throw new Error(`FRACTRAN source returned ${fractranResponse.status}`);
   if (!chantResponse.ok) throw new Error(`Shakespeare source returned ${chantResponse.status}`);
-  [oracleSource, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource] = await Promise.all([
+  if (!conductorResponse.ok) throw new Error(`INTERCAL source returned ${conductorResponse.status}`);
+  [oracleSource, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource, conductorSource] = await Promise.all([
     oracleResponse.text(),
     beatResponse.text(),
     bassResponse.text(),
@@ -5787,6 +5773,7 @@ try {
     pietResponse.text(),
     fractranResponse.text(),
     chantResponse.text(),
+    conductorResponse.text(),
   ]);
   const initialHashPhrase = decodeOmenHash(window.location.hash);
   if (initialHashPhrase) {

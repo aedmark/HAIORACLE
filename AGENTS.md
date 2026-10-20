@@ -89,8 +89,11 @@ Never force-push or rewrite shared history.
 | `src/fractran.mjs` | Piet codel and FRACTRAN prime-exponent interpreters and 12-step chime engine |
 | `src/chant.spl` | Canonical Shakespeare Programming Language 2001 3-Act tragedy and formant choir script |
 | `src/shakespeare.mjs` | Shakespeare Programming Language interpreter and 12-scene formant vowel choir engine |
+| `src/conductor.i` | Canonical INTERCAL 1972 orchestral conductor score |
+| `src/intercal.mjs` | INTERCAL 1972 virtual machine and 12-step dynamic arrangement orchestrator |
 | `src/conductor.mjs` | Euler *Gradus Suavitatis*, Neo-Riemannian *Tonnetz*, and Euclidean rhythm ensemble conductor |
 | `src/ensemble.mjs` | Shared Web Audio ensemble graph for live playback and offline WAV export |
+| `src/accompaniment.mjs` | Fun Machine one-finger accompanist: styles, pad voicing, arpeggios, tonic-relative chords |
 | `src/mixer.mjs` | Eight-channel mixing console state, fader taper, solo rules, and VU meter math |
 | `src/session.mjs` | Validated `.fun` session format and on-device preset store |
 | `src/zip.mjs` | Zero-dependency STORED ZIP writer for stem bundles |

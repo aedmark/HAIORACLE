@@ -9,11 +9,14 @@
 // cell edits as per-cell click counts replayed through each plate's cycler
 // (cells cycle independently, so order does not matter).
 
+import { ACCOMPANIMENT_STYLES } from "./accompaniment.mjs";
 import { GENRE_RULEBOOKS } from "./conductor.mjs";
 import { MIXER_CHANNEL_IDS } from "./mixer.mjs";
 
 export const SESSION_FORMAT = "edmark-fun-session";
-export const SESSION_VERSION = 1;
+// Version 2 (D-028) replaced the Fun Machine's mode and chord quality with an
+// accompaniment style. Version 1 files still open and are upgraded on read.
+export const SESSION_VERSION = 2;
 export const SESSION_FILE_EXTENSION = "fun";
 export const MAX_SESSION_BYTES = 64 * 1024;
 export const MAX_PHRASE_LENGTH = 72;
@@ -25,8 +28,10 @@ export const MAX_PRESETS = 24;
 export const MAX_PRESET_NAME_LENGTH = 40;
 
 export const PLATE_IDS = Object.freeze(["beat", "bass", "harmony", "chime", "chant"]);
-export const FUN_MODES = Object.freeze(["auto_chord", "lead"]);
-export const FUN_QUALITIES = Object.freeze(["auto", "major", "minor", "dom7", "maj9", "dim", "modal_open"]);
+export const FUN_STYLES = ACCOMPANIMENT_STYLES;
+// Version 1 fields, accepted only to upgrade older files.
+const V1_FUN_MODES = Object.freeze(["auto_chord", "lead"]);
+const V1_FUN_QUALITIES = Object.freeze(["auto", "major", "minor", "dom7", "maj9", "dim", "modal_open"]);
 // Every quality buildFunChord() can resolve to, including genre-driven ones.
 export const CHORD_QUALITY_IDS = Object.freeze([
   "major", "minor", "dom7", "maj9", "min9", "dom7alt", "dim", "modal_open", "phrygian", "lydian", "raw",
@@ -94,7 +99,7 @@ export function validateSession(raw) {
     "acoustics", "funMachine", "plates", "mixer",
   ]);
   if (raw.format !== SESSION_FORMAT) throw new SessionError("session.format", `must be "${SESSION_FORMAT}"`);
-  if (raw.version !== SESSION_VERSION) throw new SessionError("session.version", `must be ${SESSION_VERSION}`);
+  if (raw.version !== SESSION_VERSION && raw.version !== 1) throw new SessionError("session.version", `must be 1 or ${SESSION_VERSION}`);
 
   expectKeys(raw.acoustics, "session.acoustics", ["enabled", "level", "crackle", "reverb", "ticks"]);
   const acoustics = Object.freeze({
@@ -105,14 +110,23 @@ export function validateSession(raw) {
     ticks: expectBool(raw.acoustics.ticks, "session.acoustics.ticks"),
   });
 
-  expectKeys(raw.funMachine, "session.funMachine", ["mode", "quality", "progression"]);
+  let style;
+  if (raw.version === 1) {
+    // v1 → v2: one-finger chords become a progression, lead solo an arpeggio.
+    expectKeys(raw.funMachine, "session.funMachine", ["mode", "quality", "progression"]);
+    const mode = expectEnum(raw.funMachine.mode, "session.funMachine.mode", V1_FUN_MODES);
+    expectEnum(raw.funMachine.quality, "session.funMachine.quality", V1_FUN_QUALITIES);
+    style = mode === "lead" ? "arpeggio" : "progression";
+  } else {
+    expectKeys(raw.funMachine, "session.funMachine", ["style", "progression"]);
+    style = expectEnum(raw.funMachine.style, "session.funMachine.style", FUN_STYLES);
+  }
   const { progression } = raw.funMachine;
   if (!Array.isArray(progression) || progression.length !== 12) {
     throw new SessionError("session.funMachine.progression", "must list exactly 12 steps");
   }
   const funMachine = Object.freeze({
-    mode: expectEnum(raw.funMachine.mode, "session.funMachine.mode", FUN_MODES),
-    quality: expectEnum(raw.funMachine.quality, "session.funMachine.quality", FUN_QUALITIES),
+    style,
     progression: Object.freeze(progression.map((step, index) => {
       const path = `session.funMachine.progression[${index}]`;
       if (step === null) return null;
