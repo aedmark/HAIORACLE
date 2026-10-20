@@ -466,10 +466,11 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 An excerpt of what Smoky Parlor Jazz would look like:
 
 ```inform7
-Smoky Parlor Jazz is an insistent genre. The code of Smoky Parlor Jazz is "smoky_jazz".
+Smoky Parlor Jazz is an insistent voiced genre. The code of Smoky Parlor Jazz is "smoky_jazz".
 The motto of Smoky Parlor Jazz is "ii-V-I progressions with rootless 3rd/7th/9th guide tones, swung overtones, and chromatic approaches."
 The changes of Smoky Parlor Jazz are the Table of Smoky Jazz Changes.
-The melody method of Smoky Parlor Jazz is extended snapping. The organ voicing of Smoky Parlor Jazz is guide tones.
+The melody method of Smoky Parlor Jazz is member snapping. The melody members of Smoky Parlor Jazz are {root, third, fifth, seventh, ninth}. The melody extensions of Smoky Parlor Jazz are {5, 9}.
+The organ voicing of Smoky Parlor Jazz is {third, seventh, ninth}.
 
 Colouring rule for Smoky Parlor Jazz when the interval above the tonic is listed in {0, 5}: rule succeeds with result maj9.
 Colouring rule for Smoky Parlor Jazz when the interval above the tonic is listed in {1, 6, 11}: rule succeeds with result dom7alt.
@@ -482,6 +483,8 @@ region	degree	quality	label
 3	2	min9	"ii9"
 4	1	dom7alt	"♭II7alt"
 ```
+
+The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Known deviations from real Inform 7, documented in the interpreter:**
 - Rules fire in source order, first match wins. Real Inform sorts rules by specificity.

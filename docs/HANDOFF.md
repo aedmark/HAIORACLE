@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 29, on `main`: the Kapellmeister rulebooks' current behaviour is frozen as the Inform 7 migration contract (P5-23 phase 1, D-033); session 28: per-phrase arrangements keep at least five band voices (D-032) and the transport no longer rearranges the page once per loop; session 27 gave each phrase its own INTERCAL arrangement (D-031), and section and harmony readouts no longer reflow the layout; session 26 made the conductor's registers decide the arrangement, which the transport, console, MIDI markers, and stem README display (D-030); session 25 reworked the Fun Machine is reworked into a one-finger accompanist the band follows (D-029); session 24 added the INTERCAL 1972 Grand Ensemble Conductor (`src/conductor.i`, `src/intercal.mjs`) overcomes the continuous wall of sound with dynamic arrangement breathing across Exposition, Antiphony, Tutti, and Breakdown, and the Esoteric Fun Machine is overhauled into a warm, lush analog synth pad lead with real-time ensemble accompaniment modulation (P5-22, D-028)._
+_Last updated: 2026-10-20, session 30, on `main`: the six Kapellmeister genres are written in Inform 7 (`src/rulebooks.ni`) and compiled by `src/inform.mjs`, cross-checked against the conductor but not yet wired in (P5-23 phase 2, D-033); session 29 froze the migration contract; session 28: per-phrase arrangements keep at least five band voices (D-032) and the transport no longer rearranges the page once per loop; session 27 gave each phrase its own INTERCAL arrangement (D-031), and section and harmony readouts no longer reflow the layout; session 26 made the conductor's registers decide the arrangement, which the transport, console, MIDI markers, and stem README display (D-030); session 25 reworked the Fun Machine is reworked into a one-finger accompanist the band follows (D-029); session 24 added the INTERCAL 1972 Grand Ensemble Conductor (`src/conductor.i`, `src/intercal.mjs`) overcomes the continuous wall of sound with dynamic arrangement breathing across Exposition, Antiphony, Tutti, and Breakdown, and the Esoteric Fun Machine is overhauled into a warm, lush analog synth pad lead with real-time ensemble accompaniment modulation (P5-22, D-028)._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-22 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-20, session 29, local Linux environment)
+**Verified** (2026-10-20, session 30, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **91/91 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **101/101 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 33 entries, 0 errors, 0 warnings** |
 
@@ -84,6 +84,28 @@ _Last updated: 2026-10-20, session 29, on `main`: the Kapellmeister rulebooks' c
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 30: 2026-10-20: Inform 7 rulebooks, phase 2
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-23 phase 2: the Inform 7 subset interpreter and the canonical rulebooks file (D-033).
+
+**Done:** P5-23 phase 2.
+
+**Changed:**
+1. `src/rulebooks.ni`: all six genres in the Inform 7 subset. It holds kinds (genre, chord quality, chord member, Tonnetz move, spine/melody/bass method), either/or adjectives (fettered/unfettered, patient/insistent, triadic/voiced), colouring, progression, and melody tone rulebooks, and tables of changes, Tonnetz walks, Fun Machine progressions (with `[root]` substitutions), and chime overtones.
+2. `src/inform.mjs`: `readStory()` parses the subset and rejects anything else with a line number; `followRulebook()` applies source-order, first-match rules; `compileRulebooks()` follows every rulebook over its whole domain (12 intervals, strictness 1–14) and returns frozen, validated genre data.
+3. `tests/inform.test.mjs`: tests every subset construct, rejections and compile errors, and cross-checks every compiled value against today's `conductor.mjs`.
+4. `tests/rulebook-capture.mjs` v2: the slider runs 3–14, so the capture now covers strictness 1–14 (ensembles at 3, 8, 14). The fixture was rewritten with `--rewrite` before anything in `src/` changed, so it still records pre-migration behaviour.
+
+**Verified:** 101/101 Node checks. Changing one Smoky Jazz bass-walk note and one jazz overtone in the `.ni` file failed the cross-check; restoring it passed.
+
+**Not verified:** Nothing in the browser yet. The app does not load `src/rulebooks.ni` until phase 3.
+
+**Left undone:** P5-23 phases 3–5; listening pass on the fuller forms; P4-02; P6-01.
+
+**Next session should start with:** P5-23 phase 3: have `conductor.mjs` read `compileRulebooks()` output, delete its genre tables and switches, fetch `src/rulebooks.ni` in the app, and keep `tests/rulebooks.test.mjs` passing unchanged.
 
 ### Session 29: 2026-10-20: Inform 7 rulebooks, phase 1
 
@@ -286,29 +308,5 @@ _Last updated: 2026-10-20, session 29, on `main`: the Kapellmeister rulebooks' c
 **Left undone:** P5-20, P4-02, P6-01; five-cell rhythm tiling; export button grouping.
 
 **Next session should start with:** a decision on P5-20 storage, or the design and layout pass.
-
-### Session 20: 2026-10-19: the parlor mixing console
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-19: an eight-channel mixer with faders, panning, mute/solo, and VU meters, built inside the shared ensemble graph so live and offline audio both honor it.
-
-**Done:** P5-19, D-024.
-
-**Changed:**
-1. `src/mixer.mjs` (new): channel list, frozen console state, fader taper, solo rules, dB/pan formatting, meter RMS/peak math.
-2. `src/ensemble.mjs`: one fader → `StereoPannerNode` strip per bus (stereo upmix for unity at center), optional post-pan `AnalyserNode` taps, a `Math.SQRT1_2` trim on the vitrine panner path; bus gains are now constant.
-3. `src/app.mjs`: console rendering, `updateMixer()`, and a VU `requestAnimationFrame` loop; the five `*Enabled` flags are replaced by channel mutes, so plate switches, mixer M buttons, and Bandstand buttons share one state.
-4. `index.html`, `styles.css`: `#mixer-engine` between the Fun Machine and Plate II; vertical faders via `writing-mode`; eight columns on desktop, four below 620 px, and a scrolling rail below 480 px.
-
-**Verified:** 56/56 Node checks, including new mixer-model and strip-routing tests (mutation-checked: removing mute-beats-solo fails two tests). Browser at `http://127.0.0.1:8765`: a default-console WAV for "the moon owes me five dollars" with parlor acoustics off rendered −26.78 dB RMS, peak 14280, identical to the pre-mixer commit served from a scratch worktree; soloing PULSE hard left rendered the right channel at −113 dB; plate switch, M button, and Bandstand stayed in sync; every playing channel's meter moved within 4 s; arrow keys move vertical faders with matching `aria-valuetext`; no page overflow at 375 px or 1100 px, with eight strips in one row on desktop.
-
-**Not verified:** Listening review; screen-reader pass over the strips (P4-02). The browser pane is 314 px wide, below the page's 320 px `min-width`, so overflow there is expected and pre-existing.
-
-**Problems:** The first phone layout (four columns) clipped strips below 480 px; replaced with a scrolling rail placed after the 620 px block so it wins the cascade.
-
-**Left undone:** P5-20, P5-21, P4-02, P6-01.
-
-**Next session should start with:** P5-21.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).

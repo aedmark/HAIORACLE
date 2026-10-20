@@ -26,6 +26,7 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Shakespeare runtime | `src/shakespeare.mjs` | `runShakespeare()`, `composeChant()` | `src/chant.spl`, validated score, browser host |
 | Dramatic choir spell | `src/chant.spl` | 2001 Shakespeare Programming Language play | Shakespeare VM output |
 | Master arrangement conductor | `src/intercal.mjs`, `src/conductor.i` | `composeArrangement()`, `arrangementWordFor()`, `arrangementSectionAt()`, `runIntercal()` | live scheduler, offline exports, transport section readout, console TACET lamps, and MIDI markers in `src/app.mjs` |
+| Kapellmeister rulebooks | `src/inform.mjs`, `src/rulebooks.ni` | `compileRulebooks()`, `readStory()`, `followRulebook()` | Inform 7 subset source for the six genres, compiled to frozen genre data (D-033). As of P5-23 phase 2 it is compiled and cross-checked in tests only; the conductor still uses its own tables until phase 3 |
 | Ensemble audio graph | `src/ensemble.mjs` | `buildEnsembleGraph()` | live `AudioContext` and offline WAV `OfflineAudioContext` in `src/app.mjs` |
 | Session boundary | `src/session.mjs` | `parseSession()`, `validateSession()`, `parsePresetStore()` | session ledger in `src/app.mjs`, `localStorage`, `.fun` files |
 | Export writers | `src/zip.mjs`, `src/midi.mjs` | `createStoredZip()`, `buildMidiFile()` | stem and MIDI exports in `src/app.mjs` |

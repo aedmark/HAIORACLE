@@ -92,6 +92,8 @@ Never force-push or rewrite shared history.
 | `src/conductor.i` | Canonical INTERCAL 1972 orchestral conductor score |
 | `src/intercal.mjs` | INTERCAL 1972 virtual machine and 12-step dynamic arrangement orchestrator |
 | `src/conductor.mjs` | Euler *Gradus Suavitatis*, Neo-Riemannian *Tonnetz*, and Euclidean rhythm ensemble conductor |
+| `src/rulebooks.ni` | Canonical Inform 7 (subset) Kapellmeister genre rulebooks |
+| `src/inform.mjs` | Inform 7 subset interpreter and rulebook compiler |
 | `src/ensemble.mjs` | Shared Web Audio ensemble graph for live playback and offline WAV export |
 | `src/accompaniment.mjs` | Fun Machine one-finger accompanist: styles, pad voicing, arpeggios, tonic-relative chords |
 | `src/mixer.mjs` | Eight-channel mixing console state, fader taper, solo rules, and VU meter math |

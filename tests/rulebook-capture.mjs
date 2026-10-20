@@ -24,7 +24,7 @@ import { melodyFor } from "../src/music.mjs";
 import { composeScore } from "../src/score.mjs";
 import { composeChant } from "../src/shakespeare.mjs";
 
-export const CAPTURE_VERSION = 1;
+export const CAPTURE_VERSION = 2;
 
 const GENRES = Object.values(GENRE_RULEBOOKS);
 const KEYS = Array.from({ length: 12 }, (_, i) => i);
@@ -43,8 +43,9 @@ const PHRASES = [
   "a",
 ];
 const MUTATIONS = [0, 1, 2, 3];
-const STRICTNESS = Array.from({ length: 12 }, (_, i) => i + 1);
-const ENSEMBLE_STRICTNESS = [3, 8, 12];
+// The Kapellmeister slider runs 3..14; 1 and 2 are covered too.
+const STRICTNESS = Array.from({ length: 14 }, (_, i) => i + 1);
+const ENSEMBLE_STRICTNESS = [3, 8, 14];
 const RAW_PITCHES = Array.from({ length: 48 }, (_, i) => i - 12);
 
 const root = new URL("../", import.meta.url);
