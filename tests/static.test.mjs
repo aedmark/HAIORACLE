@@ -241,6 +241,14 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.match(app, /fetch\("src\/chant\.spl"\)/);
   assert.match(app, /fetch\("src\/conductor\.i"\)/);
   assert.match(app, /composeArrangement\(/);
+  // The arrangement reaches the whole workstation, not only the scheduler.
+  assert.match(app, /function activeArrangement\(\)/);
+  assert.match(app, /arrangementPlays\("fun", stepIndex\)/, "the player's part consults register :8");
+  assert.match(app, /classList\.toggle\("is-tacet", resting\)/, "console strips show TACET while rested");
+  assert.match(app, /buildMidiFile\(\{[^}]*markers \}\)/, "MIDI export writes section markers");
+  assert.match(app, /\.\.\.arrangementReadme\(stepStarts\)/, "the stem README maps the sections");
+  assert.match(html, /<output class="transport-section" id="transport-section"/);
+  assert.match(styles, /\.mixer-strip\.is-tacet \.mixer-tacet/);
 });
 
 test("the application has no remote runtime assets", async () => {

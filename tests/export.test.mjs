@@ -165,6 +165,21 @@ test("the MIDI file is Type 1 with a tempo track and one named, programmed track
   assert.deepEqual(drums.filter((e) => e.type === "on").map((e) => [e.channel, e.note]), [[DRUM_CHANNEL, 36]]);
 });
 
+test("arrangement markers land on the conductor track at their ticks, inside the loop only", () => {
+  const midi = parseMidi(buildMidiFile({
+    bpm: 120,
+    lengthTicks: 1920,
+    tracks: [],
+    markers: [
+      { tick: 480, text: "II · ANTIPHONAL CONVERSATION" },
+      { tick: 0, text: "I · EXPOSITION GROOVE" },
+      { tick: 1920, text: "PAST THE END" },
+    ],
+  }));
+  const markers = midi.tracks[0].filter((e) => e.meta === 0x06).map((e) => [e.tick, decoder.decode(Uint8Array.from(e.data))]);
+  assert.deepEqual(markers, [[0, "I · EXPOSITION GROOVE"], [480, "II · ANTIPHONAL CONVERSATION"]]);
+});
+
 test("loop-safe notes clip at the loop end, trim overlapping repeats, and merge unisons", () => {
   const notes = loopSafeNotes([
     { tick: 0, duration: 600, midi: 60, velocity: 80 },

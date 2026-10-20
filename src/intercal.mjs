@@ -12,8 +12,10 @@
  * 1. Politeness Quotient: Statement politeness ratio (P / N) is strictly
  *    verified (0.20 <= P <= 0.33). Rude code is rejected with ICL079;
  *    groveling code is rejected with ICL099.
- * 2. Sectional Orchestration: Uses PLEASE IGNORE and PLEASE REMEMBER to
- *    dynamically rest and summon voices across 4 musical regions:
+ * 2. Sectional Orchestration: eight twospot registers rest (#0) or summon (#1)
+ *    one channel each; onespot markers open sections, and the registers as the
+ *    program leaves them become the masks. PLEASE IGNORE freezes the Fun
+ *    Machine register so no later order can rest the player:
  *    - Region 0 (Steps 0..2): Exposition Groove (Lead, Beat, Bass, Chimes; Harmony & Choir rest)
  *    - Region 1 (Steps 3..5): Antiphonal Conversation (Chords & Choir enter; Lead breathes)
  *    - Region 2 (Steps 6..8): Grand Tutti Apotheosis (All 8 channels unite)
@@ -86,6 +88,7 @@ export class IntercalVM {
     this.vars16 = new Map();
     this.vars32 = new Map();
     this.ignoredVars = new Set();
+    this.trace = [];
     this.parse();
   }
 
@@ -188,6 +191,9 @@ export class IntercalVM {
             this.vars32.set(target, val);
           } else if (target.startsWith(".")) {
             this.vars16.set(target, val);
+            // Onespot markers carry the arrangement's form, so each one keeps
+            // a snapshot of the twospot channel registers at that moment.
+            this.trace.push(Object.freeze({ target, value: val, registers: Object.freeze(Object.fromEntries(this.vars32)) }));
           }
         }
       }
@@ -211,6 +217,7 @@ export class IntercalVM {
       ignoredVars: Array.from(this.ignoredVars),
       vars32: Object.fromEntries(this.vars32),
       vars16: Object.fromEntries(this.vars16),
+      trace: Object.freeze([...this.trace]),
     };
   }
 }
@@ -220,104 +227,96 @@ export function runIntercal(source) {
   return vm.evaluate();
 }
 
+// The conductor score's calling convention (src/conductor.i):
+//  - twospot registers :1..:8 hold one channel each, in INTERCAL_CHANNELS
+//    order; #1 plays and #0 rests;
+//  - `.1 <- #n` opens section n (1..4); a section plays the registers as they
+//    stand when the next section opens;
+//  - `.3 <- #s` names the turnaround step and closes section 4; the turnaround
+//    step plays the registers as they stand at GIVE UP.
+const SECTION_COUNT = 4;
+const STEPS_PER_SECTION = 3;
+
+function channelMask(registers, where) {
+  const mask = {};
+  INTERCAL_CHANNELS.forEach((channel, index) => {
+    const name = `:${index + 1}`;
+    const value = registers[name];
+    if (value !== 0 && value !== 1) {
+      throw new RangeError(`INTERCAL conductor: register ${name} (${channel}) must hold #0 or #1 at ${where}, found ${value === undefined ? "nothing" : `#${value}`}`);
+    }
+    mask[channel] = value === 1;
+  });
+  return Object.freeze(mask);
+}
+
 /**
- * Composes a dynamic 12-step ensemble arrangement from the INTERCAL conductor score.
- * Breaks the wall of sound into 4 musical regions with intentional breathing,
- * call-and-response, tutti climaxes, and cadence turnarounds.
+ * Composes the 12-step ensemble arrangement by running the INTERCAL conductor
+ * score: four 3-step sections (Exposition, Antiphony, Tutti, Breakdown) plus a
+ * COME FROM turnaround step. Every mask comes from the program's registers, so
+ * editing src/conductor.i re-arranges the band; malformed form is rejected.
+ * The arrangement is the band's form, so it is the same for every creature.
  */
-export function composeArrangement(source, score, cycle = 0) {
+export function composeArrangement(source) {
   const exec = runIntercal(source);
+  if (!exec.gaveUp) throw new RangeError("INTERCAL conductor: the score must end with GIVE UP");
   const politenessPct = (exec.politenessRatio * 100).toFixed(1);
 
-  // 4 Regional Arrangement Templates driven by INTERCAL execution
-  // Region 0 (Steps 0..2): Exposition Groove
-  // Region 1 (Steps 3..5): Antiphonal Conversation
-  // Region 2 (Steps 6..8): Grand Tutti Apotheosis
-  // Region 3 (Steps 9..11): Hypogeal Breakdown & COME FROM Turnaround
-  const regionalMasks = [
-    // 0: Exposition: Groove foundation (Lead, Beat, Bass, Chimes; Harmony & Chant rest)
-    Object.freeze({
-      lead: true,
-      beat: true,
-      bass: true,
-      harmony: false,
-      chime: true,
-      chant: false,
-      fungal: true,
-      fun: true,
-    }),
-    // 1: Antiphony: Call-and-response (Harmony & Chant take lead; Lead breathes)
-    Object.freeze({
-      lead: false,
-      beat: true,
-      bass: true,
-      harmony: true,
-      chime: true,
-      chant: true,
-      fungal: true,
-      fun: true,
-    }),
-    // 2: Tutti: Full ensemble apotheosis
-    Object.freeze({
-      lead: true,
-      beat: true,
-      bass: true,
-      harmony: true,
-      chime: true,
-      chant: true,
-      fungal: true,
-      fun: true,
-    }),
-    // 3: Breakdown (steps 9..10) & Turnaround (step 11 via COME FROM)
-    Object.freeze({
-      lead: true,
-      beat: false, // Beat drops out on breakdown
-      bass: false, // Bass drops out on breakdown
-      harmony: true,
-      chime: true,
-      chant: true,
-      fungal: true,
-      fun: true,
-    }),
-  ];
-
-  const channelMasks = [];
-  for (let step = 0; step < 12; step += 1) {
-    const regionIdx = Math.floor(step / 3) % 4;
-    const baseMask = regionalMasks[regionIdx];
-
-    if (step === 11) {
-      // Step 11: COME FROM (60) Turnaround cadence brings Beat and Bass back with emphatic resolution
-      channelMasks.push(Object.freeze({
-        ...baseMask,
-        beat: true,
-        bass: true,
-        isTurnaround: true,
-      }));
-    } else {
-      channelMasks.push(Object.freeze({
-        ...baseMask,
-        isTurnaround: false,
-      }));
+  const regionalMasks = [];
+  let openSection = 0;
+  let turnaroundStep = null;
+  for (const mark of exec.trace) {
+    if (mark.target === ".1") {
+      if (mark.value !== openSection + 1 || mark.value > SECTION_COUNT) {
+        throw new RangeError(`INTERCAL conductor: expected section ${openSection + 1}, found .1 <- #${mark.value}`);
+      }
+      if (openSection > 0) regionalMasks.push(channelMask(mark.registers, `the start of section ${mark.value}`));
+      openSection = mark.value;
+    } else if (mark.target === ".3") {
+      if (openSection !== SECTION_COUNT || turnaroundStep !== null) {
+        throw new RangeError("INTERCAL conductor: the turnaround .3 must follow section 4, once");
+      }
+      if (!Number.isInteger(mark.value) || mark.value < 0 || mark.value >= SECTION_COUNT * STEPS_PER_SECTION) {
+        throw new RangeError(`INTERCAL conductor: turnaround step #${mark.value} is outside the 12-step loop`);
+      }
+      regionalMasks.push(channelMask(mark.registers, "the turnaround"));
+      turnaroundStep = mark.value;
     }
   }
+  if (regionalMasks.length !== SECTION_COUNT || turnaroundStep === null) {
+    throw new RangeError(`INTERCAL conductor: expected 4 sections and a turnaround, found ${regionalMasks.length} sections`);
+  }
+  const turnaroundMask = channelMask(exec.vars32, "GIVE UP");
+
+  const channelMasks = Array.from({ length: SECTION_COUNT * STEPS_PER_SECTION }, (_, step) => (
+    step === turnaroundStep
+      ? Object.freeze({ ...turnaroundMask, isTurnaround: true })
+      : Object.freeze({ ...regionalMasks[Math.floor(step / STEPS_PER_SECTION)], isTurnaround: false })
+  ));
 
   const sections = INTERCAL_SECTION_NAMES.map((name, idx) => Object.freeze({
     index: idx,
     name,
-    steps: [idx * 3, idx * 3 + 1, idx * 3 + 2],
+    steps: Object.freeze([idx * 3, idx * 3 + 1, idx * 3 + 2]),
     mask: regionalMasks[idx],
   }));
 
-  const summary = `INTERCAL 1972 CONDUCTOR · 4 REGIONS · POLITENESS ${politenessPct}% (ICL BALANCED) · COME FROM @11`;
+  const summary = `INTERCAL 1972 CONDUCTOR · 4 REGIONS · POLITENESS ${politenessPct}% (ICL BALANCED) · COME FROM @${turnaroundStep}`;
 
   return Object.freeze({
-    sections,
+    sections: Object.freeze(sections),
     channelMasks: Object.freeze(channelMasks),
     politeness: exec.politenessRatio,
     politenessPercentage: `${politenessPct}%`,
     statementsExecuted: exec.stepsExecuted,
-    turnaroundStep: 11,
+    turnaroundStep,
     summary,
   });
+}
+
+/** The section a loop step belongs to, and whether it is the turnaround. */
+export function arrangementSectionAt(arrangement, step) {
+  const index = ((Math.trunc(step) % 12) + 12) % 12;
+  const section = arrangement.sections[Math.floor(index / STEPS_PER_SECTION)];
+  return Object.freeze({ section, isTurnaround: index === arrangement.turnaroundStep, mask: arrangement.channelMasks[index] });
 }

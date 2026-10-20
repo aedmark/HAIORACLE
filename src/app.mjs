@@ -31,7 +31,7 @@ import {
 } from "./accompaniment.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
-import { INTERCAL_SECTION_NAMES, composeArrangement } from "./intercal.mjs";
+import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
 import { SILENT_GAIN, buildEnsembleGraph, parlorSendLevels } from "./ensemble.mjs";
 import {
   ACCOMPANIMENT_CHANNEL_IDS,
@@ -115,6 +115,7 @@ const elements = {
   transportPause: document.querySelector("#transport-pause"),
   transportStop: document.querySelector("#transport-stop"),
   transportPosition: document.querySelector("#transport-position"),
+  transportSection: document.querySelector("#transport-section"),
   mixerStrips: document.querySelector("#mixer-strips"),
   mixerTelemetry: document.querySelector("#mixer-telemetry"),
   mixerReset: document.querySelector("#mixer-reset"),
@@ -3803,14 +3804,24 @@ function ensembleGraphOptions(context, { start, unit, fadeIn, stop = null, meter
   };
 }
 
+// The INTERCAL arrangement in force, or null when the Raw Chaos rulebook
+// unfetters the VMs (or the conductor score has not loaded).
+function activeArrangement() {
+  return activeGenre === GENRE_RULEBOOKS.RAW_CHAOS ? null : currentArrangement;
+}
+
+function arrangementPlays(channel, step) {
+  const mask = activeArrangement()?.channelMasks[((step % 12) + 12) % 12];
+  return !mask || mask[channel];
+}
+
 // Every voice that sounds on a loop step, for both the live scheduler and the
 // offline render. Live-only behavior (held Fun Machine keys, punch-in) stays
 // in the live scheduler. The INTERCAL 1972 dynamic arrangement mask controls
 // channel breathing across Exposition, Antiphony, Tutti, and Breakdown.
 function scheduleEnsembleStep(context, transport, score, step, at, stepDuration, soundingDuration) {
-  const stepIdx = step % 12;
-  const mask = currentArrangement?.channelMasks?.[stepIdx];
-  const bypassArrangement = activeGenre === GENRE_RULEBOOKS.RAW_CHAOS || !mask;
+  const mask = activeArrangement()?.channelMasks[step % 12];
+  const bypassArrangement = !mask;
 
   if (bypassArrangement || mask.lead) {
     scheduleNote(context, transport, score, step, at, soundingDuration);
@@ -3842,7 +3853,7 @@ function scheduleEnsembleStep(context, transport, score, step, at, stepDuration,
 // region, re-struck mid-region only when the punched chord changes.
 function scheduleSequencedFunChord(context, transport, step, at, stepDuration, soundingDuration) {
   const stepIndex = step % 12;
-  if (!customProgression[stepIndex]) return;
+  if (!customProgression[stepIndex] || !arrangementPlays("fun", stepIndex)) return;
   const prevStepIndex = (stepIndex + 11) % 12;
   const isRegStart = stepIndex % 3 === 0;
   const isNewChord = customProgression[stepIndex] !== customProgression[prevStepIndex];
@@ -3907,7 +3918,10 @@ async function playScore(score, { cursor = 0 } = {}) {
       // Fun Machine: 12-step synchronized loop chord progression & overlay melody
       const stepIndex = currentStep % 12;
 
-      if (activeHeldFunKey !== null && activeFunPerformance) {
+      if (!arrangementPlays("fun", stepIndex)) {
+        // The conductor score rests the player only if src/conductor.i stops
+        // IGNOREing register :8; the canonical score never does.
+      } else if (activeHeldFunKey !== null && activeFunPerformance) {
         // The accompanist plays on the band's own step grid.
         const performance = activeFunPerformance;
         const stepInfo = performance.steps[stepIndex];
@@ -3971,10 +3985,33 @@ async function playScore(score, { cursor = 0 } = {}) {
 }
 
 function updateTransportPosition(step) {
-  if (!elements.transportPosition) return;
-  elements.transportPosition.value = step === null || step < 0
-    ? "STEP -- / 12"
-    : `STEP ${String((step % 12) + 1).padStart(2, "0")} / 12`;
+  const stopped = step === null || step < 0;
+  if (elements.transportPosition) {
+    elements.transportPosition.value = stopped ? "STEP -- / 12" : `STEP ${String((step % 12) + 1).padStart(2, "0")} / 12`;
+  }
+  updateArrangementDisplay(stopped ? null : step);
+}
+
+// Shows where the INTERCAL conductor has the band: the section on the
+// transport, and a TACET lamp on every console strip it rests this step.
+function updateArrangementDisplay(step) {
+  const arrangement = activeArrangement();
+  const place = arrangement && step !== null && step >= 0 ? arrangementSectionAt(arrangement, step) : null;
+  if (elements.transportSection) {
+    elements.transportSection.value = !currentArrangement
+      ? ""
+      : !arrangement
+        ? "INTERCAL · UNFETTERED"
+        : place
+          ? `${["I", "II", "III", "IV"][place.section.index]} · ${place.section.name}${place.isTurnaround ? " · COME FROM" : ""}`
+          : "INTERCAL · 4 SECTIONS";
+  }
+  for (const { id } of MIXER_CHANNELS) {
+    const refs = mixerStripElements[id];
+    if (!refs) continue;
+    const resting = Boolean(place && place.mask[id] === false);
+    refs.strip.classList.toggle("is-tacet", resting);
+  }
 }
 
 function syncTransportUI() {
@@ -4141,8 +4178,9 @@ function showScore(score) {
     elements.chantName.textContent = CHANT_NAMES[score.chantMode];
   }
   if (conductorSource) {
-    currentArrangement = composeArrangement(conductorSource, score);
+    currentArrangement = composeArrangement(conductorSource);
   }
+  updateArrangementDisplay(currentTransport?.audibleStep ?? null);
   applyEnsembleConductor();
   updateBeatGrid();
   updateBassGrid();
@@ -4602,7 +4640,9 @@ async function renderEnsembleLoop(score, {
   };
 
   let stepTime = LOOP_START_OFFSET;
+  const stepStarts = [];
   for (let step = 0; step < stepsCount; step += 1) {
+    stepStarts.push(stepTime - LOOP_START_OFFSET);
     const stepDuration = unit * rhythm[step % rhythm.length];
     const gateRatio = Math.min(0.94, score.gate / 100);
     const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
@@ -4612,7 +4652,7 @@ async function renderEnsembleLoop(score, {
   }
 
   const buffer = render ? await offlineCtx.startRendering() : null;
-  return { buffer, noteLog: offlineTransport.noteLog || [], bpm, loopDuration };
+  return { buffer, noteLog: offlineTransport.noteLog || [], bpm, loopDuration, stepStarts };
 }
 
 async function exportSpecimenWav() {
@@ -4656,6 +4696,7 @@ async function exportSpecimenStems() {
     const entries = [];
     let loopDuration = 0;
     let bpm = 0;
+    let stepStarts = [];
     for (const [index, [id, file]] of STEM_FILES.entries()) {
       elements.status.textContent = `RENDERING STEM ${index + 1}/9 · ${file.slice(3).toUpperCase()}`;
       const result = await renderEnsembleLoop(score, {
@@ -4664,7 +4705,7 @@ async function exportSpecimenStems() {
         clockTicks: false,
         engageAll: true,
       });
-      ({ loopDuration, bpm } = result);
+      ({ loopDuration, bpm, stepStarts } = result);
       entries.push({ name: `${file}.wav`, data: await wavBytes(result.buffer) });
     }
     elements.status.textContent = "RENDERING STEM 9/9 · PARLOR ROOM";
@@ -4684,6 +4725,7 @@ async function exportSpecimenStems() {
         ...STEM_FILES.map(([, file, label]) => `${file}.wav  ${label}`),
         "09-parlor-room.wav  PARLOR ROOM · wax-cylinder crackle and clockwork escapement",
         "",
+        ...arrangementReadme(stepStarts),
         "Each channel stem is rendered alone through the full chain at its console fader",
         "and pan, ignoring mute and solo, with its own chamber reverb. The master",
         "compressor reacts to each stem separately, so the stems sum close to, but not",
@@ -4695,6 +4737,29 @@ async function exportSpecimenStems() {
     downloadBlob(new Blob([zip], { type: "application/zip" }), specimenFilenameFor(score, "zip").replace(/\.zip$/, "-stems.zip"));
     elements.status.textContent = "NINE STEMS EXPORTED (ZIP)";
   });
+}
+
+// The INTERCAL sections (and the COME FROM turnaround) as timeline markers,
+// seconds from the loop start. Empty when Raw Chaos unfetters the band.
+function arrangementMarkers(stepStarts) {
+  const arrangement = activeArrangement();
+  if (!arrangement) return [];
+  const markers = arrangement.sections.map((section) => ({
+    at: stepStarts[section.steps[0]],
+    text: `${["I", "II", "III", "IV"][section.index]} · ${section.name}`,
+  }));
+  markers.push({ at: stepStarts[arrangement.turnaroundStep], text: "COME FROM (60) · TURNAROUND" });
+  return markers.sort((a, b) => a.at - b.at);
+}
+
+function arrangementReadme(stepStarts) {
+  const markers = arrangementMarkers(stepStarts);
+  if (!markers.length) return ["Arrangement: RAW CHAOS · every voice plays every step.", ""];
+  return [
+    "Arrangement (INTERCAL conductor, seconds after the loop begins):",
+    ...markers.map(({ at, text }) => `  ${at.toFixed(3).padStart(7)} s  ${text}`),
+    "",
+  ];
 }
 
 // A Type 1 MIDI file of every pitched part in the loop, captured from the same
@@ -4709,7 +4774,7 @@ async function exportSpecimenMidi() {
     doneText: "MIDI WRITTEN ✦",
     failStatus: "MIDI EXPORT FAILED",
   }, async () => {
-    const { noteLog, bpm, loopDuration } = await renderEnsembleLoop(score, { engageAll: true, captureNotes: true, render: false });
+    const { noteLog, bpm, loopDuration, stepStarts } = await renderEnsembleLoop(score, { engageAll: true, captureNotes: true, render: false });
     const tracks = MIDI_TRACKS.map((track) => {
       const events = noteLog.filter((event) => event.channel === track.id);
       const velocities = velocitiesFor(events.map((event) => event.peak));
@@ -4723,7 +4788,8 @@ async function exportSpecimenMidi() {
         })),
       };
     });
-    const bytes = buildMidiFile({ bpm, tracks, lengthTicks: ticksForSeconds(loopDuration, bpm), title: score.name });
+    const markers = arrangementMarkers(stepStarts).map(({ at, text }) => ({ tick: ticksForSeconds(at, bpm), text }));
+    const bytes = buildMidiFile({ bpm, tracks, lengthTicks: ticksForSeconds(loopDuration, bpm), title: score.name, markers });
     downloadBlob(new Blob([bytes], { type: "audio/midi" }), specimenFilenameFor(score, "mid"));
     elements.status.textContent = `MIDI SCORE WRITTEN · ${noteLog.length} NOTES`;
   });
@@ -4995,9 +5061,15 @@ function renderMixerConsole() {
     mute.addEventListener("click", () => updateMixer(toggleMute(mixerState, id)));
     solo.addEventListener("click", () => updateMixer(toggleSolo(mixerState, id)));
 
+    const tacet = document.createElement("span");
+    tacet.className = "mixer-tacet";
+    tacet.textContent = "TACET";
+    tacet.title = "The INTERCAL conductor rests this voice for the current section";
+    name.append(tacet);
+
     strip.append(name, bay, db, pan, panValue, switches);
     elements.mixerStrips.append(strip);
-    mixerStripElements[id] = { strip, fader, db, pan, panValue, mute, solo };
+    mixerStripElements[id] = { strip, fader, db, pan, panValue, mute, solo, tacet };
   }
   syncMixerConsole();
 }
@@ -5494,6 +5566,7 @@ elements.kapellmeisterGenre?.addEventListener("change", (e) => {
   updateChantGrid();
   updateFunKeyboardChordLabels();
   renderFunSequencerGrid();
+  updateArrangementDisplay(currentTransport?.audibleStep ?? null);
 });
 
 elements.kapellmeisterStrictness?.addEventListener("input", (e) => {

@@ -355,7 +355,7 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** D-024 point 5 (mixer placement) is superseded. A new structural test in `tests/static.test.mjs` checks the wing order, that the reading strip holds no controls, and that the transport and export buttons sit in their wings. The older order checks (Fun Machine, then mixer, then ledger, then Plate II) still hold. Phrase identity, audio, and stored session formats are untouched.
 
-## D-028 INTERCAL 1972 Grand Ensemble Conductor and Lush Synth Pad Fun Machine Overhaul (2026-10-20, status: accepted; Fun Machine voice superseded by D-029)
+## D-028 INTERCAL 1972 Grand Ensemble Conductor and Lush Synth Pad Fun Machine Overhaul (2026-10-20, status: accepted; Fun Machine voice superseded by D-029; arrangement mechanics refined by D-030)
 
 **Context:** The ensemble previously suffered from a continuous "wall of sound" where all seven instruments fired unconditionally on every 16th-note step across the 12-step loop without dynamic arrangement, musical breathing, or sectional contrast. Furthermore, the one-finger chord organ had critical sonic and interactive issues: it used a harsh wheezy reed combo-organ tone (two sawteeth with rapid 5.5 Hz vibrato into a buzzy 2400 Hz resonant filter) and an abrasive duplicate lead note on every step, and when keys were pushed during play-along, the rest of the band failed to modulate with the user's chords. The maintainer directed: "INTERCAL it is. Let's overcome the wall of sound *first*. I have issues with the one-finger chord organ right now."
 
@@ -399,6 +399,20 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 **Alternatives:** Keeping chord-quality chips beside style chips would double the choices on a toy meant for one finger. Muting the LOLCODE lead outright would leave the band without its voice while auditioning; keeping it at full level kept two melodies colliding. Fixing the key mismatch by making the pad tonic-relative would have made the C key play something other than C.
 
 **Consequences:** The keyboard plays an arrangement rather than single chords. Sequenced and punched chords sound as pads in the live loop and in WAV and stem exports, and are now labelled and conducted in the right key (the sequencer grid previously showed tonic-relative names for generated steps, such as "C MAJ9" for E♭maj9). The INTERCAL arrangement mask (D-028) gates only the band voices, so the player's part is never rested. Timbre and feel still need a listening pass.
+
+## D-030 The INTERCAL score's registers are the arrangement, and the workstation shows it (2026-10-20, status: accepted)
+
+**Context:** The maintainer asked whether the INTERCAL conductor (D-028) was used in the DAW work and asked for an audit. The masks already gated the live loop, WAV, stems, MIDI capture, and meters through `scheduleEnsembleStep()`. But `composeArrangement()` hard-coded the four masks and read only the politeness ratio from the VM; run literally, `src/conductor.i` disagreed with them (its breakdown kept the beat, and `PLEASE IGNORE :1` froze the lead instead of resting it). Nothing displayed the arrangement, so a soloed voice could fall silent unexplained, and exports carried no section information.
+
+**Decision:**
+1. **Registers decide.** Twospot registers `:1..:8` hold one channel each (`#1` plays, `#0` rests); `.1 <- #n` opens section n and each section plays the registers as they stand when the next opens; `.3 <- #s` names the turnaround step, which plays the registers at `GIVE UP`. The VM snapshots registers at each onespot assignment and `composeArrangement(source)` builds the masks from them, rejecting out-of-order sections, non-binary or missing registers, an out-of-range turnaround, or a missing `GIVE UP`. The canonical score was rewritten to this convention and yields the same masks as before.
+2. **The player is protected by the score.** `PLEASE IGNORE :8` freezes the Fun Machine register, so the breakdown's `DO :8 <- #0` does nothing; the host consults `:8` for held keys and sequenced chords, so D-029's "the player is never rested" is now a property of the program.
+3. **The workstation shows the form.** The transport names the section (`I · EXPOSITION GROOVE`, `· COME FROM` on the turnaround, `UNFETTERED` under Raw Chaos); console strips light TACET while rested; MIDI files carry Marker events at each section and the turnaround; the stem README maps sections to seconds.
+4. **Same form for every creature.** The arrangement does not read the score; it is the band's form, not its content.
+
+**Alternatives:** Keeping the hard-coded masks and treating the program as decoration would have left the INTERCAL VM unable to change the music. Seeding the arrangement from the score would vary the form per creature; deferred until someone wants it, since it changes every creature's sound.
+
+**Consequences:** Editing `src/conductor.i` re-arranges the band, and malformed form fails loudly at summon. Default sound is unchanged.
 
 ## Open questions
 

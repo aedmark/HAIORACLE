@@ -103,14 +103,19 @@ export function loopSafeNotes(notes, lengthTicks) {
  * Builds an SMF Type 1 file.
  * `tracks`: `[{ name, channel, program, notes: [{ tick, duration, midi, velocity }] }]`.
  * `lengthTicks`: loop length; every track ends there so the file loops cleanly.
+ * `markers`: `[{ tick, text }]` written as Marker events on the conductor
+ * track, so a DAW shows the arrangement's sections on its timeline.
  */
-export function buildMidiFile({ bpm, tracks, lengthTicks, title = "", ppq = MIDI_PPQ }) {
+export function buildMidiFile({ bpm, tracks, lengthTicks, title = "", markers = [], ppq = MIDI_PPQ }) {
   if (!(bpm > 0)) throw new RangeError("MIDI tempo must be positive");
   const microsPerQuarter = Math.round(60_000_000 / bpm);
   const conductor = [
     { tick: 0, order: 0, bytes: metaText(0x03, title || "CONDUCTOR") },
     { tick: 0, order: 1, bytes: [0xff, 0x51, 0x03, (microsPerQuarter >>> 16) & 0xff, (microsPerQuarter >>> 8) & 0xff, microsPerQuarter & 0xff] },
     { tick: 0, order: 2, bytes: [0xff, 0x58, 0x04, 4, 2, 24, 8] },
+    ...markers
+      .filter((marker) => marker.tick >= 0 && marker.tick < lengthTicks)
+      .map((marker) => ({ tick: Math.round(marker.tick), order: 3, bytes: metaText(0x06, marker.text) })),
   ];
   const chunks = [chunk("MTrk", trackData(conductor, lengthTicks))];
 

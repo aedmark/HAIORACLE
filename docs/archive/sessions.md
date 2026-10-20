@@ -382,3 +382,48 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P4-02 and P6-01 roadmap items.
 
 **Next session should start with:** P4-02 or P6-01 when ready.
+
+### Session 16: 2026-10-19: the kapellmeister conductor awakens with authentic genre rulebooks & walking bass
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Audit and overhaul the Kapellmeister Music-Theory & Genre Rulebook Console (`#kapellmeister-engine`, `P5-15`, `D-019`) so that switching between the six historical and theoretical genres produces unmistakable, dramatic audiovisual and musical transformations, the Euler Gradus strictness slider ($G \le 3\dots 14$) smoothly sieves harmonic consonance, and all plate grids, telemetry bars, and compass indicators update synchronously on user interaction.
+
+**Done:** P5-15, D-019 Kapellmeister conductor audit and overhaul.
+
+**Changed:**
+1. **Genre Rulebooks & Harmonic Conductors (`src/conductor.mjs`)**:
+   - **Authentic Walking Basslines (`conductedBass`)**:
+     - `12-BAR DELTA & PARLOR BLUES`: Walks authentic chord root, 3rd, 5th, and 6th/b7th degrees (`[0, 4, 7, 9, 0, 4, 0, 7, 0, 0, 0, 0]`) locking to the 12-bar progression (I7 $\to$ IV7 $\to$ I7 $\to$ V7 $\to$ IV7 $\to$ I7 $\to$ V7 turn) with driving quarter-note gates.
+     - `SMOKY PARLOR JAZZ & EXTENDED TONNETZ`: Implements an authentic upright acoustic walking bass line with chromatic passing/approach tones (`[0, 4, 10, 0, 7, 3, 0, 5, 0, 0, 7, 11]`) enclosing each downbeat of the chord changes (Imaj9 $\to$ vi9 $\to$ ii9 $\to$ $\flat$II7alt tritone sub).
+     - `MYSTIC BYZANTINE & HIMALAYAN DRONE`: Sustained sub-bass pedal on tonic root with 4th-step open fifths.
+     - `PALESTRINA MODAL COUNTERPOINT`: Contrary-motion stepwise cantus firmus resolving to the Picardy third cadence at step 11.
+     - `VICTORIAN NEO-RIEMANNIAN TONNETZ`: Root/fifth/third triad voice-leading.
+   - **Accompaniment Plate Labels & Feedback**:
+     - `conductedBass`: Steps dynamically compute their note name and register/slide decoration (`PITCH_NAMES[absRoot]`, e.g., `E♭`, `G`, `B♭+~`, `C+`).
+     - `conductedHarmony`: Steps display conducted chord quality and mirror orientation (e.g., `E♭7/`, `A♭7\`, `E♭M9/`, `Cm9\`, `E5/`).
+     - `conductedChant`: Steps display dramatis persona and conducted vowel pitch (e.g., `HAM·G`, `PRO·C`, `HEC·E`).
+     - `conductedChimes`: Steps update ratio labels and indicate `REST` on Euclidean hockets.
+   - **Euler Gradus Consonance Sieve (`projectConsonantPitch`)**:
+     - Rewrote sieve to utilize a precomputed `SEMITONE_GRADUS` lookup table ($G = 1\dots 11$).
+     - Lower strictness ($G \le 3\dots 5$) strictly sieve raw VM pitches to pure unisons, octaves, and fifths; moderate strictness ($G \le 7\dots 9$) permits sweet major and minor thirds; permissive settings ($G \le 10\dots 14$) open up full chromatic extensions, blue notes ($\flat 5$), and dissonant intervals.
+2. **UI Wiring & State Mutation Bleed Prevention (`src/app.mjs`)**:
+   - Wired `#kapellmeister-telemetry` into `elements` (previously omitted from `elements`, preventing telemetry text from updating).
+   - Introduced `rawBeat`, `rawBass`, `rawHarmony`, `rawChimes`, `rawChant` references. Re-conducting now always pulls from pristine virtual machine outputs or active mutation shifts rather than re-conducting already-conducted structures, preserving exact VM purity when returning to `RAW ESOTERIC CHAOS`.
+   - Updated `applyEnsembleConductor()` to synchronously refresh plate grid buttons (`updateBassGrid`, `updateHarmonyGrid`, `updateChimeGrid`, `updateChantGrid`), `#kapellmeister-telemetry`, and active step indicators (`highlightBeatStep(activeBeatStep)`).
+   - Cell click cycling on accompaniment plates updates the raw state and re-conducts live sound and visuals immediately.
+3. **Automated Verification (`tests/oracle.test.mjs`)**:
+   - Expanded Kapellmeister test suite to assert note and chord labels across Blues, Jazz, Drone, Counterpoint, and Raw Chaos.
+   - Verified that `RAW_CHAOS` preserves the exact byte-for-byte outputs of all virtual machines.
+
+**Decisions:** Fulfills and refines D-016 and D-019.
+
+**Verified:** 33/33 Node checks passed (`node --test tests/*.test.mjs`), `python3 tools/check_docs.py` reported 0 errors and 0 warnings, `python3 tools/manual.py check docs/manual.json` passed with 0 warnings.
+
+**Not verified:** Assistive-technology and screen-reader testing remains P4-02 work.
+
+**Problems:** None.
+
+**Left undone:** P4-02 and P6-01 roadmap items.
+
+**Next session should start with:** P4-02 assistive technology and screen reader checks.

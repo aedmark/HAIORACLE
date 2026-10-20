@@ -716,9 +716,11 @@
             "lead": "`src/intercal.mjs` and `src/conductor.i` execute genuine INTERCAL 1972 rules:",
             "points": [
               "Statement Politeness Checking: enforces the INTERCAL 1972 politeness rule (0.20 <= P/N <= 0.334), rejecting impolite programs with ICL079 and groveling programs with ICL099. The conductor score executes with 6 polite statements out of 27 (22.2%).",
-              "Sectional Dynamic Arrangement: `PLEASE IGNORE` and `PLEASE REMEMBER` mask and unmask instrument registers (:1..:8) across 4 musical regions: Region 0 (Exposition groove: Lead, Beat, Bass, Chimes active; Harmony and Choir rest), Region 1 (Antiphony: Lead rests while Chords and Choir converse), Region 2 (Tutti: full 8-voice climax), and Region 3 (Breakdown: Beat and Bass rest on steps 9-10).",
+              "Registers are the arrangement: twospot registers :1..:8 hold one channel each (#1 plays, #0 rests), `.1 <- #n` opens section n, and the VM snapshots the registers at each marker, so the program itself decides Region 0 (Exposition groove: Harmony and Choir rest), Region 1 (Antiphony: Lead rests), Region 2 (Tutti), and Region 3 (Breakdown: Beat and Bass rest on steps 9-10). Malformed form is rejected at summon.",
+              "`PLEASE IGNORE :8` freezes the Fun Machine register, so the breakdown's `DO :8 <- #0` does nothing and the player is never rested.",
               "`COME FROM (60)` Turnaround Cadence: intercepts the loop turnaround at step 11, bringing Beat and Bass back with decisive cadence resolution into the next loop cycle.",
-              "IntercalVM bitwise operations: supports authentic 16-bit and 32-bit registers, bitwise mingle ($) and select (~), statement labels, and GIVE UP termination."
+              "IntercalVM bitwise operations: supports authentic 16-bit and 32-bit registers, bitwise mingle ($) and select (~), statement labels, and GIVE UP termination.",
+              "The workstation shows the form: the transport names the section, console strips light TACET while rested, MIDI exports carry section Marker events, and the stem README lists section times."
             ]
           },
           "why": "In real ensemble performance, musicality requires breathing space, call-and-response dynamics, and sectional contrast rather than an unceasing wall of sound where every instrument blasts at maximum density on every step (ADR D-028).",
@@ -726,7 +728,7 @@
             {"label": "INTERCAL conductor score", "target": "src/conductor.i"},
             {"label": "INTERCAL interpreter & arrangement", "target": "src/intercal.mjs"},
             {"label": "INTERCAL conductor tests", "target": "tests/oracle.test.mjs"},
-            {"label": "Architecture Record D-028", "target": "docs/DECISIONS.md"}
+            {"label": "Architecture Records D-028 and D-030", "target": "docs/DECISIONS.md"}
           ],
           "related": ["esoteric-fun-machine", "kapellmeister-genre-console", "bandstand-console"]
         }

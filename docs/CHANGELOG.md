@@ -4,6 +4,7 @@
 
 ### Changed
 
+- See the INTERCAL conductor at work: the transport names the current section, console strips light **TACET** while the conductor rests them, MIDI exports mark each section on the DAW timeline, and the stem README lists section times. The conductor score's own registers now decide who plays, so editing `src/conductor.i` re-arranges the band.
 - Find every control in one of four wings beneath the vitrine: **Perform** (transport with restart, volume, and tempo; the Fun Machine; the Kapellmeister rulebook), **Mix** (Bandstand, mixing console, parlor room), **Keep** (Session Ledger and a new export and share desk), and **The Band** (Plates II–VI). The reading strip now only names the creature, and the keyboard's tab order follows the wings.
 
 ### Fixed

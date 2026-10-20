@@ -807,6 +807,17 @@ h1 em {
   font-variant-numeric: tabular-nums;
 }
 
+.transport-section {
+  min-width: 0;
+  color: rgba(228, 215, 190, 0.72);
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .transport-hint {
   margin: 0 0 0 auto;
   color: rgba(228, 215, 190, 0.6);
@@ -1001,6 +1012,23 @@ h1 em {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-align: center;
+}
+
+.mixer-tacet {
+  visibility: hidden;
+  padding: 0 0.3rem;
+  border: 1px solid var(--brass-dim);
+  color: var(--brass-bright);
+  font-size: 0.44rem;
+  letter-spacing: 0.16em;
+}
+
+.mixer-strip.is-tacet .mixer-tacet {
+  visibility: visible;
+}
+
+.mixer-strip.is-tacet .mixer-meter {
+  opacity: 0.45;
 }
 
 .mixer-strip-source {
@@ -2178,7 +2206,8 @@ noscript {
     white-space: normal;
   }
 
-  .transport-position {
+  .transport-position,
+  .transport-section {
     grid-column: 1 / -1;
     text-align: center;
   }

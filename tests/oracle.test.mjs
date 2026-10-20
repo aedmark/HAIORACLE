@@ -29,6 +29,7 @@ import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, sp
 import { CHANT_NAMES, FORMANT_VOWELS, PERSONA_ROLES, composeChant, cycleChantCell, runShakespeare } from "../src/shakespeare.mjs";
 import {
   INTERCAL_SECTION_NAMES,
+  arrangementSectionAt,
   composeArrangement,
   intercalMingle,
   intercalSelect,
@@ -689,12 +690,12 @@ test("the INTERCAL 1972 conductor executes src/conductor.i deterministically wit
   assert.equal(result.politeCount, 6);
   assert.ok(result.politenessRatio >= 0.20 && result.politenessRatio <= 0.334);
   assert.equal(result.gaveUp, true);
-  assert.equal(result.stepsExecuted, 27);
-  assert.deepEqual(result.ignoredVars, [":2"]);
-  assert.equal(result.vars32[":1"], 1);
-  assert.equal(result.vars32[":4"], 1);
-  assert.equal(result.vars32[":6"], 1);
+  assert.equal(result.stepsExecuted, 26, "COME FROM (100) skips the lead's exit after (60)");
+  assert.deepEqual(result.ignoredVars, [":8"], "the Fun Machine register stays IGNOREd");
+  assert.deepEqual(result.vars32, { ":1": 1, ":2": 1, ":3": 1, ":4": 1, ":5": 1, ":6": 1, ":7": 1, ":8": 1 });
   assert.equal(result.vars16[".1"], 4);
+  assert.equal(result.vars16[".3"], 11);
+  assert.deepEqual(result.trace.map((mark) => `${mark.target}=${mark.value}`), [".1=1", ".1=2", ".1=3", ".1=4", ".3=11"]);
 
   // INTERCAL bitwise operators
   assert.equal(intercalMingle(9, 3), 135);
@@ -731,7 +732,7 @@ PLEASE GIVE UP
 
 test("INTERCAL 1972 dynamic arrangement orchestrates sectional breathing and COME FROM turnarounds", () => {
   const score = composeScore(source, "the moon owes me five dollars");
-  const arrangement = composeArrangement(conductorSource, score);
+  const arrangement = composeArrangement(conductorSource);
   assert.equal(arrangement.sections.length, 4);
   assert.equal(arrangement.channelMasks.length, 12);
   assert.equal(arrangement.turnaroundStep, 11);
@@ -778,6 +779,32 @@ test("INTERCAL 1972 dynamic arrangement orchestrates sectional breathing and COM
   assert.equal(arrangement.channelMasks[11].beat, true);
   assert.equal(arrangement.channelMasks[11].bass, true);
   assert.equal(arrangement.channelMasks[11].isTurnaround, true);
+
+  // The player's part is never rested: :8 is IGNOREd before the breakdown's DO :8 <- #0.
+  assert.ok(arrangement.channelMasks.every((mask) => mask.fun === true));
+  assert.deepEqual(arrangement.sections.map((section) => section.name), [...INTERCAL_SECTION_NAMES]);
+  assert.equal(arrangementSectionAt(arrangement, 4).section.name, "ANTIPHONAL CONVERSATION");
+  assert.equal(arrangementSectionAt(arrangement, 23).isTurnaround, true, "steps wrap into the 12-step loop");
+});
+
+test("the INTERCAL score, not the host, decides the arrangement, and malformed form is rejected", () => {
+  // Editing the program re-arranges the band: un-rest the choir in the exposition.
+  const choirFirst = conductorSource.replace("DO :6 <- #0", "DO :6 <- #1");
+  assert.equal(composeArrangement(choirFirst).channelMasks[0].chant, true);
+  // Without IGNORE, the breakdown's DO :8 <- #0 rests the Fun Machine on steps 9-10.
+  const rudeToPlayer = conductorSource.replace("PLEASE IGNORE :8", "PLEASE REMEMBER :8");
+  const hushed = composeArrangement(rudeToPlayer);
+  assert.deepEqual(hushed.channelMasks.map((mask) => mask.fun), [...Array(9).fill(true), false, false, false]);
+  // Moving the COME FROM target moves the turnaround.
+  assert.equal(composeArrangement(conductorSource.replace("DO .3 <- #11", "DO .3 <- #10")).turnaroundStep, 10);
+
+  const rejects = (program, pattern) => assert.throws(() => composeArrangement(program), pattern);
+  rejects(conductorSource.replace("DO .1 <- #3", "DO .1 <- #5"), /expected section 3/);
+  rejects(conductorSource.replace("DO .3 <- #11", "DO .3 <- #12"), /outside the 12-step loop/);
+  rejects(conductorSource.replace("DO :5 <- #1", "DO :5 <- #2"), /register :5 \(chime\) must hold #0 or #1/);
+  rejects(conductorSource.replace("DO :7 <- #1\n", ""), /register :7 \(fungal\)/);
+  rejects(conductorSource.replace("(60) DO .3 <- #11", "(60) DO :5 <- #1"), /4 sections and a turnaround/);
+  rejects(conductorSource.replace("PLEASE GIVE UP", "PLEASE DO :5 <- #1"), /GIVE UP/);
 });
 
 
