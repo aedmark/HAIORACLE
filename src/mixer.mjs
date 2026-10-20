@@ -22,6 +22,7 @@ export const ACCOMPANIMENT_CHANNEL_IDS = Object.freeze(["beat", "bass", "harmony
 
 export const FADER_UNITY = 80;
 export const FADER_MAX = 100;
+export const FADER_CEILING_DB = 12;
 export const PAN_RANGE = 100;
 export const METER_FLOOR_DB = -60;
 
@@ -87,15 +88,21 @@ export function isChannelAudible(state, id) {
   return anySoloed(state) ? soloed : true;
 }
 
-// Square-law taper: 80 is unity, 100 is +3.9 dB, 0 is silence.
-export function faderGain(value) {
+// Two-part taper. Below unity it is square-law, so 40 is -12 dB and 0 is
+// silence. Above unity the top 20 steps are linear in dB up to +12 dB, enough
+// headroom to lift quiet voices such as the lead and choir over the band.
+export function faderDb(value) {
   const position = clamp(value, 0, FADER_MAX);
-  return position <= 0 ? 0 : (position / FADER_UNITY) ** 2;
+  if (position <= 0) return -Infinity;
+  if (position <= FADER_UNITY) return 40 * Math.log10(position / FADER_UNITY);
+  return ((position - FADER_UNITY) / (FADER_MAX - FADER_UNITY)) * FADER_CEILING_DB;
 }
 
-export function faderDb(value) {
-  const gain = faderGain(value);
-  return gain <= 0 ? -Infinity : 20 * Math.log10(gain);
+export function faderGain(value) {
+  const position = clamp(value, 0, FADER_MAX);
+  if (position <= 0) return 0;
+  if (position <= FADER_UNITY) return (position / FADER_UNITY) ** 2;
+  return 10 ** (faderDb(position) / 20);
 }
 
 export function formatDb(db) {

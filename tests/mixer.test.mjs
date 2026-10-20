@@ -42,16 +42,19 @@ test("a fresh console is transparent: unity gain, centered, nothing muted or sol
   assert.ok(Object.isFrozen(state) && Object.isFrozen(state.channels) && Object.isFrozen(state.channels.lead));
 });
 
-test("the fader taper maps 0 to silence, 80 to unity, and 100 to a modest boost", () => {
+test("the fader taper maps 0 to silence, 80 to unity, and 100 to a +12 dB boost", () => {
   assert.equal(faderGain(0), 0);
   assert.equal(faderGain(FADER_UNITY), 1);
-  assert.equal(faderGain(100), 1.5625);
+  assert.ok(Math.abs(faderGain(100) - 10 ** (12 / 20)) < 1e-12);
+  assert.ok(Math.abs(faderGain(90) - 10 ** (6 / 20)) < 1e-12, "boost is linear in dB above unity");
   assert.equal(faderGain(40), 0.25);
-  assert.equal(faderGain(150), 1.5625, "values clamp to the fader range");
+  assert.equal(faderGain(150), faderGain(100), "values clamp to the fader range");
+  for (let v = 1; v <= 100; v += 1) assert.ok(faderGain(v) > faderGain(v - 1), `taper rises at ${v}`);
   assert.equal(faderGain(-5), 0);
   assert.equal(faderDb(0), -Infinity);
   assert.equal(formatDb(faderDb(FADER_UNITY)), "0.0 dB");
-  assert.equal(formatDb(faderDb(100)), "+3.9 dB");
+  assert.equal(formatDb(faderDb(100)), "+12.0 dB");
+  assert.equal(formatDb(faderDb(81)), "+0.6 dB");
   assert.equal(formatDb(faderDb(40)), "-12.0 dB");
   assert.equal(formatDb(-Infinity), "-∞ dB");
 });

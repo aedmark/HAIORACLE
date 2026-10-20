@@ -542,7 +542,7 @@
             "points": [
               "Each bus routes through a 2-channel `GainNode` fader and a `StereoPannerNode`; upmixing first lets a centered pan pass mono voices at unity.",
               "`channelSettings()` turns faders, pans, mutes, and solos into per-strip gain and pan; any solo isolates the soloed channels, and an explicit mute still wins.",
-              "The fader taper is `(v / 80)²`, so 80 is unity and 100 is +3.9 dB; changes ramp over a 20 ms time constant.",
+              "The fader taper is square-law `(v / 80)²` below unity and linear in dB above it, so 40 is −12 dB, 80 is unity, and 100 is +12 dB; changes ramp over a 20 ms time constant.",
               "Live strips carry a post-pan `AnalyserNode`; a `requestAnimationFrame` loop turns `meterReading()` RMS and peak into meter fills with fast attack, a slow fall, and a 0.9 s peak hold.",
               "A fixed `Math.SQRT1_2` trim on the vitrine drag panner keeps the default console bit-identical in level to the pre-mixer mix."
             ]
