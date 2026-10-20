@@ -4,17 +4,17 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 31, on `main`: the conductor now plays the six Kapellmeister genres from the Inform 7 rulebooks (`src/rulebooks.ni`), with its JavaScript genre tables deleted and the golden fixture unchanged (P5-23 phase 3, D-033); session 30 wrote the rulebooks; session 29 froze the migration contract; session 28: per-phrase arrangements keep at least five band voices (D-032) and the transport no longer rearranges the page once per loop; session 27 gave each phrase its own INTERCAL arrangement (D-031), and section and harmony readouts no longer reflow the layout; session 26 made the conductor's registers decide the arrangement, which the transport, console, MIDI markers, and stem README display (D-030); session 25 reworked the Fun Machine is reworked into a one-finger accompanist the band follows (D-029); session 24 added the INTERCAL 1972 Grand Ensemble Conductor (`src/conductor.i`, `src/intercal.mjs`) overcomes the continuous wall of sound with dynamic arrangement breathing across Exposition, Antiphony, Tutti, and Breakdown, and the Esoteric Fun Machine is overhauled into a warm, lush analog synth pad lead with real-time ensemble accompaniment modulation (P5-22, D-028)._
+_Last updated: 2026-10-20, session 32, on `main`: the Kapellmeister menu, title, and motto come from the Inform 7 rulebooks, and the Perform wing no longer reflows when its text changes (P5-23 phase 4, D-033); session 31 moved the conductor onto the rulebooks; session 30 wrote the rulebooks; session 29 froze the migration contract; session 28: per-phrase arrangements keep at least five band voices (D-032) and the transport no longer rearranges the page once per loop; session 27 gave each phrase its own INTERCAL arrangement (D-031), and section and harmony readouts no longer reflow the layout; session 26 made the conductor's registers decide the arrangement, which the transport, console, MIDI markers, and stem README display (D-030); session 25 reworked the Fun Machine is reworked into a one-finger accompanist the band follows (D-029); session 24 added the INTERCAL 1972 Grand Ensemble Conductor (`src/conductor.i`, `src/intercal.mjs`) overcomes the continuous wall of sound with dynamic arrangement breathing across Exposition, Antiphony, Tutti, and Breakdown, and the Esoteric Fun Machine is overhauled into a warm, lush analog synth pad lead with real-time ensemble accompaniment modulation (P5-22, D-028)._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-22 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-20, session 31, local Linux environment)
+**Verified** (2026-10-20, session 32, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
 | `node --test tests/*.test.mjs` | **101/101 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 33 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 34 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -84,6 +84,28 @@ _Last updated: 2026-10-20, session 31, on `main`: the conductor now plays the si
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 32: 2026-10-20: Inform 7 rulebooks, phase 4
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-23 phase 4: build the Kapellmeister menu, title, and description from the rulebooks; update the manual, README, architecture, and map (D-033).
+
+**Done:** P5-23 phase 4.
+
+**Changed:**
+1. `index.html`: the genre `<select>` starts empty and disabled, the title reads "READING THE RULEBOOKS…", and a new `#kapellmeister-genre-motto` line shows each genre's motto (the mottos were never shown before).
+2. `src/app.mjs`: `buildGenreMenu()` fills the menu from `genreCodes()`/`genreBook()` after install (option text = title, tooltip = motto); `updateKapellmeisterUI()` sets the title and motto, and the telemetry names the genre by its Inform 7 name.
+3. `styles.css`: changing text reflowed the Perform wing in more places than the transport. The Kapellmeister header is now a fixed grid (title reserves two lines, stacks at 760 px or less; telemetry one fixed line); the Fun Machine heading reserves two lines; the Fun Machine telemetry takes its own line with two reserved lines (three at 480 px or less); the sequencer uses `minmax(0, 1fr)` columns with fixed cell line boxes; plate labels keep fixed line boxes. ♭ and ♯ fall back to a taller font, which had been changing heights by 2 px.
+4. `docs/manual.json`: new `inform-rulebooks` entry (34 entries); stale spine-builder text in the Kapellmeister entry replaced. README, ARCHITECTURE, CHANGELOG updated.
+
+**Verified:** 101/101 Node checks, including new static assertions for the generated menu and the fixed boxes. In the browser, every wing and the page kept one height across all six genres at every 20 px from 320 to 1720. With the loop playing at 208 BPM, switching genres and styles and holding keys kept one layout at 340, 400, 560, 720, 1000, and 1440 px with no clipped title or telemetry. There was no horizontal overflow from 320 to 800 px.
+
+**Not verified:** Safari/Firefox rendering of `line-clamp` and `contain: inline-size` (evergreen support is documented, not observed here).
+
+**Left undone:** P5-23 phase 5 (fixture-only seventh genre); listening pass; P4-02; P6-01.
+
+**Next session should start with:** P5-23 phase 5.
 
 ### Session 31: 2026-10-20: Inform 7 rulebooks, phase 3
 
@@ -280,30 +302,5 @@ _Last updated: 2026-10-20, session 31, on `main`: the conductor now plays the si
 **Left undone:** Sticky transport; P4-02, P6-01.
 
 **Next session should start with:** a hands-on pass over the four wings in Safari and Firefox, or P4-02.
-
-### Session 22: 2026-10-19: the session ledger
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-20: on-device preset storage plus `.fun` session files, with the decision recorded and ARCHITECTURE and SECURITY updated (maintainer-approved storage boundary change).
-
-**Done:** P5-20, D-026.
-
-**Changed:**
-1. `src/session.mjs` (new): versioned session schema, strict validator, `.fun` parse/serialize, preset store parse/upsert/remove.
-2. `src/mixer.mjs`: `mixerStateFromChannels()`.
-3. `src/app.mjs`: per-cell edit counts (`plateCellCycles`, `cyclePlateCell()`), `recomposePlate()` shared by mutations and restore, `setFunMachineMode()` and `setFunChordQuality()`, `captureSession()`, `applySession()`, guarded preset storage, and ledger handlers.
-4. `index.html`, `styles.css`: `#session-engine` between the mixer and Plate II.
-5. ARCHITECTURE, SECURITY, README: the "no storage" promises now describe the one on-device store.
-
-**Verified:** 75/75 Node checks, including a new session suite (field-level rejection, prototype keys, size limit, preset corruption, exact chord rebuild, per-cell replay equivalence). Browser: changed plates, mutations, cell edits, a punched chord, rulebook, strictness, chord quality, mode, room, tempo, volume, and console, then saved a preset and a file. A fresh page restored the preset with zero differences across 18 UI readouts, and re-saving produced a byte-identical `.fun` file. Tampered files (bad tempo, injected quality, unknown key, non-JSON, 70 KB) were each rejected with the field named and the current creature left untouched. DELETE removed the storage key. With `localStorage` throwing, preset save reported it and file save still worked. No overflow at 375 px.
-
-**Not verified:** Real private-window and quota behavior; screen-reader pass over the ledger (P4-02).
-
-**Problems:** Plate cells do not return to an identical state after any cycle length, so edits are stored as exact per-cell counts rather than counts modulo a period.
-
-**Left undone:** P4-02, P6-01; the design and layout pass.
-
-**Next session should start with:** the design and layout pass.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).

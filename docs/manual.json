@@ -641,9 +641,9 @@
           "tags": ["music-theory", "genres", "counterpoint", "blues", "jazz", "tonnetz"],
           "what": "Allows the user to select and manipulate the harmonic rulebook governing the six-language esoteric ensemble (`#kapellmeister-engine`). Offers six distinct rulebooks: Victorian Neo-Riemannian Tonnetz, 12-Bar Delta & Parlor Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Modal Drone, and Raw Esoteric Chaos. Displays active Step (01..12), Chord Name (e.g. C Maj, F7, Cmaj9), Harmonic Vector, and Euler Consonance score in real time alongside an interactive SVG Tonnetz compass.",
           "how": {
-            "lead": "`src/conductor.mjs` and `src/app.mjs` implement genre progression engines and harmonic telemetry:",
+            "lead": "`src/rulebooks.ni` states the genres; `src/conductor.mjs` and `src/app.mjs` apply them and show harmonic telemetry:",
             "points": [
-              "Dispatches chord progressions via `buildGenreSpine()`: `buildBluesSpine()` (I7-IV7-V7), `buildJazzSpine()` (Imaj9-vi9-ii9-♭II7alt), `buildCounterpointSpine()` (prepared suspensions and Picardy third), `buildModalDroneSpine()` (root/fifth drone), and `buildRawChaosSpine()` (unfiltered VM output).",
+              "Each genre is written in Inform 7 in `src/rulebooks.ni` (D-033): `buildGenreSpine()` reads its changes table (I7-IV7-V7, Imaj9-vi9-ii9-♭II7alt, suspensions with a Picardy third, root/fifth drone ladders) or walks the Tonnetz, and the menu, title, and motto are built from the same file.",
               "`projectConsonantPitch()` adapts to genre rules: blue-note sieve for blues, guide-tone approach for jazz, and stepwise conjunct motion for counterpoint.",
               "The Euler consonance strictness slider modulates the maximum permissible Gradus threshold from strict (G ≤ 5) to permissive (G ≤ 14).",
               "`highlightBeatStep()` updates the live readout on each 16th-note step and highlights the active region on the SVG Tonnetz compass."
@@ -656,7 +656,33 @@
             {"label": "Console UI and handlers", "target": "src/app.mjs"},
             {"label": "Architecture Record D-019", "target": "docs/DECISIONS.md"}
           ],
-          "related": ["tonnetz-spine", "euler-consonance-sieve", "antique-parlor-acoustics", "bandstand-console"]
+          "related": ["tonnetz-spine", "euler-consonance-sieve", "antique-parlor-acoustics", "bandstand-console", "inform-rulebooks"]
+        },
+        {
+          "id": "inform-rulebooks",
+          "title": "Inform 7 Kapellmeister Rulebooks",
+          "summary": "The six genres are written in a strict subset of Inform 7 and compiled at load into the data the conductor plays.",
+          "tags": ["inform-7", "rulebooks", "genres", "interpreter", "natural-language"],
+          "what": "`src/rulebooks.ni` states everything a Kapellmeister genre decides, in Inform 7's English: its chord colours, changes, Fun Machine progressions, melody snapping, bass walk, organ voicing, chime overtones, menu title, and motto. `src/inform.mjs` reads it, rejects anything outside the subset with a line number, and compiles it into frozen genre data before the app plays a note.",
+          "how": {
+            "lead": "A purpose-built interpreter for the subset (D-033):",
+            "points": [
+              "Kinds, values, properties with defaults, either/or adjectives (`Delta Blues is an insistent voiced genre.`), globals that vary, tables with `--` blanks and `(continued)`, and genre-based rulebooks that produce values.",
+              "Rules such as `Colouring rule for Smoky Parlor Jazz when the interval above the tonic is listed in {0, 5}: rule succeeds with result maj9.` fire in source order, first match wins (a documented departure from Inform's specificity ordering).",
+              "`compileRulebooks()` follows every rulebook over its whole domain (12 intervals, strictness 1–14), so playing never runs Inform. The true algorithms a genre names (Tonnetz walking, Euler sieving, contrary motion, cell choosing, inverted triads) stay in `src/conductor.mjs`.",
+              "The app installs the compiled rulebooks before anything reads a genre: the Kapellmeister menu, the Fun Machine's key colours, the conductor, and session presets.",
+              "`tests/fixtures/rulebooks-golden.json` froze every genre decision before the migration, and the conductor still reproduces it exactly."
+            ]
+          },
+          "why": "The genres are the project's most-edited musical knowledge. As English prose and tables they read like a music-theory notebook, and adding or retuning a genre no longer means editing six JavaScript functions. Inform 7's kinds, tables, and rulebooks already had the right shape (D-033).",
+          "evidence": [
+            {"label": "Inform 7 rulebooks", "target": "src/rulebooks.ni"},
+            {"label": "Inform 7 subset interpreter", "target": "src/inform.mjs"},
+            {"label": "Interpreter and rulebook tests", "target": "tests/inform.test.mjs"},
+            {"label": "Migration contract", "target": "tests/rulebooks.test.mjs"},
+            {"label": "Architecture Record D-033", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["kapellmeister-genre-console", "tonnetz-spine", "euler-consonance-sieve", "esoteric-fun-machine"]
         },
         {
           "id": "antique-parlor-acoustics",

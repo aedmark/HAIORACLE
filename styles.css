@@ -1292,6 +1292,19 @@ h1 em {
   background: var(--brass-bright);
 }
 
+/* Plate labels change while the band follows the conductor and the
+   Fun Machine, so each keeps one fixed line box: ♭ and ♯ fall back to a taller
+   font, and a long label truncates instead of wrapping and growing the plate. */
+.step-trits,
+.beat-step .cell-byte {
+  height: 1.3em;
+  max-width: 100%;
+  overflow: hidden;
+  line-height: 1.3em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .step-trits {
   color: var(--brass-bright);
   font-size: 0.56rem;
@@ -1435,6 +1448,91 @@ h1 em {
   gap: 0.75rem;
   min-width: 0;
   max-width: 100%;
+}
+
+/* The Fun Machine's telemetry narrates every held key and progression, so
+   it takes its own line, never widens the row, and always reserves two lines. */
+#fun-machine-telemetry {
+  display: -webkit-box;
+  flex: 1 0 100%;
+  height: 3.2em;
+  overflow: hidden;
+  contain: inline-size;
+  line-height: 1.6em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+@media (max-width: 480px) {
+  #fun-machine-telemetry {
+    height: 4.8em;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+}
+
+/* Genre titles and telemetry change length with the rulebook, so the
+   Kapellmeister header is a fixed grid: the title always reserves two lines,
+   the telemetry stays on one, and the menu column never moves. */
+.kapellmeister-engine .beat-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.kapellmeister-engine .beat-identity {
+  min-width: 0;
+}
+
+.kapellmeister-engine .beat-title-row {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+}
+
+#fun-machine-heading,
+#kapellmeister-heading {
+  display: -webkit-box;
+  height: 2.5em;
+  overflow: hidden;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* Fixed line box: ♭ and ♯ fall back to a font with a taller one. */
+#kapellmeister-telemetry {
+  height: 1.6em;
+  line-height: 1.6em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .kapellmeister-engine .beat-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A genre's motto from src/rulebooks.ni. Mottos differ in length, so the
+   line always reserves three lines and switching genres never shifts the page. */
+.kapellmeister-motto {
+  display: -webkit-box;
+  height: 4.2em;
+  margin: 0.45rem 0 0;
+  overflow: hidden;
+  color: rgba(228, 215, 190, 0.78);
+  font-family: var(--serif-display);
+  font-size: 0.78rem;
+  font-style: italic;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
 }
 
 .kapellmeister-select-wrap {
@@ -1900,9 +1998,11 @@ h1 em {
   letter-spacing: 0.06em;
 }
 
+/* minmax(0, 1fr): a long chord label must never widen its column (and with
+   it the whole matrix) when the rulebook or a punched chord changes it. */
 .fun-sequence-grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 0.35rem;
 }
 
@@ -1950,7 +2050,10 @@ h1 em {
   line-height: 1;
 }
 
+/* Fixed line boxes: ♭ and ♯ fall back to a taller font, and badges such as
+   "Lydian Mystic (#4)" would otherwise wrap, so cells stay one height. */
 .fun-step-chord {
+  height: 1.2em;
   margin-top: 0.2rem;
   font-family: var(--serif-display);
   font-size: 0.66rem;
@@ -1960,10 +2063,16 @@ h1 em {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-  line-height: 1.1;
+  line-height: 1.2em;
 }
 
 .fun-step-badge {
+  height: 1.4em;
+  max-width: 100%;
+  overflow: hidden;
+  line-height: 1.4em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   margin-top: 0.2rem;
   font-family: var(--mono-ledger);
   font-size: 0.44rem;
@@ -1978,14 +2087,14 @@ h1 em {
 
 @media (max-width: 768px) {
   .fun-sequence-grid {
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 480px) {
 
   .fun-sequence-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

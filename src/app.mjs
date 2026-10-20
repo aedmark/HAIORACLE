@@ -173,6 +173,7 @@ const elements = {
   bandstandMutateAll: document.querySelector("#bandstand-mutate-all"),
   kapellmeisterEngine: document.querySelector("#kapellmeister-engine"),
   kapellmeisterGenreTitle: document.querySelector("#kapellmeister-genre-title"),
+  kapellmeisterGenreMotto: document.querySelector("#kapellmeister-genre-motto"),
   kapellmeisterGenre: document.querySelector("#kapellmeister-genre"),
   kapellmeisterTelemetry: document.querySelector("#kapellmeister-telemetry"),
   kapellmeisterStrictness: document.querySelector("#kapellmeister-strictness"),
@@ -4061,14 +4062,32 @@ async function runTransportCommand(command) {
 
 let currentConductedMelody = null;
 
+// The Kapellmeister menu lists the genres of src/rulebooks.ni in source
+// order; nothing about a genre is written into the page itself.
+function buildGenreMenu() {
+  const menu = elements.kapellmeisterGenre;
+  if (!menu) return;
+  menu.replaceChildren(...genreCodes().map((code) => {
+    const book = genreBook(code);
+    const option = document.createElement("option");
+    option.value = code;
+    option.textContent = book.title;
+    option.title = book.motto;
+    return option;
+  }));
+  menu.value = activeGenre;
+  menu.disabled = false;
+}
+
 function updateKapellmeisterUI() {
-  if (elements.kapellmeisterGenreTitle) {
-    elements.kapellmeisterGenreTitle.textContent = genreBook(activeGenre).title;
-  }
+  if (!rulebooksInstalled()) return;
+  const book = genreBook(activeGenre);
+  if (elements.kapellmeisterGenreTitle) elements.kapellmeisterGenreTitle.textContent = book.title;
+  if (elements.kapellmeisterGenreMotto) elements.kapellmeisterGenreMotto.textContent = book.motto;
   if (elements.kapellmeisterTelemetry) {
     const chord0 = currentConductedSpine?.[0];
     const tonicName = currentScore ? chordLabelFor(chord0, currentScore.root) : "C Maj";
-    elements.kapellmeisterTelemetry.textContent = `RULEBOOK: ${activeGenre.toUpperCase().replace(/_/g, " ")} · TONIC: ${tonicName} · STRICTNESS: G ≤ ${activeStrictness}`;
+    elements.kapellmeisterTelemetry.textContent = `RULEBOOK: ${book.name.toUpperCase()} · TONIC: ${tonicName} · STRICTNESS: G ≤ ${activeStrictness}`;
   }
   if (currentConductedSpine) {
     const nodeIds = [elements.nodeText0, elements.nodeText1, elements.nodeText2, elements.nodeText3];
@@ -5568,6 +5587,7 @@ elements.chipTick?.addEventListener("click", () => {
 
 elements.kapellmeisterGenre?.addEventListener("change", (e) => {
   activeGenre = e.target.value;
+  updateKapellmeisterUI();
   applyEnsembleConductor();
   updateBeatGrid();
   updateBassGrid();
@@ -5865,8 +5885,9 @@ try {
   // The Kapellmeister's genres live in Inform 7 (D-033). Nothing that reads a
   // genre (the conductor, the Fun Machine, saved presets) runs before this.
   installRulebooks(compileRulebooks(rulebooksSource));
-  const menuGenre = elements.kapellmeisterGenre?.value;
-  activeGenre = genreCodes().includes(menuGenre) ? menuGenre : genreCodes()[0];
+  activeGenre = genreCodes()[0];
+  buildGenreMenu();
+  updateKapellmeisterUI();
   updateFunKeyboardChordLabels();
   renderPresetList();
   syncSessionButtons();

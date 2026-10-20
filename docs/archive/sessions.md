@@ -596,3 +596,28 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P5-20, P4-02, P6-01; five-cell rhythm tiling; export button grouping.
 
 **Next session should start with:** a decision on P5-20 storage, or the design and layout pass.
+
+### Session 22: 2026-10-19: the session ledger
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-20: on-device preset storage plus `.fun` session files, with the decision recorded and ARCHITECTURE and SECURITY updated (maintainer-approved storage boundary change).
+
+**Done:** P5-20, D-026.
+
+**Changed:**
+1. `src/session.mjs` (new): versioned session schema, strict validator, `.fun` parse/serialize, preset store parse/upsert/remove.
+2. `src/mixer.mjs`: `mixerStateFromChannels()`.
+3. `src/app.mjs`: per-cell edit counts (`plateCellCycles`, `cyclePlateCell()`), `recomposePlate()` shared by mutations and restore, `setFunMachineMode()` and `setFunChordQuality()`, `captureSession()`, `applySession()`, guarded preset storage, and ledger handlers.
+4. `index.html`, `styles.css`: `#session-engine` between the mixer and Plate II.
+5. ARCHITECTURE, SECURITY, README: the "no storage" promises now describe the one on-device store.
+
+**Verified:** 75/75 Node checks, including a new session suite (field-level rejection, prototype keys, size limit, preset corruption, exact chord rebuild, per-cell replay equivalence). Browser: changed plates, mutations, cell edits, a punched chord, rulebook, strictness, chord quality, mode, room, tempo, volume, and console, then saved a preset and a file. A fresh page restored the preset with zero differences across 18 UI readouts, and re-saving produced a byte-identical `.fun` file. Tampered files (bad tempo, injected quality, unknown key, non-JSON, 70 KB) were each rejected with the field named and the current creature left untouched. DELETE removed the storage key. With `localStorage` throwing, preset save reported it and file save still worked. No overflow at 375 px.
+
+**Not verified:** Real private-window and quota behavior; screen-reader pass over the ledger (P4-02).
+
+**Problems:** Plate cells do not return to an identical state after any cycle length, so edits are stored as exact per-cell counts rather than counts modulo a period.
+
+**Left undone:** P4-02, P6-01; the design and layout pass.
+
+**Next session should start with:** the design and layout pass.

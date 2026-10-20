@@ -247,6 +247,18 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.ok(app.indexOf("renderPresetList();", install) > install, "presets render only after the rulebooks install");
   assert.equal(app.slice(0, install).match(/^renderPresetList\(\);$/m), null, "no preset render at module start");
   assert.match(app, /function updateFunKeyboardChordLabels\(\) \{\n[^\n]*\n  if \(!rulebooksInstalled\(\)\) return;/);
+  // The Kapellmeister menu, title, and motto come from the rulebooks, not the page.
+  assert.doesNotMatch(html, /<option value="(victorian_tonnetz|smoky_jazz|raw_chaos)"/, "no genre is hard-coded in index.html");
+  assert.match(html, /<select id="kapellmeister-genre"[^>]*aria-describedby="kapellmeister-genre-motto"[^>]*disabled><\/select>/);
+  assert.match(html, /<p class="kapellmeister-motto" id="kapellmeister-genre-motto"><\/p>/);
+  assert.match(app, /function buildGenreMenu\(\) \{[\s\S]*?genreCodes\(\)\.map[\s\S]*?option\.title = book\.motto;/);
+  assert.ok(app.indexOf("buildGenreMenu();", install) > install, "the menu is built after the rulebooks install");
+  // Changing text never reflows the Perform wing (fixed line boxes, minmax columns).
+  assert.match(styles, /\.kapellmeister-motto \{[^}]*height: 4\.2em;[^}]*-webkit-line-clamp: 3;/);
+  assert.match(styles, /#fun-machine-heading,\n#kapellmeister-heading \{[^}]*height: 2\.5em;/);
+  assert.match(styles, /#fun-machine-telemetry \{[^}]*flex: 1 0 100%;[^}]*height: 3\.2em;[^}]*contain: inline-size;/);
+  assert.match(styles, /\.fun-sequence-grid \{\n  display: grid;\n  grid-template-columns: repeat\(12, minmax\(0, 1fr\)\);/);
+  assert.match(styles, /\.step-trits,\n\.beat-step \.cell-byte \{[^}]*height: 1\.3em;[^}]*white-space: nowrap;/);
   assert.match(app, /async function triggerFunKey\(semitone, isKeyDown = true\) \{\n[^\n]*\n  if \(semitone === null \|\| semitone === undefined \|\| !rulebooksInstalled\(\)\) return;/);
   assert.match(app, /composeArrangement\(/);
   // The arrangement reaches the whole workstation, not only the scheduler.

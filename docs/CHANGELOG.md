@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Read each Kapellmeister genre's motto under its title. The genres themselves (menu, chord colours, changes, progressions, bass walks, voicings, overtones) are now written in plain-English Inform 7 in `src/rulebooks.ni`; the music is unchanged.
+- Keep the Perform wing still while you play: switching genres or Fun Machine styles, or holding keys over the loop, no longer changes the height of any panel at any window width, and long status lines, sequencer chords, and plate labels keep a fixed space.
 - Hear every phrase breathe its own way: the INTERCAL conductor reads each creature's arrangement word and chooses who waits, who answers, and when the turnaround lands, so arrangements now differ from creature to creature (existing creatures' arrangements changed).
 - See the INTERCAL conductor at work: the transport names the current section, console strips light **TACET** while the conductor rests them, MIDI exports mark each section on the DAW timeline, and the stem README lists section times. The conductor score's own registers now decide who plays, so editing `src/conductor.i` re-arranges the band.
 - Keep the layout still while the loop plays: the section readout and the Kapellmeister harmony readout no longer change size when their text gets longer, so on wide windows the volume controls no longer jump to a new line once per loop.
