@@ -77,6 +77,14 @@ import {
 } from "./session.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
 
+// Esoteric sources share this module's ?v= stamp from the index.html import map
+// (D-035), so a cached old spell is never paired with a fresh interpreter.
+function sourceUrl(name) {
+  const url = new URL(name, import.meta.url);
+  url.search = new URL(import.meta.url).search;
+  return url;
+}
+
 const RHYTHMS = Object.freeze([
   [1, 1, 1, 1],
   [1.5, 0.5, 1, 1],
@@ -5854,15 +5862,15 @@ elements.tempo?.addEventListener("dblclick", () => {
 
 try {
   const [oracleResponse, beatResponse, bassResponse, harmonyResponse, pietResponse, fractranResponse, chantResponse, conductorResponse, rulebooksResponse] = await Promise.all([
-    fetch("src/oracle.lol"),
-    fetch("src/beat.mal"),
-    fetch("src/bass.bf"),
-    fetch("src/harmony.bfg"),
-    fetch("src/pad.piet"),
-    fetch("src/chimes.frac"),
-    fetch("src/chant.spl"),
-    fetch("src/conductor.i"),
-    fetch("src/rulebooks.ni"),
+    fetch(sourceUrl("oracle.lol")),
+    fetch(sourceUrl("beat.mal")),
+    fetch(sourceUrl("bass.bf")),
+    fetch(sourceUrl("harmony.bfg")),
+    fetch(sourceUrl("pad.piet")),
+    fetch(sourceUrl("chimes.frac")),
+    fetch(sourceUrl("chant.spl")),
+    fetch(sourceUrl("conductor.i")),
+    fetch(sourceUrl("rulebooks.ni")),
   ]);
   if (!oracleResponse.ok) throw new Error(`Oracle source returned ${oracleResponse.status}`);
   if (!beatResponse.ok) throw new Error(`Malbolge source returned ${beatResponse.status}`);

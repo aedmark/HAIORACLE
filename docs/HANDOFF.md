@@ -4,15 +4,15 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 33, on `main`: the parlor room's reverb now hears the band, the escapement is audible, and the crackle is halved (D-034); session 32: the Kapellmeister menu, title, and motto come from the Inform 7 rulebooks, and the Perform wing no longer reflows when its text changes (P5-23 phase 4, D-033); session 31 moved the conductor onto the rulebooks; session 30 wrote the rulebooks; session 29 froze the migration contract; session 28: per-phrase arrangements keep at least five band voices (D-032) and the transport no longer rearranges the page once per loop; session 27 gave each phrase its own INTERCAL arrangement (D-031), and section and harmony readouts no longer reflow the layout; session 26 made the conductor's registers decide the arrangement, which the transport, console, MIDI markers, and stem README display (D-030); session 25 reworked the Fun Machine is reworked into a one-finger accompanist the band follows (D-029); session 24 added the INTERCAL 1972 Grand Ensemble Conductor (`src/conductor.i`, `src/intercal.mjs`) overcomes the continuous wall of sound with dynamic arrangement breathing across Exposition, Antiphony, Tutti, and Breakdown, and the Esoteric Fun Machine is overhauled into a warm, lush analog synth pad lead with real-time ensemble accompaniment modulation (P5-22, D-028)._
+_Last updated: 2026-10-20, session 34, on `main`: every module and source URL carries a content-hash version stamp, so a browser can no longer run a fresh module against a cached old one, and `python3 tools/serve.py` is the dev server (D-035); session 33: the parlor room's reverb now hears the band, the escapement is audible, and the crackle is halved (D-034); session 32: the Kapellmeister menu, title, and motto come from the Inform 7 rulebooks, and the Perform wing no longer reflows when its text changes (P5-23 phase 4, D-033); session 31 moved the conductor onto the rulebooks; session 30 wrote the rulebooks; session 29 froze the migration contract; session 28: per-phrase arrangements keep at least five band voices (D-032) and the transport no longer rearranges the page once per loop; session 27 gave each phrase its own INTERCAL arrangement (D-031), and section and harmony readouts no longer reflow the layout; session 26 made the conductor's registers decide the arrangement, which the transport, console, MIDI markers, and stem README display (D-030); session 25 reworked the Fun Machine is reworked into a one-finger accompanist the band follows (D-029); session 24 added the INTERCAL 1972 Grand Ensemble Conductor (`src/conductor.i`, `src/intercal.mjs`) overcomes the continuous wall of sound with dynamic arrangement breathing across Exposition, Antiphony, Tutti, and Breakdown, and the Esoteric Fun Machine is overhauled into a warm, lush analog synth pad lead with real-time ensemble accompaniment modulation (P5-22, D-028)._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-22 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-20, session 33, local Linux environment)
+**Verified** (2026-10-20, session 34, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **101/101 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **105/105 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 34 entries, 0 errors, 0 warnings** |
 
@@ -53,6 +53,7 @@ _Last updated: 2026-10-20, session 33, on `main`: the parlor room's reverb now h
 - The parlor mixing console (`#mixer-engine`) gives all eight voices a fader, pan, mute, solo, and live post-fader VU meter. Plate ENGAGE/SILENCE switches are the console's mutes, and WAV exports follow the mix. Default voicing trims lift the lead +6 dB and the choir +12 dB with faders still at unity, faders reach a further +12 dB, the choir bypasses the creature filter, and bandpass creatures blend a dry lead tap, so neither voice is buried by narrow bandpass creatures any more (P5-19, D-024).
 - Below the vitrine and the reading strip (name and score card only), the page is a four-wing workstation (D-027): **Perform** (transport rail with restart, volume, and tempo; Fun Machine; Kapellmeister), **Mix** (Bandstand, console, parlor room), **Keep** (Session Ledger; export desk with WAV, stems, MIDI, PNG, and omen link), and **The Band** (Plates II–VI). Tab order follows the same sequence, and nothing overflows at 320, 375, 768, or 1100 px.
 - Runtime assets are local and dependency-free (D-001).
+- Updates load cleanly without a hard reload (D-035): `index.html` builds an import map that stamps every module with `?v=<ASSET_VERSION>` (a hash of `src/`), and sources are fetched with the same stamp. Verified in the built-in browser against plain `python3 -m http.server`: with 28 of 29 files served from heuristic cache, a new export added to `src/ensemble.mjs` and imported by `src/app.mjs`, plus a restamp, loaded on a normal reload with all 29 requests at the new stamp and no console errors.
 
 **Not verified**
 
@@ -66,7 +67,8 @@ _Last updated: 2026-10-20, session 33, on `main`: the parlor room's reverb now h
 
 **Gotchas**
 
-- Serve the directory over HTTP. A direct `file:` URL cannot fetch `src/oracle.lol`, `src/beat.mal`, `src/bass.bf`, `src/harmony.bfg`, `src/pad.piet`, `src/chimes.frac`, or `src/chant.spl`.
+- After editing anything under `src/`, run `node tools/stamp_assets.mjs`; `tests/assets.test.mjs` fails until you do. A new module must also join `MODULES` in `index.html` (D-035).
+- Serve the directory over HTTP, preferably with `python3 tools/serve.py` (no stale caching). A direct `file:` URL cannot fetch `src/oracle.lol`, `src/beat.mal`, `src/bass.bf`, `src/harmony.bfg`, `src/pad.piet`, `src/chimes.frac`, or `src/chant.spl`.
 - The interpreter deliberately implements a subset. Read D-002 before extending the spell.
 - Changes to hash, normalization, formula constants, scale, or name tables can break phrase identity. D-005 through D-007, D-013, D-014, and D-016 record intentional pre-release compatibility breaks.
 
@@ -77,7 +79,7 @@ _Last updated: 2026-10-20, session 33, on `main`: the parlor room's reverb now h
 3. Exports render one 12-step loop, but rhythm patterns 2 and 3 have five cells, so their WAV, stems, and MIDI do not tile seamlessly (the live loop is unaffected). A 60-step render, or rounding those patterns to 12, would fix it; either is a determinism-adjacent choice for the maintainer.
 4. Hands-on review of the four-wing layout (D-027) in Safari and Firefox; the maintainer approved it from the Chromium review. A sticky transport rail was deferred; it needs the cabinet's `overflow: hidden` changed to `overflow: clip`.
 5. Complete P4-02 with keyboard, reduced-motion, contrast, and screen-reader checks.
-6. Choose public hosting and domain (Q-001 / P6-01).
+6. Choose public hosting and domain (Q-001 / P6-01). Serve `index.html` with `Cache-Control: no-cache` there (D-035); stamped `src/` URLs can be cached freely.
 
 ## Open questions
 

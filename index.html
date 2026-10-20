@@ -632,6 +632,29 @@
   </main>
 
   <noscript>Edmark's Esoteric Fun Machine needs JavaScript to interpret its LOLCODE spell and render the omen.</noscript>
-  <script type="module" src="src/app.mjs"></script>
+  <script>
+    // Cache boundary (D-035): an import map gives every module a URL stamped with
+    // ASSET_VERSION, a hash of src/, so a browser never pairs a fresh module with
+    // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
+    // fail when the stamp or this module list falls behind src/.
+    (() => {
+      const ASSET_VERSION = "a8bef143e4f6";
+      const MODULES = [
+        "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "conductor.mjs",
+        "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs",
+        "malbolge.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "score.mjs",
+        "session.mjs", "shakespeare.mjs", "share.mjs", "transport.mjs", "zip.mjs",
+      ];
+      const imports = {};
+      for (const name of MODULES) imports[`./src/${name}`] = `./src/${name}?v=${ASSET_VERSION}`;
+      const importMap = document.createElement("script");
+      importMap.type = "importmap";
+      importMap.textContent = JSON.stringify({ imports });
+      const app = document.createElement("script");
+      app.type = "module";
+      app.src = imports["./src/app.mjs"];
+      document.currentScript.after(importMap, app);
+    })();
+  </script>
 </body>
 </html>

@@ -112,6 +112,8 @@ Never force-push or rewrite shared history.
 | `tools/check_docs.py` | Documentation consistency checker |
 | `tools/manual.py` | 3x documentation manual validator and builder |
 | `tools/freeze_rulebooks.mjs` | One-time freezer for the Kapellmeister rulebook golden fixture (P5-23) |
+| `tools/stamp_assets.mjs` | Restamps `ASSET_VERSION` in `index.html` from a hash of `src/` (D-035) |
+| `tools/serve.py` | Standard-library dev server that sends `Cache-Control: no-cache` (D-035) |
 
 ## Engineering conventions
 
@@ -119,6 +121,7 @@ Never force-push or rewrite shared history.
 - Support current evergreen browsers. A static HTTP origin is required because the app fetches `src/oracle.lol`.
 - Keep `src/oracle.lol` causal: every audiovisual parameter originates in its score output.
 - Reject malformed interpreter output before it reaches audio or rendering code.
+- Load browser modules only through the `index.html` import map and fetch `src/` sources only through `sourceUrl()`, so every URL carries `ASSET_VERSION` (D-035).
 - Add no runtime or build dependency without explicit maintainer approval and an accepted decision.
 - Commit authored source. Do not commit caches, coverage output, or generated bundles.
 
@@ -133,7 +136,8 @@ Never force-push or rewrite shared history.
 ## Run and verify
 
 - Setup: none.
-- Run: `python3 -m http.server 8000`.
+- Run: `python3 tools/serve.py` (port 8000; plain `python3 -m http.server` lets browsers cache stale modules).
+- After editing anything under `src/`: `node tools/stamp_assets.mjs`, or the cache-boundary test fails (D-035).
 - Fast checks: `node --test tests/*.test.mjs`.
 - Full checks: `node --test tests/*.test.mjs && python3 tools/check_docs.py && python3 tools/manual.py check docs/manual.json`.
 - Detailed guidance: `docs/TESTING.md`.

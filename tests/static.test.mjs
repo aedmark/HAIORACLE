@@ -233,14 +233,14 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.match(app, /function copyShareLink\(\)/);
   assert.match(app, /function exportSpecimenPng\(\)/);
   assert.match(app, /function exportSpecimenWav\(\)/);
-  assert.match(app, /fetch\("src\/beat\.mal"\)/);
-  assert.match(app, /fetch\("src\/bass\.bf"\)/);
-  assert.match(app, /fetch\("src\/harmony\.bfg"\)/);
-  assert.match(app, /fetch\("src\/pad\.piet"\)/);
-  assert.match(app, /fetch\("src\/chimes\.frac"\)/);
-  assert.match(app, /fetch\("src\/chant\.spl"\)/);
-  assert.match(app, /fetch\("src\/conductor\.i"\)/);
-  assert.match(app, /fetch\("src\/rulebooks\.ni"\)/);
+  assert.match(app, /fetch\(sourceUrl\("beat\.mal"\)\)/);
+  assert.match(app, /fetch\(sourceUrl\("bass\.bf"\)\)/);
+  assert.match(app, /fetch\(sourceUrl\("harmony\.bfg"\)\)/);
+  assert.match(app, /fetch\(sourceUrl\("pad\.piet"\)\)/);
+  assert.match(app, /fetch\(sourceUrl\("chimes\.frac"\)\)/);
+  assert.match(app, /fetch\(sourceUrl\("chant\.spl"\)\)/);
+  assert.match(app, /fetch\(sourceUrl\("conductor\.i"\)\)/);
+  assert.match(app, /fetch\(sourceUrl\("rulebooks\.ni"\)\)/);
   // The Inform 7 rulebooks install before anything reads a genre or a preset (D-033).
   const install = app.indexOf("installRulebooks(compileRulebooks(rulebooksSource));");
   assert.ok(install > 0, "the app installs the compiled rulebooks");

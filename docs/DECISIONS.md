@@ -519,6 +519,21 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Consequences:** Every creature now sounds like it plays in a room; the overall mix level and peaks are unchanged (the compressor holds them). Stems carry each channel's own share of the room, as before. This needs a listening pass to confirm the balance.
 
+## D-035 Every module and source URL carries a content-hash version stamp (2026-10-20, status: accepted)
+
+**Context:** After d931024 the maintainer's browser ran a fresh `src/app.mjs` against a cached old `src/ensemble.mjs` and failed with "does not provide an export named 'PARLOR_CRACKLE_PER_LEVEL'". `python3 -m http.server` sends `Last-Modified` without `Cache-Control`, so browsers reuse each file for a heuristic period (10 % of its age) without asking the server, and each file's timer runs separately. Static hosts can do the same: GitHub Pages sends `max-age=600` on every file. A hard reload fixed it, but visitors do not know to do that.
+
+**Decision:**
+1. **An import map versions every module.** A small inline script in `index.html` holds `ASSET_VERSION` and the list of modules, writes an import map that maps each `./src/<name>.mjs` to `./src/<name>.mjs?v=<ASSET_VERSION>`, then loads the versioned `src/app.mjs`. Relative imports inside modules resolve to the plain URL and are rewritten by the map, so module source keeps ordinary `./x.mjs` imports and Node tests import them unchanged.
+2. **Sources follow the module.** `app.mjs` fetches every esoteric source through `sourceUrl()`, which copies its own `?v=` from `import.meta.url`.
+3. **The version is a hash of `src/`.** `ASSET_VERSION` is the first 12 hex digits of SHA-256 over every file name and its bytes under `src/`. `node tools/stamp_assets.mjs` rewrites it. `tests/assets.test.mjs` fails when the stamp is stale, when the module list differs from the import closure of `src/app.mjs`, when `index.html` loads any other script, or when a fetch skips `sourceUrl()`. Forgetting to bump is a test failure, not a production bug.
+4. **Local development revalidates.** `python3 tools/serve.py` (standard library only) sends `Cache-Control: no-cache`, so edits show up on a normal reload without restamping.
+5. **Host guidance for P6-01:** serve `index.html` with `Cache-Control: no-cache` (or a short `max-age`). Versioned URLs may be cached for any length of time.
+
+**Alternatives:** A `?v=` in every import literal would repeat the version in about 40 places, and Node would load query and non-query URLs as separate module instances. A static import-map JSON would repeat it 20 times. A dev server alone would not protect visitors on a static host. A service worker or build step would add machinery the project avoids (D-001). A hand-bumped counter could be forgotten, which is the bug itself.
+
+**Consequences:** Any `src/` edit needs a restamp before the tests pass. A new module must join `MODULES` in `index.html`; the test names the missing file. The only gap left is a stale `index.html`, which is consistent with its own old URLs. A visitor could then get new bytes under an old stamp only if the browser had evicted part of the old set. Serving the page with `no-cache` closes that gap, and a normal reload revalidates the page in every major browser. `styles.css` is not stamped: a stale stylesheet cannot break module linking.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

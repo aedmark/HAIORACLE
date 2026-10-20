@@ -14,6 +14,7 @@ Automated checks prove determinism, boundary validation, the required LOLCODE su
 | Rulebook contract | `tests/rulebooks.test.mjs` with `tests/rulebook-capture.mjs` and `tests/fixtures/rulebooks-golden.json` | every Kapellmeister genre decision matches the frozen pre-migration capture exactly (P5-23, D-033): Fun Machine chord colours and progressions, genre spines over sample scores and mutations, melody projection over every pitch and strictness, and the full conducted ensemble with and without a punched spine | that the frozen behaviour is musically right; only that it is unchanged | Node 20 or newer |
 | Mixer model | `tests/mixer.test.mjs` | channel list, fader taper and dB readout, pan clamping, mute/solo precedence, Bandstand group mutes, meter RMS/peak math | how the console sounds or feels to operate | Node 20 or newer |
 | Transport and graph | `tests/transport.test.mjs` | shared ensemble graph routing, mixer strips, meter taps, vitrine pan trim, and live/offline topology parity via a fake `AudioContext`, transport state transitions and cursor handling, `Space`/`Esc` focus rules | real audio output, timing under load, or how pause/resume sounds | Node 20 or newer |
+| Cache boundary | `tests/assets.test.mjs` | `ASSET_VERSION` in `index.html` matches the hash of `src/`, the import map lists exactly the import closure of `src/app.mjs`, `index.html` has no other script, and every source fetch goes through `sourceUrl()` (D-035) | how a particular host or browser caches; check a real host's headers | Node 20 or newer |
 | Static structure | `tests/static.test.mjs` | required assets (`src/oracle.lol`, `src/beat.mal`, `manual.html`, `docs/manual.json`), basic labels, centered apparition-stage and serif-broadsheet markers, continuous scheduler and master-volume markers, bounded silhouette and clipped-core markers, vitrine tap/hold/drag interaction and percussion markers, Malbolge 12-step beat matrix and percussion scheduler markers, perform/mix/keep/band wing order with a control-free reading strip (D-027), no audio-driven visual resizing, scoped body glow, no remote runtime references | computed accessibility tree, scheduler timing, perceived loudness, or visual quality | Node 20 or newer |
 | Documentation | `tools/check_docs.py` | no placeholders, broken local links, or unknown roadmap and decision references | factual accuracy of every claim | Python 3 |
 | 3x Manual | `tools/manual.py` | structural validity, What/How/Why completeness, and evidence integrity of `docs/manual.json` | subjective prose elegance | Python 3 |
@@ -33,7 +34,8 @@ Expected results from specific runs live in `HANDOFF.md`.
 - No setup, install, account, secret, or persistent state is required. The one fixture, `tests/fixtures/rulebooks-golden.json`, is committed.
 - Run commands from the repository root.
 - Tests write no project files.
-- A browser review requires serving the directory over HTTP. Direct `file:` loading cannot fetch the spell.
+- A browser review requires serving the directory over HTTP, preferably with `python3 tools/serve.py`. Direct `file:` loading cannot fetch the spell.
+- After any `src/` edit, run `node tools/stamp_assets.mjs`; the cache-boundary test names the expected stamp when it is stale.
 
 ## Adding a check
 
@@ -53,6 +55,7 @@ Expected results from specific runs live in `HANDOFF.md`.
 | Canvas or audio rendering | full automated set | manual browser review with sound |
 | Controls, layout, or accessibility | full automated set | keyboard, narrow viewport, reduced motion, and screen-reader review |
 | Dependency boundary | full automated set | inspect network requests and record an accepted decision |
+| Adding, renaming, or removing a `src/` module or source | full automated set; update `MODULES` in `index.html` and restamp | load the page over HTTP and confirm every `/src/` request carries the new `?v=` |
 | Kapellmeister rulebooks or conductor | full automated set; the rulebook contract must pass unchanged | a deliberate musical change needs a decision record and a `--rewrite` of the fixture in the same commit |
 
 ## Manual checks before a release
@@ -79,4 +82,5 @@ Expected results from specific runs live in `HANDOFF.md`.
 - Web Audio tests require human listening. An oscillator scheduling without throwing does not prove a good mix.
 - Timer throttling in background tabs can affect scheduling; the short look-ahead window limits the damage but requires browser review.
 - Canvas snapshots are sensitive to browser, graphics stack, pixel ratio, and time. Test score inputs structurally and review the actual animation manually.
+- Plain `python3 -m http.server` sends no `Cache-Control`, so browsers reuse files heuristically and can pair a fresh `src/app.mjs` with an old `src/ensemble.mjs` ("does not provide an export named ...", 2026-10-20). The version stamp prevents this (D-035) only if it is current: restamp after every `src/` edit, and develop with `python3 tools/serve.py`.
 - FNV-1a collisions are possible. The seed is an identity affordance, not a cryptographic identifier.

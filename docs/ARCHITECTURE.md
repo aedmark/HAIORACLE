@@ -94,6 +94,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 - The LOLCODE spell produces every parameter used to distinguish the creature. Enforced by required score fields and range validation.
 - Malformed, duplicate, missing, unknown, or out-of-range output never reaches renderers. Enforced by `parseScore()` tests.
 - Runtime assets remain local and dependency-free. Enforced by `tests/static.test.mjs` and D-001.
+- Every module URL and every `src/` source fetch carries `?v=<ASSET_VERSION>`, a hash of `src/`, so a browser never links a fresh module to a cached old one. `index.html` writes the import map that stamps modules; `sourceUrl()` stamps sources. Enforced by `tests/assets.test.mjs` and D-035.
 - The creature canvas lives in a centered, bounded apparition chamber at every viewport instead of acting as a full-page background. Enforced structurally in `tests/static.test.mjs` (D-011).
 - Unsupported LOLCODE syntax fails with a line number. Enforced by the interpreter and its negative test.
 - Rendering and sound share one immutable score. Enforced by the `showScore()` and `playScore()` call path.
@@ -141,7 +142,9 @@ The visual system uses locally installed old-style and transitional book serifs 
 | Mixer settings | browser memory | `updateMixer()` | RESET CONSOLE, reload, or tab close | no |
 | Transport state and cursor | browser memory | `runTransportCommand()` | stop, summon, reload, or tab close | no |
 | Session presets | `localStorage` key `edmark-fun-machine.presets.v1` | SAVE PRESET | DELETE, or clearing site data | no |
-| Static HTTP cache | browser-managed | browser | browser controls | no |
+| Static HTTP cache | browser-managed, keyed by `?v=<ASSET_VERSION>` URLs (D-035) | browser | a new stamp, or browser controls | no |
+
+Because a file's content changes only together with its URL, the browser may keep any stamped module or source as long as it likes. Only `index.html`, which holds the stamp, should be revalidated: `tools/serve.py` does that locally with `Cache-Control: no-cache`, and a public host should do the same for the page (D-035).
 
 Session presets (D-026) are the only data that outlive the tab. They stay on the device. The app uses no cookies, `sessionStorage`, IndexedDB, analytics, or service worker, and makes no outbound requests.
 

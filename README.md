@@ -13,8 +13,10 @@ The interface is a bespoke, esoteric parlor cabinet and broadsheet built around 
 From the repository root:
 
 ```bash
-python3 -m http.server 8000
+python3 tools/serve.py
 ```
+
+This standard-library server sends `Cache-Control: no-cache`, so a reload always sees your latest edits. Plain `python3 -m http.server 8000` also works. Every module and source URL carries a version stamp, so a browser never mixes old and new files after an update (D-035). If you edit anything under `src/`, run `node tools/stamp_assets.mjs` before committing.
 
 Open [http://localhost:8000](http://localhost:8000), enter a phrase, and choose **SUMMON**. Sound requires the button press because browsers block unsolicited audio.
 
