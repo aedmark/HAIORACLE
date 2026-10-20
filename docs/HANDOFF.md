@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 41, on `main`: Raw Esoteric Chaos now runs unfettered (P5-27), and the loop machine is designed (D-039, P5-26 to build); session 40 removed the punch-in sequencer (D-038)._
+_Last updated: 2026-10-20, session 41, on `main`: Raw Esoteric Chaos now runs unfettered (P5-27), and the loop machine is designed (D-039) with its model built (P5-26 phase 1); session 40 removed the punch-in sequencer (D-038)._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-25 and P5-27 are implemented and verified; P5-26 is designed. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
@@ -106,9 +106,11 @@ _Last updated: 2026-10-20, session 41, on `main`: Raw Esoteric Chaos now runs un
 
 **Not verified:** Listening to Raw Chaos.
 
-**Left undone:** Building P5-26 (phase 1: `src/looper.mjs` model and tests); the P4-02 screen-reader pass; P6-01.
+**Phase 1 (same session):** `src/looper.mjs` is the pure model. It covers frozen songs, loops, and takes; append, overdub, undo-layer, delete, move, and repeat edits that return the same song when not allowed; the 16-loop, 4-layer, 1–8-repeat, and 32-pass limits; `songPosition()` through repeats and wrap-around; and `leadSlotAt()` (newest layer, live override). It also has the recorder state machine (arm new or overdub, start on the next boundary or on the target loop's pass, one pass, empty takes reported) and `validateSong()` for sessions v4. `tests/looper.test.mjs` has six tests; making the follow rule pick the oldest layer failed them. 123/123 Node checks. Not wired into the app yet (it is outside the import map until phase 2 imports it).
 
-**Next session should start with:** P5-26 phase 1.
+**Left undone:** P5-26 phases 2–5 (live recording and playback, the strip, sessions v4, song exports); the P4-02 screen-reader pass; P6-01.
+
+**Next session should start with:** P5-26 phase 2, live recording and song playback in the transport.
 
 ### Session 40: 2026-10-20: the punch-in sequencer comes out
 

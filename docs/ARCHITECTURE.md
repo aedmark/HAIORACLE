@@ -30,6 +30,7 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Ensemble audio graph | `src/ensemble.mjs` | `buildEnsembleGraph()` | live `AudioContext` and offline WAV `OfflineAudioContext` in `src/app.mjs` |
 | Session boundary | `src/session.mjs` | `parseSession()`, `validateSession()`, `parsePresetStore()` | session ledger in `src/app.mjs`, `localStorage`, `.fun` files |
 | Export writers | `src/zip.mjs`, `src/midi.mjs` | `createStoredZip()`, `buildMidiFile()` | stem and MIDI exports in `src/app.mjs` |
+| Loop machine model | `src/looper.mjs` | `appendLoop()`, `overdubLayer()`, `songPosition()`, `leadSlotAt()`, `recorderReduce()`, `validateSong()` | P5-26 phase 1: the pure song/loop/take model, limits, follow rule, recorder, and validation (D-039); not yet wired into the app |
 | Discovery and the cabinet | `src/cabinet.mjs` | `cabinetReduce()`, `parseCabinetState()`, `DRAWERS` | drawer chrome, unlock triggers, and the cabinet switch in `src/app.mjs` (D-037) |
 | Fun Machine accompanist | `src/accompaniment.mjs` | `buildPerformance()`, `padVoicing()`, `arpeggioNotes()`, `toTonicRelative()` | Fun Machine voices and scheduler in `src/app.mjs` |
 | Mixer model | `src/mixer.mjs` | `channelSettings()`, `isChannelAudible()`, `meterReading()` | mixing console and strips in `src/app.mjs`, `src/ensemble.mjs` |
