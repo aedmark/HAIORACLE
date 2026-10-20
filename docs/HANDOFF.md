@@ -110,6 +110,8 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 **Left undone:** The P4-02 screen-reader pass; P6-01.
 
+**Hosting note (same session):** the maintainer deploys to Neocities at `https://oopismcgoopis.com/eefm/`. Just after an upload the console showed `looper.mjs` refused as `application/octet-stream`. Probing showed Neocities' edge cache (`x-cached: HIT`) briefly answering with mixed content types for `.mjs` files (`looper.mjs`, then `session.mjs`) and a stale `app.mjs` (18:46 against 22:29). Within minutes every file answered `application/javascript` with the new upload, so it was propagation, not the code; a hard refresh fixes it. The ASSET_VERSION stamps (D-035) keep versions consistent once edges agree, but cannot fix a wrong content type. If it recurs often, renaming modules to `.js` is the fallback. The Permissions-Policy console warnings come from Neocities' own headers. `index.html` now declares the host's `/favicon.svg` (a harmless 404 when served locally from the repo); `manual.html` still has no icon because its 3x schema has no field for one.
+
 **Next session should start with:** the maintainer's listen (exported songs, corrected low voices), then P4-02 or P6-01.
 
 ### Session 44: 2026-10-20: songs are saved (P5-26 phase 4)
