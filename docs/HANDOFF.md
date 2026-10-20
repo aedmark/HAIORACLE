@@ -92,13 +92,12 @@ _Last updated: 2026-10-19, session 17, on `main`: the Esoteric Fun Machine (P5-1
    - Updated `setMasterVolume()` to modulate `funMachineDryGain` when playing the organ in standalone mode (with transport idle).
    - In `AUTO-CHORD: ONE-FINGER` mode, striking a key harmonizes the chord via `buildFunChord()`, plays the organ voice, and fires synchronized accompaniment bursts (Brainfuck walking bass, Befunge chord organ, Shakespeare formant choir, Piet chimes) scheduled with safe lookahead.
    - In `LEAD SOLO: MANUAL NOTE` mode, keys play single lead notes over the backing track.
-4. **Sustained Overlaying Chord Progression Melody Engine (`src/conductor.mjs`, `src/app.mjs`)**:
-   - `buildFunProgression(rootSemitone, quality, genre, tonicRoot)`: Generates a 12-step progression mapping 3 steps per harmonic region across 4 regions with distinct chord voicings and melodic lead riffs/arpeggiations matching the active Kapellmeister genre (Tonnetz I-vi-IV-V, 12-Bar Blues riff with blue notes, Smoky Jazz ii-V-I-VI turnaround, Counterpoint i-iv-v-I, Mystic Drone, Diminished circle).
-   - Dual acoustic layers sound simultaneously on each step: a rich dual-oscillator reed organ chord voicing and a singing lead melody note/riff.
-   - Replaced premature exponential decay with an organ sustain envelope holding at $85\%$ of peak gain throughout sounding duration, smoothly releasing over the final $80\,\text{ms}$ upon key release or step transition.
-   - Holding down a key continuously cycles through the 12-step chord progression melody in tempo. Tapping a key cleanly plays through a complete 4-step musical phrase.
-   - `runFunStandaloneScheduler()`: A dedicated 50ms Web Audio lookahead loop that powers the progression melody even when creature playback is idle/stopped, flashing sequence steps and updating telemetry.
-   - In active playback, integrates into `playScore()`'s `scheduleAhead()` loop, driving both `funBus` chord and lead voices locked to `currentStep % 12`.
+4. **Unchained Sustained Organ Voices Over Accompaniment (`src/conductor.mjs`, `src/app.mjs`)**:
+   - Decoupled keyboard chords completely from 16th-note tempo clock steps, eliminating the jittering/stuttering and step-chopping artifacts caused by re-triggering voices on each sequencer tick.
+   - `startFunMachineVoice(context, destination, chord, semitone, mode)`: Fires a rich, dedicated dual-oscillator reed organ voice (sawtooth + sub triangle + 5.5 Hz parlor vibrato + 2400 Hz formant lowpass filter) that sustains continuously and smoothly over top of the backing accompaniment for as long as the key is held down.
+   - `stopFunMachineVoice(semitone, immediateCrossfade)`: On key release, provides a natural 0.20s organ pipe release fade (with a 0.40s minimum ring-out on quick taps); when switching keys, executes a seamless 40ms crossfade between chords without clicks or voice pileups.
+   - `playScore()` now solely plays sequenced custom chords from `customProgression` when no manual key is held, while punch-in recording stamps passing beat steps without chopping or restarting the live held voice.
+   - `buildFunProgression(rootSemitone, quality, genre, tonicRoot)`: Provides harmonic progression metadata, step mappings, and telemetry summaries across all Kapellmeister genres and qualities.
    - Global `window.pointerup`, `pointercancel`, and `window.blur` listeners guarantee clean voice release without stuck keys.
 5. **One-Finger Auto-Chord Harmonization & Quality Chips (`src/conductor.mjs`, `index.html`, `src/app.mjs`)**:
    - 7 chord quality selector chips (`AUTO-GENRE`, `MAJOR`, `MINOR`, `DOM 7TH`, `MAJ 9TH`, `DIMINISHED`, `OPEN 5TH`).

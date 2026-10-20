@@ -325,7 +325,8 @@ test("the Esoteric Fun Machine play-along organ and loop punch-in sequencer are 
   assert.match(app, /function scheduleFunMachineLeadNote\(/);
   assert.match(app, /linearRampToValueAtTime\(peak, noteStart \+ attack\)/);
   assert.match(app, /buildFunProgression\(/);
-  assert.match(app, /function runFunStandaloneScheduler\(\)/);
+  assert.match(app, /function startFunMachineVoice\(/);
+  assert.match(app, /function stopFunMachineVoice\(/);
   assert.match(app, /activeHeldFunKey/);
   assert.match(app, /sustainLevel/);
   assert.match(app, /function renderFunSequencerGrid\(/);

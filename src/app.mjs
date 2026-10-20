@@ -181,10 +181,7 @@ let selectedSequencerStep = null;
 let funMachineDryGain = null;
 let activeHeldFunKey = null;
 let activeFunProgression = null;
-let funStandaloneTimer = null;
-let funStandaloneNextTime = 0;
-let funStandaloneStep = 0;
-let funStandaloneRemainingSteps = 0;
+let activeFunVoice = null;
 
 
 const interaction = {
@@ -2099,9 +2096,8 @@ function triggerSporePuff(strength = 1, atTime = null) {
 }
 
 function stopCurrentSound() {
-  if (funStandaloneTimer) {
-    window.clearTimeout(funStandaloneTimer);
-    funStandaloneTimer = null;
+  if (activeFunVoice) {
+    stopFunMachineVoice(null, true);
   }
   if (!currentTransport || !audioContext) return;
   const transport = currentTransport;
@@ -2893,6 +2889,117 @@ function scheduleFunMachineLeadNote(context, destination, semitone, at, duration
   oscSub.stop(stopTime);
 }
 
+function startFunMachineVoice(context, destination, chord, semitone, mode = "auto_chord") {
+  const now = context.currentTime;
+  if (activeFunVoice) {
+    stopFunMachineVoice(activeFunVoice.semitone, true);
+  }
+
+  const pitchClasses = mode === "auto_chord" && chord?.pitchClasses?.length
+    ? chord.pitchClasses
+    : [semitone % 12];
+  const rootPc = chord?.rootPc ?? (semitone % 12);
+  const baseOctave = 48;
+  const strumSec = 0.008;
+  const holdBoost = 1 + interaction.hold * 0.2;
+  const basePeak = 0.32 * holdBoost;
+  const notePeak = basePeak / Math.sqrt(pitchClasses.length);
+  const attack = 0.024;
+  const sustainLevel = notePeak * 0.88;
+
+  const voiceGain = context.createGain();
+  voiceGain.gain.setValueAtTime(0.0001, now);
+  voiceGain.gain.linearRampToValueAtTime(1.0, now + attack);
+  voiceGain.connect(destination);
+
+  const nodesToStop = [];
+
+  for (const [idx, pc] of pitchClasses.entries()) {
+    const noteStart = now + idx * strumSec;
+    let midi = baseOctave + pc;
+    if (idx > 0 && midi < baseOctave + rootPc) {
+      midi += 12;
+    }
+    const freq = midiToFrequency(midi);
+
+    const oscReed = context.createOscillator();
+    oscReed.type = "sawtooth";
+    oscReed.frequency.setValueAtTime(freq, noteStart);
+
+    const oscBody = context.createOscillator();
+    oscBody.type = "triangle";
+    oscBody.frequency.setValueAtTime(midiToFrequency(midi - 12), noteStart);
+
+    const lfo = context.createOscillator();
+    const lfoGain = context.createGain();
+    lfo.type = "sine";
+    lfo.frequency.setValueAtTime(5.5, noteStart);
+    lfoGain.gain.setValueAtTime(9, noteStart);
+    lfo.connect(lfoGain);
+    lfoGain.connect(oscReed.detune);
+    lfoGain.connect(oscBody.detune);
+
+    const filter = context.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(2400, noteStart);
+    filter.Q.setValueAtTime(1.8, noteStart);
+
+    const noteGain = context.createGain();
+    noteGain.gain.setValueAtTime(0.0001, noteStart);
+    noteGain.gain.linearRampToValueAtTime(notePeak, noteStart + attack);
+    noteGain.gain.setValueAtTime(sustainLevel, noteStart + attack + 0.01);
+
+    oscReed.connect(filter);
+    oscBody.connect(filter);
+    filter.connect(noteGain).connect(voiceGain);
+
+    lfo.start(noteStart);
+    oscReed.start(noteStart);
+    oscBody.start(noteStart);
+
+    nodesToStop.push(lfo, oscReed, oscBody);
+  }
+
+  activeFunVoice = {
+    semitone,
+    voiceGain,
+    nodesToStop,
+    startTime: now,
+    context,
+  };
+}
+
+function stopFunMachineVoice(semitone = null, immediateCrossfade = false) {
+  if (!activeFunVoice) return;
+  if (semitone !== null && semitone !== undefined && activeFunVoice.semitone !== semitone) return;
+
+  const voice = activeFunVoice;
+  activeFunVoice = null;
+  const context = voice.context;
+  const now = context.currentTime;
+
+  if (immediateCrossfade) {
+    voice.voiceGain.gain.cancelScheduledValues(now);
+    voice.voiceGain.gain.setValueAtTime(voice.voiceGain.gain.value || 0.8, now);
+    voice.voiceGain.gain.linearRampToValueAtTime(0.0001, now + 0.040);
+    const stopTime = now + 0.050;
+    for (const node of voice.nodesToStop) {
+      try { node.stop(stopTime); } catch {}
+    }
+  } else {
+    const minHold = 0.40;
+    const releaseStart = Math.max(now, voice.startTime + minHold);
+    const releaseDuration = 0.20;
+    voice.voiceGain.gain.cancelScheduledValues(releaseStart);
+    voice.voiceGain.gain.setValueAtTime(voice.voiceGain.gain.value || 0.8, releaseStart);
+    voice.voiceGain.gain.exponentialRampToValueAtTime(0.0001, releaseStart + releaseDuration);
+    const stopTime = releaseStart + releaseDuration + 0.06;
+    for (const node of voice.nodesToStop) {
+      try { node.stop(stopTime); } catch {}
+    }
+  }
+}
+
 function highlightBeatStep(stepIndex) {
   const normalized = ((stepIndex % 12) + 12) % 12;
   activeBeatStep = normalized;
@@ -3391,64 +3498,6 @@ function renderFunSequencerGrid() {
   }
 }
 
-function runFunStandaloneScheduler() {
-  if (funStandaloneTimer) {
-    window.clearTimeout(funStandaloneTimer);
-    funStandaloneTimer = null;
-  }
-  if (!audioContext || muted) return;
-  if (activeHeldFunKey === null && funStandaloneRemainingSteps <= 0) {
-    for (const k of elements.funKeyboard?.querySelectorAll(".fun-key.is-pressed") || []) {
-      k.classList.remove("is-pressed");
-    }
-    return;
-  }
-  if (!activeFunProgression) return;
-
-  const context = audioContext;
-  const now = context.currentTime;
-  const dest = getFunMachineDirectDestination(context);
-  const stepDuration = Math.max(0.22, (60 / activeTempoBpm) / 2);
-
-  while (funStandaloneNextTime < now + 0.35 && (activeHeldFunKey !== null || funStandaloneRemainingSteps > 0)) {
-    const stepIdx = funStandaloneStep % 12;
-    const stepItem = activeFunProgression.steps[stepIdx];
-    const playTime = Math.max(now + 0.015, funStandaloneNextTime);
-
-    if (funMachineMode === "auto_chord") {
-      scheduleFunMachineChord(context, dest, stepItem.chord, playTime, stepDuration * 0.94);
-      scheduleFunMachineLeadNote(context, dest, stepItem.melodyPitch, playTime, stepDuration * 0.94);
-    } else {
-      scheduleFunMachineLeadNote(context, dest, activeFunProgression.rootPc, playTime, stepDuration * 0.94);
-    }
-
-    const delayMs = Math.max(0, (playTime - now) * 1000);
-    const targetStep = stepIdx;
-    const keyInfo = FUN_KEY_MAP[activeFunProgression.rootPc];
-    const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${activeFunProgression.rootPc}`;
-    const holdText = activeHeldFunKey !== null ? "HELD" : "PLAYING";
-
-    window.setTimeout(() => {
-      flashSequencerStep(targetStep);
-      if (elements.funMachineTelemetry && activeFunProgression) {
-        if (funMachineMode === "auto_chord") {
-          elements.funMachineTelemetry.textContent = `${keyLabel} ${holdText} · ${activeFunProgression.summary} · STEP @${String(targetStep + 1).padStart(2, "0")} (${stepItem.chord.name} + ${stepItem.melodyNote})`;
-        } else {
-          elements.funMachineTelemetry.textContent = `${keyLabel} ${holdText} · SOLO LEAD NOTE (${keyInfo ? keyInfo.note : stepItem.chord.name})`;
-        }
-      }
-    }, delayMs);
-
-    funStandaloneNextTime = playTime + stepDuration;
-    funStandaloneStep += 1;
-    if (activeHeldFunKey === null) {
-      funStandaloneRemainingSteps -= 1;
-    }
-  }
-
-  funStandaloneTimer = window.setTimeout(runFunStandaloneScheduler, 50);
-}
-
 async function triggerFunKey(semitone, isKeyDown = true) {
   if (semitone === null || semitone === undefined) return;
   const normSemi = ((Math.trunc(semitone) % 13) + 13) % 13;
@@ -3458,10 +3507,11 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     if (activeHeldFunKey === normSemi) {
       activeHeldFunKey = null;
       if (keyBtn) keyBtn.classList.remove("is-pressed");
-      if (currentTransport && elements.funMachineTelemetry && activeFunProgression) {
+      stopFunMachineVoice(normSemi);
+      if (elements.funMachineTelemetry && activeFunProgression) {
         const keyInfo = FUN_KEY_MAP[normSemi];
         const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${normSemi}`;
-        elements.funMachineTelemetry.textContent = `${keyLabel} RELEASED · PROGRESSION ARMED`;
+        elements.funMachineTelemetry.textContent = `${keyLabel} RELEASED · PROGRESSION ARMED: ${activeFunProgression.summary}`;
       }
     }
     return;
@@ -3490,7 +3540,6 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     }
   }
 
-  const now = context.currentTime;
   activeFunProgression = buildFunProgression(
     normSemi,
     funMachineChordQuality,
@@ -3506,41 +3555,23 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   }
 
   if (targetStep !== null && targetStep >= 0 && targetStep < 12) {
-    customProgression[targetStep] = activeFunProgression.steps[0].chord;
+    customProgression[targetStep] = activeFunProgression.chords[0];
     applyEnsembleConductor();
     renderFunSequencerGrid();
     flashSequencerStep(targetStep);
   }
 
-  if (currentTransport && !muted && currentScore) {
-    const burstStep = targetStep !== null ? targetStep : (activeBeatStep >= 0 ? activeBeatStep : 0);
-    const keyPlayTime = Math.max(context.currentTime + 0.015, now + 0.015);
-    const firstStepItem = activeFunProgression.steps[burstStep % 12];
+  // Play the sustained organ chord over top of the accompaniment (unchained from tempo steps)
+  const dest = getFunMachineDirectDestination(context);
+  const primaryChord = activeFunProgression.chords[0];
+  startFunMachineVoice(context, dest, primaryChord, normSemi, funMachineMode);
 
-    if (funMachineMode === "auto_chord") {
-      scheduleFunMachineChord(context, currentTransport.funBus, firstStepItem.chord, keyPlayTime, 0.35);
-      scheduleFunMachineLeadNote(context, currentTransport.funBus, firstStepItem.melodyPitch, keyPlayTime, 0.35);
-    } else {
-      scheduleFunMachineLeadNote(context, currentTransport.funBus, normSemi, keyPlayTime, 0.35);
-    }
-
-    const burstAt = keyPlayTime + 0.005;
-    scheduleBassStep(context, currentTransport, currentScore, burstStep, burstAt, 0.24);
-    scheduleHarmonyStep(context, currentTransport, currentScore, burstStep, burstAt, 0.28);
-    scheduleChimeStep(context, currentTransport, currentScore, burstStep, burstAt, 0.3);
-    scheduleChantStep(context, currentTransport, currentScore, burstStep, burstAt, 0.32);
-
-    if (elements.funMachineTelemetry) {
-      const keyInfo = FUN_KEY_MAP[normSemi];
-      const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${normSemi}`;
-      const punchInfo = targetStep !== null ? ` · PUNCHED INTO STEP @${String(targetStep + 1).padStart(2, "0")}` : "";
-      elements.funMachineTelemetry.textContent = `${keyLabel} HELD · ${activeFunProgression.summary}${punchInfo}`;
-    }
-  } else {
-    funStandaloneStep = 0;
-    funStandaloneNextTime = Math.max(context.currentTime + 0.015, now + 0.015);
-    funStandaloneRemainingSteps = 4;
-    runFunStandaloneScheduler();
+  if (elements.funMachineTelemetry) {
+    const keyInfo = FUN_KEY_MAP[normSemi];
+    const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${normSemi}`;
+    const punchInfo = targetStep !== null ? ` · PUNCHED INTO STEP @${String(targetStep + 1).padStart(2, "0")}` : "";
+    const modeLabel = funMachineMode === "auto_chord" ? `${primaryChord.name} ${primaryChord.quality.toUpperCase()} CHORD` : "SOLO LEAD NOTE";
+    elements.funMachineTelemetry.textContent = `${keyLabel} HELD · ${modeLabel} OVER ACCOMPANIMENT · ${activeFunProgression.summary}${punchInfo}`;
   }
 }
 
@@ -3728,35 +3759,21 @@ async function playScore(score) {
       scheduleChimeStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleChantStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
       scheduleFungalBioStep(context, transport, score, currentStep, transport.nextNoteTime, stepDuration);
-      let chordToPlay = customProgression[currentStep % 12];
-      let melodyPitchToPlay = null;
+      // Fun Machine: play sequenced custom chords when no manual live key is held
+      if (customProgression[currentStep % 12] && activeHeldFunKey === null && funMachineMode === "auto_chord") {
+        scheduleFunMachineChord(context, transport.funBus, customProgression[currentStep % 12], transport.nextNoteTime, soundingDuration);
+      }
 
-      if (activeHeldFunKey !== null && activeFunProgression) {
-        const stepItem = activeFunProgression.steps[currentStep % 12];
-        chordToPlay = stepItem.chord;
-        melodyPitchToPlay = stepItem.melodyPitch;
-        if (funMachineRec) {
-          customProgression[currentStep % 12] = chordToPlay;
-          applyEnsembleConductor();
-          renderFunSequencerGrid();
-        }
-        const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
+      // Punch-in recording: if REC is armed while a key is held, stamp the chord into passing beat steps
+      if (funMachineRec && activeHeldFunKey !== null && activeFunProgression) {
+        customProgression[currentStep % 12] = activeFunProgression.chords[0];
+        applyEnsembleConductor();
+        renderFunSequencerGrid();
         const targetStep = currentStep % 12;
-        const keyInfo = FUN_KEY_MAP[activeHeldFunKey];
-        const keyLabel = keyInfo ? `[${keyInfo.displayKey}] (${keyInfo.note})` : `KEY #${activeHeldFunKey}`;
+        const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
         window.setTimeout(() => {
           flashSequencerStep(targetStep);
-          if (elements.funMachineTelemetry && activeFunProgression) {
-            elements.funMachineTelemetry.textContent = `${keyLabel} HELD · ${activeFunProgression.summary} · STEP @${String(targetStep + 1).padStart(2, "0")} (${stepItem.chord.name} + ${stepItem.melodyNote})`;
-          }
         }, delayMs);
-      }
-
-      if (chordToPlay && funMachineMode === "auto_chord") {
-        scheduleFunMachineChord(context, transport.funBus, chordToPlay, transport.nextNoteTime, soundingDuration);
-      }
-      if (melodyPitchToPlay !== null) {
-        scheduleFunMachineLeadNote(context, transport.funBus, melodyPitchToPlay, transport.nextNoteTime, soundingDuration);
       }
       if (parlorAcousticsEnabled && parlorTickEnabled) {
         scheduleClockworkTick(context, output, transport.nextNoteTime, currentStep, parlorAcousticsLevel);
@@ -4912,6 +4929,10 @@ for (const chip of document.querySelectorAll(".fun-chip")) {
         activeGenre,
         currentScore ? currentScore.root : 0
       );
+      if (audioContext && !muted) {
+        const dest = getFunMachineDirectDestination(audioContext);
+        startFunMachineVoice(audioContext, dest, activeFunProgression.chords[0], activeHeldFunKey, funMachineMode);
+      }
     }
     updateFunKeyboardChordLabels();
     if (elements.funMachineTelemetry) {
