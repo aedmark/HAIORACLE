@@ -93,7 +93,10 @@ test("every ensemble bus reaches the destination with its documented routing", (
   for (const bus of ["beatBus", "bassBus", "funBus", "chantBus"]) {
     assert.equal(reaches(edges, graph[bus].id, graph.filter.id), false, `${bus} bypasses the creature filter`);
   }
-  assert.ok(reaches(edges, graph.filter.id, graph.parlorReverbSend.id));
+  for (const bus of ["mix", "harmonyBus", "chimeBus", "fungalBus", "beatBus"]) {
+    assert.ok(reaches(edges, graph[bus].id, graph.parlorReverbSend.id), `${bus} is heard in the chamber`);
+  }
+  assert.ok(!reaches(edges, graph.bassBus.id, graph.parlorReverbSend.id), "the bass stays out of the chamber");
   assert.ok(reaches(edges, graph.chantBus.id, graph.parlorReverbSend.id), "the choir still reaches the chamber reverb");
   assert.ok(reaches(edges, graph.chantBus.id, graph.delay.id), "the choir still reaches the delay");
   assert.ok(reaches(edges, graph.funBus.id, graph.parlorReverbSend.id), "the accompanist pad blooms in the chamber reverb");
@@ -185,7 +188,7 @@ test("parlor layers start silent when switched off", () => {
     parlor: parlorSendLevels({ enabled: true, reverbEnabled: false, crackleEnabled: true, level: 0.5 }),
   });
   assert.equal(graph.parlorReverbSend.gain.value, SILENT_GAIN);
-  assert.equal(graph.parlorCrackleGain.gain.value, 0.42 * 0.5);
+  assert.equal(graph.parlorCrackleGain.gain.value, 0.21 * 0.5, "the crackle sits at half its original level");
   assert.deepEqual(
     parlorSendLevels({ enabled: false, reverbEnabled: true, crackleEnabled: true, level: 1 }),
     { reverb: SILENT_GAIN, crackle: SILENT_GAIN },

@@ -621,3 +621,25 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P4-02, P6-01; the design and layout pass.
 
 **Next session should start with:** the design and layout pass.
+
+### Session 23: 2026-10-19: the four-wing workstation
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** The design and layout pass after the DAW phase: group the controls into perform, mix, and keep, fix the six-button action column, the scattered DAW controls, and the tall preset field at phone width.
+
+**Done:** D-027 (maintainer chose "DAW first, plates last" and no sticky transport for now).
+
+**Changed:**
+1. `index.html`: the reading strip keeps only the name and score card. Four `workstation-wing` sections, each with an `h2` drawer label: Perform (`#transport-deck` now holds restart, volume, and tempo; Fun Machine; Kapellmeister), Mix (Bandstand, mixer, parlor acoustics), Keep (Session Ledger, new `#export-engine` desk), The Band (Plates II–VI). No id was renamed or removed.
+2. `styles.css`: parchment wing headers; the transport rail as a standalone console; volume and tempo side by side; the calling-slip input styling scoped to `#phrase` (it was leaking into the preset field, hence the 61 px phone height); `.beat-engine`, `.fun-machine-body`, and `.kapellmeister-body` use `minmax(0, 1fr)` columns and white keys may shrink, so nothing is clipped at 320 px; footer links wrap; a 2×2 transport grid below 480 px; the unused `.replay-button` and `.reading-actions` rules are gone.
+3. `tests/static.test.mjs`: a new wing-order test; the mixer test title no longer claims the old placement.
+4. DECISIONS (D-027, D-024 point 5 marked superseded), ARCHITECTURE, TESTING, CHANGELOG, `docs/manual.json` and the rebuilt `manual.html`.
+
+**Verified:** 76/76 Node checks, docs and manual checks clean. Built-in browser at 1100, 768, 375, and 320 px: page `scrollWidth` equals the viewport and no element inside the cabinet extends past it except the intentional mixer rail. Before the change, the Kapellmeister select and readout (to 431 px at 375) and the footer links (to 835 px at 768) were silently clipped. Preset field 61 → 31 px tall at 375. Real `Tab`/`Shift+Tab` from the summon form reaches the transport, volume, and tempo before the Fun Machine. The DOM-order sweep of every focusable control runs header → form → Perform → Mix → Keep → Band → footer, with no positive `tabindex`. PLAY, STOP, and every export and share button still work after the move, and the console shows no errors.
+
+**Not verified:** Maintainer review of the new look; Safari and Firefox; screen-reader pass over the new headings (P4-02).
+
+**Left undone:** Sticky transport; P4-02, P6-01.
+
+**Next session should start with:** a hands-on pass over the four wings in Safari and Firefox, or P4-02.

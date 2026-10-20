@@ -506,6 +506,19 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Maintainer answers (2026-10-20):** Raw Esoteric Chaos stays a rulebook in the file (`Raw Esoteric Chaos is an unfettered genre.`). A seventh playable genre is a follow-up; P5-23 only proves it is possible, using the fixture-only genre in phase 5.
 
+## D-034 The parlor room hears the whole band, and its layers are measured (2026-10-20, status: accepted)
+
+**Context:** The maintainer could not hear the chamber reverb or the clockwork escapement, and found the wax crackle overpowering. Measuring exported loops on "three pigeons in a borrowed coat" (each layer toggled, renders bit-identical) found the reverb 45 dB under the mix (−70 dBFS RMS), the escapement 25 dB under with peaks masked by the crackle, and the crackle the loudest room layer (−39 dBFS RMS). The reverb only heard the creature filter's output plus choir and pad; a narrow bandpass creature nearly silences that filter (the reason for D-024's dry lead tap), and beat and bass never reached the room.
+
+**Decision:**
+1. **Every voice but the bass is heard in the room**, post-fader so the console's balance carries in. The pulse is sent at half strength (`PARLOR_BEAT_SEND`), and the bass stays dry; the 180 Hz highpass (D-022) remains.
+2. **Measured levels, named constants** (`src/ensemble.mjs`): reverb send 1.0 per unit of ambience (was 0.32), crackle 0.21 (was 0.42, halved as asked). At the default 55 % ambience the reverb sits 14–21 dB under the mix on three sample creatures, and the crackle 20–21 dB under.
+3. **A clock you can hear:** the escapement strike roughly doubles, the case knock doubles with a 70 ms ring, and the ratchet nearly doubles. It peaks near the mix's peaks and sits about 17 dB under its RMS.
+
+**Alternatives:** Re-normalizing the impulse response instead of raising the send would change the D-022 fog-horn tuning and its test. Sending the bass would muddy the room even through the highpass.
+
+**Consequences:** Every creature now sounds like it plays in a room; the overall mix level and peaks are unchanged (the compressor holds them). Stems carry each channel's own share of the room, as before. This needs a listening pass to confirm the balance.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

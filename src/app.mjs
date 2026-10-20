@@ -35,7 +35,7 @@ import {
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
-import { SILENT_GAIN, buildEnsembleGraph, parlorSendLevels } from "./ensemble.mjs";
+import { PARLOR_CRACKLE_PER_LEVEL, PARLOR_REVERB_PER_LEVEL, SILENT_GAIN, buildEnsembleGraph, parlorSendLevels } from "./ensemble.mjs";
 import {
   ACCOMPANIMENT_CHANNEL_IDS,
   FADER_UNITY,
@@ -2087,7 +2087,7 @@ function updateAudioInteraction() {
   if (transport.parlorReverbSend && parlorAcousticsEnabled && parlorReverbEnabled) {
     const glassProximity = Math.max(0, (field.radius - 0.5) / 0.5);
     const glassBoost = 1 + glassProximity * 0.45;
-    transport.parlorReverbSend.gain.setTargetAtTime(0.32 * parlorAcousticsLevel * glassBoost, now, 0.05);
+    transport.parlorReverbSend.gain.setTargetAtTime(PARLOR_REVERB_PER_LEVEL * parlorAcousticsLevel * glassBoost, now, 0.05);
   }
 }
 
@@ -2444,6 +2444,9 @@ function ensureParlorImpulseResponse(context, durationSeconds = 1.6) {
   return buffer;
 }
 
+// The escapement sits on the master output, under nothing but the master
+// volume. Its levels were roughly doubled after measuring it 9 dB under the
+// mix's peaks and masked by the wax crackle.
 function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55) {
   if (!parlorAcousticsEnabled || !parlorTickEnabled || level <= 0) return;
   const isQuarter = stepIndex % 3 === 0;
@@ -2460,7 +2463,7 @@ function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55
     strikeOsc.frequency.setValueAtTime(startFreq, at);
     strikeOsc.frequency.exponentialRampToValueAtTime(endFreq, at + 0.012);
 
-    const strikeAmp = (isHighTick ? 0.20 : 0.17) * effLevel;
+    const strikeAmp = (isHighTick ? 0.42 : 0.36) * effLevel;
     strikeGain.gain.setValueAtTime(strikeAmp, at);
     strikeGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.016);
 
@@ -2474,13 +2477,13 @@ function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55
     bodyOsc.type = "sine";
     bodyOsc.frequency.setValueAtTime(isHighTick ? 520 : 340, at);
 
-    const bodyAmp = (isHighTick ? 0.13 : 0.15) * effLevel;
+    const bodyAmp = (isHighTick ? 0.30 : 0.32) * effLevel;
     bodyGain.gain.setValueAtTime(bodyAmp, at);
-    bodyGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.036);
+    bodyGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.07);
 
     bodyOsc.connect(bodyGain).connect(destination);
     bodyOsc.start(at);
-    bodyOsc.stop(at + 0.04);
+    bodyOsc.stop(at + 0.075);
   } else {
     // Intervening mechanical brass gear ratchet tick
     const ratchetOsc = context.createOscillator();
@@ -2494,7 +2497,7 @@ function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55
     ratchetFilter.type = "highpass";
     ratchetFilter.frequency.value = 2000;
 
-    const ratchetAmp = 0.048 * effLevel;
+    const ratchetAmp = 0.09 * effLevel;
     ratchetGain.gain.setValueAtTime(ratchetAmp, at);
     ratchetGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.009);
 
@@ -5521,12 +5524,12 @@ elements.parlorAcousticsToggle?.addEventListener("click", () => {
   if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
     currentTransport.parlorReverbSend?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorReverbEnabled ? 0.32 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorReverbEnabled ? PARLOR_REVERB_PER_LEVEL * parlorAcousticsLevel : 0.0001,
       now,
       0.025,
     );
     currentTransport.parlorCrackleGain?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorCrackleEnabled ? PARLOR_CRACKLE_PER_LEVEL * parlorAcousticsLevel : 0.0001,
       now,
       0.025,
     );
@@ -5542,12 +5545,12 @@ elements.parlorAcousticsLevel?.addEventListener("input", (e) => {
   if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
     currentTransport.parlorReverbSend?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorReverbEnabled ? 0.32 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorReverbEnabled ? PARLOR_REVERB_PER_LEVEL * parlorAcousticsLevel : 0.0001,
       now,
       0.025
     );
     currentTransport.parlorCrackleGain?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorCrackleEnabled ? PARLOR_CRACKLE_PER_LEVEL * parlorAcousticsLevel : 0.0001,
       now,
       0.025
     );
@@ -5559,7 +5562,7 @@ elements.chipCrackle?.addEventListener("click", () => {
   if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
     currentTransport.parlorCrackleGain?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorCrackleEnabled ? 0.42 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorCrackleEnabled ? PARLOR_CRACKLE_PER_LEVEL * parlorAcousticsLevel : 0.0001,
       now,
       0.025
     );
@@ -5572,7 +5575,7 @@ elements.chipReverb?.addEventListener("click", () => {
   if (audioContext && currentTransport) {
     const now = audioContext.currentTime;
     currentTransport.parlorReverbSend?.gain.setTargetAtTime(
-      parlorAcousticsEnabled && parlorReverbEnabled ? 0.32 * parlorAcousticsLevel : 0.0001,
+      parlorAcousticsEnabled && parlorReverbEnabled ? PARLOR_REVERB_PER_LEVEL * parlorAcousticsLevel : 0.0001,
       now,
       0.025
     );

@@ -4,11 +4,11 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 32, on `main`: the Kapellmeister menu, title, and motto come from the Inform 7 rulebooks, and the Perform wing no longer reflows when its text changes (P5-23 phase 4, D-033); session 31 moved the conductor onto the rulebooks; session 30 wrote the rulebooks; session 29 froze the migration contract; session 28: per-phrase arrangements keep at least five band voices (D-032) and the transport no longer rearranges the page once per loop; session 27 gave each phrase its own INTERCAL arrangement (D-031), and section and harmony readouts no longer reflow the layout; session 26 made the conductor's registers decide the arrangement, which the transport, console, MIDI markers, and stem README display (D-030); session 25 reworked the Fun Machine is reworked into a one-finger accompanist the band follows (D-029); session 24 added the INTERCAL 1972 Grand Ensemble Conductor (`src/conductor.i`, `src/intercal.mjs`) overcomes the continuous wall of sound with dynamic arrangement breathing across Exposition, Antiphony, Tutti, and Breakdown, and the Esoteric Fun Machine is overhauled into a warm, lush analog synth pad lead with real-time ensemble accompaniment modulation (P5-22, D-028)._
+_Last updated: 2026-10-20, session 33, on `main`: the parlor room's reverb now hears the band, the escapement is audible, and the crackle is halved (D-034); session 32: the Kapellmeister menu, title, and motto come from the Inform 7 rulebooks, and the Perform wing no longer reflows when its text changes (P5-23 phase 4, D-033); session 31 moved the conductor onto the rulebooks; session 30 wrote the rulebooks; session 29 froze the migration contract; session 28: per-phrase arrangements keep at least five band voices (D-032) and the transport no longer rearranges the page once per loop; session 27 gave each phrase its own INTERCAL arrangement (D-031), and section and harmony readouts no longer reflow the layout; session 26 made the conductor's registers decide the arrangement, which the transport, console, MIDI markers, and stem README display (D-030); session 25 reworked the Fun Machine is reworked into a one-finger accompanist the band follows (D-029); session 24 added the INTERCAL 1972 Grand Ensemble Conductor (`src/conductor.i`, `src/intercal.mjs`) overcomes the continuous wall of sound with dynamic arrangement breathing across Exposition, Antiphony, Tutti, and Breakdown, and the Esoteric Fun Machine is overhauled into a warm, lush analog synth pad lead with real-time ensemble accompaniment modulation (P5-22, D-028)._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-22 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-20, session 32, local Linux environment)
+**Verified** (2026-10-20, session 33, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
@@ -84,6 +84,29 @@ _Last updated: 2026-10-20, session 32, on `main`: the Kapellmeister menu, title,
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 33: 2026-10-20: the parlor room, measured
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Maintainer: the reverb and clockwork escapement did not seem to do anything, and the crackle should be about half as loud.
+
+**Done:** D-034.
+
+**Measured (exported WAV loops, each layer toggled, repeat renders differ by −130 dB):** before the change, on "three pigeons", the reverb was −70.3 dBFS RMS (45 dB under the −25.4 dBFS mix), the escapement −50.3 RMS with −16.5 peaks, and the crackle −39.2 RMS. Cause of the silent reverb: it heard only the creature filter's output (plus choir and pad); bandpass creatures nearly silence that filter, and beat and bass never reached it.
+
+**Changed:**
+1. `src/ensemble.mjs`: the reverb hears lead, organ, chimes, choir, fungal, and pad post-fader, plus the pulse at half strength (`PARLOR_BEAT_SEND`); the bass stays dry. New constants `PARLOR_REVERB_PER_LEVEL` (0.32 → 1.0) and `PARLOR_CRACKLE_PER_LEVEL` (0.42 → 0.21).
+2. `src/app.mjs`: live ambience, toggles, and the vitrine glass boost use the constants; the escapement strike, case knock (now 70 ms), and ratchet are roughly doubled.
+3. `tests/transport.test.mjs`: the chamber hears every bus but the bass; the crackle is pinned at half.
+
+**Verified after:** reverb 14.2–21.2 dB under the mix on three creatures (pigeons −21.2, moon −14.2, hai oracle −15.6); escapement −42 RMS, peaks −9.7; crackle −45.3 RMS (−6 dB). Mix RMS and peaks unchanged. 101/101 Node checks.
+
+**Not verified:** Listening. Whether the room now sounds right, and whether "half as loud" should be −10 dB (perceived half) rather than this −6 dB.
+
+**Left undone:** P5-23 phase 5; listening pass; P4-02; P6-01.
+
+**Next session should start with:** the maintainer's listen to the room, then P5-23 phase 5.
 
 ### Session 32: 2026-10-20: Inform 7 rulebooks, phase 4
 
@@ -282,27 +305,5 @@ _Last updated: 2026-10-20, session 32, on `main`: the Kapellmeister menu, title,
 5. `tests/oracle.test.mjs`, `tests/static.test.mjs`: Added unit tests for INTERCAL execution, politeness validation (`ICL079`/`ICL099`), `COME FROM` turnaround, dynamic arrangement masks, and Fun Machine real-time ensemble following (79/79 tests passing).
 
 **Verified:** 79/79 Node tests passing; `python3 tools/check_docs.py` 0 errors, 0 warnings; `python3 tools/manual.py check docs/manual.json` 6 sections, 33 entries, 0 errors, 0 warnings.
-
-### Session 23: 2026-10-19: the four-wing workstation
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** The design and layout pass after the DAW phase: group the controls into perform, mix, and keep, fix the six-button action column, the scattered DAW controls, and the tall preset field at phone width.
-
-**Done:** D-027 (maintainer chose "DAW first, plates last" and no sticky transport for now).
-
-**Changed:**
-1. `index.html`: the reading strip keeps only the name and score card. Four `workstation-wing` sections, each with an `h2` drawer label: Perform (`#transport-deck` now holds restart, volume, and tempo; Fun Machine; Kapellmeister), Mix (Bandstand, mixer, parlor acoustics), Keep (Session Ledger, new `#export-engine` desk), The Band (Plates II–VI). No id was renamed or removed.
-2. `styles.css`: parchment wing headers; the transport rail as a standalone console; volume and tempo side by side; the calling-slip input styling scoped to `#phrase` (it was leaking into the preset field, hence the 61 px phone height); `.beat-engine`, `.fun-machine-body`, and `.kapellmeister-body` use `minmax(0, 1fr)` columns and white keys may shrink, so nothing is clipped at 320 px; footer links wrap; a 2×2 transport grid below 480 px; the unused `.replay-button` and `.reading-actions` rules are gone.
-3. `tests/static.test.mjs`: a new wing-order test; the mixer test title no longer claims the old placement.
-4. DECISIONS (D-027, D-024 point 5 marked superseded), ARCHITECTURE, TESTING, CHANGELOG, `docs/manual.json` and the rebuilt `manual.html`.
-
-**Verified:** 76/76 Node checks, docs and manual checks clean. Built-in browser at 1100, 768, 375, and 320 px: page `scrollWidth` equals the viewport and no element inside the cabinet extends past it except the intentional mixer rail. Before the change, the Kapellmeister select and readout (to 431 px at 375) and the footer links (to 835 px at 768) were silently clipped. Preset field 61 → 31 px tall at 375. Real `Tab`/`Shift+Tab` from the summon form reaches the transport, volume, and tempo before the Fun Machine. The DOM-order sweep of every focusable control runs header → form → Perform → Mix → Keep → Band → footer, with no positive `tabindex`. PLAY, STOP, and every export and share button still work after the move, and the console shows no errors.
-
-**Not verified:** Maintainer review of the new look; Safari and Firefox; screen-reader pass over the new headings (P4-02).
-
-**Left undone:** Sticky transport; P4-02, P6-01.
-
-**Next session should start with:** a hands-on pass over the four wings in Safari and Firefox, or P4-02.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).

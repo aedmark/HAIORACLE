@@ -14,6 +14,7 @@
 
 ### Fixed
 
+- Hear the parlor room: the chamber reverb now hears every voice except the bass (it was nearly silent, especially for bandpass creatures), the clockwork escapement ticks clearly, and the wax crackle sits at half its old level so it no longer overpowers the band.
 - Read every Tonnetz compass label clearly: long region names such as "Phrygian Inflection" and "Lydian Mystic (#4)" no longer pile on top of each other. Each region now has its own column, a numbered glyph, and a two-line label underneath.
 - Make the band follow a held or punched Fun Machine chord in the right key; it previously played the chord transposed by the creature's tonic. The sequencer grid also names generated steps correctly now.
 - Keep the preset-name field one line tall on phones, and stop the Kapellmeister rulebook, Fun Machine keyboard, and footer links from being cut off on narrow screens.

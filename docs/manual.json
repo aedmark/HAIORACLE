@@ -694,8 +694,9 @@
             "lead": "`src/app.mjs` procedurally generates the acoustic space using Web Audio API nodes:",
             "points": [
               "`ensureWaxCrackleBuffer()` generates a 3.0s stereo buffer synthesizing acoustic recording horn resonance (350–3200 Hz bandpass), Poisson-distributed dust pops, and 78 RPM turntable groove rumble.",
-              "`ensureParlorImpulseResponse()` generates a 1.6s stereo impulse response modeling discrete early reflections (12–98 ms) and high-frequency velvet drape absorption for a Web Audio `ConvolverNode`.",
-              "`scheduleClockworkTick()` synthesizes mechanical brass escapement clicks on quarter-beats (steps 0, 3, 6, 9) with high 'tick' (2600 Hz) and lower 'tock' (1800 Hz) transients.",
+              "`ensureParlorImpulseResponse()` generates a 1.6s stereo impulse response modeling discrete early reflections (12–98 ms) and high-frequency velvet drape absorption for a Web Audio `ConvolverNode`. Every voice but the bass is heard in the room, post-fader (the pulse at half strength), sitting about 14–21 dB under the mix at the default ambience (D-034).",
+              "Levels per unit of the ambience slider live in `src/ensemble.mjs`: `PARLOR_REVERB_PER_LEVEL` (1.0) and `PARLOR_CRACKLE_PER_LEVEL` (0.21, halved after listening found the crackle overpowering).",
+              "`scheduleClockworkTick()` synthesizes mechanical brass escapement clicks on quarter-beats (steps 0, 3, 6, 9) with high 'tick' (2600 Hz) and lower 'tock' (1800 Hz) transients and a wooden case knock, loud enough to read through the band (peaks near the mix's).",
               "`exportSpecimenWav()` incorporates the identical crackle, chamber convolution, and clockwork escapement ticks into rendered 16-bit PCM WAV loops."
             ]
           },

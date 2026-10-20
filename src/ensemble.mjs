@@ -48,10 +48,19 @@ const DELAY_MULTIPLIERS = Object.freeze([1, 1.5, 0.75, 2, 1.25, 0.5]);
 const DRONE_INTERVALS = Object.freeze([-12, -5, 7]);
 const DRONE_DETUNE = Object.freeze([-5, 4, -3]);
 
+// Parlor room levels per unit of the ambience slider. The crackle was halved
+// after listening found it overpowered the band (it had been 0.42). The
+// reverb send was raised from 0.32 once the room heard every voice: measured
+// on exported loops, it sat 25-29 dB under the mix, too faint to hear as a room.
+export const PARLOR_REVERB_PER_LEVEL = 1.0;
+export const PARLOR_CRACKLE_PER_LEVEL = 0.21;
+// The pulse is heard in the room at half strength; the bass stays dry.
+export const PARLOR_BEAT_SEND = 0.5;
+
 export function parlorSendLevels({ enabled, reverbEnabled, crackleEnabled, level }) {
   return {
-    reverb: enabled && reverbEnabled ? 0.32 * level : SILENT_GAIN,
-    crackle: enabled && crackleEnabled ? 0.42 * level : SILENT_GAIN,
+    reverb: enabled && reverbEnabled ? PARLOR_REVERB_PER_LEVEL * level : SILENT_GAIN,
+    crackle: enabled && crackleEnabled ? PARLOR_CRACKLE_PER_LEVEL * level : SILENT_GAIN,
   };
 }
 
@@ -197,8 +206,11 @@ export function buildEnsembleGraph(context, score, {
   delay.connect(compressor);
   compressor.connect(output).connect(context.destination);
 
-  // Parlor chamber reverb. The 180 Hz highpass send keeps sub-bass and filter
-  // resonance out of the convolver (D-022).
+  // Parlor chamber reverb. Every voice but the bass is heard in the room,
+  // post-fader so the console's balance carries into it. It used to hear only
+  // the creature filter's output (plus choir and pad), which a narrow bandpass
+  // creature nearly silences, so the room was ~45 dB under the mix. The 180 Hz
+  // highpass keeps sub-bass and resonance out of the convolver (D-022).
   const parlorReverbSend = context.createGain();
   const parlorReverbFilter = context.createBiquadFilter();
   parlorReverbFilter.type = "highpass";
@@ -218,9 +230,11 @@ export function buildEnsembleGraph(context, score, {
     }
   }
   parlorReverbSend.gain.setValueAtTime(parlor.reverb, now);
-  filter.connect(parlorReverbFilter).connect(parlorReverbSend).connect(parlorConvolver).connect(compressor);
-  strips.chant.out.connect(parlorReverbFilter);
-  strips.fun.out.connect(parlorReverbFilter);
+  parlorReverbFilter.connect(parlorReverbSend).connect(parlorConvolver).connect(compressor);
+  for (const id of ["lead", "harmony", "chime", "chant", "fungal", "fun"]) strips[id].out.connect(parlorReverbFilter);
+  const parlorBeatSend = context.createGain();
+  parlorBeatSend.gain.value = PARLOR_BEAT_SEND;
+  strips.beat.out.connect(parlorBeatSend).connect(parlorReverbFilter);
 
   let parlorCrackleSource = null;
   let parlorCrackleGain = null;
