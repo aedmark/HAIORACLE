@@ -45,6 +45,14 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
                               +-> Piet & FRACTRAN VMs (src/pad.piet, src/chimes.frac) -> 12-step prime-ratio chimes -^
                               +-> Shakespeare VM (src/chant.spl) -> 12-scene formant vowel choir -^
                               +-> Canvas creature + text reading
+
+Web Audio composition (per-step schedulers in src/app.mjs)
+      -> eight buses -> mixer strips: voicing trim -> fader -> pan (+ live VU analyser)   [src/ensemble.mjs, src/mixer.mjs]
+      -> creature filter / compressor / delay / parlor reverb -> master output
+      live:    master transport (play / pause / stop, Space / Esc) drives the look-ahead scheduler   [src/transport.mjs]
+      offline: renderEnsembleLoop() -> WAV mix | 9 solo stems -> STORED ZIP | noteLog -> SMF Type 1   [src/zip.mjs, src/midi.mjs]
+
+session state <-> captureSession() / applySession() <-> strict validator <-> localStorage presets | .fun files   [src/session.mjs]
 ```
 
 | Interface | Producer | Consumer | Contract |
