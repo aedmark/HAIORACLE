@@ -47,24 +47,30 @@ export function soundingPitchClasses(chord) {
 }
 
 /**
- * Builds what a held key plays.
+ * Builds what a held key plays. `keySemitone` is the key's position on the
+ * 13-key manual (0 = the left C .. 12 = C'); its chord depends only on the
+ * pitch class, but `lift` (the position itself) raises every voice so the
+ * manual climbs like a keyboard and C' sounds an octave above C.
  *  - swell: one genre-coloured chord on the key, held across all four regions.
  *  - arpeggio: the same single chord, rippled in the band's rhythm.
  *  - progression: the genre's 4-chord progression from the key, with a lead line.
- * Returns `{ style, key, chords[4], steps[12], summary }`, where each step has
- * `chord`, `regionIndex`, `isRegionStart`, and `leadPitch` (semitones above C4,
- * or null when the style has no lead line).
+ * Returns `{ style, key, lift, chords[4], steps[12], summary }`, where each
+ * step has `chord`, `regionIndex`, `isRegionStart`, and `leadPitch` (semitones
+ * above C4, already lifted, or null when the style has no lead line).
  */
 export function buildPerformance(keySemitone, style, genre, tonicRoot = 0) {
   if (!ACCOMPANIMENT_STYLES.includes(style)) throw new RangeError(`Unknown accompaniment style: ${style}`);
-  const key = ((Math.trunc(keySemitone) % 12) + 12) % 12;
+  const position = Math.max(0, Math.min(12, Math.trunc(keySemitone) || 0));
+  const key = position % 12;
+  const lift = position;
   let chords;
   let leadPitches = Array(12).fill(null);
   let summary;
   if (style === "progression") {
     const progression = buildFunProgression(key, "auto", genre, tonicRoot);
     chords = progression.chords;
-    leadPitches = progression.steps.map((step) => step.melodyPitch);
+    // melodyPitch climbs from the key's pitch class; C' lifts it an octave.
+    leadPitches = progression.steps.map((step) => step.melodyPitch + (position - key));
     summary = chords.map(chordText).join(" → ");
   } else {
     const chord = buildFunChord(key, "auto", genre, tonicRoot);
@@ -80,25 +86,31 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0) {
       leadPitch: leadPitches[index],
     });
   });
-  return Object.freeze({ style, key, chords: Object.freeze([...chords]), steps: Object.freeze(steps), summary });
+  return Object.freeze({ style, key, lift, chords: Object.freeze([...chords]), steps: Object.freeze(steps), summary });
 }
 
 /**
  * Voices a chord for the pad: the root alone in the low register, the other
  * tones spread above it. Given the previous voicing, each upper tone takes the
  * octave nearest the previous upper voices, so chord changes glide instead of
- * jumping (simple voice leading).
+ * jumping (simple voice leading). `lift` raises the whole register by that
+ * many semitones: the key's position on the manual.
  */
-export function padVoicing(chord, previous = null) {
+export function padVoicing(chord, previous = null, lift = 0) {
   const pcs = soundingPitchClasses(chord);
   const rootPc = ((chord.rootPc % 12) + 12) % 12;
   // Keep the root below the upper voices (C3..F#3, or G2..B2 for higher keys).
-  const root = PAD_ROOT_BASE + rootPc >= UPPER_LOW ? PAD_ROOT_BASE + rootPc - 12 : PAD_ROOT_BASE + rootPc;
+  const low = UPPER_LOW + lift;
+  const high = UPPER_HIGH + lift;
+  // The root is the highest of its pitch class below the upper window.
+  let root = PAD_ROOT_BASE + rootPc;
+  while (root >= low) root -= 12;
+  while (root + 12 < low) root += 12;
   const previousUpper = previous ? previous.slice(1) : null;
   const upper = [];
   for (const pc of pcs) {
     const candidates = [];
-    for (let midi = UPPER_LOW; midi < UPPER_HIGH; midi += 1) if (midi % 12 === pc) candidates.push(midi);
+    for (let midi = low; midi < high; midi += 1) if (midi % 12 === pc) candidates.push(midi);
     let choice = candidates[0];
     if (previousUpper?.length) {
       const distance = (midi) => Math.min(...previousUpper.map((p) => Math.abs(p - midi)));
@@ -115,8 +127,8 @@ export function padVoicing(chord, previous = null) {
  * down the chord an octave above the pad, continuing across steps so the
  * figure flows through the whole loop.
  */
-export function arpeggioNotes(chord, stepIndex, subdivisions = 2) {
-  const upper = padVoicing(chord).slice(1).map((midi) => midi + 12);
+export function arpeggioNotes(chord, stepIndex, subdivisions = 2, lift = 0) {
+  const upper = padVoicing(chord, null, lift).slice(1).map((midi) => midi + 12);
   const tones = [...upper, upper[0] + 12];
   const cycle = [...tones, ...tones.slice(1, -1).reverse()];
   return Array.from({ length: subdivisions }, (_, k) => cycle[(stepIndex * subdivisions + k) % cycle.length]);

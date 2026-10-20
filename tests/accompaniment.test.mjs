@@ -117,3 +117,34 @@ test("Fun Machine chords shift into the conductor's tonic-relative frame", async
   const raw = buildFunChord(5, "auto", "raw_chaos", 51);
   assert.deepEqual([...toTonicRelative(raw, 51).pitchClasses], []);
 });
+
+test("the manual climbs like a keyboard: every voice rises with the key, and C' sounds an octave above C", () => {
+  for (const genre of GENRES) {
+    for (const style of ACCOMPANIMENT_STYLES) {
+      const low = buildPerformance(0, style, genre, 52);
+      const high = buildPerformance(12, style, genre, 52);
+      assert.equal(low.lift, 0);
+      assert.equal(high.lift, 12);
+      assert.equal(high.key, 0, "C' plays the same chords as C");
+      assert.deepEqual(high.chords, low.chords);
+      assert.deepEqual(
+        high.steps.map((s) => s.leadPitch),
+        low.steps.map((s) => (s.leadPitch === null ? null : s.leadPitch + 12)),
+        `${genre} ${style}: C' sings the lead an octave higher`,
+      );
+      for (const chord of low.chords) {
+        assert.deepEqual(padVoicing(chord, null, 12), padVoicing(chord).map((m) => m + 12), "the pad lifts an octave");
+        assert.deepEqual(arpeggioNotes(chord, 3, 2, 12), arpeggioNotes(chord, 3, 2).map((m) => m + 12), "the arpeggio lifts an octave");
+      }
+    }
+  }
+  // Each key's pad and arpeggio sit in a window that rises a semitone per key.
+  for (let position = 0; position <= 12; position += 1) {
+    const chord = buildPerformance(position, "swell", "victorian_tonnetz", 52).chords[0];
+    const voicing = padVoicing(chord, null, position);
+    assert.ok(voicing[0] < 55 + position && voicing[0] >= 43 + position, `root of key ${position}`);
+    assert.ok(voicing.slice(1).every((m) => m >= 55 + position && m < 79 + position), `upper voices of key ${position}`);
+    const arpeggio = arpeggioNotes(chord, 0, 6, position);
+    assert.ok(Math.min(...arpeggio) >= 67 + position, `arpeggio of key ${position} starts above its window`);
+  }
+});

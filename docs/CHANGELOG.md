@@ -14,6 +14,7 @@
 
 ### Fixed
 
+- Play the Fun Machine manual like a keyboard: each key now sounds higher than the one to its left, and C' sounds an octave above C (they used to play in the same octave).
 - Load the new version after an update without a hard reload: every module and esoteric source URL carries a version stamp, so the browser can no longer run a fresh module against a cached old one ("does not provide an export named ..."). `python3 tools/serve.py` serves the page for local development without stale caching.
 - Hear the parlor room: the chamber reverb now hears every voice except the bass (it was nearly silent, especially for bandpass creatures), the clockwork escapement ticks clearly, and the wax crackle sits at half its old level so it no longer overpowers the band.
 - Read every Tonnetz compass label clearly: long region names such as "Phrygian Inflection" and "Lydian Mystic (#4)" no longer pile on top of each other. Each region now has its own column, a numbered glyph, and a two-line label underneath.

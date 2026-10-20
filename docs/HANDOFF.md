@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 34, on `main`: every module and source URL carries a content-hash version stamp, so a browser can no longer run a fresh module against a cached old one, and `python3 tools/serve.py` is the dev server (D-035); session 33: the parlor room's reverb now hears the band, the escapement is audible, and the crackle is halved (D-034); session 32: the Kapellmeister menu, title, and motto come from the Inform 7 rulebooks, and the Perform wing no longer reflows when its text changes (P5-23 phase 4, D-033); session 31 moved the conductor onto the rulebooks; session 30 wrote the rulebooks; session 29 froze the migration contract; session 28: per-phrase arrangements keep at least five band voices (D-032) and the transport no longer rearranges the page once per loop; session 27 gave each phrase its own INTERCAL arrangement (D-031), and section and harmony readouts no longer reflow the layout; session 26 made the conductor's registers decide the arrangement, which the transport, console, MIDI markers, and stem README display (D-030); session 25 reworked the Fun Machine is reworked into a one-finger accompanist the band follows (D-029); session 24 added the INTERCAL 1972 Grand Ensemble Conductor (`src/conductor.i`, `src/intercal.mjs`) overcomes the continuous wall of sound with dynamic arrangement breathing across Exposition, Antiphony, Tutti, and Breakdown, and the Esoteric Fun Machine is overhauled into a warm, lush analog synth pad lead with real-time ensemble accompaniment modulation (P5-22, D-028)._
+_Last updated: 2026-10-20, session 35, on `main`: the Fun Machine manual climbs like a keyboard, so C' sounds an octave above C (D-036); session 34 stamped every module and source URL with a content hash (D-035)._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-22 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
@@ -86,6 +86,28 @@ _Last updated: 2026-10-20, session 34, on `main`: every module and source URL ca
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 35: 2026-10-20: the manual climbs like a keyboard
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Maintainer: "the C on the left hand side is the same octave as the one on the right. That's not how keyboards work."
+
+**Done:** D-036.
+
+**Changed:**
+1. `src/accompaniment.mjs`: `buildPerformance()` keeps the key's manual position as `lift` (0..12); `leadPitch` includes it; `padVoicing(chord, previous, lift)` and `arpeggioNotes(chord, step, subdivisions, lift)` raise their windows by it.
+2. `src/app.mjs`: held-key pads (region, bridge, and idle audition) and arpeggios pass `performance.lift`.
+3. `tests/accompaniment.test.mjs`: C' equals C plus an octave in every genre and style, and every key's pad and arpeggio sit in a window that rises a semitone per key.
+4. `index.html`: `ASSET_VERSION` restamped (`node tools/stamp_assets.mjs`, D-035) because `src/` changed.
+
+**Verified:** 106/106 Node checks. In the browser (served by `tools/serve.py`), C pads 48,55,60,64 and C' pads 60,67,72,76; keys 0, 4, 7, 11, and 12 climb in pad, arpeggio, and lead; holding C and then C' over the loop raised no console errors. The first browser run used a cached pre-D-035 `index.html`, which is the very problem D-035 prevents from now on.
+
+**Not verified:** Listening, especially how bright the top keys are.
+
+**Left undone:** P5-23 phase 5; listening passes (parlor room, manual); P4-02; P6-01.
+
+**Next session should start with:** the maintainer's listen, then P5-23 phase 5.
 
 ### Session 33: 2026-10-20: the parlor room, measured
 
@@ -290,22 +312,5 @@ _Last updated: 2026-10-20, session 34, on `main`: every module and source URL ca
 **Left undone:** Listening pass; P4-02; P6-01.
 
 **Next session should start with:** a listening pass on the accompanist.
-
-### Session 24: 2026-10-20: INTERCAL 1972 conductor and Fun Machine synth pad overhaul
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Overcome the ensemble's continuous wall of sound by introducing INTERCAL 1972 as master arrangement conductor (`src/conductor.i`, `src/intercal.mjs`), and overhaul the Esoteric Fun Machine into a warm, lush analog synth pad lead with real-time band modulation (P5-22, D-028).
-
-**Done:** P5-22, D-028 (maintainer direction: "INTERCAL it is. Let's overcome the wall of sound first. I have issues with the one-finger chord organ right now").
-
-**Changed:**
-1. `src/conductor.i`: Canonical 27-statement INTERCAL 1972 conductor score with 6 polite statements (22.2% politeness ratio), orchestrating dynamic section breathing across Exposition (groove foundation), Antiphony (chords/choir conversation while lead breathes), Tutti (full apotheosis), and Breakdown with `(100) PLEASE COME FROM (60)` loop turnaround cadence interception at step 11.
-2. `src/intercal.mjs`: Dependency-free INTERCAL 1972 virtual machine and dynamic arrangement orchestrator. Enforces politeness bounds ($0.20 \le P \le 0.334$), executes 16-bit and 32-bit registers, bitwise mingle (`$`) and select (`~`), statement labels, `PLEASE IGNORE` and `PLEASE REMEMBER` channel masks, `COME FROM` flow interception, and `GIVE UP`.
-3. `src/app.mjs`: Overhauled `scheduleFunMachineChord()`, `scheduleFunMachineLeadNote()`, `startFunMachineVoice()`, and `stopFunMachineVoice()` into a warm, lush analog synth pad lead (dual detuned triangle/saw waves, sine sub-bass foundation, slow 0.35 Hz chorus shimmer LFO, 920 Hz resonant lowpass filter with gentle 65ms attack swell and velvety release). Connected `triggerFunKey` to `applyEnsembleConductor(activeFunProgression.steps.map(s => s.chord))` so Brainfuck walking bass, Befunge chord organ, Piet chimes, Shakespeare choir, and LOLCODE lead immediately modulate to accompany the user's chords in real time. Eliminated duplicate lead note clash during `auto_chord` mode in `scheduleAhead()`. Applied INTERCAL arrangement masks in `scheduleEnsembleStep()` and `renderEnsembleLoop()`.
-4. `AGENTS.md`, `ROADMAP.md` (P5-22), `docs/DECISIONS.md` (D-028), `docs/ARCHITECTURE.md`, `docs/CHANGELOG.md`, `docs/manual.json` and rebuilt `manual.html`.
-5. `tests/oracle.test.mjs`, `tests/static.test.mjs`: Added unit tests for INTERCAL execution, politeness validation (`ICL079`/`ICL099`), `COME FROM` turnaround, dynamic arrangement masks, and Fun Machine real-time ensemble following (79/79 tests passing).
-
-**Verified:** 79/79 Node tests passing; `python3 tools/check_docs.py` 0 errors, 0 warnings; `python3 tools/manual.py check docs/manual.json` 6 sections, 33 entries, 0 errors, 0 warnings.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).

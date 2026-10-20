@@ -534,6 +534,16 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Consequences:** Any `src/` edit needs a restamp before the tests pass. A new module must join `MODULES` in `index.html`; the test names the missing file. The only gap left is a stale `index.html`, which is consistent with its own old URLs. A visitor could then get new bytes under an old stamp only if the browser had evicted part of the old set. Serving the page with `no-cache` closes that gap, and a normal reload revalidates the page in every major browser. `styles.css` is not stamped: a stale stylesheet cannot break module linking.
 
+## D-036 The Fun Machine manual climbs like a keyboard (2026-10-20, status: accepted)
+
+**Context:** The maintainer noticed that the left C and the right C' of the 13-key manual sounded in the same octave. The accompanist reduced every key to its pitch class and voiced the pad, arpeggio, and lead in fixed registers, so C' equalled C and keys further right did not reliably sound higher (B's arpeggio sat below C's).
+
+**Decision:** A performance carries `lift`, the key's position on the manual (0 for the left C up to 12 for C'). The chord, and what the band follows, still depend only on the pitch class. The pad's voicing window, the arpeggio (which derives from it), and the lead line all rise by `lift` semitones, so every key sits a semitone above the one to its left and C' sounds exactly an octave above C. Voice leading still picks the nearest octave within the lifted window. Punched sequencer chords keep the unlifted register.
+
+**Alternatives:** Lifting only C' by an octave would leave the keys between C and C' in fixed registers (B under C). Re-voicing each chord from its own root would make progressions jump instead of glide.
+
+**Consequences:** Keys to the right sound brighter and higher; C' reaches G6 at the top of its arpeggio. This refines D-029's voicing, and it needs a listening pass at the top of the manual.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

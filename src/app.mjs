@@ -3773,11 +3773,12 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     const bridge = regionStart - context.currentTime;
     if (bridge > 0.12) {
       const chord = performance.steps[nextStep % 12].chord;
-      transport.funVoicing = padVoicing(chord, transport.funVoicing);
+      transport.funVoicing = padVoicing(chord, transport.funVoicing, performance.lift);
       schedulePadChord(context, transport.funBus, chord, context.currentTime, bridge + 0.2, { level, voicing: transport.funVoicing });
     }
   } else {
-    schedulePadChord(context, getFunMachineDirectDestination(context), performance.chords[0], context.currentTime, 30, { level });
+    const chord = performance.chords[0];
+    schedulePadChord(context, getFunMachineDirectDestination(context), chord, context.currentTime, 30, { level, voicing: padVoicing(chord, null, performance.lift) });
   }
 }
 
@@ -3948,7 +3949,7 @@ async function playScore(score, { cursor = 0 } = {}) {
         if (stepInfo.isRegionStart) {
           let regionDuration = 0;
           for (let k = 0; k < 3; k += 1) regionDuration += loopStepDuration(score, currentStep + k);
-          transport.funVoicing = padVoicing(stepInfo.chord, transport.funVoicing);
+          transport.funVoicing = padVoicing(stepInfo.chord, transport.funVoicing, performance.lift);
           schedulePadChord(context, transport.funBus, stepInfo.chord, at, regionDuration, {
             level: FUN_PAD_LEVEL[performance.style],
             voicing: transport.funVoicing,
@@ -3957,7 +3958,7 @@ async function playScore(score, { cursor = 0 } = {}) {
         }
         if (performance.style === "arpeggio") {
           const half = stepDuration / 2;
-          arpeggioNotes(stepInfo.chord, stepIndex, 2).forEach((midi, k) => {
+          arpeggioNotes(stepInfo.chord, stepIndex, 2, performance.lift).forEach((midi, k) => {
             scheduleArpNote(context, transport.funBus, midi, at + k * half, half, {
               accent: stepInfo.isRegionStart && k === 0,
               pan: k === 0 ? -0.3 : 0.3,
