@@ -19,6 +19,8 @@ import {
   setFader,
   setMuted,
   setPan,
+  silentSettings,
+  stemSettings,
   toggleMute,
   toggleSolo,
 } from "../src/mixer.mjs";
@@ -117,4 +119,14 @@ test("meter readings report RMS and peak in dBFS with a -60 dB floor", () => {
   assert.equal(meterFill(-30), 0.5);
   assert.equal(meterFill(6), 1, "overs pin to the top of the column");
   assert.equal(meterReading([]).rms, 0);
+});
+
+test("stem settings open exactly one channel at its fader and pan, ignoring mute and solo", () => {
+  let state = setPan(setFader(createMixerState(), "chant", 90), "chant", -40);
+  state = toggleMute(toggleSolo(state, "bass"), "chant");
+  const stem = stemSettings(state, "chant");
+  assert.deepEqual(stem.chant, { gain: faderGain(90), pan: -0.4 });
+  for (const id of MIXER_CHANNEL_IDS.filter((id) => id !== "chant")) assert.equal(stem[id].gain, 0, id);
+  assert.ok(MIXER_CHANNEL_IDS.every((id) => silentSettings(state)[id].gain === 0));
+  assert.throws(() => stemSettings(state, "theremin"), RangeError);
 });

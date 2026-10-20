@@ -784,6 +784,31 @@
             {"label": "Architecture Record D-018", "target": "docs/DECISIONS.md"}
           ],
           "related": ["broadsheet-png-export", "client-url-sharing", "mycelial-fruiting-growth"]
+        },
+        {
+          "id": "stem-and-midi-export",
+          "title": "Nine-Stem WAV Bundle & Type 1 MIDI Score",
+          "summary": "Exports every channel as an aligned WAV stem in one ZIP, and the whole loop as a multi-track MIDI file.",
+          "tags": ["export", "stems", "zip", "midi", "daw"],
+          "what": "`EXPORT 9 STEMS (ZIP)` downloads `…-stems.zip` holding eight channel stems (lead, manual, pulse, bass, organ, chimes, choir, mycelium), a parlor-room stem of crackle and clockwork, and a README with tempo and loop length. `WRITE MIDI SCORE` downloads a Standard MIDI File (Type 1) with a tempo track and seven named instrument tracks, ready to drop into any DAW.",
+          "how": {
+            "lead": "`renderEnsembleLoop()` in `src/app.mjs` drives both exports through the shared graph; `src/zip.mjs` and `src/midi.mjs` write the files:",
+            "points": [
+              "Each channel stem renders the loop with only that strip open at its fader and pan (`stemSettings()`), mute and solo ignored, keeping its own chamber reverb; the room stem renders with every strip closed.",
+              "`createStoredZip()` writes STORED entries with CRC-32 and the DOS epoch date, so the same stems always make the same archive, and rejects path-traversal entry names.",
+              "During a schedule-only pass, each pitched scheduler records its note through `logNote()`, so MIDI comes from the code that makes the sound.",
+              "`buildMidiFile()` writes 480 PPQ tracks with General MIDI programs (drums on channel 10), clips notes to the loop, trims overlapping repeats, merges unisons, and scales velocity from each part's loudest event."
+            ]
+          },
+          "why": "Players wanted to carry a creature into a real studio (roadmap P5-21). Rendering through the shared graph means stems sound exactly like their channel in the mix; capturing notes from the schedulers keeps MIDI from drifting away from the audio. Both writers are a few hundred lines of browser-native code, keeping the zero-dependency boundary (ADR D-025).",
+          "evidence": [
+            {"label": "Offline renderer and exporters", "target": "src/app.mjs"},
+            {"label": "STORED ZIP writer", "target": "src/zip.mjs"},
+            {"label": "SMF Type 1 writer", "target": "src/midi.mjs"},
+            {"label": "Writer tests", "target": "tests/export.test.mjs"},
+            {"label": "Architecture Record D-025", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["deterministic-wav-export", "parlor-mixing-console", "master-transport"]
         }
       ]
     }

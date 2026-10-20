@@ -26,6 +26,7 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Shakespeare runtime | `src/shakespeare.mjs` | `runShakespeare()`, `composeChant()` | `src/chant.spl`, validated score, browser host |
 | Dramatic choir spell | `src/chant.spl` | 2001 Shakespeare Programming Language play | Shakespeare VM output |
 | Ensemble audio graph | `src/ensemble.mjs` | `buildEnsembleGraph()` | live `AudioContext` and offline WAV `OfflineAudioContext` in `src/app.mjs` |
+| Export writers | `src/zip.mjs`, `src/midi.mjs` | `createStoredZip()`, `buildMidiFile()` | stem and MIDI exports in `src/app.mjs` |
 | Mixer model | `src/mixer.mjs` | `channelSettings()`, `isChannelAudible()`, `meterReading()` | mixing console and strips in `src/app.mjs`, `src/ensemble.mjs` |
 | Master transport | `src/transport.mjs` | `transportReduce()`, `transportCommandForKey()` | transport deck and hotkeys in `src/app.mjs` |
 | Harmonic conductor | `src/conductor.mjs` | `conductEnsemble()`, `eulerGradus()`, `buildTonnetzSpine()`, `bjorklund()` | all 6 esoteric engines, `src/app.mjs` |
@@ -62,6 +63,9 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 | Channel voicing | `CHANNEL_VOICING_DB` in `src/ensemble.mjs` | each strip's trim node | fixed default balance in dB before the fader (lead +6, choir +12, others 0); never changed at runtime |
 | Ensemble graph | `buildEnsembleGraph()` | `playScore()`, `exportSpecimenWav()` | one node topology for live and offline audio; drums, bass, Fun Machine, and choir bypass the creature filter (the choir still feeds the delay and parlor reverb), while lead, organ, chimes, and mycelium pass through it, and bandpass creatures add a parallel dry lead tap at −6 dB; `stop` ends looping sources for offline renders |
 | Mixer console | `#mixer-engine` strips, plate ENGAGE/SILENCE switches, Bandstand buttons | `updateMixer()` → strip gains and pans in live and offline graphs | eight channels; fader `0..100` (80 = unity, 100 = +12 dB), pan `−100..100`, mute, solo; any solo isolates soloed channels and an explicit mute still wins; post-pan analyser drives VU meters live only |
+| Offline render | `renderEnsembleLoop()` | WAV, stem, and MIDI exports | one 12-step loop through the shared graph starting at 0.04 s with a 1.35 s tail; overrides for strip levels, room levels, clockwork, muted plates, and note capture |
+| Stem bundle | `#export-stems` | browser download | STORED ZIP of `01-lead.wav` … `08-mycelium.wav` (each channel alone at its fader and pan, mute/solo ignored), `09-parlor-room.wav`, and `README.txt` |
+| MIDI score | `#export-midi`, scheduler `logNote()` calls | browser download | SMF Type 1, 480 PPQ; conductor track plus seven named parts on separate channels (drums on channel 10); notes clipped to the loop |
 | Master transport | `#transport-deck` buttons, `Space`/`Esc` via `transportCommandForKey()` | `runTransportCommand()` | `stopped`/`playing`/`paused` with a raw step cursor; pause resumes after the last audible step; audio runs only while playing and unmuted |
 | Melody motif | `melodyFor()` | audio transport | exactly twelve frozen semitone offsets selected and rotated by validated score fields |
 | Master volume | range input | active transport output gain | session-local `0..100` value mapped through a bounded perceptual curve; changes ramp over 18 ms |
@@ -83,6 +87,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 - Live playback and WAV export build the same node topology. Enforced by `tests/transport.test.mjs` and D-023.
 - Every ensemble bus passes through its own mixer strip (voicing trim → fader → pan), and the console opens at unity faders, centered, with default balance set only by `CHANNEL_VOICING_DB`. Enforced by `tests/transport.test.mjs`, `tests/mixer.test.mjs`, and D-024.
 - A plate's ENGAGE/SILENCE switch and its mixer mute are the same state. Enforced by `tests/static.test.mjs` and D-024.
+- WAV mix, stems, and MIDI all come from one offline scheduling path, and MIDI notes are recorded by the same scheduler calls that produce sound. Enforced by `tests/static.test.mjs` and D-025.
 - Audio loops only while the transport is `playing` and the bell is unmuted; mute never changes transport state. Enforced by `runTransportCommand()` and D-023.
 - Master volume changes only the post-compressor output gain and never changes the deterministic creature score. Enforced structurally in `tests/static.test.mjs` (D-009).
 - Vitrine tap, hold, and drag gestures modulate transient visual morphing, pitch, intensity, and synthesized percussion and decay smoothly back to the immutable score on release. Enforced structurally in `tests/static.test.mjs` (D-012).

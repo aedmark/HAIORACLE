@@ -309,6 +309,20 @@ Releasing the pointer decays all offsets smoothly back to the creature's determi
 
 **Consequences:** On bandpass creatures (score voices 1 and 5) the organ, chimes, and mycelium stay filtered and quiet; the lead and choir are rescued by points 7 and 8. Hard-panning a channel puts its full level on one side (+3 dB acoustic power versus center), which is standard balance behavior for a stereo source. The Fun Machine strip applies only while the transport is running; idle keyboard auditioning still uses its direct path. The parlor room (reverb, crackle, ticks) keeps its own console and is the ninth stem planned for P5-21.
 
+## D-025 Stem bundle and MIDI score built from the shared graph and live schedulers (2026-10-19, status: accepted)
+
+**Context:** P5-21 asks for a nine-track WAV stem ZIP and a multi-track Standard MIDI File without adding dependencies (D-001). D-023 and D-024 already put every voice through one graph with per-channel strips, so the open questions were what each stem contains, where MIDI notes come from, and how to package files in the browser.
+
+**Decision:**
+1. **One offline renderer (`renderEnsembleLoop()`)** schedules a 12-step loop through `buildEnsembleGraph()` for the WAV mix, each stem, and MIDI capture. Overrides replace strip levels (`channels`), room levels (`parlor`), clockwork (`clockTicks`), render muted plates (`engageAll`), and capture notes (`captureNotes`); `render: false` schedules without rendering.
+2. **Stems:** eight channel stems, each rendered alone at its own console fader and pan with mute and solo ignored (`stemSettings()`), keeping its own chamber reverb but no crackle or clockwork. A ninth parlor-room stem carries the crackle and escapement at the room console's settings. All stems share the WAV loop's length, start offset, and master volume, so they line up at 0 s in any DAW. A README lists tempo, loop length, and contents.
+3. **ZIP (`src/zip.mjs`):** STORED entries with CRC-32 and the DOS epoch date, so identical stems produce identical archives. PCM barely compresses, and DEFLATE would mean a dependency or a much larger module. Entry names are validated against path traversal.
+4. **MIDI from the schedulers (`logNote()`):** each pitched scheduler records `{ channel, midi, at, duration, peak }` into an optional `transport.noteLog`, so the MIDI file comes from the same code that makes the sound rather than a parallel re-derivation that could drift. `src/midi.mjs` writes SMF Type 1 at 480 PPQ: a conductor track (title, tempo, 4/4), then LEAD, MANUAL, PULSE (GM drums on channel 10), BASS, ORGAN, CHIMES, and CHOIR with stock GM programs. Notes are clipped to the loop, repeated pitches are trimmed so no note-off cuts a newer note, and unison doublings merge. Velocity scales each part from its loudest event (40–127).
+
+**Alternatives:** Deriving MIDI from the VM step data directly would duplicate every scheduler's pitch logic. Rendering stems by muting the live console would make the bundle depend on whatever the player last soloed. A DEFLATE implementation or a library (JSZip, a MIDI writer) would breach the zero-dependency boundary for little gain.
+
+**Consequences:** Stems sum close to, not exactly to, the mix: the master compressor reacts to each stem separately and the wax crackle is random per render (measured −27 dB residual on "the moon owes me five dollars"). Just-intonation chimes round to the nearest equal-tempered note, and the mycelium voice is unpitched, so it is absent from MIDI. MIDI includes muted plates; stems include muted channels. A 9-stem bundle of a four-second loop is about 8.5 MB and renders in under two seconds on the test machine. The rhythm patterns with five cells still do not tile seamlessly at 12 steps (noted in HANDOFF since session 19).
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

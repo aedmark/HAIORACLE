@@ -17,9 +17,11 @@ import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
 import { composeScore, WAVEFORMS } from "./score.mjs";
+import { GM_DRUMS, MIDI_TRACKS, buildMidiFile, ticksForSeconds, velocitiesFor } from "./midi.mjs";
+import { createStoredZip } from "./zip.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
-import { buildEnsembleGraph, parlorSendLevels } from "./ensemble.mjs";
+import { SILENT_GAIN, buildEnsembleGraph, parlorSendLevels } from "./ensemble.mjs";
 import {
   ACCOMPANIMENT_CHANNEL_IDS,
   FADER_UNITY,
@@ -37,6 +39,8 @@ import {
   setFader,
   setMuted,
   setPan,
+  silentSettings,
+  stemSettings,
   toggleMute,
   toggleSolo,
 } from "./mixer.mjs";
@@ -75,6 +79,8 @@ const elements = {
   shareLink: document.querySelector("#share-link"),
   exportPng: document.querySelector("#export-png"),
   exportWav: document.querySelector("#export-wav"),
+  exportStems: document.querySelector("#export-stems"),
+  exportMidi: document.querySelector("#export-midi"),
   sound: document.querySelector("#sound-toggle"),
   transportDeck: document.querySelector("#transport-deck"),
   transportPlay: document.querySelector("#transport-play"),
@@ -2164,6 +2170,18 @@ function voiceStack(score, step) {
     : selected;
 }
 
+// Offline renders may set `transport.engageAll` (stems render every part even
+// if the console mutes it) and `transport.noteLog` (MIDI export captures every
+// pitched event from the same code that makes the sound). Live transports set
+// neither.
+function transportEngages(transport, id) {
+  return transport.engageAll === true || channelEngaged(id);
+}
+
+function logNote(transport, channel, midi, at, duration, peak) {
+  transport.noteLog?.push({ channel, midi: Math.round(midi), at, duration, peak });
+}
+
 function scheduleNote(context, transport, score, step, at, duration) {
   const field = harmonicField();
   const primaryNote = score.root + transport.melody[step % transport.melody.length];
@@ -2176,6 +2194,7 @@ function scheduleNote(context, transport, score, step, at, duration) {
   envelope.gain.exponentialRampToValueAtTime(peakGain, at + Math.max(0.01, attack));
   envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
   envelope.connect(transport.mix);
+  logNote(transport, "lead", primaryNote, at, duration, peakGain);
 
   const chorusPhaseCents = Math.sin(field.angle + step * 0.52) * (6 + 14 * field.radius);
   const layers = field.shiftedWeight > 0.04
@@ -2444,7 +2463,7 @@ function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55
 
 
 function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration) {
-  if (!channelEngaged("beat") || !currentBeat || !transport.beatBus) return;
+  if (!transportEngages(transport, "beat") || !currentBeat || !transport.beatBus) return;
   const step = currentBeat.steps[stepIndex % currentBeat.steps.length];
   if (!step) return;
 
@@ -2456,6 +2475,7 @@ function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration
     const startFreq = midiToFrequency(score.root - 5);
     const endFreq = Math.max(34, midiToFrequency(score.root - 24));
     const peak = (step.kick === 2 ? 0.24 : 0.13) * holdLift;
+    logNote(transport, "beat", GM_DRUMS.kick, at, 0.1, peak);
     const decay = Math.min(0.2, Math.max(0.11, stepDuration * 0.68));
     kickOsc.type = "sine";
     kickOsc.frequency.setValueAtTime(startFreq, at);
@@ -2477,6 +2497,7 @@ function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration
     snareFilter.frequency.setValueAtTime(1180 + (stepIndex % 3) * 160, at);
     snareFilter.Q.setValueAtTime(2.6, at);
     const peak = (step.snare === 2 ? 0.14 : 0.065) * holdLift;
+    logNote(transport, "beat", GM_DRUMS.snare, at, 0.1, peak);
     const decay = step.snare === 2 ? 0.11 : 0.065;
     snareGain.gain.setValueAtTime(0.0001, at);
     snareGain.gain.exponentialRampToValueAtTime(peak, at + 0.005);
@@ -2501,6 +2522,7 @@ function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration
   if (step.hat > 0) {
     const baseHatFreq = midiToFrequency(score.root + 19);
     const ratios = step.hat === 2 ? [1, 1.5] : [1];
+    logNote(transport, "beat", step.hat === 2 ? GM_DRUMS.openHat : GM_DRUMS.hat, at, 0.08, step.hat === 2 ? 0.068 : 0.036);
     for (const [idx, ratio] of ratios.entries()) {
       const hatOsc = context.createOscillator();
       const hatGain = context.createGain();
@@ -2519,7 +2541,7 @@ function scheduleBeatStep(context, transport, score, stepIndex, at, stepDuration
 }
 
 function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration) {
-  if (!channelEngaged("bass") || !currentBass || !transport.bassBus) return;
+  if (!transportEngages(transport, "bass") || !currentBass || !transport.bassBus) return;
   const step = currentBass.steps[stepIndex % currentBass.steps.length];
   if (!step || step.gate === 0) return;
 
@@ -2531,6 +2553,7 @@ function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration
   const glideFreq = midiToFrequency(nextMidi);
 
   const duration = Math.max(0.08, stepDuration * (step.gate === 2 ? 0.88 : 0.46));
+  logNote(transport, "bass", baseMidi, at, duration, step.gate === 2 ? 1 : 0.7);
   const holdBoost = 1 + interaction.hold * 0.16;
   const peak = (step.accent ? 0.21 : 0.145) * holdBoost;
 
@@ -2577,7 +2600,7 @@ function scheduleBassStep(context, transport, score, stepIndex, at, stepDuration
 }
 
 function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDuration) {
-  if (!channelEngaged("harmony") || !currentHarmony || !transport.harmonyBus) return;
+  if (!transportEngages(transport, "harmony") || !currentHarmony || !transport.harmonyBus) return;
   const step = currentHarmony.steps[stepIndex % currentHarmony.steps.length];
   if (!step || step.gate === 0) return;
 
@@ -2597,6 +2620,7 @@ function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDurat
     const noteStart = at + voiceIndex * strumSec;
     const midi = Math.min(84, Math.max(36, score.root + interval + harmonyShift));
     const freq = midiToFrequency(midi);
+    logNote(transport, "harmony", midi, noteStart, duration, isSustained ? 1 : 0.75);
     const osc = context.createOscillator();
     const voiceGain = context.createGain();
 
@@ -2617,7 +2641,7 @@ function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDurat
 }
 
 function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuration) {
-  if (!channelEngaged("chime") || !currentChimes || !transport.chimeBus) return;
+  if (!transportEngages(transport, "chime") || !currentChimes || !transport.chimeBus) return;
   const step = currentChimes.steps[stepIndex % currentChimes.steps.length];
   if (!step || step.gate === 0) return;
 
@@ -2626,6 +2650,8 @@ function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuratio
   const rootMidi = Math.min(84, score.root + 12 + chimeOctave);
   const rootFreq = midiToFrequency(rootMidi);
   const bellFreq = rootFreq * step.ratioValue;
+  // Just-intonation ratios round to the nearest equal-tempered MIDI note.
+  logNote(transport, "chime", rootMidi + 12 * Math.log2(step.ratioValue), at, stepDuration * (isAccented ? 1.6 : 1.0), isAccented ? 1 : 0.7);
   const holdBoost = 1 + interaction.hold * 0.16;
 
   // 1. FRACTRAN Just Intonation overtone chime bell locked to active Tonnetz chord
@@ -2688,7 +2714,7 @@ function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuratio
 }
 
 function scheduleChantStep(context, transport, score, stepIndex, at, stepDuration) {
-  if (!channelEngaged("chant") || !currentChant || !transport.chantBus) return;
+  if (!transportEngages(transport, "chant") || !currentChant || !transport.chantBus) return;
   const step = currentChant.steps[stepIndex % currentChant.steps.length];
   if (!step || step.gate === 0) return;
 
@@ -2697,6 +2723,7 @@ function scheduleChantStep(context, transport, score, stepIndex, at, stepDuratio
   const chantShift = interaction.pitchBend > 0.35 ? 7 : (interaction.pitchBend < -0.35 ? -5 : 0);
   const midi = Math.max(40, Math.min(82, score.root + step.registerOffset + step.interval + chantShift));
   const baseFreq = midiToFrequency(midi);
+  logNote(transport, "chant", midi, at, duration, isSoliloquy ? 1 : 0.75);
   const holdBoost = 1 + interaction.hold * 0.14;
 
   // Glottal source with gentle triangle-dominant blend and smooth vibrato
@@ -2844,7 +2871,7 @@ function getFunMachineDirectDestination(context) {
   return funMachineDryGain;
 }
 
-function scheduleFunMachineChord(context, destination, chord, at, duration) {
+function scheduleFunMachineChord(context, destination, chord, at, duration, transport = null) {
   if (!chord || !chord.pitchClasses || chord.pitchClasses.length === 0) return;
   const strumSec = 0.010;
   const holdBoost = 1 + interaction.hold * 0.2;
@@ -2862,6 +2889,7 @@ function scheduleFunMachineChord(context, destination, chord, at, duration) {
       midi += 12;
     }
     const freq = midiToFrequency(midi);
+    if (transport) logNote(transport, "fun", midi, noteStart, soundingTime, basePeak);
 
     const oscReed = context.createOscillator();
     oscReed.type = "sawtooth";
@@ -3723,7 +3751,7 @@ function scheduleEnsembleStep(context, transport, score, step, at, stepDuration,
   scheduleChimeStep(context, transport, score, step, at, stepDuration);
   scheduleChantStep(context, transport, score, step, at, stepDuration);
   scheduleFungalBioStep(context, transport, score, step, at, stepDuration);
-  if (parlorAcousticsEnabled && parlorTickEnabled) {
+  if (transport.clockTicks ?? (parlorAcousticsEnabled && parlorTickEnabled)) {
     scheduleClockworkTick(context, transport.output, at, step, parlorAcousticsLevel);
   }
 }
@@ -3738,7 +3766,7 @@ function scheduleSequencedFunChord(context, transport, step, at, stepDuration, s
   const isNewChord = customProgression[stepIndex] !== customProgression[prevStepIndex];
   if (isRegStart || isNewChord) {
     const chordDuration = isRegStart ? stepDuration * 3.0 : soundingDuration;
-    scheduleFunMachineChord(context, transport.funBus, customProgression[stepIndex], at, chordDuration);
+    scheduleFunMachineChord(context, transport.funBus, customProgression[stepIndex], at, chordDuration, transport);
   }
 }
 
@@ -4027,6 +4055,8 @@ function showScore(score) {
   if (elements.shareLink) elements.shareLink.disabled = false;
   if (elements.exportPng) elements.exportPng.disabled = false;
   if (elements.exportWav) elements.exportWav.disabled = false;
+  if (elements.exportStems) elements.exportStems.disabled = false;
+  if (elements.exportMidi) elements.exportMidi.disabled = false;
   try {
     const nextHash = encodeOmenHash(score.phrase);
     if (window.location.hash !== nextHash) {
@@ -4363,88 +4393,230 @@ function exportSpecimenPng() {
   }
 }
 
-async function exportSpecimenWav() {
-  if (!currentScore) return;
-  const score = currentScore;
-  const OfflineAudioCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-  if (!OfflineAudioCtx) {
+// --- Offline exports: WAV mix, stem bundle, MIDI score (P3-03, P5-21) ------
+
+const LOOP_START_OFFSET = 0.04;
+const LOOP_TAIL_SECONDS = 1.35; // Natural decay of delay repeats and resonant reverbs
+const STEM_FILES = Object.freeze([
+  ["lead", "01-lead", "LEAD · LOLCODE melody and drones"],
+  ["fun", "02-manual", "MANUAL · Fun Machine sequenced chords"],
+  ["beat", "03-pulse", "PULSE · Malbolge percussion"],
+  ["bass", "04-bass", "BASS · Brainfuck walking bass"],
+  ["harmony", "05-organ", "ORGAN · Befunge chord organ"],
+  ["chime", "06-chimes", "CHIMES · Piet/FRACTRAN bells and pads"],
+  ["chant", "07-choir", "CHOIR · Shakespeare formant voices"],
+  ["fungal", "08-mycelium", "MYCELIUM · bio-acoustic sonification"],
+]);
+
+function offlineAudioConstructor() {
+  return window.OfflineAudioContext || window.webkitOfflineAudioContext || null;
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+// Disables an export button while `task` runs, then restores its label.
+async function runExport(button, { idleHtml, busyText, doneText, failStatus }, task) {
+  if (!offlineAudioConstructor()) {
     elements.status.textContent = "OFFLINE AUDIO NOT SUPPORTED";
     return;
   }
-
-  elements.status.textContent = "RECORDING WAV LOOP...";
-  if (elements.exportWav) {
-    elements.exportWav.disabled = true;
-    elements.exportWav.textContent = "RECORDING... ✦";
+  if (button) {
+    button.disabled = true;
+    button.textContent = busyText;
   }
-
   try {
-    const pulse = activeTempoBpm || score.pulse;
-    const unit = 60 / pulse / 2;
-    const rhythm = RHYTHMS[score.rhythm];
-    const stepsCount = 12;
-    let loopDuration = 0;
-    for (let step = 0; step < stepsCount; step += 1) {
-      loopDuration += unit * rhythm[step % rhythm.length];
-    }
-    const tailDuration = 1.35; // Natural decay of delay repeats and resonant reverbs
-    const totalDuration = loopDuration + tailDuration;
-    const sampleRate = 44100;
-    const totalFrames = Math.ceil(totalDuration * sampleRate);
-
-    const offlineCtx = new OfflineAudioCtx(2, totalFrames, sampleRate);
-    const graph = buildEnsembleGraph(offlineCtx, score, ensembleGraphOptions(offlineCtx, {
-      start: 0,
-      stop: totalDuration,
-      unit,
-      fadeIn: false,
-    }));
-    const offlineTransport = {
-      ...graph,
-      melody: currentConductedMelody || melodyFor(score),
-    };
-
-    let stepTime = 0.04;
-    for (let step = 0; step < stepsCount; step += 1) {
-      const lengthMultiplier = rhythm[step % rhythm.length];
-      const stepDuration = unit * lengthMultiplier;
-      const gateRatio = Math.min(0.94, score.gate / 100);
-      const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
-      scheduleEnsembleStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration, soundingDuration);
-      scheduleSequencedFunChord(offlineCtx, offlineTransport, step, stepTime, stepDuration, soundingDuration);
-      stepTime += stepDuration;
-    }
-
-    const renderedBuffer = await offlineCtx.startRendering();
-    const wavBlob = audioBufferToWavBlob(renderedBuffer);
-    const filename = specimenFilenameFor(score, "wav");
-
-    const url = URL.createObjectURL(wavBlob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
-
-    elements.status.textContent = "SPECIMEN AUDIO RECORDED (WAV)";
-    if (elements.exportWav) {
-      elements.exportWav.textContent = "WAV RECORDED ✦";
+    await task();
+    if (button) {
+      button.textContent = doneText;
       window.setTimeout(() => {
-        if (elements.exportWav) {
-          elements.exportWav.disabled = false;
-          elements.exportWav.innerHTML = 'RECORD WAV LOOP <span aria-hidden="true">☊</span>';
-        }
+        button.disabled = false;
+        button.innerHTML = idleHtml;
       }, 1800);
     }
-  } catch (err) {
-    elements.status.textContent = "WAV EXPORT FAILED";
-    if (elements.exportWav) {
-      elements.exportWav.disabled = false;
-      elements.exportWav.innerHTML = 'RECORD WAV LOOP <span aria-hidden="true">☊</span>';
+  } catch (error) {
+    console.error(error);
+    elements.status.textContent = failStatus;
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = idleHtml;
     }
   }
+}
+
+/**
+ * Renders one 12-step loop offline through the shared graph. Options override
+ * the live console: `channels` and `parlor` replace strip and room levels,
+ * `clockTicks` forces the escapement on or off, `engageAll` renders muted
+ * plates, and `captureNotes` records every pitched event for MIDI. With
+ * `render: false` the loop is only scheduled, which is all MIDI capture needs.
+ */
+async function renderEnsembleLoop(score, {
+  channels,
+  parlor,
+  clockTicks,
+  engageAll = false,
+  captureNotes = false,
+  render = true,
+} = {}) {
+  const OfflineAudioCtx = offlineAudioConstructor();
+  const bpm = activeTempoBpm || score.pulse;
+  const unit = 60 / bpm / 2;
+  const rhythm = RHYTHMS[score.rhythm];
+  const stepsCount = 12;
+  let loopDuration = 0;
+  for (let step = 0; step < stepsCount; step += 1) {
+    loopDuration += unit * rhythm[step % rhythm.length];
+  }
+  const totalDuration = loopDuration + LOOP_TAIL_SECONDS;
+  const sampleRate = 44100;
+  const offlineCtx = new OfflineAudioCtx(2, Math.ceil(totalDuration * sampleRate), sampleRate);
+  const options = ensembleGraphOptions(offlineCtx, { start: 0, stop: totalDuration, unit, fadeIn: false });
+  if (channels) options.channels = channels;
+  if (parlor) options.parlor = parlor;
+  const graph = buildEnsembleGraph(offlineCtx, score, options);
+  const offlineTransport = {
+    ...graph,
+    melody: currentConductedMelody || melodyFor(score),
+    engageAll,
+    clockTicks,
+    noteLog: captureNotes ? [] : undefined,
+  };
+
+  let stepTime = LOOP_START_OFFSET;
+  for (let step = 0; step < stepsCount; step += 1) {
+    const stepDuration = unit * rhythm[step % rhythm.length];
+    const gateRatio = Math.min(0.94, score.gate / 100);
+    const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
+    scheduleEnsembleStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration, soundingDuration);
+    scheduleSequencedFunChord(offlineCtx, offlineTransport, step, stepTime, stepDuration, soundingDuration);
+    stepTime += stepDuration;
+  }
+
+  const buffer = render ? await offlineCtx.startRendering() : null;
+  return { buffer, noteLog: offlineTransport.noteLog || [], bpm, loopDuration };
+}
+
+async function exportSpecimenWav() {
+  if (!currentScore) return;
+  const score = currentScore;
+  elements.status.textContent = "RECORDING WAV LOOP...";
+  await runExport(elements.exportWav, {
+    idleHtml: 'RECORD WAV LOOP <span aria-hidden="true">☊</span>',
+    busyText: "RECORDING... ✦",
+    doneText: "WAV RECORDED ✦",
+    failStatus: "WAV EXPORT FAILED",
+  }, async () => {
+    const { buffer } = await renderEnsembleLoop(score);
+    downloadBlob(audioBufferToWavBlob(buffer), specimenFilenameFor(score, "wav"));
+    elements.status.textContent = "SPECIMEN AUDIO RECORDED (WAV)";
+  });
+}
+
+async function wavBytes(buffer) {
+  return new Uint8Array(await audioBufferToWavBlob(buffer).arrayBuffer());
+}
+
+// Nine stems: each console channel rendered alone at its fader and pan (mute
+// and solo ignored) with its own chamber reverb, plus the parlor room's crackle
+// and clockwork on their own. All stems share one start time and length.
+async function exportSpecimenStems() {
+  if (!currentScore) return;
+  const score = currentScore;
+  await runExport(elements.exportStems, {
+    idleHtml: 'EXPORT 9 STEMS (ZIP) <span aria-hidden="true">⧉</span>',
+    busyText: "RENDERING STEMS... ✦",
+    doneText: "STEMS EXPORTED ✦",
+    failStatus: "STEM EXPORT FAILED",
+  }, async () => {
+    const room = parlorSendLevels({
+      enabled: parlorAcousticsEnabled,
+      reverbEnabled: parlorReverbEnabled,
+      crackleEnabled: parlorCrackleEnabled,
+      level: parlorAcousticsLevel,
+    });
+    const entries = [];
+    let loopDuration = 0;
+    let bpm = 0;
+    for (const [index, [id, file]] of STEM_FILES.entries()) {
+      elements.status.textContent = `RENDERING STEM ${index + 1}/9 · ${file.slice(3).toUpperCase()}`;
+      const result = await renderEnsembleLoop(score, {
+        channels: stemSettings(mixerState, id),
+        parlor: { reverb: room.reverb, crackle: SILENT_GAIN },
+        clockTicks: false,
+        engageAll: true,
+      });
+      ({ loopDuration, bpm } = result);
+      entries.push({ name: `${file}.wav`, data: await wavBytes(result.buffer) });
+    }
+    elements.status.textContent = "RENDERING STEM 9/9 · PARLOR ROOM";
+    const roomRender = await renderEnsembleLoop(score, { channels: silentSettings(mixerState), parlor: room });
+    entries.push({ name: "09-parlor-room.wav", data: await wavBytes(roomRender.buffer) });
+    const seedHex = (score.seed >>> 0).toString(16).padStart(8, "0");
+    entries.push({
+      name: "README.txt",
+      data: [
+        "EDMARK'S ESOTERIC FUN MACHINE · STEM BUNDLE",
+        "",
+        `Specimen: ${score.name}`,
+        `Seed: 0x${seedHex}`,
+        `Tempo: ${bpm} BPM · one 12-step loop of ${loopDuration.toFixed(3)} s plus a ${LOOP_TAIL_SECONDS} s tail`,
+        `Format: 16-bit PCM WAV, 44.1 kHz stereo. Every stem starts at 0 s; the loop begins at ${LOOP_START_OFFSET} s.`,
+        "",
+        ...STEM_FILES.map(([, file, label]) => `${file}.wav  ${label}`),
+        "09-parlor-room.wav  PARLOR ROOM · wax-cylinder crackle and clockwork escapement",
+        "",
+        "Each channel stem is rendered alone through the full chain at its console fader",
+        "and pan, ignoring mute and solo, with its own chamber reverb. The master",
+        "compressor reacts to each stem separately, so the stems sum close to, but not",
+        "exactly to, the full mix.",
+        "",
+      ].join("\n"),
+    });
+    const zip = createStoredZip(entries);
+    downloadBlob(new Blob([zip], { type: "application/zip" }), specimenFilenameFor(score, "zip").replace(/\.zip$/, "-stems.zip"));
+    elements.status.textContent = "NINE STEMS EXPORTED (ZIP)";
+  });
+}
+
+// A Type 1 MIDI file of every pitched part in the loop, captured from the same
+// schedulers that make the sound. Muted plates are included.
+async function exportSpecimenMidi() {
+  if (!currentScore) return;
+  const score = currentScore;
+  elements.status.textContent = "TRANSCRIBING MIDI SCORE...";
+  await runExport(elements.exportMidi, {
+    idleHtml: 'WRITE MIDI SCORE <span aria-hidden="true">♪</span>',
+    busyText: "TRANSCRIBING... ✦",
+    doneText: "MIDI WRITTEN ✦",
+    failStatus: "MIDI EXPORT FAILED",
+  }, async () => {
+    const { noteLog, bpm, loopDuration } = await renderEnsembleLoop(score, { engageAll: true, captureNotes: true, render: false });
+    const tracks = MIDI_TRACKS.map((track) => {
+      const events = noteLog.filter((event) => event.channel === track.id);
+      const velocities = velocitiesFor(events.map((event) => event.peak));
+      return {
+        ...track,
+        notes: events.map((event, index) => ({
+          tick: ticksForSeconds(event.at - LOOP_START_OFFSET, bpm),
+          duration: Math.max(1, ticksForSeconds(event.duration, bpm)),
+          midi: event.midi,
+          velocity: velocities[index],
+        })),
+      };
+    });
+    const bytes = buildMidiFile({ bpm, tracks, lengthTicks: ticksForSeconds(loopDuration, bpm), title: score.name });
+    downloadBlob(new Blob([bytes], { type: "audio/midi" }), specimenFilenameFor(score, "mid"));
+    elements.status.textContent = `MIDI SCORE WRITTEN · ${noteLog.length} NOTES`;
+  });
 }
 
 function vitrineCoordinates(event) {
@@ -5203,6 +5375,14 @@ elements.exportPng?.addEventListener("click", () => {
 
 elements.exportWav?.addEventListener("click", () => {
   exportSpecimenWav();
+});
+
+elements.exportStems?.addEventListener("click", () => {
+  exportSpecimenStems();
+});
+
+elements.exportMidi?.addEventListener("click", () => {
+  exportSpecimenMidi();
 });
 
 window.addEventListener("hashchange", () => {

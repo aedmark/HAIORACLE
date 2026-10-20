@@ -16,12 +16,14 @@ test("the static entry points exist", async () => {
     "src/fractran.mjs",
     "src/lolcode.mjs",
     "src/malbolge.mjs",
+    "src/midi.mjs",
     "src/mixer.mjs",
     "src/music.mjs",
     "src/score.mjs",
     "src/share.mjs",
     "src/shakespeare.mjs",
     "src/transport.mjs",
+    "src/zip.mjs",
     "src/oracle.lol",
     "src/beat.mal",
     "src/bass.bf",
@@ -247,12 +249,14 @@ test("the application has no remote runtime assets", async () => {
     "src/fractran.mjs",
     "src/lolcode.mjs",
     "src/malbolge.mjs",
+    "src/midi.mjs",
     "src/mixer.mjs",
     "src/music.mjs",
     "src/score.mjs",
     "src/share.mjs",
     "src/shakespeare.mjs",
     "src/transport.mjs",
+    "src/zip.mjs",
   ].map((path) => readFile(new URL(path, root), "utf8")));
   assert.equal(files.some((contents) => /https?:\/\//i.test(contents)), false);
   assert.equal(files.some((contents) => /node_modules|from\s+["'](?!\.\/)/i.test(contents)), false);
@@ -394,4 +398,25 @@ test("the parlor mixing console sits between the Fun Machine and Plate II and dr
   // Plate switches are channel mutes; no parallel enable flags remain.
   assert.doesNotMatch(app, /\b(beat|bass|harmony|chime|chant)Enabled\b/);
   assert.match(app, /updateMixer\(toggleMute\(mixerState, "beat"\)\)/);
+});
+
+test("stem ZIP and MIDI exports are wired through the shared offline renderer", async () => {
+  const [html, app] = await Promise.all([
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("src/app.mjs", root), "utf8"),
+  ]);
+  assert.match(html, /id="export-stems"[^>]*disabled/);
+  assert.match(html, /EXPORT 9 STEMS \(ZIP\)/);
+  assert.match(html, /id="export-midi"[^>]*disabled/);
+  assert.match(html, /WRITE MIDI SCORE/);
+  assert.match(app, /async function renderEnsembleLoop\(score/);
+  assert.match(app, /async function exportSpecimenStems\(\)/);
+  assert.match(app, /async function exportSpecimenMidi\(\)/);
+  assert.match(app, /channels: stemSettings\(mixerState, id\)/);
+  assert.match(app, /captureNotes: true, render: false/);
+  // WAV, stems, and MIDI all schedule through renderEnsembleLoop; only one OfflineAudioContext is built.
+  assert.equal(app.match(/new OfflineAudioCtx\(/g).length, 1);
+  for (const channel of ["lead", "beat", "bass", "harmony", "chime", "chant"]) {
+    assert.match(app, new RegExp(`logNote\\(transport, "${channel}"`), channel);
+  }
 });

@@ -148,3 +148,24 @@ export function meterReading(samples) {
 export function meterFill(db) {
   return clamp((db - METER_FLOOR_DB) / -METER_FLOOR_DB, 0, 1);
 }
+
+// Strip settings for rendering one channel's stem: that channel at its own
+// fader and pan, every other channel silent. Mute and solo are ignored so a
+// stem bundle always holds every part, whatever the live console is doing.
+export function stemSettings(state, stemId) {
+  assertChannel(stemId);
+  const settings = {};
+  for (const id of MIXER_CHANNEL_IDS) {
+    const { fader, pan } = state.channels[id];
+    settings[id] = { gain: id === stemId ? faderGain(fader) : 0, pan: pan / PAN_RANGE };
+  }
+  return settings;
+}
+
+// Every strip closed: used for the parlor-room stem, which carries only the
+// room's own crackle and clockwork.
+export function silentSettings(state) {
+  const settings = {};
+  for (const id of MIXER_CHANNEL_IDS) settings[id] = { gain: 0, pan: state.channels[id].pan / PAN_RANGE };
+  return settings;
+}

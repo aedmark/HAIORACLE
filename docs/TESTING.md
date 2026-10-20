@@ -7,6 +7,7 @@ Automated checks prove determinism, boundary validation, the required LOLCODE su
 | Suite | File | Proves | Does not prove | Needs |
 | --- | --- | --- | --- | --- |
 | Oracle logic | `tests/oracle.test.mjs` | deterministic hashing, valid score ranges, batch name/body/eye/scale/kinetic/melody/beat diversity, exact twelve-note arpeggio and chromatic motifs, Malbolge `crazy`/`rotr` ternary VM and `src/beat.mal` execution, negative LOLCODE and Malbolge interpreter behavior | browser API integration or sensory quality | Node 20 or newer |
+| Export writers | `tests/export.test.mjs` | CRC-32 check value, ZIP round-trip and determinism, entry-name safety, MIDI VLQ examples, Type 1 structure, tempo, programs, drum channel, loop clipping, velocity scaling | that a DAW imports the files as intended | Node 20 or newer |
 | Mixer model | `tests/mixer.test.mjs` | channel list, fader taper and dB readout, pan clamping, mute/solo precedence, Bandstand group mutes, meter RMS/peak math | how the console sounds or feels to operate | Node 20 or newer |
 | Transport and graph | `tests/transport.test.mjs` | shared ensemble graph routing, mixer strips, meter taps, vitrine pan trim, and live/offline topology parity via a fake `AudioContext`, transport state transitions and cursor handling, `Space`/`Esc` focus rules | real audio output, timing under load, or how pause/resume sounds | Node 20 or newer |
 | Static structure | `tests/static.test.mjs` | required assets (`src/oracle.lol`, `src/beat.mal`, `manual.html`, `docs/manual.json`), basic labels, centered apparition-stage and serif-broadsheet markers, continuous scheduler and master-volume markers, bounded silhouette and clipped-core markers, vitrine tap/hold/drag interaction and percussion markers, Malbolge 12-step beat matrix and percussion scheduler markers, no audio-driven visual resizing, scoped body glow, no remote runtime references | computed accessibility tree, scheduler timing, perceived loudness, or visual quality | Node 20 or newer |
@@ -51,18 +52,19 @@ Expected results from specific runs live in `HANDOFF.md`.
 
 1. Serve the repository and summon three phrases in current Chrome, Firefox, and Safari.
 2. Confirm sound starts only after a gesture, loops without an audible gap, mutes immediately, restarts, and is replaced cleanly by a new summon.
-3. Ride each mixer fader, pan, mute, and solo during playback; confirm meters track each bandmate, a plate's ENGAGE/SILENCE switch and its mixer M button always agree, and a WAV export reflects the console.
-4. Play, pause, and resume mid-loop; confirm resume picks up on the next step without a skipped or doubled beat, Stop rewinds to step one, and `Space`/`Esc` work after clicking a plate button but `Space` still activates a button reached with Tab.
-5. Move master volume through zero, the default 82 percent, and maximum using pointer and keyboard; confirm live ramps are smooth and the loudest dense voice does not clip or pump.
-6. Listen to every named motif family; confirm each forms a recognizable twelve-note loop and that restarts return to its first note.
-7. Confirm repeated text produces identical metadata and creature structure.
-8. Summon enough creatures to inspect every eye silhouette, iris treatment, pupil geometry, and layout for clipping or illegibility.
-9. Inspect all eight kinetic cores and silhouette-flux families for distinct motion, boundary containment, legibility, and stable frame rate.
-10. Tap, press-and-hold, and hold-and-drag across the vitrine with mouse and touch; confirm percussive strikes, ratchet ticks, pitch bends, filter swells, eye tracking, and shape morphing respond smoothly and return to the resting creature on release.
-11. Use keyboard-only controls at desktop and narrow mobile widths.
-12. Confirm the cabinet remains bilaterally balanced, the apparition stays centered in its bell-jar vitrine, labels do not collide, and the serif and telegraph-monospace stacks remain legible at desktop and phone widths.
-13. Enable reduced motion and confirm the interface remains legible, calm, and frozen at a representative phase.
-14. Inspect the network panel for unexpected outbound requests.
+3. Export stems and MIDI, import both into a DAW at the README tempo, and confirm the nine stems line up and loop, the MIDI parts land on their own tracks, and drums map to a GM kit.
+4. Ride each mixer fader, pan, mute, and solo during playback; confirm meters track each bandmate, a plate's ENGAGE/SILENCE switch and its mixer M button always agree, and a WAV export reflects the console.
+5. Play, pause, and resume mid-loop; confirm resume picks up on the next step without a skipped or doubled beat, Stop rewinds to step one, and `Space`/`Esc` work after clicking a plate button but `Space` still activates a button reached with Tab.
+6. Move master volume through zero, the default 82 percent, and maximum using pointer and keyboard; confirm live ramps are smooth and the loudest dense voice does not clip or pump.
+7. Listen to every named motif family; confirm each forms a recognizable twelve-note loop and that restarts return to its first note.
+8. Confirm repeated text produces identical metadata and creature structure.
+9. Summon enough creatures to inspect every eye silhouette, iris treatment, pupil geometry, and layout for clipping or illegibility.
+10. Inspect all eight kinetic cores and silhouette-flux families for distinct motion, boundary containment, legibility, and stable frame rate.
+11. Tap, press-and-hold, and hold-and-drag across the vitrine with mouse and touch; confirm percussive strikes, ratchet ticks, pitch bends, filter swells, eye tracking, and shape morphing respond smoothly and return to the resting creature on release.
+12. Use keyboard-only controls at desktop and narrow mobile widths.
+13. Confirm the cabinet remains bilaterally balanced, the apparition stays centered in its bell-jar vitrine, labels do not collide, and the serif and telegraph-monospace stacks remain legible at desktop and phone widths.
+14. Enable reduced motion and confirm the interface remains legible, calm, and frozen at a representative phase.
+15. Inspect the network panel for unexpected outbound requests.
 
 ## Known pitfalls
 
