@@ -254,6 +254,17 @@
             <button class="beat-button looper-button" id="looper-overdub" type="button" aria-pressed="false" disabled>OVERDUB</button>
             <button class="beat-button looper-button" id="looper-clear" type="button" disabled>CLEAR SONG</button>
             <output class="looper-readout" id="looper-readout" aria-live="off">NO LOOPS YET · HOLD KEYS AND RECORD WHAT YOU PLAY</output>
+            <ol class="looper-tiles" id="looper-tiles" aria-label="Loops in the song, in playing order"></ol>
+            <div class="looper-edit" id="looper-edit" role="group" aria-label="Selected loop">
+              <span class="looper-edit-label" id="looper-edit-label">NO LOOP SELECTED</span>
+              <button class="beat-button looper-button" id="looper-repeats-down" type="button" aria-label="Play the selected loop fewer times" disabled>−</button>
+              <output class="looper-repeats" id="looper-repeats" aria-live="off">×1</output>
+              <button class="beat-button looper-button" id="looper-repeats-up" type="button" aria-label="Play the selected loop more times" disabled>+</button>
+              <button class="beat-button looper-button" id="looper-move-earlier" type="button" disabled>◀ EARLIER</button>
+              <button class="beat-button looper-button" id="looper-move-later" type="button" disabled>LATER ▶</button>
+              <button class="beat-button looper-button" id="looper-undo" type="button" disabled>UNDO LAYER</button>
+              <button class="beat-button looper-button" id="looper-delete" type="button" disabled>DELETE LOOP</button>
+            </div>
             <p class="visually-hidden" id="looper-announcer" role="status"></p>
           </div>
         </div>
@@ -641,7 +652,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "42e0b9dbf5dc";
+      const ASSET_VERSION = "470b26137aa0";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

@@ -109,6 +109,13 @@ export function setRepeats(song, loopIndex, repeats) {
   return freezeSong(loops);
 }
 
+/** A valid selected loop after an edit: the same index if it exists, else the last loop, else null. */
+export function clampSelection(song, index) {
+  if (!song.loops.length) return null;
+  if (!Number.isInteger(index) || index < 0) return 0;
+  return Math.min(index, song.loops.length - 1);
+}
+
 /**
  * Where the song is after `absoluteStep` steps (counted from the song's first
  * step): the loop, which of its repeats, and the step within the loop. The song

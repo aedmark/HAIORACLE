@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 42, on `main`: the loop machine records held keys into loops, overdubs layers, and plays the song with the band following the newest layer (P5-26 phase 2, D-039); session 41 unfettered Raw Chaos._
+_Last updated: 2026-10-20, session 43, on `main`: the loop machine has its full strip: loop tiles, repeats, move, undo, and delete (P5-26 phase 3); session 42 made it record and play._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-25 and P5-27 are implemented and verified; P5-26 is designed. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
@@ -86,6 +86,25 @@ _Last updated: 2026-10-20, session 42, on `main`: the loop machine records held 
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 43: 2026-10-20: the loop strip (P5-26 phase 3)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-26 phase 3: the full loop strip (D-039).
+
+**Changed:**
+1. `index.html` and `styles.css`: `#looper-tiles`, a sideways-scrolling row of fixed height (so adding or playing loops never moves the page). Each tile is one select button (`aria-pressed`, a spoken summary of layers and repeats); the playing tile gets `is-playing`. Below it, `#looper-edit` acts on the selected loop: repeats − / + (with a `×n` readout), ◀ EARLIER, LATER ▶, UNDO LAYER, and DELETE LOOP. Every edit button starts disabled.
+2. `src/app.mjs`: `renderLooperTiles()` rebuilds only when the song or selection changes, so focus survives playback; the playing mark comes from `audiblePosition` at loop boundaries. `renderLooperEdit()` enables only what applies and locks move, undo, and delete while a take is armed or recording. `editSong()` applies an edit, keeps the selection valid (`clampSelection()`), lets the band re-follow, and announces the result or the reason for a refusal (8-repeat cap, 32-pass limit).
+3. `src/looper.mjs`: `clampSelection()`, with a unit test; static checks cover the tiles, edit row, fixed height, and recording lock.
+
+**Verified:** 124/124 Node checks. In the browser, three recordings made three tiles with the newest selected, and the playing mark walked loop 1 → 2. Loop 1 at ×3, moved later, undone (removed, as it had one layer), and a delete each landed with an announcement. Move and delete were disabled while armed; the page height stayed constant throughout; no console errors.
+
+**Not verified:** Listening; keyboard-only and screen-reader use of the strip.
+
+**Left undone:** P5-26 phase 4 (sessions v4) and phase 5 (song exports); the P4-02 screen-reader pass; P6-01.
+
+**Next session should start with:** P5-26 phase 4, saving songs in sessions and presets.
 
 ### Session 42: 2026-10-20: the loop machine records and plays (P5-26 phase 2)
 
@@ -290,29 +309,5 @@ _Last updated: 2026-10-20, session 42, on `main`: the loop machine records held 
 **Left undone:** P5-23 phase 5; listening pass; P4-02; P6-01.
 
 **Next session should start with:** the maintainer's listen to the room, then P5-23 phase 5.
-
-### Session 32: 2026-10-20: Inform 7 rulebooks, phase 4
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-23 phase 4: build the Kapellmeister menu, title, and description from the rulebooks; update the manual, README, architecture, and map (D-033).
-
-**Done:** P5-23 phase 4.
-
-**Changed:**
-1. `index.html`: the genre `<select>` starts empty and disabled, the title reads "READING THE RULEBOOKS…", and a new `#kapellmeister-genre-motto` line shows each genre's motto (the mottos were never shown before).
-2. `src/app.mjs`: `buildGenreMenu()` fills the menu from `genreCodes()`/`genreBook()` after install (option text = title, tooltip = motto); `updateKapellmeisterUI()` sets the title and motto, and the telemetry names the genre by its Inform 7 name.
-3. `styles.css`: changing text reflowed the Perform wing in more places than the transport. The Kapellmeister header is now a fixed grid (title reserves two lines, stacks at 760 px or less; telemetry one fixed line); the Fun Machine heading reserves two lines; the Fun Machine telemetry takes its own line with two reserved lines (three at 480 px or less); the sequencer uses `minmax(0, 1fr)` columns with fixed cell line boxes; plate labels keep fixed line boxes. ♭ and ♯ fall back to a taller font, which had been changing heights by 2 px.
-4. `docs/manual.json`: new `inform-rulebooks` entry (34 entries); stale spine-builder text in the Kapellmeister entry replaced. README, ARCHITECTURE, CHANGELOG updated.
-
-**Verified:** 101/101 Node checks, including new static assertions for the generated menu and the fixed boxes. In the browser, every wing and the page kept one height across all six genres at every 20 px from 320 to 1720. With the loop playing at 208 BPM, switching genres and styles and holding keys kept one layout at 340, 400, 560, 720, 1000, and 1440 px with no clipped title or telemetry. There was no horizontal overflow from 320 to 800 px.
-
-**Follow-up (maintainer screenshot):** The Tonnetz compass drew each region's label centred inside a small SVG circle at fixed 110-unit spacing, so table genres' long labels ("Tonic 1-5 Drone", "Phrygian Inflection") collided. The compass is now an HTML `<ol class="tonnetz-compass">` of four equal `minmax(0, 1fr)` columns. Each has a glyph with a region numeral (I–IV) and a two-line label underneath (smaller type at 400 px or less). Across all six genres × three mutations, from 300 to 1720 px, no labels overlap or clip and the compass keeps one height.
-
-**Not verified:** Safari/Firefox rendering of `line-clamp` and `contain: inline-size` (evergreen support is documented, not observed here).
-
-**Left undone:** P5-23 phase 5 (fixture-only seventh genre); listening pass; P4-02; P6-01.
-
-**Next session should start with:** P5-23 phase 5.
 
 Older sessions: [archive/sessions.md](archive/sessions.md).

@@ -391,6 +391,13 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   assert.match(app, /advanceRecorder\(stepIndex, position, liveSlot\);\n      followSong\(transport, loop, stepIndex, liveSlot\);\n\n      scheduleEnsembleStep\(/, "the band is conducted before it plays the step");
   assert.match(app, /for \(const \{ layerIndex, slot \} of slotsAt\(loop, stepIndex\)\)/);
   assert.match(app, /releasable: false,/, "recorded pads ring out when a live key lets go");
+  // Phase 3: loop tiles (one button each) and one edit row for the selected loop.
+  assert.match(html, /<ol class="looper-tiles" id="looper-tiles" aria-label="Loops in the song, in playing order"><\/ol>/);
+  for (const id of ["looper-repeats-down", "looper-repeats-up", "looper-move-earlier", "looper-move-later", "looper-undo", "looper-delete"]) {
+    assert.match(html, new RegExp(`id="${id}"[^>]*disabled`), `${id} starts disabled`);
+  }
+  assert.match(styles, /\.looper-tiles \{[^}]*height: 3\.4rem;[^}]*overflow-x: auto;/, "tiles scroll sideways at a fixed height");
+  assert.match(app, /enable\("#looper-move-earlier", loop && !busy && selectedLoop > 0\);/, "no structural edits while a take is armed or recording");
   assert.match(app, /function updateFunKeyboardChordLabels\(/);
   assert.match(app, /async function triggerFunKey\(/);
   assert.doesNotMatch(app, /customProgression|funMachineRec|funMachineReset|renderFunSequencerGrid|scheduleSequencedFunChord|selectedSequencerStep/);

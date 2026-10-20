@@ -11,6 +11,7 @@ import {
   appendLoop,
   canAppendLoop,
   canOverdub,
+  clampSelection,
   deleteLoop,
   emptySong,
   emptyTake,
@@ -178,4 +179,12 @@ test("saved songs validate strictly and round-trip", () => {
   const long = { loops: Array.from({ length: 5 }, () => ({ repeats: 8, layers: plain.loops[0].layers })) };
   rejects(long, "song.loops");
   assert.throws(() => makeSlot(13, "swell"), RangeError);
+});
+
+test("the selected loop stays valid after edits", () => {
+  const song = appendLoop(appendLoop(emptySong(), take(0, [0])), take(5, [0]));
+  assert.equal(clampSelection(song, 1), 1);
+  assert.equal(clampSelection(song, 4), 1, "past the end falls back to the last loop");
+  assert.equal(clampSelection(song, null), 0);
+  assert.equal(clampSelection(emptySong(), 0), null, "an empty song selects nothing");
 });

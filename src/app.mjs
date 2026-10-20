@@ -77,19 +77,26 @@ import {
 } from "./session.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
 import {
+  MAX_REPEATS,
+  MAX_SONG_PASSES,
   appendLoop,
   canAppendLoop,
   canOverdub,
+  clampSelection,
+  deleteLoop,
   emptySong,
   idleRecorder,
   isEmptyTake,
   leadSlotAt,
   makeSlot,
+  moveLoop,
   overdubLayer,
   recorderReduce,
+  setRepeats,
   slotsAt,
   songPasses,
   songPosition,
+  undoLayer,
 } from "./looper.mjs";
 import {
   CABINET_STORAGE_KEY,
@@ -3962,7 +3969,10 @@ async function playScore(score, { cursor = 0 } = {}) {
         if (currentTransport !== transport) return;
         transport.audibleStep = currentStep;
         if (currentStep % 12 === 11) noteLoopHeard();
-        if (currentStep % 12 === 0) renderLooper();
+        if (currentStep % 12 === 0) {
+          transport.audiblePosition = songPosition(song, currentStep);
+          renderLooper();
+        }
         highlightBeatStep(currentStep);
         updateTransportPosition(currentStep);
       }, delayMs);
@@ -5696,7 +5706,80 @@ function looperReadoutText() {
   return `${now}${plural(song.loops.length, "LOOP")} · ${plural(songPasses(song), "PASS")}${target}`.replace("PASSS", "PASSES");
 }
 
+// Tiles are rebuilt only when the song or the selection changes, so a focused
+// tile keeps focus while the loop plays; the playing mark is a class toggle.
+let renderedTiles = null;
+function renderLooperTiles() {
+  const list = document.querySelector("#looper-tiles");
+  if (!list) return;
+  const signature = [song, selectedLoop];
+  if (!renderedTiles || renderedTiles[0] !== signature[0] || renderedTiles[1] !== signature[1]) {
+    renderedTiles = signature;
+    list.replaceChildren(...song.loops.map((loop, index) => {
+      const item = document.createElement("li");
+      const tile = document.createElement("button");
+      tile.type = "button";
+      tile.className = "looper-tile";
+      tile.dataset.loop = String(index);
+      tile.setAttribute("aria-pressed", String(index === selectedLoop));
+      tile.setAttribute("aria-label", `Loop ${index + 1}: ${loop.layers.length} layer${loop.layers.length === 1 ? "" : "s"}, plays ${loop.repeats} time${loop.repeats === 1 ? "" : "s"}`);
+      const number = document.createElement("b");
+      number.textContent = `LOOP ${index + 1}`;
+      const detail = document.createElement("span");
+      detail.textContent = `${loop.layers.length}L · ×${loop.repeats}`;
+      tile.append(number, detail);
+      tile.addEventListener("click", () => {
+        selectedLoop = index;
+        renderLooper();
+      });
+      item.append(tile);
+      return item;
+    }));
+  }
+  const playing = currentTransport?.audiblePosition?.loopIndex ?? null;
+  for (const tile of list.querySelectorAll(".looper-tile")) {
+    tile.classList.toggle("is-playing", Number(tile.dataset.loop) === playing);
+  }
+}
+
+function renderLooperEdit() {
+  const loop = selectedLoop !== null ? song.loops[selectedLoop] : null;
+  const busy = recorder.mode !== "idle";
+  const label = document.querySelector("#looper-edit-label");
+  if (label) label.textContent = loop ? `LOOP ${selectedLoop + 1} · ${loop.layers.length} LAYER${loop.layers.length === 1 ? "" : "S"}` : "NO LOOP SELECTED";
+  const repeats = document.querySelector("#looper-repeats");
+  if (repeats) repeats.value = loop ? `×${loop.repeats}` : "×1";
+  const enable = (id, on) => {
+    const button = document.querySelector(id);
+    if (button) button.disabled = !on;
+  };
+  enable("#looper-repeats-down", loop && loop.repeats > 1);
+  enable("#looper-repeats-up", loop && loop.repeats < MAX_REPEATS && songPasses(song) < MAX_SONG_PASSES);
+  enable("#looper-move-earlier", loop && !busy && selectedLoop > 0);
+  enable("#looper-move-later", loop && !busy && selectedLoop < song.loops.length - 1);
+  enable("#looper-undo", loop && !busy);
+  enable("#looper-delete", loop && !busy);
+}
+
+// Applies a song edit, keeps the selection valid, lets the band re-follow the
+// edited song on the next step, and says what happened (or why nothing did).
+function editSong(next, { selection = selectedLoop, done, refused }) {
+  if (next === song) {
+    if (refused) announceLooper(refused);
+    renderLooper();
+    return;
+  }
+  song = next;
+  selectedLoop = clampSelection(song, selection);
+  if (currentTransport) currentTransport.followedSlot = null;
+  if (!song.loops.length && activeHeldFunKey === null) applyEnsembleConductor();
+  announceLooper(done);
+  renderLooper();
+}
+
 function renderLooper() {
+  renderLooperTiles();
+  renderLooperEdit();
   const record = document.querySelector("#looper-record");
   const overdub = document.querySelector("#looper-overdub");
   const clear = document.querySelector("#looper-clear");
@@ -5712,6 +5795,33 @@ function renderLooper() {
 document.querySelector("#looper-record")?.addEventListener("click", () => armRecorder("new"));
 document.querySelector("#looper-overdub")?.addEventListener("click", () => armRecorder("overdub"));
 document.querySelector("#looper-clear")?.addEventListener("click", clearSong);
+document.querySelector("#looper-repeats-down")?.addEventListener("click", () => {
+  const loop = song.loops[selectedLoop];
+  if (loop) editSong(setRepeats(song, selectedLoop, loop.repeats - 1), { done: `LOOP ${selectedLoop + 1} PLAYS ${loop.repeats - 1} TIME${loop.repeats - 1 === 1 ? "" : "S"}` });
+});
+document.querySelector("#looper-repeats-up")?.addEventListener("click", () => {
+  const loop = song.loops[selectedLoop];
+  if (!loop) return;
+  const next = setRepeats(song, selectedLoop, loop.repeats + 1);
+  editSong(next, {
+    done: `LOOP ${selectedLoop + 1} PLAYS ${loop.repeats + 1} TIMES`,
+    refused: loop.repeats >= MAX_REPEATS ? `A LOOP PLAYS AT MOST ${MAX_REPEATS} TIMES` : `THE SONG IS AT ITS ${MAX_SONG_PASSES}-PASS LIMIT`,
+  });
+});
+document.querySelector("#looper-move-earlier")?.addEventListener("click", () => {
+  if (selectedLoop !== null) editSong(moveLoop(song, selectedLoop, -1), { selection: selectedLoop - 1, done: `LOOP MOVED TO POSITION ${selectedLoop}` });
+});
+document.querySelector("#looper-move-later")?.addEventListener("click", () => {
+  if (selectedLoop !== null) editSong(moveLoop(song, selectedLoop, 1), { selection: selectedLoop + 1, done: `LOOP MOVED TO POSITION ${selectedLoop + 2}` });
+});
+document.querySelector("#looper-undo")?.addEventListener("click", () => {
+  const loop = song.loops[selectedLoop];
+  if (!loop) return;
+  editSong(undoLayer(song, selectedLoop), { done: loop.layers.length > 1 ? `NEWEST LAYER OF LOOP ${selectedLoop + 1} REMOVED` : `LOOP ${selectedLoop + 1} REMOVED` });
+});
+document.querySelector("#looper-delete")?.addEventListener("click", () => {
+  if (selectedLoop !== null) editSong(deleteLoop(song, selectedLoop), { done: `LOOP ${selectedLoop + 1} DELETED` });
+});
 renderLooper();
 
 elements.bandstandEngageAll?.addEventListener("click", () => {

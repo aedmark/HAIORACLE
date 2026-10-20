@@ -113,6 +113,75 @@ select:focus-visible {
   background: rgba(139, 46, 56, 0.55);
 }
 
+/* Loop tiles scroll sideways at a fixed height, so adding or playing loops
+   never moves the page. */
+.looper-tiles {
+  display: flex;
+  flex: 1 0 100%;
+  gap: 0.4rem;
+  height: 3.4rem;
+  margin: 0;
+  padding: 0 0 0.3rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  list-style: none;
+  contain: inline-size;
+}
+
+.looper-tile {
+  flex: 0 0 auto;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.15rem;
+  width: 4.6rem;
+  height: 100%;
+  border: 1px solid rgba(184, 146, 73, 0.45);
+  color: var(--parchment-light);
+  background: rgba(23, 17, 14, 0.9);
+  font-family: var(--mono-ledger);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+
+.looper-tile b {
+  font-size: 0.78rem;
+}
+
+.looper-tile[aria-pressed="true"] {
+  border-color: var(--brass-bright);
+  box-shadow: inset 0 0 0 1px rgba(212, 175, 101, 0.55);
+}
+
+.looper-tile.is-playing {
+  background: linear-gradient(180deg, rgba(107, 31, 40, 0.55) 0%, rgba(28, 20, 16, 0.95) 100%);
+}
+
+.looper-edit {
+  display: flex;
+  flex: 1 0 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+}
+
+.looper-edit-label,
+.looper-repeats {
+  color: rgba(228, 215, 190, 0.86);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+}
+
+.looper-edit-label {
+  min-width: 9.5rem;
+}
+
+.looper-repeats {
+  min-width: 2.2rem;
+  text-align: center;
+}
+
 .looper-readout {
   display: block;
   flex: 1 0 100%;
