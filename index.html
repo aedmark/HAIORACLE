@@ -303,29 +303,26 @@
             <input id="kapellmeister-strictness" type="range" min="3" max="14" value="8" step="1" title="Adjust Euler Gradus Suavitatis consonance threshold">
           </div>
           <div class="kapellmeister-compass" id="kapellmeister-compass" aria-hidden="true">
-            <svg viewBox="0 0 460 70" preserveAspectRatio="xMidYMid meet" class="tonnetz-compass-svg">
-              <line x1="30" y1="35" x2="430" y2="35" stroke="#8d6b32" stroke-width="1.5" stroke-dasharray="4,6" />
-              <g class="compass-region is-active" id="compass-reg-0" transform="translate(60, 35)">
-                <polygon points="0,-22 18,12 -18,12" class="tonnetz-tri" />
-                <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
-                <text x="0" y="4" class="tonnetz-node-text" id="node-text-0">I</text>
-              </g>
-              <g class="compass-region" id="compass-reg-1" transform="translate(170, 35)">
-                <polygon points="0,22 18,-12 -18,-12" class="tonnetz-tri" />
-                <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
-                <text x="0" y="4" class="tonnetz-node-text" id="node-text-1">R</text>
-              </g>
-              <g class="compass-region" id="compass-reg-2" transform="translate(280, 35)">
-                <polygon points="0,-22 18,12 -18,12" class="tonnetz-tri" />
-                <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
-                <text x="0" y="4" class="tonnetz-node-text" id="node-text-2">L</text>
-              </g>
-              <g class="compass-region" id="compass-reg-3" transform="translate(390, 35)">
-                <polygon points="0,22 18,-12 -18,-12" class="tonnetz-tri" />
-                <circle cx="0" cy="0" r="16" class="tonnetz-node-circle" />
-                <text x="0" y="4" class="tonnetz-node-text" id="node-text-3">P</text>
-              </g>
-            </svg>
+            <!-- Four equal columns: each region's chord label wraps inside its own
+                 column, however long the genre's name for it is. -->
+            <ol class="tonnetz-compass">
+              <li class="compass-region is-active" id="compass-reg-0">
+                <svg class="tonnetz-glyph" viewBox="-24 -24 48 48"><polygon points="0,-22 18,12 -18,12" class="tonnetz-tri" /><circle r="12" class="tonnetz-node-circle" /><text y="1" class="tonnetz-node-numeral">I</text></svg>
+                <span class="tonnetz-node-text" id="node-text-0">I</span>
+              </li>
+              <li class="compass-region" id="compass-reg-1">
+                <svg class="tonnetz-glyph" viewBox="-24 -24 48 48"><polygon points="0,22 18,-12 -18,-12" class="tonnetz-tri" /><circle r="12" class="tonnetz-node-circle" /><text y="1" class="tonnetz-node-numeral">II</text></svg>
+                <span class="tonnetz-node-text" id="node-text-1">R</span>
+              </li>
+              <li class="compass-region" id="compass-reg-2">
+                <svg class="tonnetz-glyph" viewBox="-24 -24 48 48"><polygon points="0,-22 18,12 -18,12" class="tonnetz-tri" /><circle r="12" class="tonnetz-node-circle" /><text y="1" class="tonnetz-node-numeral">III</text></svg>
+                <span class="tonnetz-node-text" id="node-text-2">L</span>
+              </li>
+              <li class="compass-region" id="compass-reg-3">
+                <svg class="tonnetz-glyph" viewBox="-24 -24 48 48"><polygon points="0,22 18,-12 -18,-12" class="tonnetz-tri" /><circle r="12" class="tonnetz-node-circle" /><text y="1" class="tonnetz-node-numeral">IV</text></svg>
+                <span class="tonnetz-node-text" id="node-text-3">P</span>
+              </li>
+            </ol>
           </div>
         </div>
       </section>

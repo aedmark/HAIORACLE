@@ -315,7 +315,10 @@ test("the Kapellmeister console and antique parlor acoustics controls are wired 
   assert.match(html, /id="harmonic-chord"/);
   assert.match(html, /id="harmonic-vector"/);
   assert.match(html, /id="harmonic-euler"/);
-  assert.match(html, /class="tonnetz-compass-svg"/);
+  assert.match(html, /<ol class="tonnetz-compass">/);
+  for (let i = 0; i < 4; i += 1) assert.match(html, new RegExp(`<li class="compass-region[^"]*" id="compass-reg-${i}">[\\s\\S]*?<span class="tonnetz-node-text" id="node-text-${i}">`));
+  assert.match(styles, /\.tonnetz-compass \{[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/, "compass labels get equal columns");
+  assert.match(styles, /\.tonnetz-node-text \{[^}]*height: 2\.6em;[^}]*-webkit-line-clamp: 2;/, "compass labels reserve two lines");
   assert.match(html, /id="parlor-acoustics-engine"/);
   assert.match(html, /id="parlor-acoustics-toggle"/);
   assert.match(html, /id="parlor-acoustics-level"/);

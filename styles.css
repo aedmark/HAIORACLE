@@ -1636,10 +1636,42 @@ h1 em {
   padding: 0.25rem 0.5rem;
 }
 
-.tonnetz-compass-svg {
-  width: 100%;
-  height: 60px;
+/* The compass's four regions are equal columns. A region's chord label
+   (from the genre's changes, as long as "Phrygian Inflection") wraps within
+   its column and always reserves two lines, so labels never collide and the
+   compass never changes height. */
+.tonnetz-compass {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.35rem 0 0.2rem;
+  list-style: none;
+}
+
+.tonnetz-compass::before {
+  content: "";
+  position: absolute;
+  top: calc(0.35rem + 21px);
+  left: 12.5%;
+  right: 12.5%;
+  border-top: 1.5px dashed #8d6b32;
+}
+
+.compass-region {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.tonnetz-glyph {
   display: block;
+  width: 42px;
+  height: 42px;
+  overflow: visible;
 }
 
 .tonnetz-tri {
@@ -1656,13 +1688,41 @@ h1 em {
   transition: fill 140ms ease, stroke 140ms ease;
 }
 
-.tonnetz-node-text {
-  font-family: var(--mono-ledger);
-  font-size: 11px;
-  font-weight: 700;
+.tonnetz-node-numeral {
   fill: #cbb490;
+  font-family: var(--serif-display);
+  font-size: 10px;
+  font-weight: 700;
   text-anchor: middle;
   dominant-baseline: central;
+}
+
+.tonnetz-node-text {
+  display: -webkit-box;
+  max-width: 100%;
+  height: 2.6em;
+  overflow: hidden;
+  color: #cbb490;
+  font-family: var(--mono-ledger);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.3em;
+  text-align: center;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+@media (max-width: 400px) {
+  .tonnetz-compass {
+    gap: 0.25rem;
+  }
+
+  .tonnetz-node-text {
+    font-size: 0.54rem;
+    letter-spacing: -0.02em;
+  }
 }
 
 .compass-region.is-active .tonnetz-tri {
@@ -1676,9 +1736,10 @@ h1 em {
   stroke: var(--brass-bright);
 }
 
+.compass-region.is-active .tonnetz-node-numeral,
 .compass-region.is-active .tonnetz-node-text {
   fill: #faf3e6;
-  font-weight: 900;
+  color: #faf3e6;
 }
 
 .parlor-acoustics-engine {
