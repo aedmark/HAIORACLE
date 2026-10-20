@@ -18,7 +18,7 @@
 
 ### Fixed
 
-- Show the site's icon in the browser tab: the page now declares `/favicon.svg`, so browsers stop requesting a missing `/favicon.ico`.
+- Stop favicon 404s in the console: the app and the manual declare an empty icon, so browsers request none.
 - Hear the right bass, organ, and choir notes on low-pitched creatures: notes outside a voice's range used to collapse onto its edge (every bass note an E1); they now move by octaves and keep their pitch. MIDI exports carry the corrected notes too.
 - Hear Raw Esoteric Chaos as intended: with no Fun Machine key held, the esoteric machines now play their own raw output instead of being quietly conducted. Holding a key still brings the band along.
 - Read the cabinet more easily: no text is smaller than 9.6 px, faint labels are brighter (at least 4.5:1 contrast), screen readers no longer announce every step of the loop, and reduced motion takes effect as soon as you turn it on.

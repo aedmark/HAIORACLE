@@ -363,7 +363,7 @@ def build_html(data: dict[str, Any]) -> str:
     style = STYLE.replace("ACCENT2", str(accent2)).replace("ACCENT", str(accent))
     return f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="generator" content="3x Documentation Scheme"><title>{html.escape(str(manual["title"]))}</title><style>{style}</style></head>
+<meta name="generator" content="3x Documentation Scheme"><link rel="icon" href="data:,"><title>{html.escape(str(manual["title"]))}</title><style>{style}</style></head>
 <body><aside class="sidebar"><div class="brand"><span class="brand-icon" aria-hidden="true">{inline(icon)}</span><h1>{inline(project.get("short_name", project["name"]))}</h1></div>
 <div class="version">{inline(project["version"])}</div><label for="manual-search" class="hidden">Search manual</label><input id="manual-search" class="search" type="search" placeholder="Search this manual…" autocomplete="off"><nav>{nav}</nav></aside>
 <main class="content"><header class="hero"><h1>{inline(manual["title"])}</h1>{subtitle}{description}<div class="badges">{badges}</div>
