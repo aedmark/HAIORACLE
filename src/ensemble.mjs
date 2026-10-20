@@ -150,12 +150,16 @@ export function buildEnsembleGraph(context, score, {
   }
 
   // Drums and bass skip the creature filter so they keep their weight; the Fun
-  // Machine reaches the output both dry and compressed so it sits on top.
+  // Machine reaches the output both dry and compressed so it sits on top. The
+  // choir skips it too: its voices are already shaped by their own formant
+  // bandpasses, and a narrow bandpass creature filter on top silenced them.
+  // It still feeds the delay and, below, the parlor reverb.
   strips.lead.out.connect(filter);
   strips.harmony.out.connect(filter);
   strips.chime.out.connect(filter);
-  strips.chant.out.connect(filter);
   strips.fungal.out.connect(filter);
+  strips.chant.out.connect(compressor);
+  strips.chant.out.connect(delay);
   strips.beat.out.connect(compressor);
   strips.bass.out.connect(compressor);
   strips.fun.out.connect(output);
@@ -202,6 +206,7 @@ export function buildEnsembleGraph(context, score, {
   }
   parlorReverbSend.gain.setValueAtTime(parlor.reverb, now);
   filter.connect(parlorReverbFilter).connect(parlorReverbSend).connect(parlorConvolver).connect(compressor);
+  strips.chant.out.connect(parlorReverbFilter);
 
   let parlorCrackleSource = null;
   let parlorCrackleGain = null;

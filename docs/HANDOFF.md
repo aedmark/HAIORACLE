@@ -48,7 +48,7 @@ _Last updated: 2026-10-19, session 20, on `main`: eight-channel parlor mixing co
 - A comprehensive 3x technical manual (`docs/manual.json`, `manual.html`, `tools/manual.py`) documents What, How, and Why across all 28 major systems, interpreters, and algorithms with 0 warnings.
 - Full interactive and audiovisual functionality verified in live browser review (P4-01).
 - The master transport (`#transport-deck`) plays, pauses at the last heard step, and stops-and-rewinds the loop; `Space` toggles play/pause and `Esc` stops from anywhere. Live playback and WAV export build one shared graph (`src/ensemble.mjs`), so exports render the routing the listener hears (P5-18, D-023).
-- The parlor mixing console (`#mixer-engine`) gives all eight voices a fader, pan, mute, solo, and live post-fader VU meter. Plate ENGAGE/SILENCE switches are the console's mutes, and WAV exports follow the mix. Default voicing trims lift the lead +6 dB and the choir +12 dB with faders still at unity, and faders reach a further +12 dB (P5-19, D-024).
+- The parlor mixing console (`#mixer-engine`) gives all eight voices a fader, pan, mute, solo, and live post-fader VU meter. Plate ENGAGE/SILENCE switches are the console's mutes, and WAV exports follow the mix. Default voicing trims lift the lead +6 dB and the choir +12 dB with faders still at unity, faders reach a further +12 dB, and the choir bypasses the creature filter so bandpass creatures no longer silence it (P5-19, D-024).
 - Runtime assets are local and dependency-free (D-001).
 
 **Not verified**
@@ -66,7 +66,7 @@ _Last updated: 2026-10-19, session 20, on `main`: eight-channel parlor mixing co
 
 ## Next steps
 
-1. Decide whether the choir (and possibly lead) should bypass the creature filter. On bandpass creatures (score voices 1 and 5) the filter buries every filtered channel: "three pigeons in a borrowed coat" solos its lead at −51 dB and its choir at −67 dB even after the D-024 trims. The choir already has its own formant filters.
+1. Decide whether the lead should also escape narrow bandpass creature filters. The choir now bypasses the filter (D-024 point 7; pigeons choir −66.6 → −47.2 dB), but "three pigeons in a borrowed coat" (voice 5) still solos its lead at −51 dB, along with quiet organ and chimes. Options: widen the bandpass Q, or add a dry lead tap.
 2. P5-21 stems: render one solo pass per channel through the shared graph using `channelSettings()` with a single soloed channel, plus a ninth parlor-room stem. Note that rhythm patterns 2 and 3 have five cells, so a 12-step WAV does not tile seamlessly for those creatures (observed while building P5-18; the live loop is unaffected).
 3. P5-20 sessions need a decision first: browser preset storage contradicts the "no local storage" statement in ARCHITECTURE.md and SECURITY.md.
 4. Complete P4-02 with keyboard, reduced-motion, contrast, and screen-reader checks.

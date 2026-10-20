@@ -87,13 +87,15 @@ test("every ensemble bus reaches the destination with its documented routing", (
   for (const bus of ["mix", "beatBus", "bassBus", "harmonyBus", "chimeBus", "chantBus", "fungalBus", "funBus"]) {
     assert.ok(reaches(edges, graph[bus].id, "destination"), `${bus} is connected to the output`);
   }
-  for (const bus of ["mix", "harmonyBus", "chimeBus", "chantBus", "fungalBus"]) {
+  for (const bus of ["mix", "harmonyBus", "chimeBus", "fungalBus"]) {
     assert.ok(reaches(edges, graph[bus].id, graph.filter.id), `${bus} passes through the creature filter`);
   }
-  for (const bus of ["beatBus", "bassBus", "funBus"]) {
+  for (const bus of ["beatBus", "bassBus", "funBus", "chantBus"]) {
     assert.equal(reaches(edges, graph[bus].id, graph.filter.id), false, `${bus} bypasses the creature filter`);
   }
   assert.ok(reaches(edges, graph.filter.id, graph.parlorReverbSend.id));
+  assert.ok(reaches(edges, graph.chantBus.id, graph.parlorReverbSend.id), "the choir still reaches the chamber reverb");
+  assert.ok(reaches(edges, graph.chantBus.id, graph.delay.id), "the choir still reaches the delay");
   assert.ok(reaches(edges, graph.parlorReverbSend.id, graph.compressor.id));
   assert.ok(reaches(edges, graph.parlorCrackleSource.id, graph.output.id));
   assert.equal(graph.drones.length, 3);
