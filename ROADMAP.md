@@ -101,7 +101,7 @@ Goal: expand only where additional complexity creates more play.
   - THE CREATURE'S OWN, first in the RULEBOOK menu, is written per creature by `src/creature-rulebook.mjs` from its scale, through a functional grammar in Inform 7 (Part 5 of `src/rulebooks.ni`: harmonic functions, paths, chord shapes).
   - Chords with a third win over suspended, open, or diminished ones, so a Phrygian creature leans home on ♭II. It borrows a fettered genre's character, with organ and melody kept to its triads.
   - Over 200 creatures: 103 distinct progressions, every chord tone in the creature's scale, clashes at most 6%. Sessions accept `"creature"`.
-  - The default rulebook for a fresh creature is still Victorian Tonnetz, pending the maintainer's listen.
+  - At the maintainer's choice (2026-10-21), a fresh creature now opens in THE CREATURE'S OWN.
   Acceptance: distinct progressions across phrases in every fettered genre, the clash ceilings hold, as-written output is unchanged, and the maintainer's listen.
 
 ## Phase 6: Release

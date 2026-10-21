@@ -4037,8 +4037,12 @@ function buildGenreMenu() {
 function updateKapellmeisterUI() {
   if (!rulebooksInstalled()) return;
   const book = genreBook(activeGenre);
-  if (elements.kapellmeisterGenreTitle) elements.kapellmeisterGenreTitle.textContent = book.title;
-  if (elements.kapellmeisterGenreMotto) elements.kapellmeisterGenreMotto.textContent = book.motto;
+  // Before any creature is summoned there is no book of its own to show.
+  const unwritten = activeGenre === CREATURE_GENRE && !currentScore;
+  if (elements.kapellmeisterGenreTitle) elements.kapellmeisterGenreTitle.textContent = unwritten ? "THE CREATURE'S OWN RULEBOOK" : book.title;
+  if (elements.kapellmeisterGenreMotto) {
+    elements.kapellmeisterGenreMotto.textContent = unwritten ? "Summon a creature and it writes its own rulebook from its scale." : book.motto;
+  }
   if (elements.kapellmeisterVariation) {
     const text = !genreVaried ? "VARIATION: AS WRITTEN (SWITCHED)"
       : !book.variation?.length ? "VARIATION: THIS RULEBOOK PLAYS AS WRITTEN"
@@ -6360,7 +6364,8 @@ try {
   // The Kapellmeister's genres live in Inform 7 (D-033). Nothing that reads a
   // genre (the conductor, the Fun Machine, saved presets) runs before this.
   installRulebooks(compileRulebooks(rulebooksSource));
-  activeGenre = genreCodes()[0];
+  // A fresh creature plays the rulebook it writes for itself (D-043).
+  activeGenre = CREATURE_GENRE;
   buildGenreMenu();
   updateKapellmeisterUI();
   updateFunKeyboardChordLabels();

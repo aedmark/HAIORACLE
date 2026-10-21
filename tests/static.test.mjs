@@ -398,6 +398,7 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   assert.match(app, /stepChords\.push\(currentConductedSpine\?\.\[step % 12\] \?\? null\);/);
   assert.match(app, /    varied: genreVaried,\n    funMachine: \{/);
   assert.match(app, /genreVaried = session\.varied;/);
+  assert.match(app, /activeGenre = CREATURE_GENRE;/, "a fresh creature plays its own rulebook (D-043)");
   assert.match(app, /followSong\(offlineTransport, loop, step % 12, null\);/);
   assert.match(app, /playSongLayers\(offlineCtx, offlineTransport, score, step, loop,/);
   assert.match(app, /currentHarmonicPass = livePass;\n  restoreLiveConducting\(\);/, "the render hands the band back to the live loop");

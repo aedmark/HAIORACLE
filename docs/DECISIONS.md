@@ -792,7 +792,7 @@ The default rulebook for a fresh creature (THE CREATURE'S OWN or Victorian Tonne
 - The grammar is three Inform 7 tables (Harmonic Functions, Harmonic Paths, Chord Shapes). `src/creature-rulebook.mjs` writes the book.
 - The path is chosen by `harmony_turn` and `harmony_cadence`, and a root's alternative by `harmony_swap`. Every candidate root is tried for a chord with a third and no flat fifth before any suspended, open, or diminished shape, and a major dominant takes its scale's ♭7.
 - The borrowed character (`harmony_character`) supplies bass, overtones, insistence, and permitted moves. Its organ voicing and melody keep to triad members (blue-note scale snapping becomes chord snapping), because the borrowed 7ths, 9ths, and blue notes clashed on a quarter of steps.
-- A fresh creature still defaults to Victorian Tonnetz, pending the maintainer's listen.
+- A fresh creature now opens in THE CREATURE'S OWN. The maintainer chose this on 2026-10-21 after hearing it. Until a creature is summoned, the Kapellmeister shows a note in place of the motto.
 
 ## D-044 Harmony moves one chord per loop, on the downbeat (2026-10-20, status: accepted)
 
