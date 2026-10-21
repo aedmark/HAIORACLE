@@ -1066,3 +1066,20 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P5-26 phase 4 (sessions v4) and phase 5 (song exports); the P4-02 screen-reader pass; P6-01.
 
 **Next session should start with:** P5-26 phase 4, saving songs in sessions and presets.
+
+### Session 44: 2026-10-20: songs are saved (P5-26 phase 4)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-26 phase 4: sessions v4 carry the loop machine's song (D-039).
+
+**Changed:**
+1. `src/session.mjs`: `SESSION_VERSION` 4, which adds a required `song` validated by `validateSong()` (a `SongError` becomes a `SessionError` with the same field path). v1–v3 open with an empty song, and v3 or v4 share `funMachine: { style }`. The version is checked before the keys, because it decides which keys belong.
+2. `src/app.mjs`: `captureSession()` stores the song; `applySession()` restores it, selects its last loop, resets the recorder, lets the band re-follow, and redraws the strip.
+3. Tests: v4 samples carry a two-layer song; v3 opens with an empty song; song errors name `session.song…` paths; v1 and v2 samples drop the song. Docs: ARCHITECTURE and SECURITY trust rows, the manual's ledger entry, ROADMAP, CHANGELOG, and D-039 status.
+
+**Verified:** 125/125 Node checks. In the browser, two recorded loops (the second at ×2) saved as a v4 preset. After CLEAR SONG and a page reload, loading the preset restored both tiles and the readout ("2 LOOPS · 3 PASSES"), and playback had the band following loop 1 (bass "G G G+ E♭~"). No console errors; the test preset was removed.
+
+**Left undone:** P5-26 phase 5 (whole-song WAV, stem, and MIDI export, capped at 32 passes); the P4-02 screen-reader pass; P6-01.
+
+**Next session should start with:** P5-26 phase 5.

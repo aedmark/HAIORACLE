@@ -86,6 +86,19 @@ test("the LOLCODE spell produces every required score field", () => {
   assert.equal(melodyFor(score).length, 12);
 });
 
+test("the spell gives every creature its own harmony fields, each spread across its range (D-043)", () => {
+  const ranges = { harmonyTurn: 3, harmonySwap: 15, harmonyBorrow: 3, harmonyCadence: 3, harmonyPace: 2, harmonyCharacter: 11 };
+  const seen = Object.fromEntries(Object.keys(ranges).map((key) => [key, new Set()]));
+  for (let i = 0; i < 200; i += 1) {
+    const score = composeScore(source, `harmony field ${i}`);
+    for (const [key, max] of Object.entries(ranges)) {
+      assert.ok(Number.isInteger(score[key]) && score[key] >= 0 && score[key] <= max, `${key} ${score[key]}`);
+      seen[key].add(score[key]);
+    }
+  }
+  for (const [key, max] of Object.entries(ranges)) assert.equal(seen[key].size, max + 1, `${key} reaches every value`);
+});
+
 test("the same normalized phrase summons the same creature", () => {
   const first = composeScore(source, "  A Cucumber With Excellent Boundaries  ");
   const second = composeScore(source, "a cucumber with excellent boundaries");

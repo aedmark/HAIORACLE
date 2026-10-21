@@ -76,6 +76,11 @@ Goal: expand only where additional complexity creates more play.
   - Two more causes were found and fixed. Chord members are taken from a chord's own tones, with honest defaults: dom7alt and Lydian had minor thirds, and diminished chords perfect fifths. Walks land on chord members (`walkTone()`).
   - Clash share of steps, before → after: Victorian 29 → 5%, Palestrina 20 → 5%, Jazz 33 → 3%, Ragtime 6 → 0%, Drone 7 → 0%, Blues 46 → 30% (blue notes).
   - `tests/clashes.test.mjs` holds per-genre ceilings, and the golden fixture was re-frozen deliberately: spines, colours, and progressions unchanged.
+
+  Phase 1 done 2026-10-20:
+  - The spell emits `harmony_turn`, `harmony_swap`, `harmony_borrow`, `harmony_cadence`, `harmony_pace`, and `harmony_character` (divisors 353–383).
+  - No existing field changed across 500 phrases. Every value of every field is reached, and the fields are pairwise independent over 20,000 seeds (|z| ≤ 2.5).
+  - Nothing reads them yet, so nothing sounds different.
   Acceptance: distinct progressions across phrases in every fettered genre, the clash ceilings hold, as-written output is unchanged, and the maintainer's listen.
 
 ## Phase 6: Release

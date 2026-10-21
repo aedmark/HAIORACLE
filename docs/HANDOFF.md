@@ -87,6 +87,35 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 54: 2026-10-20: the creature's harmony fields (P5-30 phase 1)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-30 phase 1: the spell emits each creature's harmony fields (D-043).
+
+**Done:** Phase 0 was committed and pushed with the D-043 spec (41620bf, e7f47f6) after the maintainer's "so much richer and coherent!". Phase 1 is done.
+
+**Changed:**
+1. `src/oracle.lol` emits six fields:
+   - `harmony_turn` (`MOD … 353 AN 4`)
+   - `harmony_swap` (`… 359 AN 16`)
+   - `harmony_borrow` (`… 367 AN 4`)
+   - `harmony_cadence` (`… 373 AN 4`)
+   - `harmony_pace` (`… 379 AN 3`)
+   - `harmony_character` (`… 383 AN 12`, to be used modulo the borrowable genres, so D-041's new genres fit)
+2. `src/score.mjs` validates them as `harmonyTurn` … `harmonyCharacter`. The vitrine's default score gains zeros.
+3. Tests: `tests/oracle.test.mjs` checks the ranges, and that every value is reached over 200 phrases.
+
+**Verified:**
+- 146/146 Node checks.
+- Across 500 phrases, no existing score field changed.
+- On 500 phrases, turn × cadence looked linked (z = 4.1). Over 20,000 seeds every pair of new fields is independent (|z| ≤ 2.5, turn × cadence 0.4), so it was chance and the divisors stay.
+- The browser summons normally.
+
+**Not verified:** Nothing audible yet; nothing reads the fields.
+
+**Next session should start with:** P5-30 phase 2, Inform 7 "permits" sentences and the conductor's variation moves. The golden fixture keeps guarding "as written", and a second fixture freezes the varied spines.
+
 ### Session 53: 2026-10-20: the band agrees with its chords (P5-30 phase 0, D-043)
 
 **Contributor:** Claude Code with maintainer direction
@@ -351,20 +380,3 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Hosting note (same session):** the maintainer deploys to Neocities at `https://oopismcgoopis.com/eefm/`. Just after an upload the console showed `looper.mjs` refused as `application/octet-stream`. Probing showed Neocities' edge cache (`x-cached: HIT`) briefly answering with mixed content types for `.mjs` files (`looper.mjs`, then `session.mjs`) and a stale `app.mjs` (18:46 against 22:29). Within minutes every file answered `application/javascript` with the new upload, so it was propagation, not the code; a hard refresh fixes it. The ASSET_VERSION stamps (D-035) keep versions consistent once edges agree, but cannot fix a wrong content type. If it recurs often, renaming modules to `.js` is the fallback. The Permissions-Policy console warnings come from Neocities' own headers. `index.html` and the generated `manual.html` (via `tools/manual.py`) declare an empty icon (`data:,`), so no favicon is requested anywhere: the maintainer wants a clean console, not an icon.
 
 **Next session should start with:** the maintainer's listen (exported songs, corrected low voices), then P4-02 or P6-01.
-
-### Session 44: 2026-10-20: songs are saved (P5-26 phase 4)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-26 phase 4: sessions v4 carry the loop machine's song (D-039).
-
-**Changed:**
-1. `src/session.mjs`: `SESSION_VERSION` 4, which adds a required `song` validated by `validateSong()` (a `SongError` becomes a `SessionError` with the same field path). v1–v3 open with an empty song, and v3 or v4 share `funMachine: { style }`. The version is checked before the keys, because it decides which keys belong.
-2. `src/app.mjs`: `captureSession()` stores the song; `applySession()` restores it, selects its last loop, resets the recorder, lets the band re-follow, and redraws the strip.
-3. Tests: v4 samples carry a two-layer song; v3 opens with an empty song; song errors name `session.song…` paths; v1 and v2 samples drop the song. Docs: ARCHITECTURE and SECURITY trust rows, the manual's ledger entry, ROADMAP, CHANGELOG, and D-039 status.
-
-**Verified:** 125/125 Node checks. In the browser, two recorded loops (the second at ×2) saved as a v4 preset. After CLEAR SONG and a page reload, loading the preset restored both tiles and the readout ("2 LOOPS · 3 PASSES"), and playback had the band following loop 1 (bass "G G G+ E♭~"). No console errors; the test preset was removed.
-
-**Left undone:** P5-26 phase 5 (whole-song WAV, stem, and MIDI export, capped at 32 passes); the P4-02 screen-reader pass; P6-01.
-
-**Next session should start with:** P5-26 phase 5.

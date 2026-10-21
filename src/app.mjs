@@ -1815,6 +1815,7 @@ class OracleVision {
       kineticDepth: 72, kineticTilt: 3, fluxMode: 1,
       fungalForm: 0, fungalName: "AGARIC CAP", fungalHyphae: 64, fungalSpores: 55, fungalBloom: 60,
       funVoice: 0, funBright: 0, funSpread: 2,
+      harmonyTurn: 0, harmonySwap: 0, harmonyBorrow: 0, harmonyCadence: 0, harmonyPace: 0, harmonyCharacter: 0,
     };
     this.startedAt = performance.now();
     this.particles = [];

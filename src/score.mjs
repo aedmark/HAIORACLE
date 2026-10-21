@@ -52,6 +52,14 @@ const REQUIRED_RANGES = Object.freeze({
   fun_voice: [0, 6],
   fun_bright: [-3, 3],
   fun_spread: [0, 4],
+  // The creature's own harmony (D-043): read by the conductor's variation
+  // moves and by THE CREATURE'S OWN rulebook.
+  harmony_turn: [0, 3],
+  harmony_swap: [0, 15],
+  harmony_borrow: [0, 3],
+  harmony_cadence: [0, 3],
+  harmony_pace: [0, 2],
+  harmony_character: [0, 11],
   name_a: [0, 31],
   name_b: [0, 31],
   name_c: [0, 47],
@@ -217,6 +225,12 @@ export function parseScore(lines, seed, phrase) {
     funVoice: values.fun_voice,
     funBright: values.fun_bright,
     funSpread: values.fun_spread,
+    harmonyTurn: values.harmony_turn,
+    harmonySwap: values.harmony_swap,
+    harmonyBorrow: values.harmony_borrow,
+    harmonyCadence: values.harmony_cadence,
+    harmonyPace: values.harmony_pace,
+    harmonyCharacter: values.harmony_character,
     steps: Object.freeze(steps),
     name: creatureName(values),
   });
