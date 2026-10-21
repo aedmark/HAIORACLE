@@ -598,6 +598,92 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Consequences:** The Fun Machine gains a real arrangement surface. Exports grow with the song. Sessions change format again (v4). Build in phases (P5-26).
 
+## D-040 The Fun Machine chooses a voice: the creature's own, or a parlor preset (2026-10-20, status: proposed)
+
+**Context:** Every phrase plays the Fun Machine through the same velvet pad (two detuned saws and a triangle per note, a 0.23 Hz chorus, and a lowpass that opens on the attack), the same triangle-and-square pluck for arpeggios, and the same sine lead. The maintainer asked on 2026-10-20 for a voice selector, so it is "not always the same synth pad": each phrase should be able to choose its own voice deterministically, and there should be presets that are known to sound good.
+
+**Decision (proposed):**
+1. **A voice is a patch, not code.** `src/voices.mjs` holds frozen, validated patch objects. Each patch has three parts, one per accompaniment role (`pad`, `pluck` for arpeggios, `lead`). Each part gives:
+   - up to three oscillator layers, each with a type, a frequency ratio, detune, gain, and stereo spread;
+   - an optional sub layer;
+   - an optional breath of noise;
+   - a filter (type, base, attack peak, sustain, Q);
+   - an amplitude envelope with attack and sustain as fractions of the region, plus release in seconds;
+   - a chorus LFO (rate and depth) and a delayed vibrato (rate and depth).
+
+   `schedulePadChord()`, `scheduleArpNote()`, and `scheduleFunLeadNote()` read a patch instead of hard-coded numbers. A validator bounds every field: at most 3 layers per note, filter 80–8000 Hz, Q ≤ 8, and attack and release within the current ranges. That limits oscillator count and stops a bad patch from clipping or screeching.
+2. **Presets, tuned by ear.** There are eight curated presets, in parlor language:
+   - **VELVET PAD**: today's sound, bit for bit. It is the reference and the fallback.
+   - **HARMONIUM**: a reed square, a slow bellows swell, and a little nasal bandpass.
+   - **GLASS HARMONICA**: sine partials at 1 and 2.76, a soft attack, and long tails.
+   - **THEATRE ORGAN**: drawbar-style stacked sines at 1, 2, 3, and 4 with a tremulant.
+   - **STRING MACHINE**: an ensemble of three detuned saws with a fast chorus. It is a Solina homage.
+   - **MUSIC BOX**: struck triangles at 1 and 4 with a short decay. The pad becomes a rolled chord.
+   - **CALLIOPE**: breathy pulse, with wide vibrato and noise.
+   - **ÆTHER CHOIR**: two formant bandpasses over a saw, sharing vowel tables with Plate VI.
+
+   Each preset names the General MIDI program its MIDI track announces.
+3. **The creature's own voice (deterministic).** `src/oracle.lol` gains three score fields, drawn with new, unused divisors so that no existing field changes:
+   - `fun_voice` picks one of the eight presets;
+   - `fun_bright` (−3..3) shifts the filter by octave-fractions;
+   - `fun_spread` (0..4) scales detune and stereo width.
+
+   The host applies the two tweaks inside the validator's bounds. The selector's default, **THE CREATURE'S OWN**, plays that result, so the same phrase always sounds the same and every phrase is still a known-good family. This keeps the spell causal: the creature's voice originates in the score.
+4. **The selector.** A row of voice chips under the style chips on the Fun Machine: THE CREATURE'S OWN, then the eight presets. They work like the style chips (`aria-pressed`, keyboard reachable, no layout shift). Optionally, a rulebook may name a voice that suits it ("The suggested voice of Gospel Shout is theatre organ."), and a ninth chip, **MATCH THE RULEBOOK**, follows it (D-041).
+5. **Recorded takes keep their voice.** A loop-machine slot becomes `{ key, style, voice }`, with voice resolved to a preset id when recorded, so stacked layers can be different instruments. Sessions become v5 with `funMachine.voice`. Files from v1–v4 open with VELVET PAD everywhere, so they sound as they did when saved.
+6. **Exports.** The MANUAL stem renders each slot's voice, and the MIDI Fun Machine track sends a program change whenever the voice changes.
+
+**Alternatives:**
+- **Free synthesis per phrase** (the spell emits raw oscillator and filter numbers): more variety, but many phrases would sound bad, and the maintainer asked for presets that sound good.
+- **Presets only, with no deterministic default:** loses "every creature is itself".
+- **Patches written in Inform 7:** charming, but it widens the subset (D-033) for numeric data that JavaScript validates better.
+
+**Consequences:**
+- Sessions change format (v5).
+- The score gains three fields, so the score validator, the manual, the share fragment, and the score tests change. Existing creatures' other fields do not change.
+- Creatures' Fun Machine sound changes by default. That is the point, but VELVET PAD is one click away.
+- CPU stays bounded by the layer cap.
+
+**Open choices (recommendations first):** voice per slot, so layers can differ (recommended), or per song; whether to ship MATCH THE RULEBOOK with D-041 wave 1 or later.
+
+## D-041 Many more Kapellmeister genres, in waves, written in Inform 7 (2026-10-20, status: proposed)
+
+**Context:** Seven genres ship: Victorian Tonnetz, Delta Blues, Smoky Parlor Jazz, Palestrina, Mystic Drone, Parlor Ragtime, and Raw Chaos. P5-24 proved a genre can be added in `src/rulebooks.ni` alone. The maintainer asked on 2026-10-20 for "way more musical genres".
+
+**Decision (proposed):**
+1. **Waves**, so each one is reviewable and listenable. Every wave appends genres, keeps every entry of the existing genres in the golden fixture identical (as P5-24 did), and is played in the browser before it is committed.
+2. **Wave 1: Inform 7 only.** These six genres need no JavaScript, only today's chord qualities and methods:
+   - **DOO-WOP PARLOR BALLAD**: I · vi · IV · V, a triplet-feel bass walk, and member-snapped melodies.
+   - **SACRED HARP SHAPE-NOTE**: open fifths and minor modal changes, a stern drone bass, and fourths and fifths in the chimes.
+   - **ANDALUSIAN FLAMENCO**: i · ♭VII · ♭VI · V with a Phrygian colour on the dominant, and a descending bass walk.
+   - **KLEZMER FREYGISH**: a Phrygian-dominant tonic, minor iv, and ♭VII, with augmented-second melody tones.
+   - **SEA SHANTY & HORNPIPE**: I · IV · I · V, with a pedal drone under the chorus and plain consonant overtones.
+   - **SILENT-FILM LYDIAN**: lydian and maj9 colours, with a Tonnetz walk at high consonance.
+3. **Wave 2: six more chord qualities, then six genres.** The qualities are **min7, maj7, half-diminished (m7♭5), augmented, sus4, and major 6**. These are a one-time JavaScript change in the conductor's quality table, labels, and `chordText()`. The Inform 7 kind gains their names, and the golden fixture is unaffected because no existing genre uses them. Then:
+   - **BOSSA NOVA SALON**: maj7 and min7, ii–V–I, and a root–fifth bass that anticipates the beat.
+   - **BAROQUE CHORALE**: circle-of-fifths changes, half-diminished pre-dominants, and contrary-motion bass.
+   - **GOTHIC HORROR ORGAN**: minor, augmented, and diminished chords with chromatic mediants (a P/L Tonnetz walk), plus a pedal bass.
+   - **GOSPEL SHOUT**: I6, IV, sus4 "amens", plagal cadences, and a walking bass.
+   - **TANGO HABANERA**: minor and half-diminished chords, V7, and a habanera bass walk.
+   - **NEO-SOUL LO-FI**: min9, maj7, and min7, with soft member-snapped melodies.
+4. **Wave 3 (optional, needs its own decision): feel.** Genres such as waltz, swing, gamelan, and tango want rhythm, not just harmony. A small `feel` property would let a rulebook choose triple or swing step weighting from a fixed JavaScript menu: straight, swing, waltz, or habanera. It would touch the beat and bass schedulers, so it needs listening and possibly its own golden entries. Candidates: VAUDEVILLE WALTZ, GAMELAN PELOG (pentatonic scale snapping), and SWING-ERA BALLROOM.
+5. **Menu families.** With 19+ genres, the RULEBOOK `<select>` groups them into `<optgroup>`s using one new Inform 7 property: "A genre has some text called the family" (PARLOR, SACRED & EARLY, FOLK & DANCE, NIGHT CLUB, ESOTERIC). Families are optional, so ungrouped genres still work. A genre may also name a suggested Fun Machine voice (D-040).
+6. **Per-genre definition of done:**
+   - a motto;
+   - changes, melody, bass, organ voicing, overtones, and a Fun Machine progression;
+   - the golden fixture appended and re-frozen with `--rewrite` showing only additions;
+   - a test that the genre plays through the conductor, the Fun Machine, and session validation (like `tests/seventh-genre.test.mjs`);
+   - no layout shift with its title and motto;
+   - the maintainer's listen.
+
+**Alternatives:** one big batch (faster, but nobody can listen to twelve genres at once); generating genres from parameters (variety without character).
+
+**Consequences:**
+- The rulebook file roughly triples, and the golden fixture grows. Fixture size is watched: it is about 640 KB now, so if it passes about 1.5 MB, per-genre entries narrow to one tonic sweep.
+- Saved sessions accept the new codes. Older builds reject them, which is expected.
+
+**Open choices:** which wave-1 genres to keep or swap; whether wave 3 (feel) is wanted at all.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)
