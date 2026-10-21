@@ -144,17 +144,15 @@ export function applyTonnetzOperation(triad, op) {
 }
 
 // The members a quality implies when a chord names no tones of its own.
-// Altered dominants and Lydian chords have a major third; a diminished chord
-// a flat fifth and a diminished seventh (D-043: these used to default to a
-// minor third and a perfect fifth, which the organ and choir then sang a
-// semitone against the chord's own tones).
-const MAJOR_THIRD_QUALITIES = new Set(["major", "dom7", "maj9", "dom7alt", "lydian"]);
+// Altered dominants, Lydian chords, maj7, augmented, and 6th chords have a
+// major third; diminished and half-diminished flat fifths; augmented sharp fifths.
+const MAJOR_THIRD_QUALITIES = new Set(["major", "dom7", "maj9", "dom7alt", "lydian", "maj7", "augmented", "major_6"]);
 
 export function buildTriad(root, quality = "minor", op = "I", customPcs = null) {
   const r = ((root % 12) + 12) % 12;
-  const thirdOffset = MAJOR_THIRD_QUALITIES.has(quality) ? 4 : 3;
-  const fifthOffset = quality === "dim" ? 6 : 7;
-  const seventhOffset = quality === "dim" ? 9 : (quality === "major" || quality === "maj9" ? 11 : 10);
+  const thirdOffset = quality === "sus4" ? 5 : (MAJOR_THIRD_QUALITIES.has(quality) ? 4 : 3);
+  const fifthOffset = quality === "dim" || quality === "half_diminished" || quality === "half-diminished" ? 6 : (quality === "augmented" ? 8 : 7);
+  const seventhOffset = quality === "dim" ? 9 : (quality === "major" || quality === "maj9" || quality === "maj7" ? 11 : (quality === "major_6" ? 9 : 10));
   const pitchClasses = customPcs
     ? Object.freeze([...customPcs].map((pc) => ((pc % 12) + 12) % 12))
     : null;
@@ -164,7 +162,7 @@ export function buildTriad(root, quality = "minor", op = "I", customPcs = null) 
   // fifth) lends its suspended tone to the "third".
   const intervals = new Set((pitchClasses ?? []).map((pc) => (pc - r + 12) % 12));
   const member = (choices, fallback) => (r + (choices.find((interval) => intervals.has(interval)) ?? fallback)) % 12;
-  const third = member(thirdOffset === 4 ? [4, 3, 2, 5] : [3, 4, 2, 5], thirdOffset);
+  const third = member(thirdOffset === 5 ? [5, 4, 3, 2] : (thirdOffset === 4 ? [4, 3, 2, 5] : [3, 4, 2, 5]), thirdOffset);
   const fifth = member([fifthOffset, 7, 6, 8], fifthOffset);
   const seventh = member([seventhOffset, 10, 11, 9], seventhOffset);
   const ninth = member([2, 1], 2);
@@ -197,6 +195,12 @@ export function chordLabelFor(chord, tonicMidi = 60) {
   if (chord.quality === "modal_open") return `${name}5 (Open)`;
   if (chord.quality === "phrygian") return `${name} Phryg`;
   if (chord.quality === "lydian") return `${name} Lyd`;
+  if (chord.quality === "min7") return `${name}min7`;
+  if (chord.quality === "maj7") return `${name}maj7`;
+  if (chord.quality === "half_diminished" || chord.quality === "half-diminished") return `${name}ø7`;
+  if (chord.quality === "augmented") return `${name} aug`;
+  if (chord.quality === "sus4") return `${name}sus4`;
+  if (chord.quality === "major_6") return `${name}6`;
   return `${name} ${chord.quality}`;
 }
 
@@ -208,6 +212,12 @@ export const CHORD_QUALITIES = Object.freeze({
   MAJ9: "maj9",
   DIM: "dim",
   OPEN5: "modal_open",
+  MIN7: "min7",
+  MAJ7: "maj7",
+  HALF_DIM: "half_diminished",
+  AUG: "augmented",
+  SUS4: "sus4",
+  MAJOR_6: "major_6",
 });
 
 export const FUN_KEY_MAP = Object.freeze([
@@ -257,6 +267,18 @@ export function buildFunChord(rootSemitone, quality = "auto", genre = null, toni
     customPcs = [r, (r + 1) % 12, (r + 4) % 12, (r + 7) % 12];
   } else if (resolvedQuality === "lydian") {
     customPcs = [r, (r + 6) % 12, (r + 7) % 12, (r + 11) % 12];
+  } else if (resolvedQuality === "min7") {
+    customPcs = [r, (r + 3) % 12, (r + 7) % 12, (r + 10) % 12];
+  } else if (resolvedQuality === "maj7") {
+    customPcs = [r, (r + 4) % 12, (r + 7) % 12, (r + 11) % 12];
+  } else if (resolvedQuality === "half_diminished" || resolvedQuality === "half-diminished") {
+    customPcs = [r, (r + 3) % 12, (r + 6) % 12, (r + 10) % 12];
+  } else if (resolvedQuality === "augmented") {
+    customPcs = [r, (r + 4) % 12, (r + 8) % 12];
+  } else if (resolvedQuality === "sus4") {
+    customPcs = [r, (r + 5) % 12, (r + 7) % 12];
+  } else if (resolvedQuality === "major_6") {
+    customPcs = [r, (r + 4) % 12, (r + 7) % 12, (r + 9) % 12];
   } else if (resolvedQuality === "minor") {
     customPcs = [r, (r + 3) % 12, (r + 7) % 12];
   } else if (resolvedQuality === "raw") {
@@ -667,6 +689,12 @@ export function conductEnsemble({
             : chord.quality === "modal_open" ? "5"
             : chord.quality === "phrygian" ? "phr"
             : chord.quality === "lydian" ? "lyd"
+            : chord.quality === "min7" ? "m7"
+            : chord.quality === "maj7" ? "M7"
+            : chord.quality === "half_diminished" || chord.quality === "half-diminished" ? "ø"
+            : chord.quality === "augmented" ? "+"
+            : chord.quality === "sus4" ? "sus"
+            : chord.quality === "major_6" ? "6"
             : "";
           const harmonyLabel = step.gate === 0 ? "REST" : `${rootName}${qualityShort}${step.mirror}`;
 

@@ -649,7 +649,7 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 - MATCH THE RULEBOOK waits for D-041, so each new genre ships with a suggested voice.
 - CALLIOPE is dropped, leaving seven presets.
 
-## D-041 Many more Kapellmeister genres, in waves, written in Inform 7 (2026-10-20, status: accepted for wave 1, 2026-10-21)
+## D-041 Many more Kapellmeister genres, in waves, written in Inform 7 (2026-10-20, status: accepted for waves 1 and 2, 2026-10-21)
 
 **Context:** Seven genres ship: Victorian Tonnetz, Delta Blues, Smoky Parlor Jazz, Palestrina, Mystic Drone, Parlor Ragtime, and Raw Chaos. P5-24 proved a genre can be added in `src/rulebooks.ni` alone. The maintainer asked on 2026-10-20 for "way more musical genres".
 
@@ -693,6 +693,14 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 - The only JavaScript change is reading `family` and building the groups.
 - The golden fixture was re-frozen with additions only: 677 existing entries identical once indices are resolved, and 544 added.
 - As a consequence, `harmony_character` now spans 12 fettered genres, so some creatures' own rulebooks borrow a different character than before.
+
+**Wave 2 as built (2026-10-21):**
+- Six new chord qualities were added across the engine: `min7`, `maj7`, `half_diminished` (`m7♭5`), `augmented`, `sus4`, and `major_6`. They are defined in `src/conductor.mjs`, `src/variation.mjs`, `src/session.mjs`, and mapped from Inform 7 names in `src/inform.mjs`.
+- Six new Kapellmeister genres were authored in Inform 7 (`src/rulebooks.ni`): Bossa Nova Salon, Baroque Chorale, Gothic Horror Organ, Gospel Shout & Revival, Tango Habanera, and Neo-Soul Lo-Fi (bringing total genres to 19 across the 5 menu families).
+- Each new genre comes with changes, a Fun Machine progression table, bass walk, organ voicing, melody extensions/methods, overtones, and permitted variation moves.
+- Organ voicings and melody extensions are kept strictly consonant with the chord qualities to prevent semitone rubs, verified by clash ceilings in `tests/clashes.test.mjs` (0.0%–0.8% clash rate).
+- Golden fixtures (`tests/fixtures/rulebooks-golden.json` and `tests/fixtures/variations-golden.json`) re-frozen with additions only.
+- As a consequence, `harmony_character` now spans 18 fettered genres.
 
 **Related:** D-043 (accepted 2026-10-20) adds a goal to this redesign: every creature varies its genre or writes its own. New genres are then written with the variation moves they permit.
 

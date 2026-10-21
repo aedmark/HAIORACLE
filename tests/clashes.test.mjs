@@ -39,11 +39,18 @@ const CEILINGS = Object.freeze({
   klezmer_freygish: 3,
   sea_shanty: 3,
   silent_film_lydian: 8,
+  // D-041 wave 2, measured at 0% when written.
+  bossa_nova_salon: 4,
+  baroque_chorale: 4,
+  gothic_horror: 4,
+  gospel_shout: 4,
+  tango_habanera: 4,
+  neo_soul: 4,
 });
 
 // Varied creatures (D-043 phase 2) may reach chords the genre never wrote;
 // jazz then adds idiomatic rubs (a 6th against a minor 7th).
-const VARIED_CEILINGS = Object.freeze({ ...CEILINGS, smoky_jazz: 10, silent_film_lydian: 10 });
+const VARIED_CEILINGS = Object.freeze({ ...CEILINGS, smoky_jazz: 10, silent_film_lydian: 10, bossa_nova_salon: 6, neo_soul: 6 });
 
 function clashRate(genre, phrases, varied = false) {
   let steps = 0;

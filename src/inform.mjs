@@ -526,7 +526,7 @@ export function followRulebook(story, rulebookName, subject, globals = {}) {
 
 export const INTERVALS = Object.freeze(Array.from({ length: 12 }, (_, i) => i));
 export const STRICTNESS_RANGE = Object.freeze([1, 14]);
-const code = (valueName) => valueName.replace(/ /g, "_").toLowerCase();
+const code = (valueName) => valueName.replace(/[\s-]/g, "_").toLowerCase();
 
 function fail(where, message) {
   throw new RangeError(`Kapellmeister rulebooks: ${where}: ${message}`);

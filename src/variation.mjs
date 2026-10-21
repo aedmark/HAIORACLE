@@ -34,15 +34,30 @@ const TONES = Object.freeze({
   min9: [0, 3, 7, 10, 2],
   dom7alt: [0, 4, 7, 10],
   dim: [0, 3, 6, 9],
+  min7: [0, 3, 7, 10],
+  maj7: [0, 4, 7, 11],
+  half_diminished: [0, 3, 6, 10],
+  augmented: [0, 4, 8],
+  sus4: [0, 5, 7],
+  major_6: [0, 4, 7, 9],
 });
 
 const NUMERALS = ["I", "♭II", "II", "♭III", "III", "IV", "♯IV", "V", "♭VI", "VI", "♭VII", "VII"];
-const MINORISH = new Set(["minor", "min9", "dim"]);
+const MINORISH = new Set(["minor", "min9", "dim", "min7", "half_diminished"]);
 
 function numeral(root, quality) {
   const name = NUMERALS[((root % 12) + 12) % 12];
   const shown = MINORISH.has(quality) ? name.toLowerCase() : name;
-  const suffix = quality === "dom7" || quality === "dom7alt" ? "7" : quality === "maj9" ? "maj9" : quality === "min9" ? "9" : quality === "dim" ? "°" : "";
+  const suffix = quality === "dom7" || quality === "dom7alt" || quality === "min7" ? "7"
+    : quality === "maj9" ? "maj9"
+    : quality === "min9" ? "9"
+    : quality === "dim" ? "°"
+    : quality === "maj7" ? "maj7"
+    : quality === "half_diminished" ? "ø7"
+    : quality === "augmented" ? "+"
+    : quality === "sus4" ? "sus4"
+    : quality === "major_6" ? "6"
+    : "";
   return `${shown}${suffix}`;
 }
 
@@ -108,9 +123,9 @@ export function varySpine(spine, score, permitted, makeChord) {
       const current = steps[run.start];
       for (let tries = 0; tries < swaps.length; tries += 1) {
         const move = swaps[(index + score.harmonySwap + tries) % swaps.length];
-        if (move === "relative_substitution" && ["major", "minor", "maj9", "min9"].includes(current.quality)) {
-          const toMinor = current.quality === "major" || current.quality === "maj9";
-          const quality = { major: "minor", maj9: "min9", minor: "major", min9: "maj9" }[current.quality];
+        if (move === "relative_substitution" && ["major", "minor", "maj9", "min9", "maj7", "min7"].includes(current.quality)) {
+          const toMinor = current.quality === "major" || current.quality === "maj9" || current.quality === "maj7";
+          const quality = { major: "minor", maj9: "min9", maj7: "min7", minor: "major", min9: "maj9", min7: "maj7" }[current.quality];
           const root = current.root + (toMinor ? 9 : 3);
           fill(run, chord(root, quality, "relative"));
           moves.push("RELATIVE SUB");

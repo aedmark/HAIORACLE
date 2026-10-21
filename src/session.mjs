@@ -37,6 +37,7 @@ const V1_FUN_QUALITIES = Object.freeze(["auto", "major", "minor", "dom7", "maj9"
 // Every quality buildFunChord() can resolve to, including genre-driven ones.
 export const CHORD_QUALITY_IDS = Object.freeze([
   "major", "minor", "dom7", "maj9", "min9", "dom7alt", "dim", "modal_open", "phrygian", "lydian", "raw",
+  "min7", "maj7", "half_diminished", "half-diminished", "augmented", "sus4", "major_6",
 ]);
 
 export class SessionError extends Error {

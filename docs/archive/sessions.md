@@ -1229,3 +1229,29 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Verified by ear:** the maintainer: "Much better." P5-28 phase 2 and D-042 were committed separately.
 
 **Next session should start with:** P5-28 phase 3.
+
+### Session 50: 2026-10-20: the creature's own voice (P5-28 phase 3)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-28 phase 3: each phrase chooses its Fun Machine voice deterministically (D-040).
+
+**Done:** P5-28 phase 2 and D-042 were committed separately and pushed (637550b, 9a17a59) after the maintainer's "Much better." Phase 3 is done.
+
+**Changed:**
+1. `src/oracle.lol` emits `fun_voice` (`MOD … 337 AN 7`), `fun_bright` (`DIFF OF MOD … 347 AN 7 AN 3`, so −3..3), and `fun_spread` (`MOD … 349 AN 5`). `src/score.mjs` validates them as `funVoice`, `funBright`, and `funSpread`. The vitrine's default score gains neutral values.
+2. `src/voices.mjs`:
+   - `creatureVoice(score)` clones the chosen preset, scales its filters by 2^(bright/6) and its detune, width, and chorus depth by 0.6 + 0.2 × spread (both clamped to the validator's bounds), leaves formants alone, and validates the result.
+   - `creatureVoiceLabel()` gives a reading like "HARMONIUM · BRIGHTER · NARROW".
+3. `index.html` and `src/app.mjs`: THE CREATURE'S OWN chip comes first and is pressed by default. `currentFunVoice()` caches the creature voice per seed. `showCreatureVoice()` puts the chosen voice in the chip's tooltip on every summon, and the chip's telemetry names it.
+
+**Verified:**
+- 139/139 Node checks.
+- Across 500 phrases, no existing score field changed. The new fields spread evenly: each voice is 61–89 creatures, each tilt 61–86, each spread 92–113.
+- In the browser, "three pigeons in a borrowed coat" reads HARMONIUM · BRIGHTER · NARROW both times it was summoned, and "the moth reads braille" reads MUSIC BOX · BRIGHT · NARROWEST.
+- A held key played the creature voice with no console errors.
+
+**Not verified:** How the tilted and spread extremes sound (DARKEST, BRIGHTEST, NARROWEST, WIDEST).
+
+**Next session should start with:** P5-28 phase 4: per-slot voices in the loop machine, and sessions v5 with `funMachine.voice`. Files from v1–v4 open with VELVET PAD.
+

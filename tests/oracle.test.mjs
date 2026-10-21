@@ -442,8 +442,8 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   const chimes = composeChimes(pietSource, fractranSource, score, 0);
   const chant = composeChant(chantSource, score, 0);
 
-  // 1. Every genre rulebook (six original, Parlor Ragtime, and D-041 wave 1's six) loads from src/rulebooks.ni with display names
-  assert.equal(GENRES.length, 13);
+  // 1. Every genre rulebook (six original, Parlor Ragtime, D-041 wave 1's six, and wave 2's six) loads from src/rulebooks.ni with display names
+  assert.equal(GENRES.length, 19);
   for (const genre of rulebooks.genres) {
     assert.ok(genre.title, `Expected display name for genre ${genre.code}`);
   }
@@ -561,6 +561,42 @@ test("the Esoteric Fun Machine auto-chord organ harmonizes keys and overlays cus
   assert.equal(open5Chord.name, "D");
   assert.equal(open5Chord.quality, "modal_open");
   assert.deepEqual(open5Chord.pitchClasses, [2, 9, 4]);
+
+  const min7Chord = buildFunChord(9, CHORD_QUALITIES.MIN7);
+  assert.equal(min7Chord.name, "A");
+  assert.equal(min7Chord.quality, "min7");
+  assert.deepEqual(min7Chord.pitchClasses, [9, 0, 4, 7]);
+  assert.equal(chordLabelFor(min7Chord), "Amin7");
+
+  const maj7Chord = buildFunChord(0, CHORD_QUALITIES.MAJ7);
+  assert.equal(maj7Chord.name, "C");
+  assert.equal(maj7Chord.quality, "maj7");
+  assert.deepEqual(maj7Chord.pitchClasses, [0, 4, 7, 11]);
+  assert.equal(chordLabelFor(maj7Chord), "Cmaj7");
+
+  const halfDimChord = buildFunChord(11, CHORD_QUALITIES.HALF_DIM);
+  assert.equal(halfDimChord.name, "B");
+  assert.equal(halfDimChord.quality, "half_diminished");
+  assert.deepEqual(halfDimChord.pitchClasses, [11, 2, 5, 9]);
+  assert.equal(chordLabelFor(halfDimChord), "Bø7");
+
+  const augChord = buildFunChord(0, CHORD_QUALITIES.AUG);
+  assert.equal(augChord.name, "C");
+  assert.equal(augChord.quality, "augmented");
+  assert.deepEqual(augChord.pitchClasses, [0, 4, 8]);
+  assert.equal(chordLabelFor(augChord), "C aug");
+
+  const sus4Chord = buildFunChord(7, CHORD_QUALITIES.SUS4);
+  assert.equal(sus4Chord.name, "G");
+  assert.equal(sus4Chord.quality, "sus4");
+  assert.deepEqual(sus4Chord.pitchClasses, [7, 0, 2]);
+  assert.equal(chordLabelFor(sus4Chord), "Gsus4");
+
+  const maj6Chord = buildFunChord(5, CHORD_QUALITIES.MAJOR_6);
+  assert.equal(maj6Chord.name, "F");
+  assert.equal(maj6Chord.quality, "major_6");
+  assert.deepEqual(maj6Chord.pitchClasses, [5, 9, 0, 2]);
+  assert.equal(chordLabelFor(maj6Chord), "F6");
 
   // 3. customSpine overlay conducts ensemble loop without altering other algorithmic steps
   const customProgression = Array(12).fill(null);

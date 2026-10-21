@@ -156,10 +156,16 @@ test("genre codes, flags, and menu order are as the rulebooks state", () => {
     "victorian_tonnetz", "blues_twelve_bar", "smoky_jazz", "renaissance_counterpoint", "modal_drone", "parlor_ragtime",
     // D-041 wave 1, written only in Inform 7.
     "doowop_ballad", "sacred_harp", "andalusian_flamenco", "klezmer_freygish", "sea_shanty", "silent_film_lydian",
+    // D-041 wave 2.
+    "bossa_nova_salon", "baroque_chorale", "gothic_horror", "gospel_shout", "tango_habanera", "neo_soul",
     "raw_chaos",
   ]);
   assert.deepEqual(books.genres.filter((g) => g.unfettered).map((g) => g.code), ["raw_chaos"]);
-  assert.deepEqual(books.genres.filter((g) => g.insistent).map((g) => g.code), ["blues_twelve_bar", "smoky_jazz", "modal_drone", "parlor_ragtime", "sacred_harp", "andalusian_flamenco", "klezmer_freygish", "sea_shanty"]);
+  assert.deepEqual(books.genres.filter((g) => g.insistent).map((g) => g.code), [
+    "blues_twelve_bar", "smoky_jazz", "modal_drone", "parlor_ragtime",
+    "sacred_harp", "andalusian_flamenco", "klezmer_freygish", "sea_shanty",
+    "gothic_horror", "gospel_shout", "tango_habanera",
+  ]);
   // Every genre names a menu family (D-041).
   assert.deepEqual([...new Set(books.genres.map((g) => g.family))], ["PARLOR", "NIGHT CLUB", "SACRED & EARLY", "ESOTERIC", "FOLK & DANCE"]);
 });

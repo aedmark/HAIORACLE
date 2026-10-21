@@ -4,19 +4,19 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-21, session 59, on `main`._
+_Last updated: 2026-10-21, session 60, on `main`._
 
 - P5-28 is complete: Fun Machine voices, each creature's own by default (D-040).
 - D-042 freed the organ, chimes, and mycelium from the creature filter.
 - P5-30 is complete (D-043): clashes cut, every creature varying its genre's changes, the VARIATION readout, AS WRITTEN, sessions v6, and THE CREATURE'S OWN rulebook.
 - D-044 moves harmony one chord per loop, on the downbeat.
 - A fresh creature opens in THE CREATURE'S OWN (maintainer's choice, 2026-10-21).
-- P5-29 wave 1 is done and approved by ear: six new Inform 7 genres and menu families, 13 genres in all.
-- Next: D-041 wave 2 (six chord qualities, then six genres).
+- P5-29 wave 1 and wave 2 are done: six new chord qualities, twelve new Inform 7 genres, 19 genres in all.
+- Next: maintainer listen to Wave 2 genres, or Wave 3 (feel) / P4-02.
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 wave 1, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-21, session 59, local Linux environment)
+**Verified** (2026-10-21, session 60, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
@@ -94,6 +94,43 @@ _Last updated: 2026-10-21, session 59, on `main`._
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 60: 2026-10-21: six new chord qualities and six new genres (P5-29 wave 2)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Implement P5-29 wave 2 (D-041): six new chord qualities (`min7`, `maj7`, `half_diminished`, `augmented`, `sus4`, `major_6`), then six new Inform 7 genres (Bossa Nova Salon, Baroque Chorale, Gothic Horror Organ, Gospel Shout & Revival, Tango Habanera, Neo-Soul Lo-Fi).
+
+**Done:**
+- D-041 is accepted for waves 1 and 2. Wave 2 is implemented and all 160 checks pass.
+
+**Changed:**
+1. Chord qualities:
+   - `src/conductor.mjs`: added `min7`, `maj7`, `half_diminished`, `augmented`, `sus4`, and `major_6` to `CHORD_QUALITIES`, `MAJOR_THIRD_QUALITIES`, `buildTriad()`, `chordLabelFor()`, `buildFunChord()`, and Befunge plate `qualityShort`.
+   - `src/variation.mjs`: added pitch classes to `TONES`, updated `MINORISH`, `numeral()`, and relative substitutions.
+   - `src/session.mjs`: added new qualities to `CHORD_QUALITY_IDS` for session validation.
+   - `src/inform.mjs`: normalize Inform 7 kinds `half-diminished` -> `half_diminished` and `major 6` -> `major_6`.
+2. `src/rulebooks.ni` adds Chapters 13–18 (Raw Chaos moves to Chapter 19), bringing the catalog to 19 genres across 5 menu families:
+   - Bossa Nova Salon (NIGHT CLUB): maj7 and min7, ii-V-I changes, syncopated bass, organ voicing {third, fifth, seventh}.
+   - Baroque Chorale (SACRED & EARLY): circle of fifths, half-diminished pre-dominant, contrary-motion bass.
+   - Gothic Horror Organ (ESOTERIC): chromatic mediant P/L walk, augmented chords, pedal bass.
+   - Gospel Shout & Revival (SACRED & EARLY): I6, IV, sus4 "amen" cadences, walking bass.
+   - Tango Habanera (FOLK & DANCE): half-diminished ii, V7, habanera bass walk.
+   - Neo-Soul Lo-Fi (NIGHT CLUB): min9, maj7, min7, soft chord-member lead melodies.
+   Six new Fun Machine progression tables added to Part 3 (`Table of Ipanema Stroll`, `Table of Chorale Cadence`, `Table of Crypt Mediants`, `Table of Revival Amen`, `Table of Salon Tango`, `Table of Cassette Velvet`).
+3. Clash ceilings & variation tests:
+   - `tests/clashes.test.mjs` sets ceilings for the 6 new genres (measured at 0.0%–0.8% clash rates).
+   - `tests/variation.test.mjs` sets distinct varied progression floors (bossa 50, baroque 18, gothic 8, gospel 10, tango 10, neo-soul 50).
+   - Golden and variation fixtures re-frozen with additions only.
+   - Asset version stamped to `ae35645dac6b`.
+   - `manual.html` rebuilt from `docs/manual.json`.
+
+**Verified:**
+- 160/160 Node checks.
+- Golden fixtures contain additions only; existing 13 genres unchanged.
+- Documentation consistency checks pass (0 errors, 0 warnings).
+
+**Next session should start with:** Maintainer listen to the six Wave 2 genres in the browser, or Wave 3 (feel) / P4-02.
 
 ### Session 59: 2026-10-21: six new genres, all in Inform 7 (P5-29 wave 1)
 
@@ -404,27 +441,3 @@ _Last updated: 2026-10-21, session 59, on `main`._
 
 **Next session should start with:** P5-28 phase 5: a MIDI program change whenever the Fun Machine track's voice changes, and a check that the exports carry each layer's voice.
 
-### Session 50: 2026-10-20: the creature's own voice (P5-28 phase 3)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-28 phase 3: each phrase chooses its Fun Machine voice deterministically (D-040).
-
-**Done:** P5-28 phase 2 and D-042 were committed separately and pushed (637550b, 9a17a59) after the maintainer's "Much better." Phase 3 is done.
-
-**Changed:**
-1. `src/oracle.lol` emits `fun_voice` (`MOD … 337 AN 7`), `fun_bright` (`DIFF OF MOD … 347 AN 7 AN 3`, so −3..3), and `fun_spread` (`MOD … 349 AN 5`). `src/score.mjs` validates them as `funVoice`, `funBright`, and `funSpread`. The vitrine's default score gains neutral values.
-2. `src/voices.mjs`:
-   - `creatureVoice(score)` clones the chosen preset, scales its filters by 2^(bright/6) and its detune, width, and chorus depth by 0.6 + 0.2 × spread (both clamped to the validator's bounds), leaves formants alone, and validates the result.
-   - `creatureVoiceLabel()` gives a reading like "HARMONIUM · BRIGHTER · NARROW".
-3. `index.html` and `src/app.mjs`: THE CREATURE'S OWN chip comes first and is pressed by default. `currentFunVoice()` caches the creature voice per seed. `showCreatureVoice()` puts the chosen voice in the chip's tooltip on every summon, and the chip's telemetry names it.
-
-**Verified:**
-- 139/139 Node checks.
-- Across 500 phrases, no existing score field changed. The new fields spread evenly: each voice is 61–89 creatures, each tilt 61–86, each spread 92–113.
-- In the browser, "three pigeons in a borrowed coat" reads HARMONIUM · BRIGHTER · NARROW both times it was summoned, and "the moth reads braille" reads MUSIC BOX · BRIGHT · NARROWEST.
-- A held key played the creature voice with no console errors.
-
-**Not verified:** How the tilted and spread extremes sound (DARKEST, BRIGHTEST, NARROWEST, WIDEST).
-
-**Next session should start with:** P5-28 phase 4: per-slot voices in the loop machine, and sessions v5 with `funMachine.voice`. Files from v1–v4 open with VELVET PAD.
