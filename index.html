@@ -164,6 +164,8 @@
             <p class="reading-label">ONE-FINGER ACCOMPANIST &amp; LOOP SEQUENCER</p>
             <div class="beat-title-row">
               <h3 id="fun-machine-heading"><span id="fun-machine-status">ONE-FINGER ACCOMPANIST · PROGRESSION</span></h3>
+              <!-- Narrates the held key, style, voice, and chord; two fixed lines (styles.css). -->
+              <span class="beat-telemetry" id="fun-machine-telemetry">HOLD A KEY AND THE BAND FOLLOWS YOUR CHORD</span>
             </div>
           </div>
         </div>
@@ -671,7 +673,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "bcaedf9871a5";
+      const ASSET_VERSION = "ea88303a86bd";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

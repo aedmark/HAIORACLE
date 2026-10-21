@@ -576,3 +576,14 @@ test("the page groups the workstation into perform, mix, keep, and band wings (D
   // Consoles never widen past the cabinet, which clips overflow instead of scrolling.
   assert.match(styles, /\.beat-engine \{\n {2}display: grid;\n {2}grid-template-columns: minmax\(0, 1fr\);/);
 });
+
+test("every element the app looks up by id exists in the page", async () => {
+  // The Fun Machine's telemetry line once vanished from index.html while the
+  // app kept writing to it, so its narration never showed.
+  const [app, html] = await Promise.all([readFile(new URL("../src/app.mjs", import.meta.url), "utf8"), readFile(new URL("../index.html", import.meta.url), "utf8")]);
+  const ids = [...new Set([...app.matchAll(/document\.querySelector\("#([a-z0-9-]+)"\)/g)].map((match) => match[1]))];
+  assert.ok(ids.length > 100);
+  const missing = ids.filter((id) => !html.includes(`id="${id}"`));
+  assert.deepEqual(missing, [], `the app looks for ${missing.join(", ")}`);
+  assert.match(html, /<span class="beat-telemetry" id="fun-machine-telemetry">/);
+});

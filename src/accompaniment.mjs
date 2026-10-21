@@ -93,10 +93,10 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
       if (leadPitch !== null && chord !== chords[regionIndex]) leadPitch = nearestChordTone(leadPitch, chord);
       return Object.freeze({ chord, regionIndex, isRegionStart: chord !== previous, leadPitch, leadSteps: 4 });
     });
-    const shown = spine.filter((chord, index) => index === 0 || chord !== spine[index - 1]);
+    const shown = spine.map(chordText).filter((text, index, all) => index === 0 || text !== all[index - 1]);
     return Object.freeze({
       style, key, lift, chords: Object.freeze([...chords]), steps: Object.freeze(steps), regionSteps: 12,
-      summary: moves.length ? shown.map(chordText).join(" → ") : summary, variation: Object.freeze([...moves]),
+      summary: moves.length ? shown.join(" → ") : summary, variation: Object.freeze([...moves]),
     });
   }
   const steps = Array.from({ length: 12 }, (_, index) => {

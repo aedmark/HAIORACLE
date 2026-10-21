@@ -11,7 +11,7 @@ _Last updated: 2026-10-21, session 58, on `main`._
 - P5-30 is complete (D-043): clashes cut, every creature varying its genre's changes, the VARIATION readout, AS WRITTEN, sessions v6, and THE CREATURE'S OWN rulebook.
 - D-044 moves harmony one chord per loop, on the downbeat.
 - A fresh creature opens in THE CREATURE'S OWN (maintainer's choice, 2026-10-21).
-- Next: the maintainer's listen, then D-041 genres or P4-02.
+- Next: D-041 wave 1 (P5-29; the RULEBOOK menu has THE CREATURE'S OWN plus the seven genres, and no new genres yet) or P4-02.
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
@@ -127,7 +127,7 @@ _Last updated: 2026-10-21, session 58, on `main`._
 
 **Not verified:** The maintainer's listen.
 
-**Open:** `#fun-machine-telemetry` is still missing from `index.html`.
+**Fixed later in the session:** `#fun-machine-telemetry` is restored under the Fun Machine title. It had dropped out of `index.html` in 3aac60e along with the maintainer's own page edits. A new static test checks that every `#id` the app queries (120 of them) exists in the page. Progression summaries now deduplicate by chord name. Verified in the browser: the line narrates the key, style, step, and chord, names the voice on a chip change, and keeps a fixed height, so the keyboard below never moved.
 
 **Follow-up (same session):** at the maintainer's choice, a fresh creature opens in THE CREATURE'S OWN (`activeGenre = CREATURE_GENRE` at rulebook install). Before any summon, the Kapellmeister shows "Summon a creature and it writes its own rulebook from its scale." Verified in the browser on a fresh page, then on "a moth in the music box".
 
