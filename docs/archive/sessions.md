@@ -886,3 +886,23 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P5-23 phase 5; listening passes (parlor room, manual); P4-02; P6-01.
 
 **Next session should start with:** the maintainer's listen, then P5-23 phase 5.
+
+### Session 36: 2026-10-20: the echo keeps the tempo
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Maintainer: the one-finger accompaniment seemed slightly faster than the tempo setting.
+
+**Found:** the accompanist itself plays on the band's step grid at the live tempo (`loopStepDuration()` and the scheduler both read `activeTempoBpm`). The delay, however, was timed once when the loop started (`unit × DELAY_MULTIPLIERS[score.rhythm]`) and never followed the tempo slider. Since D-029 the pad, arpeggio, and lead all feed that delay, so after a tempo change mid-loop their echoes ran at the old tempo.
+
+**Changed:** `src/ensemble.mjs` exports `delayTimeFor(score, bpm)` and uses it at build time; `setTempoBpm()` in `src/app.mjs` retimes the running loop's delay with a short glide. Tests cover the formula and the live retime. `ASSET_VERSION` restamped.
+
+**Verified:** 107/107 Node checks; in the browser, a normal reload picked up the new stamp, and moving the tempo 70 → 150 → 96 while holding a key raised no errors.
+
+**Not verified:** Listening. If the accompaniment still feels quick at a steady tempo, the likely cause is the ARPEGGIO style's two notes per step (sixteenths against the band's eighth-note steps, D-029). That is a design choice to revisit, not this bug.
+
+**Left undone:** P5-23 phase 5; listening passes; P4-02; P6-01.
+
+**Next session should start with:** the maintainer's listen, then P5-23 phase 5.
+
+Older sessions: [archive/sessions.md](sessions.md).

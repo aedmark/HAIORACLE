@@ -87,6 +87,26 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 46: 2026-10-20: the lead's drone breathes
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** The maintainer heard a lead-plate note on some phrases that "never drops off or changes in intensity".
+
+**Done:** Incidental fix (no roadmap ID).
+
+**Changed:**
+1. Cause: the three tonic drones (`DRONE_INTERVALS`, root −12/−5/+7, in the score's waveform) connect to the lead bus and sounded at a constant pitch and gain for the whole loop. They ignored chords and arrangement rests, so they stood out most on phrases with sparse melodies or when the lead was soloed.
+2. `src/ensemble.mjs`: each drone now passes through its own envelope gain (`droneEnvelopes`, after the interaction gain that `updateAudioInteraction()` still drives). `droneFrequencies(score, chordRoot)` moves the drones to the chord root by the shorter way (at most a tritone), so they never leap.
+3. `src/app.mjs`: `shapeDrones()` runs every three steps (one harmonic region), live and in exports. It glides to the conducted chord root (the tonic under Raw Chaos), swells to `DRONE_SWELL`, settles to `DRONE_SETTLE`, and fades to silence while `arrangementPlays("lead", …)` is false.
+4. Tests: envelope routing and shortest-path chord following; static checks that both schedulers shape the drones.
+
+**Verified:** 127/127 Node checks. An in-browser offline render of the drones alone at 0.25 s per step, as RMS per step ×1000: before the fix it sat at a flat 19; after, it ran 25 18 12 19 21 23 14 8 3 25…, swelling on each chord and falling to 3 over the rest.
+
+**Not verified:** The maintainer's listen on the phrases that showed it.
+
+**Next session should start with:** that listen, then P4-02 or P6-01.
+
 ### Session 45: 2026-10-20: songs export whole (P5-26 complete)
 
 **Contributor:** Claude Code with maintainer direction
@@ -290,23 +310,3 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 **Left undone:** A seventh playable genre in `src/rulebooks.ni` (the maintainer's follow-up); listening passes; P4-02; P6-01.
 
 **Next session should start with:** the maintainer's choice: ship a seventh genre, the outstanding listening passes, or P4-02 / P6-01.
-
-### Session 36: 2026-10-20: the echo keeps the tempo
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Maintainer: the one-finger accompaniment seemed slightly faster than the tempo setting.
-
-**Found:** the accompanist itself plays on the band's step grid at the live tempo (`loopStepDuration()` and the scheduler both read `activeTempoBpm`). The delay, however, was timed once when the loop started (`unit × DELAY_MULTIPLIERS[score.rhythm]`) and never followed the tempo slider. Since D-029 the pad, arpeggio, and lead all feed that delay, so after a tempo change mid-loop their echoes ran at the old tempo.
-
-**Changed:** `src/ensemble.mjs` exports `delayTimeFor(score, bpm)` and uses it at build time; `setTempoBpm()` in `src/app.mjs` retimes the running loop's delay with a short glide. Tests cover the formula and the live retime. `ASSET_VERSION` restamped.
-
-**Verified:** 107/107 Node checks; in the browser, a normal reload picked up the new stamp, and moving the tempo 70 → 150 → 96 while holding a key raised no errors.
-
-**Not verified:** Listening. If the accompaniment still feels quick at a steady tempo, the likely cause is the ARPEGGIO style's two notes per step (sixteenths against the band's eighth-note steps, D-029). That is a design choice to revisit, not this bug.
-
-**Left undone:** P5-23 phase 5; listening passes; P4-02; P6-01.
-
-**Next session should start with:** the maintainer's listen, then P5-23 phase 5.
-
-Older sessions: [archive/sessions.md](archive/sessions.md).

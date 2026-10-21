@@ -35,7 +35,18 @@ import {
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
-import { PARLOR_CRACKLE_PER_LEVEL, PARLOR_REVERB_PER_LEVEL, SILENT_GAIN, buildEnsembleGraph, delayTimeFor, foldIntoRange, parlorSendLevels } from "./ensemble.mjs";
+import {
+  DRONE_SETTLE,
+  DRONE_SWELL,
+  PARLOR_CRACKLE_PER_LEVEL,
+  PARLOR_REVERB_PER_LEVEL,
+  SILENT_GAIN,
+  buildEnsembleGraph,
+  delayTimeFor,
+  droneFrequencies,
+  foldIntoRange,
+  parlorSendLevels,
+} from "./ensemble.mjs";
 import {
   ACCOMPANIMENT_CHANNEL_IDS,
   FADER_UNITY,
@@ -3850,6 +3861,29 @@ function playSongLayers(context, transport, score, absoluteStep, loop, timing) {
   }
 }
 
+// Each region the tonic drones glide to the conducted chord's root, swell,
+// and settle; they fade out while the arrangement rests the lead. They used
+// to hold one note at one level for the whole loop (the "stuck note").
+function shapeDrones(transport, score, absoluteStep, at) {
+  if (!transport.droneEnvelopes || absoluteStep % 3 !== 0) return;
+  const stepIndex = absoluteStep % 12;
+  const chord = currentConductedSpine?.[stepIndex];
+  const chordRoot = chord && chord.quality !== "raw" ? chord.root : 0;
+  const frequencies = droneFrequencies(score, chordRoot);
+  transport.drones.forEach((drone, index) => drone.frequency.setTargetAtTime(frequencies[index], at, 0.06));
+  const resting = !arrangementPlays("lead", stepIndex);
+  const region = padStepsDuration(score, absoluteStep, 3);
+  for (const envelope of transport.droneEnvelopes) {
+    envelope.gain.cancelScheduledValues(at);
+    if (resting) {
+      envelope.gain.setTargetAtTime(0, at, 0.12);
+    } else {
+      envelope.gain.setTargetAtTime(DRONE_SWELL, at, 0.04);
+      envelope.gain.setTargetAtTime(DRONE_SETTLE, at + 0.12, Math.max(0.05, region / 3));
+    }
+  }
+}
+
 function liveVoiceOf(transport) {
   transport.liveVoice ??= { voicing: null, leadMidi: null };
   return transport.liveVoice;
@@ -3959,6 +3993,7 @@ async function playScore(score, { cursor = 0 } = {}) {
       followSong(transport, loop, stepIndex, liveSlot);
 
       scheduleEnsembleStep(context, transport, score, currentStep, at, stepDuration, soundingDuration);
+      shapeDrones(transport, score, currentStep, at);
 
       if (!arrangementPlays("fun", stepIndex)) {
         // The conductor score rests the player only if src/conductor.i stops
@@ -4689,6 +4724,7 @@ async function renderEnsembleLoop(score, {
       offlineTransport.melody = currentConductedMelody || offlineTransport.melody;
     }
     scheduleEnsembleStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration, soundingDuration);
+    shapeDrones(offlineTransport, score, step, stepTime);
     if (loop && arrangementPlays("fun", step % 12)) {
       playSongLayers(offlineCtx, offlineTransport, score, step, loop, { stepIndex: step % 12, at: stepTime, stepDuration, soundingDuration });
     }

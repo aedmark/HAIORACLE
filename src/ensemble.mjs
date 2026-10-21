@@ -87,6 +87,22 @@ export function foldIntoRange(midi, low, high = Infinity) {
   return note;
 }
 
+// The tonic drones used to hold one pitch at one level for the whole loop;
+// on bright waveforms that sounded like a stuck lead note. The host now moves
+// them each region: they glide to the conducted chord's root and swell to
+// DRONE_SWELL, then settle toward DRONE_SETTLE, and fall silent while the
+// arrangement rests the lead. A separate envelope stage carries this, so the
+// vitrine's own drone gains (interaction) stay independent.
+export const DRONE_SWELL = 1;
+export const DRONE_SETTLE = 0.35;
+
+/** Drone frequencies for a chord root (semitones above the tonic), moved by the shortest way. */
+export function droneFrequencies(score, chordRoot) {
+  const root = ((Math.trunc(chordRoot) % 12) + 12) % 12;
+  const shift = root > 6 ? root - 12 : root;
+  return DRONE_INTERVALS.map((interval) => midiToFrequency(score.root + shift + interval));
+}
+
 function midiToFrequency(note) {
   return 440 * (2 ** ((note - 69) / 12));
 }
@@ -279,6 +295,7 @@ export function buildEnsembleGraph(context, score, {
 
   const drones = [];
   const droneGains = [];
+  const droneEnvelopes = [];
   const initialDroneGains = [0.085, score.voice === 5 ? 0.035 : 0.018, SILENT_GAIN];
   for (const [index, interval] of DRONE_INTERVALS.entries()) {
     const drone = context.createOscillator();
@@ -289,7 +306,10 @@ export function buildEnsembleGraph(context, score, {
     drone.frequency.value = midiToFrequency(score.root + interval);
     drone.detune.value = DRONE_DETUNE[index];
     droneGain.gain.value = initialDroneGains[index];
-    drone.connect(droneGain).connect(mix);
+    const envelope = context.createGain();
+    envelope.gain.value = DRONE_SWELL;
+    drone.connect(droneGain).connect(envelope).connect(mix);
+    droneEnvelopes.push(envelope);
     drone.start(now);
     if (stop !== null) drone.stop(stop);
     drones.push(drone);
@@ -315,6 +335,7 @@ export function buildEnsembleGraph(context, score, {
     output,
     drones,
     droneGains,
+    droneEnvelopes,
     parlorReverbSend,
     parlorCrackleGain,
     parlorCrackleSource,

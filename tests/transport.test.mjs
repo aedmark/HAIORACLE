@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { CHANNEL_VOICING_DB, ENSEMBLE_BUS_GAINS, LEAD_DRY_TAP, SILENT_GAIN, buildEnsembleGraph, delayTimeFor, foldIntoRange, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
+import { CHANNEL_VOICING_DB, DRONE_SWELL, ENSEMBLE_BUS_GAINS, LEAD_DRY_TAP, SILENT_GAIN, buildEnsembleGraph, delayTimeFor, droneFrequencies, foldIntoRange, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "../src/transport.mjs";
 
 // A minimal AudioContext stand-in that records every node and connection, so
@@ -319,4 +319,20 @@ test("voices fold notes into their range by octaves, keeping the pitch class", (
     assert.equal(folded % 12, midi % 12);
     assert.ok(folded >= 40 && folded <= 82);
   }
+});
+
+test("the tonic drones pass through their own envelope and follow the chord root the short way", () => {
+  const context = fakeContext();
+  const graph = build(context);
+  assert.equal(graph.droneEnvelopes.length, graph.drones.length);
+  const edges = context.edges;
+  graph.drones.forEach((drone, index) => {
+    assert.ok(reaches(edges, drone.id, graph.droneEnvelopes[index].id), "drone -> its interaction gain -> its envelope");
+    assert.ok(reaches(edges, graph.droneEnvelopes[index].id, graph.mix.id), "envelope -> the lead bus");
+    assert.equal(graph.droneEnvelopes[index].gain.value, DRONE_SWELL);
+  });
+  const ratio = (a, b) => Math.round(12 * Math.log2(a / b));
+  const tonic = droneFrequencies(SCORE, 0);
+  assert.deepEqual(droneFrequencies(SCORE, 5).map((f, i) => ratio(f, tonic[i])), [5, 5, 5], "up a fourth");
+  assert.deepEqual(droneFrequencies(SCORE, 7).map((f, i) => ratio(f, tonic[i])), [-5, -5, -5], "a fifth up is reached by going down a fourth");
 });

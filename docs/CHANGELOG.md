@@ -18,6 +18,7 @@
 
 ### Fixed
 
+- Stop the lead from droning on one note: the three tonic drones under the lead used to hold one pitch at one level for the whole loop. They now follow each chord's root, swell when it lands and settle back, and fall silent while the arrangement rests the lead.
 - Stop favicon 404s in the console: the app and the manual declare an empty icon, so browsers request none.
 - Hear the right bass, organ, and choir notes on low-pitched creatures: notes outside a voice's range used to collapse onto its edge (every bass note an E1); they now move by octaves and keep their pitch. MIDI exports carry the corrected notes too.
 - Hear Raw Esoteric Chaos as intended: with no Fun Machine key held, the esoteric machines now play their own raw output instead of being quietly conducted. Holding a key still brings the band along.
