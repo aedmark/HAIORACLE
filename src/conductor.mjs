@@ -27,8 +27,23 @@ export function genreCodes() {
   return rulebooks().genres.map((genre) => genre.code);
 }
 
+// THE CREATURE'S OWN rulebook (D-043): written per creature by
+// src/creature-rulebook.mjs and installed by the host when it summons one.
+export const CREATURE_GENRE = "creature";
+let creatureBook = null;
+
+export function installCreatureBook(book) {
+  creatureBook = book;
+}
+
+/** The compiled rulebooks themselves, for building a creature's own. */
+export function compiledRulebooks() {
+  return rulebooks();
+}
+
 /** The compiled genre for a code; an unknown code falls back to the first genre. */
 export function genreBook(code) {
+  if (code === CREATURE_GENRE && creatureBook) return creatureBook;
   const books = rulebooks();
   return books.byCode[code] ?? books.genres[0];
 }

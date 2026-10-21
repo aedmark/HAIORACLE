@@ -10,7 +10,7 @@
 // (cells cycle independently, so order does not matter).
 
 import { ACCOMPANIMENT_STYLES } from "./accompaniment.mjs";
-import { genreCodes } from "./conductor.mjs";
+import { CREATURE_GENRE, genreCodes } from "./conductor.mjs";
 import { SLOT_VOICES, SongError, emptySong, validateSong } from "./looper.mjs";
 import { DEFAULT_VOICE_ID } from "./voices.mjs";
 import { MIXER_CHANNEL_IDS } from "./mixer.mjs";
@@ -204,7 +204,8 @@ export function validateSession(raw) {
     volume: expectInt(raw.volume, "session.volume", 0, 100),
     // Genre codes come from the installed Inform 7 rulebooks (D-033); validating
     // before they are installed throws instead of rejecting every genre.
-    genre: expectEnum(raw.genre, "session.genre", genreCodes()),
+    // "creature" is THE CREATURE'S OWN rulebook, rebuilt from the phrase (D-043).
+    genre: expectEnum(raw.genre, "session.genre", [CREATURE_GENRE, ...genreCodes()]),
     strictness: expectInt(raw.strictness, "session.strictness", 3, 14),
     varied: raw.version >= 6 ? expectBool(raw.varied, "session.varied") : false,
     acoustics,

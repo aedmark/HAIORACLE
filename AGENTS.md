@@ -91,6 +91,7 @@ Never force-push or rewrite shared history.
 | `src/shakespeare.mjs` | Shakespeare Programming Language interpreter and 12-scene formant vowel choir engine |
 | `src/conductor.i` | Canonical INTERCAL 1972 orchestral conductor score |
 | `src/intercal.mjs` | INTERCAL 1972 virtual machine and 12-step dynamic arrangement orchestrator |
+| `src/creature-rulebook.mjs` | THE CREATURE'S OWN rulebook: changes written from the creature's scale through the Inform 7 functional grammar (D-043) |
 | `src/variation.mjs` | A creature's variation on its genre's changes: rotation, substitutions, borrowing, cadences, pace (D-043) |
 | `src/conductor.mjs` | Euler *Gradus Suavitatis*, Neo-Riemannian *Tonnetz*, and Euclidean rhythm ensemble conductor |
 | `src/rulebooks.ni` | Canonical Inform 7 (subset) Kapellmeister genre rulebooks |

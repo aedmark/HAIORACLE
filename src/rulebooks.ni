@@ -365,3 +365,41 @@ ratio
 "3/2"
 "7/4"
 "2/1"
+
+Part 5 - The creature's own
+
+[THE CREATURE'S OWN rulebook (D-043): a creature writes its own changes from its own scale. Every region has a harmonic function; the creature's harmony fields choose a path of functions and, for each, a root from the function's candidates that its scale holds. The chord on that root is the first shape below whose tones all sit in the scale, so even a pentatonic or whole-tone creature finds chords that agree with its melody. Its bass, organ, melody, and overtones come from a genre whose character it borrows.]
+
+[Functions: 1 is tonic (home and its stand-ins), 2 predominant (leaving home), 3 dominant (leaning back). Roots are semitones above the tonic, in order of preference.]
+
+Table of Harmonic Functions
+function	name	roots
+1	"tonic"	{0, 9, 4, 3, 8}
+2	"predominant"	{5, 2, 10, 3, 8}
+3	"dominant"	{7, 11, 1, 10, 6}
+
+[Paths: the function of each of the four regions. Every path starts at home and ends leaning home, so the cycle closes.]
+
+Table of Harmonic Paths
+path	functions
+1	{1, 2, 3, 3}
+2	{1, 1, 2, 3}
+3	{1, 2, 1, 3}
+4	{1, 3, 2, 3}
+5	{1, 2, 2, 3}
+6	{1, 1, 3, 3}
+7	{1, 3, 1, 3}
+8	{1, 2, 3, 2}
+
+[Shapes, tried in order on a root: the first whose tones all lie in the creature's scale is its chord.]
+
+Table of Chord Shapes
+shape	quality	tones
+1	major	{0, 4, 7}
+2	minor	{0, 3, 7}
+3	dom7	{0, 4, 10}
+4	modal open	{0, 2, 7}
+5	modal open	{0, 5, 7}
+6	modal open	{0, 7}
+7	dim	{0, 3, 6}
+8	modal open	{0, 5, 10}

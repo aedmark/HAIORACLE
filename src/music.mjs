@@ -1,4 +1,5 @@
-const SCALES = Object.freeze([
+// Each creature's scale (score.scale), as semitones above its root.
+export const SCALES = Object.freeze([
   [0, 2, 3, 5, 7, 9, 10, 12, 14],
   [0, 2, 4, 7, 9, 12, 14, 16, 19],
   [0, 1, 4, 5, 7, 8, 11, 12, 13],
@@ -22,6 +23,17 @@ const MOTIFS = Object.freeze([
   [0, 2, 4, 6, 8, 10, 12, 10, 8, 6, 4, 2],
   [0, 3, 7, 10, 12, 10, 7, 3, 0, 7, 10, 15],
   [0, 1, 5, 6, 10, 11, 15, 14, 9, 8, 4, 3],
+]);
+
+export const SCALE_NAMES = Object.freeze([
+  "DORIAN",
+  "MAJOR PENTATONIC",
+  "DOUBLE HARMONIC",
+  "BLUES",
+  "WHOLE TONE",
+  "PHRYGIAN",
+  "UKRAINIAN DORIAN",
+  "MAJOR NINTH",
 ]);
 
 export const MELODY_NAMES = Object.freeze([

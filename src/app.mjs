@@ -3,13 +3,16 @@ import { BASS_NAMES, composeBass, cycleBassCell } from "./brainfuck.mjs";
 import {
   FUN_KEY_BY_CODE,
   FUN_KEY_BY_KEY,
+  CREATURE_GENRE,
   FUN_KEY_MAP,
   HARMONIC_PASSES,
   buildFunChord,
   chordLabelFor,
+  compiledRulebooks,
   conductEnsemble,
   genreBook,
   genreCodes,
+  installCreatureBook,
   installRulebooks,
   rulebooksInstalled,
   semitoneGradus,
@@ -33,6 +36,7 @@ import {
   strikeLength,
   toTonicRelative,
 } from "./accompaniment.mjs";
+import { buildCreatureBook } from "./creature-rulebook.mjs";
 import { myceliumEvents } from "./mycelium.mjs";
 import { CREATURE_VOICE_ID, creatureVoice, creatureVoiceLabel, scheduleVoiceLead, scheduleVoicePad, scheduleVoicePluck, voiceById } from "./voices.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
@@ -4012,7 +4016,13 @@ let currentConductedMelody = null;
 function buildGenreMenu() {
   const menu = elements.kapellmeisterGenre;
   if (!menu) return;
-  menu.replaceChildren(...genreCodes().map((code) => {
+  // THE CREATURE'S OWN comes first: the rulebook each creature writes for
+  // itself (D-043); the genres follow in source order.
+  const own = document.createElement("option");
+  own.value = CREATURE_GENRE;
+  own.textContent = "THE CREATURE'S OWN";
+  own.title = "A rulebook this creature writes from its own scale";
+  menu.replaceChildren(own, ...genreCodes().map((code) => {
     const book = genreBook(code);
     const option = document.createElement("option");
     option.value = code;
@@ -4111,6 +4121,8 @@ function showScore(score) {
   // A new creature starts its harmonic cycle at home (D-044).
   currentHarmonicPass = 0;
   showCreatureVoice(score);
+  // Each creature writes its own rulebook from its scale (D-043).
+  if (rulebooksInstalled()) installCreatureBook(buildCreatureBook(score, compiledRulebooks()));
   beatMutation = 0;
   bassMutation = 0;
   harmonyMutation = 0;

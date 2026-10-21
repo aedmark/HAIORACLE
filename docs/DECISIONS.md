@@ -788,6 +788,12 @@ The default rulebook for a fresh creature (THE CREATURE'S OWN or Victorian Tonne
 - Sessions v6 store `varied`. Files from before variation existed (v1–v5) open AS WRITTEN, so they sound as saved.
 - MIDI markers name every chord change.
 
+**As built (phase 3, 2026-10-21):**
+- The grammar is three Inform 7 tables (Harmonic Functions, Harmonic Paths, Chord Shapes). `src/creature-rulebook.mjs` writes the book.
+- The path is chosen by `harmony_turn` and `harmony_cadence`, and a root's alternative by `harmony_swap`. Every candidate root is tried for a chord with a third and no flat fifth before any suspended, open, or diminished shape, and a major dominant takes its scale's ♭7.
+- The borrowed character (`harmony_character`) supplies bass, overtones, insistence, and permitted moves. Its organ voicing and melody keep to triad members (blue-note scale snapping becomes chord snapping), because the borrowed 7ths, 9ths, and blue notes clashed on a quarter of steps.
+- A fresh creature still defaults to Victorian Tonnetz, pending the maintainer's listen.
+
 ## D-044 Harmony moves one chord per loop, on the downbeat (2026-10-20, status: accepted)
 
 **Context:** On 2026-10-20 the maintainer said "the chord progressions move too fast in tempo compared to the overall band. We need to make sure the accompaniment is locked in step with the current tempo always." Measured the same day:

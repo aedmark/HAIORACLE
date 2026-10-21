@@ -262,6 +262,7 @@ test("v6 keeps whether the creature varies its genre; older files open AS WRITTE
     assert.equal(opened.version, SESSION_VERSION);
   }
   rejectsAt(sampleSession({ varied: "yes" }), "session.varied");
+  assert.equal(validateSession(sampleSession({ genre: "creature" })).genre, "creature", "THE CREATURE'S OWN rulebook is a valid choice");
   const missing = sampleSession();
   delete missing.varied;
   rejectsAt(missing, "session.varied");

@@ -4,15 +4,16 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-21, session 57, on `main`._
+_Last updated: 2026-10-21, session 58, on `main`._
 
 - P5-28 is complete: Fun Machine voices, each creature's own by default (D-040).
 - D-042 freed the organ, chimes, and mycelium from the creature filter.
-- P5-30 phases 0–2 and 4 are done (D-043): clashes cut, every creature varying its genre's changes, the VARIATION readout, AS WRITTEN, and sessions v6.
+- P5-30 is complete (D-043): clashes cut, every creature varying its genre's changes, the VARIATION readout, AS WRITTEN, sessions v6, and THE CREATURE'S OWN rulebook.
 - D-044 moves harmony one chord per loop, on the downbeat.
-- Next: P5-30 phase 3, THE CREATURE'S OWN rulebook._
+- Open: the default rulebook for a fresh creature.
+- Next: the maintainer's listen, then D-041 genres or P4-02.
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-27 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
 **Verified** (2026-10-20, session 45, local Linux environment)
 
@@ -92,6 +93,43 @@ _Last updated: 2026-10-21, session 57, on `main`._
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 58: 2026-10-21: every creature writes its own rulebook (P5-30 complete)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-30 phase 3, THE CREATURE'S OWN rulebook (D-043).
+
+**Done:** Phase 4 was pushed (b92dca5). Phase 3 is done, which completes P5-30.
+
+**Changed:**
+1. `src/rulebooks.ni` Part 5 holds three tables:
+   - Harmonic Functions: tonic, predominant, and dominant, with candidate roots.
+   - Harmonic Paths: eight four-region paths, each starting at home.
+   - Chord Shapes: major, minor, dominant shell, two suspended, open fifth, diminished, quartal.
+
+   `src/inform.mjs` `readCreatureGrammar()` validates them as an optional `creature` section.
+2. New `src/creature-rulebook.mjs`:
+   - `buildCreatureBook(score, rulebooks)`: the path comes from `harmony_turn` and `harmony_cadence`, and a root's alternative from `harmony_swap`. Chords with a third (no ♭5) are tried on every candidate before weaker shapes, and a major dominant takes the scale's ♭7.
+   - The character comes from `harmony_character`, with organ and melody kept to triad members.
+   - Fun Machine colours follow the scale.
+3. `src/conductor.mjs`: `CREATURE_GENRE`, `installCreatureBook()`, and `compiledRulebooks()`; `genreBook("creature")` returns the installed book. `src/music.mjs` exports `SCALES` and `SCALE_NAMES`.
+4. `src/app.mjs`: THE CREATURE'S OWN is first in the menu, and every summon writes and installs the creature's book. `src/session.mjs` accepts the genre `"creature"`.
+5. Tests: new `tests/creature-rulebook.test.mjs`, and a session acceptance check.
+
+**Verified:**
+- 159/159 Node checks.
+- Over 200 creatures: 103 distinct progressions, every chord tone in the scale, no diminished chords, and clashes 0–9% by character before the triad fit, at most 6% overall after.
+- In the browser:
+  - "three pigeons" (Phrygian, Palestrina character) read i → iv → i (relative) → ♭II (Phrygian), with motto "Written from its phrygian scale, tonic → predominant → tonic → dominant…".
+  - "glass eel at midnight" read a Dorian book in the Ragtime character.
+  - A saved file kept `"creature"` and reopened on it.
+
+**Not verified:** The maintainer's listen.
+
+**Open:** Which rulebook a fresh creature should start in (THE CREATURE'S OWN or Victorian Tonnetz). `#fun-machine-telemetry` is still missing from `index.html`.
+
+**Next session should start with:** the listen and that default, then D-041 wave 1 or P4-02.
 
 ### Session 57: 2026-10-21: variation, saved and played (P5-30 phase 4 complete)
 
@@ -385,32 +423,3 @@ _Last updated: 2026-10-21, session 57, on `main`._
 **Verified by ear:** the maintainer: "Much better." P5-28 phase 2 and D-042 were committed separately.
 
 **Next session should start with:** P5-28 phase 3.
-
-### Session 48: 2026-10-20: Fun Machine voices, phase 2 (P5-28)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-28 phase 2: the six other presets (D-040).
-
-**Changed:**
-1. `src/voices.mjs`:
-   - Patches gain optional colour: `tremolo` ({rate, depth}) and `formants` (1–3 bandpasses) on pad and lead, plus `strike` on the pad (a roll of up to 0.2 s per note, capped at half the chord; each layer decays instead of sustaining). The tremolo LFO is in the pad's oscillator list, so releasing a live pad stops it too.
-   - Six presets, each with its General MIDI program:
-     - HARMONIUM: reed squares, a nasal Q, slow speech.
-     - GLASS HARMONICA: sines at 1 and 2.76 with a slow bloom and a 3.2 Hz beat.
-     - THEATRE ORGAN: drawbar sines at 1, 2, and 3 with a 6.8 Hz tremulant.
-     - STRING MACHINE: three saws in a fast chorus.
-     - MUSIC BOX: a struck, rolled triangle chord with a two-octave tine.
-     - ÆTHER CHOIR: saws through "ah" formants on the pad and "oh" formants on the lead.
-2. `index.html` and `src/app.mjs`: a VOICE chip row under ACCOMPANIMENT STYLE (`setFunVoice()`). A held key re-voices on the spot. The choice is live only: it is not in sessions, and recorded takes play in the current voice until phase 4.
-3. Tests: colour node counts, roll timing, colour validation, and that the chips match `VOICE_PRESETS`.
-
-**Verified:**
-- 133/133 Node checks.
-- Offline loudness against VELVET PAD (RMS over the sounding part of a four-note pad, eight plucks, and a four-note lead): every role of every preset is within ±0.7 dB, except MUSIC BOX's decaying pad and lead, which are −3.4 and −2.9 dB with higher peaks. No peak exceeds 0.5.
-- Live: all 21 voice × style combinations played with a key held, with no console errors.
-- The row wraps cleanly at phone and desktop widths, and selecting a chip moves nothing.
-
-**Not verified:** How they sound. These are first-pass numbers for the maintainer to tune by ear.
-
-**Next session should start with:** the maintainer's listen and tuning notes, then phase 3 (the creature's own voice from the spell).

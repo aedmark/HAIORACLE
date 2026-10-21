@@ -714,6 +714,7 @@ export function compileRulebooks(source) {
   });
 
   if (!genres.length) fail("source", "there are no genres");
+  const creature = readCreatureGrammar(story);
   const byCode = {};
   for (const genre of genres) {
     if (byCode[genre.code]) fail(genre.name, `the code "${genre.code}" is already used by ${byCode[genre.code].name}`);
@@ -727,5 +728,39 @@ export function compileRulebooks(source) {
     byCode: Object.freeze(byCode),
     progressions: Object.freeze(progressions),
     qualityProgressions,
+    creature,
   });
+}
+
+/**
+ * THE CREATURE'S OWN grammar (D-043): harmonic functions with candidate
+ * roots, four-region paths of functions, and chord shapes in order of
+ * preference. Optional: without the tables a source compiles without it.
+ */
+function readCreatureGrammar(story) {
+  const tables = ["Table of Harmonic Functions", "Table of Harmonic Paths", "Table of Chord Shapes"].map((name) => story.tables.get(key(name)));
+  if (tables.every((table) => !table)) return null;
+  const [functionsTable, pathsTable, shapesTable] = tables;
+  const where = "the creature's own grammar";
+  if (tables.some((table) => !table)) fail(where, "needs the Tables of Harmonic Functions, Harmonic Paths, and Chord Shapes together");
+  requireColumns(functionsTable, ["function", "name", "roots"], where);
+  requireColumns(pathsTable, ["path", "functions"], where);
+  requireColumns(shapesTable, ["shape", "quality", "tones"], where);
+  const functions = {};
+  functionsTable.rows.forEach((row, i) => {
+    if (!Number.isInteger(row.function) || row.function < 1) fail(where, `function row ${i + 1} needs a positive number`);
+    if (!Array.isArray(row.roots) || !row.roots.length || !row.roots.every(isPitchClass)) fail(where, `function ${row.function} roots must be pitch classes`);
+    functions[row.function] = Object.freeze({ name: row.name, roots: Object.freeze([...row.roots]) });
+  });
+  const paths = pathsTable.rows.map((row, i) => {
+    if (!Array.isArray(row.functions) || row.functions.length !== 4 || !row.functions.every((f) => functions[f])) fail(where, `path ${i + 1} needs four known functions`);
+    if (row.functions[0] !== 1) fail(where, `path ${i + 1} must start at home (function 1)`);
+    return Object.freeze([...row.functions]);
+  });
+  if (!paths.length) fail(where, "there are no harmonic paths");
+  const shapes = shapesTable.rows.map((row, i) => {
+    if (!Array.isArray(row.tones) || !row.tones.includes(0) || !row.tones.every(isPitchClass)) fail(where, `shape ${i + 1} tones must be pitch classes including the root (0)`);
+    return Object.freeze({ quality: code(row.quality), tones: Object.freeze([...row.tones]) });
+  });
+  return Object.freeze({ functions: Object.freeze(functions), paths: Object.freeze(paths), shapes: Object.freeze(shapes) });
 }

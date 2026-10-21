@@ -1162,3 +1162,32 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Not verified:** Nothing audible changed, so no listen is needed yet.
 
 **Next session should start with:** P5-28 phase 2, the six other presets: HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, and ÆTHER CHOIR. Some need patch features that are not in the schema yet: tremolo (THEATRE ORGAN), formant bandpasses (ÆTHER CHOIR), and a rolled pad strum (MUSIC BOX). Each preset is tuned by ear with the maintainer.
+
+### Session 48: 2026-10-20: Fun Machine voices, phase 2 (P5-28)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-28 phase 2: the six other presets (D-040).
+
+**Changed:**
+1. `src/voices.mjs`:
+   - Patches gain optional colour: `tremolo` ({rate, depth}) and `formants` (1–3 bandpasses) on pad and lead, plus `strike` on the pad (a roll of up to 0.2 s per note, capped at half the chord; each layer decays instead of sustaining). The tremolo LFO is in the pad's oscillator list, so releasing a live pad stops it too.
+   - Six presets, each with its General MIDI program:
+     - HARMONIUM: reed squares, a nasal Q, slow speech.
+     - GLASS HARMONICA: sines at 1 and 2.76 with a slow bloom and a 3.2 Hz beat.
+     - THEATRE ORGAN: drawbar sines at 1, 2, and 3 with a 6.8 Hz tremulant.
+     - STRING MACHINE: three saws in a fast chorus.
+     - MUSIC BOX: a struck, rolled triangle chord with a two-octave tine.
+     - ÆTHER CHOIR: saws through "ah" formants on the pad and "oh" formants on the lead.
+2. `index.html` and `src/app.mjs`: a VOICE chip row under ACCOMPANIMENT STYLE (`setFunVoice()`). A held key re-voices on the spot. The choice is live only: it is not in sessions, and recorded takes play in the current voice until phase 4.
+3. Tests: colour node counts, roll timing, colour validation, and that the chips match `VOICE_PRESETS`.
+
+**Verified:**
+- 133/133 Node checks.
+- Offline loudness against VELVET PAD (RMS over the sounding part of a four-note pad, eight plucks, and a four-note lead): every role of every preset is within ±0.7 dB, except MUSIC BOX's decaying pad and lead, which are −3.4 and −2.9 dB with higher peaks. No peak exceeds 0.5.
+- Live: all 21 voice × style combinations played with a key held, with no console errors.
+- The row wraps cleanly at phone and desktop widths, and selecting a chip moves nothing.
+
+**Not verified:** How they sound. These are first-pass numbers for the maintainer to tune by ear.
+
+**Next session should start with:** the maintainer's listen and tuning notes, then phase 3 (the creature's own voice from the spell).
