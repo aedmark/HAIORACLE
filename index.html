@@ -182,7 +182,8 @@
           <div class="fun-quality-bar" role="group" aria-label="Accompaniment voice">
             <span class="fun-quality-label">VOICE:</span>
             <div class="fun-quality-chips" id="fun-voice-chips">
-              <button class="fun-chip is-active" data-voice="velvet_pad" type="button" aria-pressed="true" title="Warm detuned saws under a slowly opening filter">VELVET PAD</button>
+              <button class="fun-chip is-active" data-voice="creature" type="button" aria-pressed="true" title="The voice this creature's phrase chose: one of the parlor presets, tilted brighter or darker and spread wider or narrower">THE CREATURE'S OWN</button>
+              <button class="fun-chip" data-voice="velvet_pad" type="button" aria-pressed="false" title="Warm detuned saws under a slowly opening filter">VELVET PAD</button>
               <button class="fun-chip" data-voice="harmonium" type="button" aria-pressed="false" title="A pump organ: reedy and nasal, slow to speak">HARMONIUM</button>
               <button class="fun-chip" data-voice="glass_harmonica" type="button" aria-pressed="false" title="Pure glass partials that bloom slowly and ring long">GLASS HARMONICA</button>
               <button class="fun-chip" data-voice="theatre_organ" type="button" aria-pressed="false" title="Drawbar sines with a deep tremulant, like a cinema organ">THEATRE ORGAN</button>
@@ -667,7 +668,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "3ee62ad4787d";
+      const ASSET_VERSION = "2fbc71a6f6aa";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

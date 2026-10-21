@@ -507,6 +507,43 @@ export const VOICE_PRESETS = Object.freeze([
 const PRESETS_BY_ID = new Map(VOICE_PRESETS.map((voice) => [voice.id, voice]));
 export const VOICE_IDS = Object.freeze(VOICE_PRESETS.map((voice) => voice.id));
 
+// THE CREATURE'S OWN voice (D-040): the spell picks a preset (`fun_voice`),
+// tilts its filters up to half an octave brighter or darker (`fun_bright`,
+// -3..3), and narrows or widens its detune, chorus, and stereo spread
+// (`fun_spread`, 0..4, where 2 is the preset as tuned). Formants stay put:
+// they are the vowel, not the brightness.
+export const CREATURE_VOICE_ID = "creature";
+const BRIGHT_WORDS = Object.freeze(["DARKEST", "DARKER", "DARK", "", "BRIGHT", "BRIGHTER", "BRIGHTEST"]);
+const SPREAD_WORDS = Object.freeze(["NARROWEST", "NARROW", "", "WIDE", "WIDEST"]);
+
+const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
+
+export function creatureVoice(score) {
+  const base = VOICE_PRESETS[score.funVoice] ?? VOICE_PRESETS[0];
+  const tilt = 2 ** (score.funBright / 6);
+  const spread = 0.6 + score.funSpread * 0.2;
+  const voice = structuredClone(base);
+  const brighten = (filter, keys) => { for (const key of keys) filter[key] = clamp(Math.round(filter[key] * tilt), ...FREQUENCY); };
+  const widen = (layers) => { for (const layer of layers) layer.detune = clamp(layer.detune * spread, -50, 50); };
+  brighten(voice.pad.filter, ["base", "peak", "settle"]);
+  brighten(voice.pluck.filter, ["base", "accentBase", "to"]);
+  brighten(voice.lead.filter, ["base"]);
+  widen(voice.pad.root);
+  widen(voice.pad.upper);
+  widen(voice.pluck.layers);
+  widen(voice.lead.layers);
+  voice.pad.width = clamp(voice.pad.width * spread, 0, 1);
+  voice.pad.chorus.depth = clamp(voice.pad.chorus.depth * spread, 0, 30);
+  voice.id = CREATURE_VOICE_ID;
+  return validateVoice(voice);
+}
+
+/** How the creature's voice reads: "GLASS HARMONICA · BRIGHTER · WIDE". */
+export function creatureVoiceLabel(score) {
+  const base = VOICE_PRESETS[score.funVoice] ?? VOICE_PRESETS[0];
+  return [base.label, BRIGHT_WORDS[score.funBright + 3], SPREAD_WORDS[score.funSpread]].filter(Boolean).join(" · ");
+}
+
 /** The preset with this id, or VELVET PAD for anything unknown. */
 export function voiceById(id) {
   return PRESETS_BY_ID.get(id) ?? PRESETS_BY_ID.get(DEFAULT_VOICE_ID);

@@ -33,7 +33,7 @@ import {
   toTonicRelative,
 } from "./accompaniment.mjs";
 import { myceliumEvents } from "./mycelium.mjs";
-import { DEFAULT_VOICE_ID, scheduleVoiceLead, scheduleVoicePad, scheduleVoicePluck, voiceById } from "./voices.mjs";
+import { CREATURE_VOICE_ID, creatureVoice, creatureVoiceLabel, scheduleVoiceLead, scheduleVoicePad, scheduleVoicePluck, voiceById } from "./voices.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
@@ -1814,6 +1814,7 @@ class OracleVision {
       shape: 0, size: 66, edge: 50, motion: 2, kineticMode: 0, kineticSpeed: 64,
       kineticDepth: 72, kineticTilt: 3, fluxMode: 1,
       fungalForm: 0, fungalName: "AGARIC CAP", fungalHyphae: 64, fungalSpores: 55, fungalBloom: 60,
+      funVoice: 0, funBright: 0, funSpread: 2,
     };
     this.startedAt = performance.now();
     this.particles = [];
@@ -2958,12 +2959,24 @@ function getFunMachineDirectDestination(context) {
 // can fade them instead of letting an old chord ring under a new one.
 const funPadHandles = new Set();
 
-// The voice the Fun Machine plays in, chosen with the VOICE chips. Not saved
-// yet, and recorded takes play in it too: sessions v5 and per-slot voices
-// arrive in P5-28 phase 4, the creature's own voice in phase 3 (D-040).
-let funVoiceId = DEFAULT_VOICE_ID;
+// The voice the Fun Machine plays in, chosen with the VOICE chips: the
+// creature's own (from its score) by default, or a preset. Not saved yet, and
+// recorded takes play in it too: sessions v5 and per-slot voices arrive in
+// P5-28 phase 4 (D-040).
+let funVoiceId = CREATURE_VOICE_ID;
+let creatureVoiceCache = { seed: null, voice: null };
 function currentFunVoice() {
-  return voiceById(funVoiceId);
+  if (funVoiceId !== CREATURE_VOICE_ID) return voiceById(funVoiceId);
+  const score = currentScore || vision.score;
+  if (creatureVoiceCache.seed !== score.seed) creatureVoiceCache = { seed: score.seed, voice: creatureVoice(score) };
+  return creatureVoiceCache.voice;
+}
+
+function funVoiceText() {
+  const score = currentScore || vision.score;
+  return funVoiceId === CREATURE_VOICE_ID
+    ? `VOICE: THE CREATURE'S OWN (${creatureVoiceLabel(score)})`
+    : `VOICE: ${currentFunVoice().label}`;
 }
 
 /**
@@ -4031,6 +4044,7 @@ function applyEnsembleConductor() {
 
 function showScore(score) {
   currentScore = score;
+  showCreatureVoice(score);
   beatMutation = 0;
   bassMutation = 0;
   harmonyMutation = 0;
@@ -5926,8 +5940,15 @@ for (const chip of document.querySelectorAll(".fun-chip[data-style]")) {
   });
 }
 
+// The creature chip names the voice this phrase chose, for sighted and
+// screen-reader visitors alike, without changing the chip's own text.
+function showCreatureVoice(score) {
+  const chip = document.querySelector('.fun-chip[data-voice="creature"]');
+  if (chip) chip.title = `This creature's own voice: ${creatureVoiceLabel(score)}`;
+}
+
 function setFunVoice(id) {
-  funVoiceId = voiceById(id).id;
+  funVoiceId = id === CREATURE_VOICE_ID ? id : voiceById(id).id;
   for (const chip of document.querySelectorAll(".fun-chip[data-voice]")) {
     const active = chip.dataset.voice === funVoiceId;
     chip.classList.toggle("is-active", active);
@@ -5939,7 +5960,7 @@ for (const chip of document.querySelectorAll(".fun-chip[data-voice]")) {
   chip.addEventListener("click", () => {
     setFunVoice(chip.dataset.voice);
     if (elements.funMachineTelemetry) {
-      elements.funMachineTelemetry.textContent = `VOICE: ${currentFunVoice().label} · HOLD A KEY TO HEAR IT`;
+      elements.funMachineTelemetry.textContent = `${funVoiceText()} · HOLD A KEY TO HEAR IT`;
     }
     // A held key changes voice on the spot, as it does for a style.
     if (activeHeldFunKey !== null) {

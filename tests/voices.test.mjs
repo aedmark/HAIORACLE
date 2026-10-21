@@ -3,7 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
+  CREATURE_VOICE_ID,
   DEFAULT_VOICE_ID,
+  creatureVoice,
+  creatureVoiceLabel,
   VOICE_IDS,
   VOICE_PRESETS,
   VoiceError,
@@ -90,12 +93,12 @@ test("the app plays the Fun Machine only through voices", async () => {
   assert.doesNotMatch(app, /type: "sawtooth", detune: -8/, "the pad's layers live in src/voices.mjs");
 });
 
-test("the VOICE chips name every preset, in order, with VELVET PAD pressed", async () => {
+test("the VOICE chips offer the creature's own voice first and pressed, then every preset in order", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   const chips = [...html.matchAll(/<button class="fun-chip( is-active)?" data-voice="([a-z_]+)" type="button" aria-pressed="(true|false)" title="[^"]+">([^<]+)<\/button>/g)];
-  assert.deepEqual(chips.map((m) => m[2]), [...VOICE_IDS]);
-  assert.deepEqual(chips.map((m) => m[4]), VOICE_PRESETS.map((voice) => voice.label));
-  assert.deepEqual(chips.filter((m) => m[3] === "true").map((m) => [m[2], Boolean(m[1])]), [["velvet_pad", true]]);
+  assert.deepEqual(chips.map((m) => m[2]), [CREATURE_VOICE_ID, ...VOICE_IDS]);
+  assert.deepEqual(chips.map((m) => m[4]), ["THE CREATURE'S OWN", ...VOICE_PRESETS.map((voice) => voice.label)]);
+  assert.deepEqual(chips.filter((m) => m[3] === "true").map((m) => [m[2], Boolean(m[1])]), [[CREATURE_VOICE_ID, true]]);
 });
 
 test("tremolo, formants, and a struck rolled chord build bounded extra nodes", () => {
@@ -124,4 +127,30 @@ test("tremolo, formants, and a struck rolled chord build bounded extra nodes", (
   const pluckFormants = structuredClone(velvet);
   pluckFormants.pluck.formants = [];
   assert.throws(() => validateVoice(pluckFormants), (error) => error.path === "voice.pluck.formants");
+});
+
+test("the creature's own voice is a preset the spell chose, tilted and spread within bounds", async () => {
+  const { composeScore } = await import("../src/score.mjs");
+  const oracle = await readFile(new URL("../src/oracle.lol", import.meta.url), "utf8");
+  const seen = new Set();
+  for (let i = 0; i < 120; i += 1) {
+    const score = composeScore(oracle, `voice test ${i}`);
+    const voice = creatureVoice(score);
+    assert.deepEqual(creatureVoice(composeScore(oracle, `voice test ${i}`)), voice, "the same phrase always sounds the same");
+    assert.equal(voice.id, CREATURE_VOICE_ID);
+    assert.equal(voice.label, VOICE_PRESETS[score.funVoice].label);
+    seen.add(score.funVoice);
+  }
+  assert.equal(seen.size, VOICE_PRESETS.length, "every preset is some creature's voice");
+
+  const at = (funBright, funSpread) => creatureVoice({ funVoice: 0, funBright, funSpread });
+  assert.deepEqual(at(0, 2).pad, velvet.pad, "the middle of both ranges is the preset as tuned");
+  assert.equal(at(3, 2).pad.filter.peak, Math.round(1750 * Math.SQRT2), "brightest is half an octave up");
+  assert.equal(at(-3, 2).lead.filter.base, Math.round(2600 / Math.SQRT2));
+  assert.equal(at(0, 4).pad.upper[0].detune, -8 * 1.4);
+  assert.equal(at(0, 0).pad.width, 0.55 * 0.6);
+  const choir = creatureVoice({ funVoice: 6, funBright: 3, funSpread: 4 });
+  assert.deepEqual(choir.pad.formants, voiceById("aether_choir").pad.formants, "formants are the vowel, so they stay");
+  assert.equal(creatureVoiceLabel({ funVoice: 2, funBright: 2, funSpread: 3 }), "GLASS HARMONICA · BRIGHTER · WIDE");
+  assert.equal(creatureVoiceLabel({ funVoice: 0, funBright: 0, funSpread: 2 }), "VELVET PAD");
 });

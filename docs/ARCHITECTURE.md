@@ -116,6 +116,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 - Every silhouette stays within a radius envelope of `0.38..1.08`, and every kinetic core is clipped to the current deforming body path. Enforced structurally in `tests/static.test.mjs` (D-007).
 - Kinetic family, speed, depth, tilt, and boundary-flux family originate in validated spell output. Enforced by required ranges and the 256-phrase coverage test (D-007).
 - Mycelial branching density, fruiting body archetype, and ballistospore emission originate in validated spell output (`fungal_form`, `fungal_hyphae`, `fungal_spores`, `fungal_bloom`). Enforced by required ranges and the phrase batch test (D-017).
+- The Fun Machine's default voice originates in validated spell output too: `fun_voice` (`[0, 6]`) picks a preset, `fun_bright` (`[-3, 3]`) tilts its filters by up to half an octave, and `fun_spread` (`[0, 4]`) scales its detune, chorus, and width; `creatureVoice()` in `src/voices.mjs` builds and validates the result (D-040).
 - Fun Machine chords are absolute pitch classes; they reach the conductor only through `toTonicRelative()`, so the band plays the same chord the pad plays. Enforced by `tests/accompaniment.test.mjs` and D-029.
 - A held Fun Machine key's chords overlay the active genre spine via `customSpine` without altering virtual machine state or native LOLCODE score determinism. Enforced by `tests/oracle.test.mjs` and D-029. (The 12-step punch-in sequencer that also used it was removed in D-038.)
 

@@ -974,3 +974,27 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** The P4-02 assistive-technology pass; P6-01.
 
 **Next session should start with:** a screen-reader pass of discovery mode, or the maintainer's feel for the drawer triggers.
+
+### Session 40: 2026-10-20: the punch-in sequencer comes out
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Maintainer: the 12-step loop progression was "fundamentally broken". It was meant to be a loop machine for recording a series of loops. They asked to remove it safely before building anything else, and to drop it from saved sessions while keeping old files openable.
+
+**Done:** D-038 (P5-25).
+
+**Changed:**
+1. `index.html`: the REC and RESET PROGRESSION buttons and the 12-step grid are removed, and the telemetry text is updated.
+2. `src/app.mjs`: sequencer state, rendering, step targeting, punch-in (in `triggerFunKey()` and the scheduler), `scheduleSequencedFunChord()` (live and offline), and session capture and restore of the progression are removed. `applyEnsembleConductor()` keeps passing an empty 12-step spine with no key held, so the band is unchanged. The discovery Keep trigger no longer watches the grid.
+3. `src/session.mjs`: `SESSION_VERSION` 3, with `funMachine: { style }`. v1 and v2 still open; their progression is validated, then dropped.
+4. `styles.css`: 16 sequencer rules (133 lines) removed.
+5. Tests: session samples are v3; v2 files open with punched chords dropped and malformed ones still rejected; static checks assert the sequencer is gone.
+6. Docs: D-038 (D-020 marked), ARCHITECTURE, manual, README, CHANGELOG (Removed), ROADMAP (P5-25 done, P5-26 loop machine, P5-26 Raw Chaos).
+
+**Verified:** 117/117 Node checks. In the browser, there was no sequencer markup, and holding a key during play worked. A preset rewritten into the old v2 form with punched chords listed, loaded (status "PRESET LOADED", style ARPEGGIO), and re-saved as v3 with only the style. No console errors.
+
+**Found:** the truthy empty spine means Raw Esoteric Chaos is still conducted in the live app (P5-27). It is kept as-is for this change.
+
+**Left undone:** P5-26 loop machine design; P5-27; the P4-02 screen-reader pass; P6-01.
+
+**Next session should start with:** designing the loop machine (P5-26) with the maintainer.

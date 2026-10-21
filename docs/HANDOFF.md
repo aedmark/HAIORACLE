@@ -87,6 +87,31 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 50: 2026-10-20: the creature's own voice (P5-28 phase 3)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-28 phase 3: each phrase chooses its Fun Machine voice deterministically (D-040).
+
+**Done:** P5-28 phase 2 and D-042 were committed separately and pushed (637550b, 9a17a59) after the maintainer's "Much better." Phase 3 is done.
+
+**Changed:**
+1. `src/oracle.lol` emits `fun_voice` (`MOD … 337 AN 7`), `fun_bright` (`DIFF OF MOD … 347 AN 7 AN 3`, so −3..3), and `fun_spread` (`MOD … 349 AN 5`). `src/score.mjs` validates them as `funVoice`, `funBright`, and `funSpread`. The vitrine's default score gains neutral values.
+2. `src/voices.mjs`:
+   - `creatureVoice(score)` clones the chosen preset, scales its filters by 2^(bright/6) and its detune, width, and chorus depth by 0.6 + 0.2 × spread (both clamped to the validator's bounds), leaves formants alone, and validates the result.
+   - `creatureVoiceLabel()` gives a reading like "HARMONIUM · BRIGHTER · NARROW".
+3. `index.html` and `src/app.mjs`: THE CREATURE'S OWN chip comes first and is pressed by default. `currentFunVoice()` caches the creature voice per seed. `showCreatureVoice()` puts the chosen voice in the chip's tooltip on every summon, and the chip's telemetry names it.
+
+**Verified:**
+- 139/139 Node checks.
+- Across 500 phrases, no existing score field changed. The new fields spread evenly: each voice is 61–89 creatures, each tilt 61–86, each spread 92–113.
+- In the browser, "three pigeons in a borrowed coat" reads HARMONIUM · BRIGHTER · NARROW both times it was summoned, and "the moth reads braille" reads MUSIC BOX · BRIGHT · NARROWEST.
+- A held key played the creature voice with no console errors.
+
+**Not verified:** How the tilted and spread extremes sound (DARKEST, BRIGHTEST, NARROWEST, WIDEST).
+
+**Next session should start with:** P5-28 phase 4: per-slot voices in the loop machine, and sessions v5 with `funMachine.voice`. Files from v1–v4 open with VELVET PAD.
+
 ### Session 49: 2026-10-20: the lead, organ, chimes, and mycelium come out from under the filter
 
 **Contributor:** Claude Code with maintainer direction
@@ -317,27 +342,3 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Left undone:** P5-26 phases 2–5 (live recording and playback, the strip, sessions v4, song exports); the P4-02 screen-reader pass; P6-01.
 
 **Next session should start with:** P5-26 phase 2, live recording and song playback in the transport.
-
-### Session 40: 2026-10-20: the punch-in sequencer comes out
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Maintainer: the 12-step loop progression was "fundamentally broken". It was meant to be a loop machine for recording a series of loops. They asked to remove it safely before building anything else, and to drop it from saved sessions while keeping old files openable.
-
-**Done:** D-038 (P5-25).
-
-**Changed:**
-1. `index.html`: the REC and RESET PROGRESSION buttons and the 12-step grid are removed, and the telemetry text is updated.
-2. `src/app.mjs`: sequencer state, rendering, step targeting, punch-in (in `triggerFunKey()` and the scheduler), `scheduleSequencedFunChord()` (live and offline), and session capture and restore of the progression are removed. `applyEnsembleConductor()` keeps passing an empty 12-step spine with no key held, so the band is unchanged. The discovery Keep trigger no longer watches the grid.
-3. `src/session.mjs`: `SESSION_VERSION` 3, with `funMachine: { style }`. v1 and v2 still open; their progression is validated, then dropped.
-4. `styles.css`: 16 sequencer rules (133 lines) removed.
-5. Tests: session samples are v3; v2 files open with punched chords dropped and malformed ones still rejected; static checks assert the sequencer is gone.
-6. Docs: D-038 (D-020 marked), ARCHITECTURE, manual, README, CHANGELOG (Removed), ROADMAP (P5-25 done, P5-26 loop machine, P5-26 Raw Chaos).
-
-**Verified:** 117/117 Node checks. In the browser, there was no sequencer markup, and holding a key during play worked. A preset rewritten into the old v2 form with punched chords listed, loaded (status "PRESET LOADED", style ARPEGGIO), and re-saved as v3 with only the style. No console errors.
-
-**Found:** the truthy empty spine means Raw Esoteric Chaos is still conducted in the live app (P5-27). It is kept as-is for this change.
-
-**Left undone:** P5-26 loop machine design; P5-27; the P4-02 screen-reader pass; P6-01.
-
-**Next session should start with:** designing the loop machine (P5-26) with the maintainer.

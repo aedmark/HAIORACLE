@@ -4,7 +4,7 @@
 
 ### Added
 
-- Choose the Fun Machine's voice: VELVET PAD (the original), HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, or ÆTHER CHOIR. The choice is not saved yet, and recorded loops play in the current voice.
+- Hear each creature's own Fun Machine voice: its phrase picks one of seven parlor presets and tilts it brighter or darker, wider or narrower (THE CREATURE'S OWN, the default; hover it to see which). Or choose a preset yourself: VELVET PAD (the original), HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, or ÆTHER CHOIR. The choice is not saved yet, and recorded loops play in the current voice.
 
 ### Removed
 
