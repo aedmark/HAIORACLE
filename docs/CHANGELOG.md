@@ -12,6 +12,8 @@
 
 ### Changed
 
+- Hear a brighter LOLCODE lead: low-pitched creatures now sing an octave or two higher (from C3 up), the lead keeps its saw and square overtones, and the creature filter is brighter and less resonant.
+- Hear each mycelium as its own species: the eight fungus forms now knock, glint, bloop, tick, chirp, ring, breathe, or drip in their own patterns, shaped by the creature's hyphae, spores, and bloom.
 - Read each Kapellmeister genre's motto under its title. The genres themselves (menu, chord colours, changes, progressions, bass walks, voicings, overtones) are now written in plain-English Inform 7 in `src/rulebooks.ni`; the music is unchanged.
 - Keep the Perform wing still while you play: switching genres or Fun Machine styles, or holding keys over the loop, no longer changes the height of any panel at any window width, and long status lines, sequencer chords, and plate labels keep a fixed space.
 - Hear every phrase breathe its own way: the INTERCAL conductor reads each creature's arrangement word and chooses who waits, who answers, and when the turnaround lands, so arrangements now differ from creature to creature (existing creatures' arrangements changed).
@@ -22,6 +24,7 @@
 
 ### Fixed
 
+- Hear the Befunge organ and the chimes: the creature filter could silence the organ even while its meter moved, and dulled the chimes and mycelium. Only the LOLCODE lead passes through it now, and the organ and chimes sit level with the band.
 - Stop the lead from droning on one note: the three tonic drones under the lead used to hold one pitch at one level for the whole loop. They now follow each chord's root, swell when it lands and settle back, and fall silent while the arrangement rests the lead.
 - Stop favicon 404s in the console: the app and the manual declare an empty icon, so browsers request none.
 - Hear the right bass, organ, and choir notes on low-pitched creatures: notes outside a voice's range used to collapse onto its edge (every bass note an E1); they now move by octaves and keep their pitch. MIDI exports carry the corrected notes too.

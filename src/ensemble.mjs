@@ -28,10 +28,13 @@ export const CHANNEL_VOICING_DB = Object.freeze({
   fun: 0,
   beat: 0,
   bass: 0,
-  harmony: 0,
-  chime: 0,
+  // The organ and chimes were tuned under the creature filter; free of it
+  // they still sat under the band, so they lift (D-042).
+  harmony: 4,
+  chime: 6,
   chant: 12,
-  fungal: 0,
+  // The per-form mycelium voices measured about 3 dB under the old one (D-042).
+  fungal: 4,
 });
 
 export function voicingGain(id) {
@@ -40,10 +43,25 @@ export function voicingGain(id) {
 
 // Parallel unfiltered lead level by creature filter type. A narrow bandpass
 // tuned well above the melody buried the lead (D-024), so bandpass creatures
-// blend a dry copy under their filtered voice; lowpass creatures are unchanged.
-export const LEAD_DRY_TAP = Object.freeze({ lowpass: 0, bandpass: 0.5 });
+// blend a dry copy under their filtered voice; lowpass creatures keep a
+// little of their overtones the same way (D-042).
+export const LEAD_DRY_TAP = Object.freeze({ lowpass: 0.3, bandpass: 0.5 });
 
 const FILTER_TYPES = Object.freeze(["lowpass", "bandpass", "lowpass", "lowpass", "lowpass", "bandpass"]);
+
+/**
+ * The creature filter's resting cutoff and resonance, shared by the graph
+ * (and so every export) and the live vitrine modulation. It colours only the
+ * LOLCODE lead now (D-042); it used to sit at 1.1-3.5 kHz with Q up to 5.8 and
+ * muffle the lead, the organ, the chimes, and the mycelium.
+ */
+export function creatureFilter(score) {
+  return {
+    type: FILTER_TYPES[score.voice],
+    cutoff: 1300 + score.bloom * 32 + score.hueShift * 3,
+    q: 0.9 + score.edge / 40,
+  };
+}
 const DELAY_MULTIPLIERS = Object.freeze([1, 1.5, 0.75, 2, 1.25, 0.5]);
 const DRONE_INTERVALS = Object.freeze([-12, -5, 7]);
 const DRONE_DETUNE = Object.freeze([-5, 4, -3]);
@@ -85,6 +103,16 @@ export function foldIntoRange(midi, low, high = Infinity) {
   while (note < low) note += 12;
   while (note > high && note - 12 >= low) note -= 12;
   return note;
+}
+
+// The spell's roots run from MIDI 30 to 65, and half of all creatures used to
+// sing their whole melody in the bass register (down to 46 Hz), which sounded
+// muffled whatever the filter did. The lead now rises by whole octaves until
+// its root reaches C3, keeping the melody's contour; drones stay low (D-042).
+export const LEAD_FLOOR = 48;
+
+export function leadOctaveShift(score) {
+  return score.root >= LEAD_FLOOR ? 0 : 12 * Math.ceil((LEAD_FLOOR - score.root) / 12);
 }
 
 // The tonic drones used to hold one pitch at one level for the whole loop;
@@ -160,9 +188,10 @@ export function buildEnsembleGraph(context, score, {
   chantBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.chant, now);
   fungalBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.fungal, now);
   funBus.gain.setValueAtTime(ENSEMBLE_BUS_GAINS.fun, now);
-  filter.type = FILTER_TYPES[score.voice];
-  filter.frequency.value = 720 + score.bloom * 20 + score.hueShift * 1.6;
-  filter.Q.value = 1.6 + score.edge / 28;
+  const creature = creatureFilter(score);
+  filter.type = creature.type;
+  filter.frequency.value = creature.cutoff;
+  filter.Q.value = creature.q;
   compressor.threshold.value = -18;
   compressor.knee.value = 18;
   compressor.ratio.value = 5;
@@ -202,17 +231,18 @@ export function buildEnsembleGraph(context, score, {
     strips[id] = { trim, fader, pan, analyser, out };
   }
 
-  // Drums and bass skip the creature filter so they keep their weight; the Fun
-  // Machine reaches the output both dry and compressed so it sits on top. The
-  // choir skips it too: its voices are already shaped by their own formant
-  // bandpasses, and a narrow bandpass creature filter on top silenced them.
-  // It still feeds the delay and, below, the parlor reverb.
+  // Only the LOLCODE lead wears the creature filter (D-042). Drums and bass
+  // skip it to keep their weight; the Fun Machine reaches the output both dry
+  // and compressed so it sits on top. The choir, organ, chimes, and mycelium
+  // skip it too: a bandpass creature silenced the organ outright (its meter
+  // moved, because meters read before the filter), and a lowpass one dulled
+  // the chimes and cut the mycelium's 3-4 kHz clicks. They still feed the
+  // delay and, below, the parlor reverb.
   strips.lead.out.connect(filter);
-  strips.harmony.out.connect(filter);
-  strips.chime.out.connect(filter);
-  strips.fungal.out.connect(filter);
-  strips.chant.out.connect(compressor);
-  strips.chant.out.connect(delay);
+  for (const id of ["chant", "harmony", "chime", "fungal"]) {
+    strips[id].out.connect(compressor);
+    strips[id].out.connect(delay);
+  }
   const leadDry = context.createGain();
   leadDry.gain.value = LEAD_DRY_TAP[filter.type] ?? 0;
   strips.lead.out.connect(leadDry);

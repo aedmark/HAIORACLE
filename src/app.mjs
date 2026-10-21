@@ -32,6 +32,7 @@ import {
   stepsToRegionBoundary,
   toTonicRelative,
 } from "./accompaniment.mjs";
+import { myceliumEvents } from "./mycelium.mjs";
 import { DEFAULT_VOICE_ID, scheduleVoiceLead, scheduleVoicePad, scheduleVoicePluck, voiceById } from "./voices.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
@@ -43,9 +44,11 @@ import {
   PARLOR_REVERB_PER_LEVEL,
   SILENT_GAIN,
   buildEnsembleGraph,
+  creatureFilter,
   delayTimeFor,
   droneFrequencies,
   foldIntoRange,
+  leadOctaveShift,
   parlorSendLevels,
 } from "./ensemble.mjs";
 import {
@@ -2104,11 +2107,12 @@ function updateAudioInteraction() {
   const transport = currentTransport;
   const field = harmonicField();
 
-  const baseCutoff = 620 + score.bloom * 24 + score.hueShift * 2;
+  // The vitrine sweeps the lead's creature filter around the same resting
+  // point the exports use (D-042).
+  const creature = creatureFilter(score);
   const harmonicExponent = (interaction.pitchBend * 0.72 + Math.sin(field.angle) * 0.35) * Math.max(0.3, interaction.hold) + interaction.tap * 0.25;
-  const targetCutoff = Math.max(220, Math.min(5200, baseCutoff * (2 ** harmonicExponent)));
-  const baseQ = 2.5 + score.edge / 16;
-  const targetQ = Math.min(5.8, baseQ + field.radius * 1.6 + interaction.tap * 0.7);
+  const targetCutoff = Math.max(220, Math.min(9000, creature.cutoff * (2 ** harmonicExponent)));
+  const targetQ = Math.min(4.5, creature.q + field.radius * 1.6 + interaction.tap * 0.7);
   const targetMix = 0.28 * (1 + interaction.hold * 0.2 + interaction.tap * 0.12);
   const baseFeedback = 0.14 + score.bloom / 650;
   const targetFeedback = Math.min(0.48, baseFeedback + field.radius * 0.14);
@@ -2284,9 +2288,10 @@ function logNote(transport, channel, midi, at, duration, peak) {
 
 function scheduleNote(context, transport, score, step, at, duration) {
   const field = harmonicField();
-  const primaryNote = score.root + transport.melody[step % transport.melody.length];
+  const leadRoot = score.root + leadOctaveShift(score);
+  const primaryNote = leadRoot + transport.melody[step % transport.melody.length];
   const consonantInterval = interaction.pitchBend > 0.48 ? 12 : (interaction.pitchBend > 0.2 ? 7 : (interaction.pitchBend < -0.45 ? -12 : (interaction.pitchBend < -0.2 ? -5 : 0)));
-  const shiftedNote = score.root + transport.melody[(step + field.phaseStep) % transport.melody.length] + consonantInterval;
+  const shiftedNote = leadRoot + transport.melody[(step + field.phaseStep) % transport.melody.length] + consonantInterval;
   const envelope = context.createGain();
   const attack = Math.min(0.055, duration * (0.2 + field.radius * 0.06));
   const duck = (transport === currentTransport && activeHeldFunKey !== null) || transport.songLeading ? LEAD_DUCK_GAIN : 1;
@@ -2308,9 +2313,12 @@ function scheduleNote(context, transport, score, step, at, duration) {
   for (const layer of layers) {
     for (const [voiceIndex, voice] of voiceStack(score, step).entries()) {
       const oscillator = context.createOscillator();
+      // The creature's own waveform leads, and the stacked voices mix in a
+      // saw or square so the line keeps overtones for the creature filter to
+      // shape; all sines and triangles sounded muffled (D-042).
       oscillator.type = voiceIndex === 0
-        ? (score.waveform === "sawtooth" ? "triangle" : score.waveform)
-        : ["triangle", "sine", "triangle", "sine"][(score.wave + voiceIndex + score.voice) % 4];
+        ? score.waveform
+        : ["triangle", "sawtooth", "sine", "square"][(score.wave + voiceIndex + score.voice) % 4];
       oscillator.frequency.value = midiToFrequency(layer.note + voice.interval);
       oscillator.detune.value = voice.detune * 0.45 + layer.detuneOffset + (step % 3 - 1) * score.twist * 0.14;
       const level = context.createGain();
@@ -2888,79 +2896,43 @@ function scheduleChantStep(context, transport, score, stepIndex, at, stepDuratio
   lfo.stop(at + duration + 0.04);
 }
 
+// The mycelium's spikes, drops, and spore puffs, from its sporophore form's
+// own sound (src/mycelium.mjs, D-042).
 function scheduleFungalBioStep(context, transport, score, stepIndex, at, stepDuration) {
   if (!transport.fungalBus) return;
   const bus = transport.fungalBus;
-  const holdBoost = 1 + interaction.hold * 0.2;
+  for (const event of myceliumEvents(score, stepIndex, interaction.hold)) {
+    const start = at + event.at * stepDuration;
+    const end = start + event.decay;
+    const gain = context.createGain();
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(event.peak, start + Math.min(0.006, event.decay / 3));
+    gain.gain.exponentialRampToValueAtTime(0.0001, end);
+    const panner = context.createStereoPanner ? context.createStereoPanner() : null;
+    panner?.pan.setValueAtTime(event.pan, start);
+    (panner ? gain.connect(panner) : gain).connect(bus);
 
-  // 1. Mycelial Action Potentials: periodic trains of micro-voltage electrical clicks
-  if (stepIndex % 3 === (score.fungalForm % 3)) {
-    const pulseCount = 2 + (score.fungalHyphae % 3);
-    for (let p = 0; p < pulseCount; p += 1) {
-      const clickTime = at + p * 0.032 + (score.fungalSpores % 4) * 0.003;
-      const clickOsc = context.createOscillator();
-      const clickFilter = context.createBiquadFilter();
-      const clickGain = context.createGain();
-
-      clickOsc.type = "sine";
-      clickOsc.frequency.setValueAtTime(2800 + p * 620 + (score.fungalBloom % 5) * 80, clickTime);
-
-      clickFilter.type = "bandpass";
-      clickFilter.frequency.setValueAtTime(3600, clickTime);
-      clickFilter.Q.setValueAtTime(5.5, clickTime);
-
-      const peak = (0.022 + (score.fungalHyphae / 100) * 0.015) * holdBoost;
-      clickGain.gain.setValueAtTime(0.0001, clickTime);
-      clickGain.gain.exponentialRampToValueAtTime(peak, clickTime + 0.003);
-      clickGain.gain.exponentialRampToValueAtTime(0.0001, clickTime + 0.018);
-
-      clickOsc.connect(clickFilter).connect(clickGain).connect(bus);
-      clickOsc.start(clickTime);
-      clickOsc.stop(clickTime + 0.024);
+    let source;
+    if (event.kind === "noise") {
+      source = context.createBufferSource();
+      source.buffer = ensureNoiseBuffer(context);
+    } else {
+      source = context.createOscillator();
+      source.type = event.wave;
+      source.frequency.setValueAtTime(event.freq, start);
+      if (event.to !== event.freq) source.frequency.exponentialRampToValueAtTime(event.to, end);
     }
-  }
-
-  // 2. Vitrine Droplet Chime / Guttation bead: delicate downward pitch sweep
-  if (stepIndex % 6 === ((score.fungalForm + 2) % 6)) {
-    const dropOsc = context.createOscillator();
-    const dropGain = context.createGain();
-    const startFreq = 1540 + (score.fungalBloom % 8) * 110;
-    const dropDuration = 0.085;
-    const dropTime = at + stepDuration * 0.28;
-
-    dropOsc.type = "sine";
-    dropOsc.frequency.setValueAtTime(startFreq, dropTime);
-    dropOsc.frequency.exponentialRampToValueAtTime(startFreq * 0.42, dropTime + dropDuration);
-
-    const dropPeak = (0.032 + (score.fungalBloom / 100) * 0.022) * holdBoost;
-    dropGain.gain.setValueAtTime(0.0001, dropTime);
-    dropGain.gain.exponentialRampToValueAtTime(dropPeak, dropTime + 0.006);
-    dropGain.gain.exponentialRampToValueAtTime(0.0001, dropTime + dropDuration);
-
-    dropOsc.connect(dropGain).connect(bus);
-    dropOsc.start(dropTime);
-    dropOsc.stop(dropTime + dropDuration + 0.03);
-  }
-
-  // 3. Ballistospore release puff: soft organic noise pop
-  if (stepIndex % 4 === 1 && score.fungalSpores > 30) {
-    const puffTime = at + stepDuration * 0.52;
-    const noise = context.createBufferSource();
-    noise.buffer = ensureNoiseBuffer(context);
-    const noiseFilter = context.createBiquadFilter();
-    noiseFilter.type = "bandpass";
-    noiseFilter.frequency.setValueAtTime(2100 + (score.fungalForm * 80), puffTime);
-    noiseFilter.Q.setValueAtTime(3.2, puffTime);
-
-    const noiseGain = context.createGain();
-    const puffPeak = (0.024 + (score.fungalSpores / 100) * 0.018) * holdBoost;
-    noiseGain.gain.setValueAtTime(0.0001, puffTime);
-    noiseGain.gain.exponentialRampToValueAtTime(puffPeak, puffTime + 0.005);
-    noiseGain.gain.exponentialRampToValueAtTime(0.0001, puffTime + 0.045);
-
-    noise.connect(noiseFilter).connect(noiseGain).connect(bus);
-    noise.start(puffTime);
-    noise.stop(puffTime + 0.05);
+    if (event.band) {
+      const band = context.createBiquadFilter();
+      band.type = "bandpass";
+      band.frequency.setValueAtTime(event.band[0], start);
+      band.Q.setValueAtTime(event.band[1], start);
+      source.connect(band).connect(gain);
+    } else {
+      source.connect(gain);
+    }
+    source.start(start);
+    source.stop(end + 0.01);
   }
 }
 

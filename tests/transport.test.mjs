@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { CHANNEL_VOICING_DB, DRONE_SWELL, ENSEMBLE_BUS_GAINS, LEAD_DRY_TAP, SILENT_GAIN, buildEnsembleGraph, delayTimeFor, droneFrequencies, foldIntoRange, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
+import { CHANNEL_VOICING_DB, DRONE_SWELL, ENSEMBLE_BUS_GAINS, LEAD_DRY_TAP, LEAD_FLOOR, SILENT_GAIN, buildEnsembleGraph, creatureFilter, delayTimeFor, droneFrequencies, foldIntoRange, leadOctaveShift, parlorSendLevels, voicingGain } from "../src/ensemble.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "../src/transport.mjs";
 
 // A minimal AudioContext stand-in that records every node and connection, so
@@ -87,11 +87,14 @@ test("every ensemble bus reaches the destination with its documented routing", (
   for (const bus of ["mix", "beatBus", "bassBus", "harmonyBus", "chimeBus", "chantBus", "fungalBus", "funBus"]) {
     assert.ok(reaches(edges, graph[bus].id, "destination"), `${bus} is connected to the output`);
   }
-  for (const bus of ["mix", "harmonyBus", "chimeBus", "fungalBus"]) {
-    assert.ok(reaches(edges, graph[bus].id, graph.filter.id), `${bus} passes through the creature filter`);
-  }
-  for (const bus of ["beatBus", "bassBus", "funBus", "chantBus"]) {
+  // Only the LOLCODE lead wears the creature filter (D-042).
+  assert.ok(reaches(edges, graph.mix.id, graph.filter.id), "the lead passes through the creature filter");
+  for (const bus of ["beatBus", "bassBus", "funBus", "chantBus", "harmonyBus", "chimeBus", "fungalBus"]) {
     assert.equal(reaches(edges, graph[bus].id, graph.filter.id), false, `${bus} bypasses the creature filter`);
+  }
+  for (const bus of ["harmonyBus", "chimeBus", "fungalBus"]) {
+    assert.ok(reaches(edges, graph[bus].id, graph.compressor.id), `${bus} reaches the compressor directly`);
+    assert.ok(reaches(edges, graph[bus].id, graph.delay.id), `${bus} still feeds the delay`);
   }
   for (const bus of ["mix", "harmonyBus", "chimeBus", "fungalBus", "beatBus"]) {
     assert.ok(reaches(edges, graph[bus].id, graph.parlorReverbSend.id), `${bus} is heard in the chamber`);
@@ -148,7 +151,7 @@ test("each bus passes through its own stereo mixer strip before the shared graph
     assert.ok(edges.some(([a, b]) => a === strip.trim.id && b === strip.fader.id), `${id} trim feeds its fader`);
     assert.equal(strip.trim.gain.value, voicingGain(id));
   }
-  assert.ok(edges.some(([a, b]) => a === graph.strips.chime.pan.id && b === graph.filter.id));
+  assert.ok(edges.some(([a, b]) => a === graph.strips.chime.pan.id && b === graph.compressor.id));
   assert.ok(edges.some(([a, b]) => a === graph.strips.beat.pan.id && b === graph.compressor.id));
   assert.equal(edges.some(([a, b]) => a === graph.beatBus.id && b === graph.compressor.id), false, "no bus bypasses its strip");
   assert.equal(graph.strips.beat.fader.gain.value, 0);
@@ -277,15 +280,18 @@ test("Escape stops from anywhere and other keys are ignored", () => {
   assert.equal(transportCommandForKey(null), null);
 });
 
-test("default voicing lifts the lead and choir while every other channel stays at unity", () => {
+test("default voicing lifts the lead, choir, organ, chimes, and mycelium while every other channel stays at unity", () => {
   assert.equal(CHANNEL_VOICING_DB.lead, 6);
   assert.equal(CHANNEL_VOICING_DB.chant, 12);
-  for (const id of ["fun", "beat", "bass", "harmony", "chime", "fungal"]) assert.equal(voicingGain(id), 1);
+  assert.equal(CHANNEL_VOICING_DB.harmony, 4);
+  assert.equal(CHANNEL_VOICING_DB.chime, 6);
+  assert.equal(CHANNEL_VOICING_DB.fungal, 4);
+  for (const id of ["fun", "beat", "bass"]) assert.equal(voicingGain(id), 1);
   assert.ok(Math.abs(voicingGain("lead") - 1.9953) < 1e-4);
   assert.ok(Math.abs(voicingGain("chant") - 3.9811) < 1e-4);
 });
 
-test("bandpass creatures blend a dry lead tap under the filter; lowpass creatures get none", () => {
+test("bandpass creatures blend a dry lead tap under the filter; lowpass creatures a smaller one", () => {
   const bandpass = fakeContext();
   const bandGraph = build(bandpass);
   assert.equal(bandGraph.filter.type, "bandpass");
@@ -297,7 +303,32 @@ test("bandpass creatures blend a dry lead tap under the filter; lowpass creature
   const lowpass = fakeContext();
   const lowGraph = buildEnsembleGraph(lowpass, { ...SCORE, voice: 4 }, { start: 0, unit: 0.25, outputGain: 1 });
   assert.equal(lowGraph.filter.type, "lowpass");
-  assert.equal(lowGraph.leadDry.gain.value, 0);
+  assert.equal(lowGraph.leadDry.gain.value, LEAD_DRY_TAP.lowpass);
+  assert.ok(LEAD_DRY_TAP.lowpass > 0 && LEAD_DRY_TAP.lowpass < LEAD_DRY_TAP.bandpass);
+});
+
+test("the creature filter rests where exports and the live vitrine agree, well above the old muffle", () => {
+  const graph = build(fakeContext());
+  const creature = creatureFilter(SCORE);
+  assert.equal(graph.filter.frequency.value, creature.cutoff);
+  assert.equal(graph.filter.Q.value, creature.q);
+  for (const bloom of [20, 100]) for (const hueShift of [24, 240]) for (const edge of [0, 100]) {
+    const { cutoff, q } = creatureFilter({ ...SCORE, bloom, hueShift, edge });
+    assert.ok(cutoff >= 2000 && cutoff <= 5300, `cutoff ${cutoff}`);
+    assert.ok(q >= 0.9 && q <= 3.4, `q ${q}`);
+  }
+});
+
+test("the lead rises by whole octaves until its root reaches C3, keeping the melody's shape", () => {
+  assert.equal(leadOctaveShift({ root: 30 }), 24);
+  assert.equal(leadOctaveShift({ root: 36 }), 12);
+  assert.equal(leadOctaveShift({ root: 47 }), 12);
+  assert.equal(leadOctaveShift({ root: LEAD_FLOOR }), 0);
+  assert.equal(leadOctaveShift({ root: 65 }), 0);
+  for (let root = 30; root <= 65; root += 1) {
+    const raised = root + leadOctaveShift({ root });
+    assert.ok(raised >= 48 && raised < 66 && leadOctaveShift({ root }) % 12 === 0, `root ${root}`);
+  }
 });
 
 test("the echo is timed from the tempo, so a live tempo change can retime it", () => {

@@ -259,12 +259,12 @@
           "tags": ["graphics", "canvas", "mycology", "procedural", "bio-acoustics", "staging"],
           "what": "Simulates a living Victorian botanical specimen rooted in an antique turned-wood mahogany pedestal and fibrous peat substrate. Branching hyphal filaments colonize the vitrine and mature over a 10-second envelope, sprouting eight generative sporophore archetypes (Agaric Cap, Bracket Conk, Coral Clavaria, Bioluminescent Bonnet, Cup Peziza, Morel Honeycomb, Globular Puffball, Hyphal Hydra) etched with Ernst Haeckel lithographic anatomy. Condensation micro-droplets cling to the curved bell jar, while Web Audio synthesizes bio-electric action potentials, guttation droplet chimes, and tactile ballistospore puffs.",
           "how": {
-            "lead": "`buildMycelialNetwork()`, `drawVitrinePedestal()`, `drawGlassCondensation()`, and `scheduleFungalBioStep()` in `src/app.mjs` execute botanical synthesis:",
+            "lead": "`buildMycelialNetwork()`, `drawVitrinePedestal()`, `drawGlassCondensation()`, and `scheduleFungalBioStep()` in `src/app.mjs` (with `myceliumEvents()` in `src/mycelium.mjs`) execute botanical synthesis:",
             "points": [
               "Renders an antique turned-wood mahogany specimen pedestal with polished brass channel ring and fibrous peat/driftwood substrate mounds grounding hyphal rootlets.",
               "Generates 46 deterministic dew condensation micro-droplets clinging along the curved glass profile of the vitrine bell jar, vibrating on tap gestures and catching specimen bloom.",
               "Etches eight sporophore archetypes with Ernst Haeckel-style lithographic details: radiating lamellae, stippled universal veil verrucae, growth sulci, fimbriate eyelash rims, scalariform alveoli, and aculei teeth.",
-              "Synthesizes bio-electric mycelial action-potential spike trains (2800–3800 Hz bandpass impulses) and guttation water droplet chimes synchronized with hyphal nutrient pulses.",
+              "Gives each sporophore form its own voice (`src/mycelium.mjs`): an AGARIC CAP clicks and drips, a BRACKET CONK knocks like wood, a CORAL CLAVARIA glints in rising glassy trains, a BIOLUMINESCENT BONNET rings slow chords, a CUP PEZIZA bloops, a MOREL HONEYCOMB ticks, a GLOBULAR PUFFBALL breathes soft clouds, and a HYPHAL HYDRA chirps. Hyphae lengthen the spike trains and rotate the patterns, spores thicken the puffs, and bloom tilts every pitch (D-042).",
               "Maintains a 35 to 85 particle ballistospore cloud discharging explosive percussive noise puffs and downward pitch chirps when the vitrine glass is disturbed."
             ]
           },

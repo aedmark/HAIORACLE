@@ -96,6 +96,7 @@ Never force-push or rewrite shared history.
 | `src/inform.mjs` | Inform 7 subset interpreter and rulebook compiler |
 | `src/ensemble.mjs` | Shared Web Audio ensemble graph for live playback and offline WAV export |
 | `src/accompaniment.mjs` | Fun Machine one-finger accompanist: styles, pad voicing, arpeggios, tonic-relative chords |
+| `src/mycelium.mjs` | Mycelium bio-acoustic voice: eight per-form sounds shaped by hyphae, spores, and bloom (D-042) |
 | `src/voices.mjs` | Fun Machine voice patches, their validator, and the pad, pluck, and lead synths (D-040) |
 | `src/looper.mjs` | Fun Machine loop machine model: songs, loops, stacked takes, recorder, follow rule (D-039) |
 | `src/cabinet.mjs` | Discovery drawers and the whole-cabinet mode: state, unlock rules, on-device memory |

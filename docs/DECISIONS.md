@@ -687,6 +687,38 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Open choices:** which wave-1 genres to keep or swap; whether wave 3 (feel) is wanted at all.
 
+## D-042 Only the lead wears the creature filter; the lead sings above C3; every fungus has its own voice (2026-10-20, status: accepted)
+
+**Context:** On 2026-10-20 the maintainer reported four problems:
+- the LOLCODE lead and the mycelium always sounded muffled;
+- the mycelium sounded alike across phrases;
+- the Befunge organ was inaudible although its meter moved;
+- the chimes were far too quiet.
+
+Exported stems on four phrases showed why:
+- **The filter.** The lead, organ, chimes, and mycelium all passed through the creature filter, a resonant lowpass or bandpass resting at about 1.1–3.5 kHz with Q up to 5.8. Meters read before it.
+  - On a bandpass creature ("three pigeons in a borrowed coat") the organ stem measured −60 dB and the chimes −52 dB.
+  - The mycelium's clicks are pitched at 2.8–4.4 kHz, so the filter cut them.
+- **The lead's register.** Half of all creatures have a root below C3 (the spell's roots run from MIDI 30 to 65). The lead played root plus melody, so their melodies sat in the bass register.
+- **The lead's timbre.** Its sawtooth was swapped for a triangle, and its stacked voices were all sines and triangles.
+- **The mycelium's sameness.** The eight sporophore forms only shifted timing and a few pitches; between phrases, mycelium spectra differed by 1.6 dB on average.
+
+**Decision:**
+1. **Only the LOLCODE lead passes through the creature filter.** The organ, chimes, and mycelium go straight to the compressor and delay, as the choir already did (D-023 item 7), and still reach the parlor reverb.
+2. **A brighter, gentler filter.** It rests at `1300 + bloom × 32 + hueShift × 3` Hz (about 2.0–5.2 kHz) with Q `0.9 + edge / 40` (0.9–3.4). `creatureFilter()` is shared by the graph, and so by every export, and by the live vitrine sweep, which used to rest elsewhere; the sweep's cap rises to 9 kHz and its Q cap falls to 4.5. Lowpass creatures also get a dry lead tap at 0.3, beside the bandpass creatures' 0.5.
+3. **The lead sings above C3.** `leadOctaveShift()` raises the whole melody by octaves until the root is at least MIDI 48, so the contour is kept. Drones stay at the root. MIDI exports carry the raised notes.
+4. **The lead keeps overtones.** The primary voice uses the creature's own waveform, sawtooth included, and the stacked voices draw from triangle, sawtooth, sine, and square.
+5. **Organ, chimes, and mycelium are lifted.** Their voicing trims become +4 dB, +6 dB, and +4 dB.
+6. **Every fungus form has its own voice.** `src/mycelium.mjs` gives each form its own spikes (waveform, register, sweep, train length, spacing), droplets, spore puffs, and 12-step patterns. Hyphae lengthen trains and rotate the patterns, spores raise puff level and frequency, and bloom tilts every pitch by up to half an octave either way.
+
+**Alternatives:** Raising faders would not fix a filter that removes a voice's band; keeping the filter on everything but brighter would still let bandpass creatures silence the organ; per-phrase random synthesis for the mycelium would lose the tie between what is drawn and what is heard.
+
+**Consequences:**
+- Every creature sounds different from before (deliberately): brighter lead, audible organ and chimes, and form-specific mycelium.
+- The determinism contract holds, since all of it derives from the score.
+- The creature's colour now lives in the lead alone.
+- This supersedes the routing in D-018 item 2 and D-023's "chimes, choir, and fungal voices pass through" note.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

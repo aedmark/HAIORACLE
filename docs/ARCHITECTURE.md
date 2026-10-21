@@ -33,6 +33,7 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Loop machine model | `src/looper.mjs` | `appendLoop()`, `overdubLayer()`, `songPosition()`, `leadSlotAt()`, `recorderReduce()`, `validateSong()` | the pure song/loop/take model, limits, follow rule, recorder, and validation (D-039). The live scheduler in `src/app.mjs` records takes (`advanceRecorder()`), conducts the band onto the leading layer (`followSong()`), and plays every layer through `playPerformanceStep()`, shared with the live key; the loop strip is `#looper`, with tiles (`renderLooperTiles()`) and a selected-loop edit row (`editSong()`). `renderEnsembleLoop()` renders every song pass with the same `followSong()` and `playSongLayers()`, then `restoreLiveConducting()` |
 | Discovery and the cabinet | `src/cabinet.mjs` | `cabinetReduce()`, `parseCabinetState()`, `DRAWERS` | drawer chrome, unlock triggers, and the cabinet switch in `src/app.mjs` (D-037) |
 | Fun Machine accompanist | `src/accompaniment.mjs` | `buildPerformance()`, `padVoicing()`, `arpeggioNotes()`, `toTonicRelative()` | Fun Machine scheduler in `src/app.mjs` |
+| Mycelium voice | `src/mycelium.mjs` | `myceliumEvents()`, `FUNGAL_SOUNDS` | eight per-form sounds (spikes, drops, spore puffs) shaped by hyphae, spores, and bloom; `scheduleFungalBioStep()` in `src/app.mjs` plays them (D-042) |
 | Fun Machine voices | `src/voices.mjs` | `validateVoice()`, `voiceById()`, `scheduleVoicePad()`, `scheduleVoicePluck()`, `scheduleVoiceLead()` | patch presets and their synths (D-040); `schedulePadChord()`, `scheduleArpNote()`, and `scheduleFunLeadNote()` in `src/app.mjs` play the current voice |
 | Mixer model | `src/mixer.mjs` | `channelSettings()`, `isChannelAudible()`, `meterReading()` | mixing console and strips in `src/app.mjs`, `src/ensemble.mjs` |
 | Master transport | `src/transport.mjs` | `transportReduce()`, `transportCommandForKey()` | transport deck and hotkeys in `src/app.mjs` |
@@ -54,7 +55,7 @@ phrase -> normalize and FNV-1a hash -> INPUT_SEED
 
 Web Audio composition (per-step schedulers in src/app.mjs)
       -> eight buses -> mixer strips: voicing trim -> fader -> pan (+ live VU analyser)   [src/ensemble.mjs, src/mixer.mjs]
-      -> creature filter / compressor / delay / parlor reverb -> master output
+      -> creature filter (LOLCODE lead only, D-042) / compressor / delay / parlor reverb -> master output
       live:    master transport (play / pause / stop, Space / Esc) drives the look-ahead scheduler   [src/transport.mjs]
       offline: renderEnsembleLoop() -> WAV mix | 9 solo stems -> STORED ZIP | noteLog -> SMF Type 1   [src/zip.mjs, src/midi.mjs]
 
@@ -77,7 +78,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 | User gesture | summon, replay, or unmute button | Web Audio | audio context starts or resumes only from the gesture path |
 | Audio scheduler | current score and audio clock | Web Audio nodes | schedules roughly 280 ms ahead and repeats until stopped or replaced |
 | Channel voicing | `CHANNEL_VOICING_DB` in `src/ensemble.mjs` | each strip's trim node | fixed default balance in dB before the fader (lead +6, choir +12, others 0); never changed at runtime |
-| Ensemble graph | `buildEnsembleGraph()` | `playScore()`, `exportSpecimenWav()` | one node topology for live and offline audio; drums, bass, Fun Machine, and choir bypass the creature filter (the choir still feeds the delay and parlor reverb), while lead, organ, chimes, and mycelium pass through it, and bandpass creatures add a parallel dry lead tap at −6 dB; `stop` ends looping sources for offline renders |
+| Ensemble graph | `buildEnsembleGraph()` | `playScore()`, `exportSpecimenWav()` | one node topology for live and offline audio; only the LOLCODE lead passes through the creature filter (`creatureFilter()`, shared with the live vitrine sweep), with a parallel dry lead tap (−6 dB on bandpass creatures, −10 dB on lowpass ones); every other voice goes straight to the compressor and delay and still reaches the parlor reverb (D-042). `leadOctaveShift()` raises low-rooted leads by octaves to at least C3; `stop` ends looping sources for offline renders |
 | Mixer console | `#mixer-engine` strips, plate ENGAGE/SILENCE switches, Bandstand buttons | `updateMixer()` → strip gains and pans in live and offline graphs | eight channels; fader `0..100` (80 = unity, 100 = +12 dB), pan `−100..100`, mute, solo; any solo isolates soloed channels and an explicit mute still wins; post-pan analyser drives VU meters live only |
 | Offline render | `renderEnsembleLoop()` | WAV, stem, and MIDI exports | one 12-step loop through the shared graph starting at 0.04 s with a 1.35 s tail; overrides for strip levels, room levels, clockwork, muted plates, and note capture |
 | Stem bundle | `#export-stems` | browser download | STORED ZIP of `01-lead.wav` … `08-mycelium.wav` (each channel alone at its fader and pan, mute/solo ignored), `09-parlor-room.wav`, and `README.txt` |

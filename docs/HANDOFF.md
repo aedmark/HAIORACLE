@@ -87,6 +87,44 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 49: 2026-10-20: the lead, organ, chimes, and mycelium come out from under the filter
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** The maintainer reported:
+- the LOLCODE lead and mycelium always sounded muffled;
+- the mycelium sounded alike across phrases;
+- the Befunge organ was inaudible although its meter moved;
+- the chimes were far too quiet.
+
+**Done:** D-042 (incidental fixes; no roadmap ID).
+
+**Changed:**
+1. `src/ensemble.mjs`:
+   - Only the lead passes through the creature filter. Organ, chimes, and mycelium go straight to the compressor and delay.
+   - `creatureFilter()` (about 2.0–5.2 kHz, Q 0.9–3.4) is shared with the live sweep in `updateAudioInteraction()`.
+   - Lowpass creatures get a 0.3 dry lead tap.
+   - `leadOctaveShift()` and `LEAD_FLOOR` (48).
+   - Voicing trims: organ +4 dB, chimes +6 dB, mycelium +4 dB.
+2. `src/app.mjs`:
+   - The lead is raised by `leadOctaveShift()` (MIDI exports included). Its primary voice uses the creature's waveform, sawtooth included, and its stacks mix in saw and square.
+   - `scheduleFungalBioStep()` plays `myceliumEvents()`.
+3. New `src/mycelium.mjs`: eight per-form sounds (spikes, drops, puffs, patterns), shaped by hyphae, spores, and bloom. It joins the import map. Tests: `tests/mycelium.test.mjs` and updated routing tests.
+
+**Verified:** 138/138 Node checks. Exported stems in the browser, measured by octave bands:
+- **Organ:** −60 → −31 dB on a bandpass creature, and about −38 → −33 dB on lowpass ones.
+- **Chimes:** −52 → −26 dB and −33 → −25 dB.
+- **Bass:** unchanged at about −35 dB.
+- **Lead:** centroid up 30–130%, its share of 1–8 kHz up 2–6 dB, and about 1–2 dB louder.
+- **Mycelium:** the spread between phrases rose from 1.6 to 6.9 dB, with centroids from 384 Hz (CUP PEZIZA) to 3.4 kHz (BIOLUMINESCENT BONNET).
+- **Live:** playback ran with no console errors.
+
+**Not verified:** The maintainer's listen, especially organ and chime balance against the lead, and whether any fungus form grates.
+
+**Verified by ear:** the maintainer: "Much better." P5-28 phase 2 and D-042 were committed separately.
+
+**Next session should start with:** P5-28 phase 3.
+
 ### Session 48: 2026-10-20: Fun Machine voices, phase 2 (P5-28)
 
 **Contributor:** Claude Code with maintainer direction
@@ -303,29 +341,3 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Left undone:** P5-26 loop machine design; P5-27; the P4-02 screen-reader pass; P6-01.
 
 **Next session should start with:** designing the loop machine (P5-26) with the maintainer.
-
-### Session 39: 2026-10-20: discovery drawers and the accessibility audit
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Start P4-02. The maintainer asked that the cabinet not overwhelm people: "more like a discovery, and then maybe an advanced mode where it's all laid bare like equipment cabinet." They chose drawers that unlock as you play, remembered on this device. (The maintainer also listened to Parlor Ragtime from session 38: "its beautiful".)
-
-**Done:** D-037; P4-02 progress (real assistive-technology pass still open).
-
-**Audit found:** 172 tab stops (top 14, Perform 38, Mix 41, Keep 9, Band 70); `#transport-position` (an `<output>`, so implicitly polite) and the Kapellmeister readout (`aria-live="polite"`) re-announced every loop step; 43 rules set text below 0.6rem, the smallest rendering at 6.7 px; dimmed bone text at alpha 0.42/0.5/0.52 fell below 4.5:1; reduced motion was read once at load. Every control already had an accessible name, and the Fun Machine letter keys ignore typing fields. Automatic contrast detection is unreliable on the parchment and wood textures, so contrast was computed per colour token instead.
-
-**Changed:**
-1. `src/cabinet.mjs` (new): `DRAWERS` (Kapellmeister, Mix, Keep, The Band; each with a target, invitation, and trigger), `cabinetReduce()`, `parseCabinetState()`/`serializeCabinetState()`, `isDrawerOpen()`.
-2. `src/app.mjs`: `buildDrawers()` moves each target's contents into a `drawer-body` behind a `drawer-bar` with a toggle (`aria-expanded`, `aria-controls`). It also adds the cabinet switch, announcements via `#cabinet-announcer`, guarded storage, and four triggers: a held key, a completed loop, changes inside the Kapellmeister/Mix/Band/sequencer/style chips, and mute/solo or bandstand clicks (or four loops).
-3. `index.html`: `#cabinet-switch` (hidden until the script runs) with the announcer; `cabinet.mjs` in the import map; `#transport-position` set to `aria-live="off"`; the Kapellmeister readout is no longer a live region.
-4. `styles.css`: drawer and switch styles, slim sealed nameplates, an opening animation only without reduced motion, `select:focus-visible`, a `.visually-hidden` utility, a 0.6rem text floor, dimmed text raised to alpha 0.62, and content-box sizing for the two telemetry boxes (border-box had left the Fun Machine status room for only about 1.5 lines).
-5. Tests: `tests/cabinet.test.mjs`; static checks for the triggers, guarded cabinet storage, the switch, quiet readouts, the type floor, and the contrast floor.
-6. Docs: D-037, SECURITY and ARCHITECTURE (a second accepted `localStorage` store), README, TESTING, CHANGELOG, ROADMAP (P4-02 progress), AGENTS map, and a manual entry (35 entries).
-
-**Verified:** 117/117 Node checks. In the browser, a fresh visit starts with all four drawers sealed and 55 tab stops. A held key, a loop, a genre change, and a mute each opened their drawer in turn with an announcement. A drawer closed by hand stayed closed across the cabinet switch and in storage, and the whole cabinet showed every drawer and no bars. With the larger type, every width from 320 to 1720 px kept one page height across all seven genres and held keys, with nothing clipped and no horizontal overflow; the Fun Machine status text fits at 360, 720, and 1390 px. No console errors.
-
-**Not verified:** A screen reader (NVDA, VoiceOver, or Orca) reading the drawers and announcements; Safari and Firefox.
-
-**Left undone:** The P4-02 assistive-technology pass; P6-01.
-
-**Next session should start with:** a screen-reader pass of discovery mode, or the maintainer's feel for the drawer triggers.
