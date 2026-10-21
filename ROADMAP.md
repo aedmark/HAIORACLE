@@ -87,6 +87,11 @@ Goal: expand only where additional complexity creates more play.
   - Distinct progressions over 80 creatures, from 1 each (Victorian 16): Victorian 73, Jazz 69, Blues 51, Ragtime 34, Palestrina 30, Drone 21.
   - Varied clash rates: Victorian 5%, Palestrina 5%, Jazz 8%, Drone 0%, Ragtime 0%, Blues 32%.
   - The golden fixture still guards "as written" unchanged, and `tests/fixtures/variations-golden.json` freezes 24 creatures' varied progressions. In the browser, three creatures in Smoky Jazz played three different changes.
+
+  Phase 4 in progress 2026-10-20:
+  - The VARIATION line and the AS WRITTEN switch are done.
+  - The maintainer found the progressions too fast for the band, so D-044 came first: a four-pass harmonic cycle, one chord per loop on the downbeat, the Fun Machine on the same clock, and exports covering the cycle.
+  - Still to do: sessions v6 (AS WRITTEN; older files open as written), varying Fun Machine progressions, and chord names in MIDI markers.
   Acceptance: distinct progressions across phrases in every fettered genre, the clash ceilings hold, as-written output is unchanged, and the maintainer's listen.
 
 ## Phase 6: Release

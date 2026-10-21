@@ -1771,6 +1771,24 @@ h1 em {
   line-clamp: 3;
 }
 
+/* One fixed line, so naming more moves never moves the layout. */
+.kapellmeister-variation {
+  height: 1.4em;
+  margin: 0.2rem 0 0;
+  overflow: hidden;
+  color: var(--brass-bright);
+  font-family: var(--mono-ledger);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kapellmeister-as-written {
+  flex: none;
+}
+
 .kapellmeister-select-wrap {
   display: flex;
   align-items: center;

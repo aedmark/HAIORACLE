@@ -4,6 +4,7 @@ import {
   FUN_KEY_BY_CODE,
   FUN_KEY_BY_KEY,
   FUN_KEY_MAP,
+  HARMONIC_PASSES,
   buildFunChord,
   chordLabelFor,
   conductEnsemble,
@@ -29,7 +30,6 @@ import {
   chordText,
   leadMidi,
   padVoicing,
-  stepsToRegionBoundary,
   toTonicRelative,
 } from "./accompaniment.mjs";
 import { myceliumEvents } from "./mycelium.mjs";
@@ -230,6 +230,8 @@ const elements = {
   kapellmeisterEngine: document.querySelector("#kapellmeister-engine"),
   kapellmeisterGenreTitle: document.querySelector("#kapellmeister-genre-title"),
   kapellmeisterGenreMotto: document.querySelector("#kapellmeister-genre-motto"),
+  kapellmeisterVariation: document.querySelector("#kapellmeister-variation"),
+  kapellmeisterAsWritten: document.querySelector("#kapellmeister-as-written"),
   kapellmeisterGenre: document.querySelector("#kapellmeister-genre"),
   kapellmeisterTelemetry: document.querySelector("#kapellmeister-telemetry"),
   kapellmeisterStrictness: document.querySelector("#kapellmeister-strictness"),
@@ -269,8 +271,10 @@ let fractranSource = "";
 let chantSource = "";
 let conductorSource = "";
 let currentScore = null;
-// The moves this creature made on its genre's changes (D-043), for the readout.
+// The moves this creature made on its genre's changes (D-043), for the readout,
+// and whether it may make them: AS WRITTEN plays the rulebook's own changes.
 let currentVariation = Object.freeze([]);
+let genreVaried = true;
 let currentArrangement = null;
 let currentBeat = null;
 let currentBass = null;
@@ -300,6 +304,12 @@ let activeTempoBpm = Number(elements.tempo?.value || 108);
 let activeGenre = null;
 let activeStrictness = 8;
 let currentConductedSpine = null;
+// The harmonic cycle (D-044): which pass of four the band is on, and the whole
+// twelve-entry spine those passes walk through, for the compass.
+let currentHarmonicPass = 0;
+let currentCycleSpine = null;
+// What the readout shows: the harmony of the step now sounding (null when stopped).
+let heardHarmony = null;
 let parlorAcousticsEnabled = true;
 let parlorAcousticsLevel = 0.55;
 let parlorCrackleEnabled = true;
@@ -3085,11 +3095,14 @@ function highlightBeatStep(stepIndex) {
     }
   }
 
+  const heard = heardHarmony && normalized >= 0
+    ? heardHarmony
+    : { pass: currentHarmonicPass, spine: currentConductedSpine, melody: currentConductedMelody, bass: currentBass };
   if (elements.harmonicStep) {
-    elements.harmonicStep.textContent = normalized < 0 ? "-- / 12" : `${String(normalized + 1).padStart(2, "0")} / 12`;
+    elements.harmonicStep.textContent = normalized < 0 ? "-- / 12 · -/4" : `${String(normalized + 1).padStart(2, "0")} / 12 · ${heard.pass + 1}/4`;
   }
-  if (currentConductedSpine && currentConductedSpine[normalized]) {
-    const chord = currentConductedSpine[normalized];
+  if (heard.spine && heard.spine[normalized]) {
+    const chord = heard.spine[normalized];
     if (elements.harmonicChord) {
       elements.harmonicChord.textContent = chordLabelFor(chord, currentScore ? currentScore.root : 60);
     }
@@ -3100,14 +3113,14 @@ function highlightBeatStep(stepIndex) {
       if (chord.quality === "raw") {
         elements.harmonicEuler.textContent = "RAW VM";
       } else {
-        const melOffset = currentConductedMelody ? currentConductedMelody[normalized] : 0;
-        const bassOffset = currentBass?.steps?.[normalized]?.interval ?? 0;
+        const melOffset = heard.melody ? heard.melody[normalized] : 0;
+        const bassOffset = heard.bass?.steps?.[normalized]?.interval ?? 0;
         const g = semitoneGradus(melOffset - bassOffset);
         const flavor = g <= 5 ? "Sweet" : g <= 8 ? "Balanced" : "Dissonant";
         elements.harmonicEuler.textContent = `G = ${g} (${flavor})`;
       }
     }
-    const regionIdx = Math.floor(normalized / 3) % 4;
+    const regionIdx = heard.pass;
     const compassNodes = [elements.compassReg0, elements.compassReg1, elements.compassReg2, elements.compassReg3];
     compassNodes.forEach((node, idx) => {
       if (node) node.classList.toggle("is-active", idx === regionIdx);
@@ -3584,7 +3597,7 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   for (const other of elements.funKeyboard?.querySelectorAll(".fun-key.is-pressed") || []) other.classList.remove("is-pressed");
   keyBtn?.classList.add("is-pressed");
 
-  const performance = buildPerformance(normSemi, funMachineStyle, activeGenre, currentScore ? currentScore.root : 0);
+  const performance = buildPerformance(normSemi, funMachineStyle, activeGenre, currentScore ? currentScore.root : 0, { pass: currentHarmonicPass });
   activeFunPerformance = performance;
   unlockDrawer("held-key");
 
@@ -3610,7 +3623,8 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   const level = FUN_PAD_LEVEL[performance.style];
   if (transport?.funBus && currentScore) {
     const nextStep = transport.step;
-    const stepsUntilRegion = stepsToRegionBoundary(nextStep) % 3;
+    const regionSteps = performance.regionSteps;
+    const stepsUntilRegion = (regionSteps - ((nextStep % 12) % regionSteps)) % regionSteps;
     let regionStart = transport.nextNoteTime;
     for (let k = 0; k < stepsUntilRegion; k += 1) regionStart += loopStepDuration(currentScore, nextStep + k);
     const bridge = regionStart - context.currentTime;
@@ -3722,11 +3736,12 @@ function playSongLayers(context, transport, score, absoluteStep, loop, timing) {
   for (const { layerIndex, slot } of slotsAt(loop, stepIndex)) {
     const take = loop.layers[layerIndex];
     const previous = stepIndex > 0 ? take[stepIndex - 1] : null;
-    const starts = stepIndex % 3 === 0 || !sameSlot(previous, slot);
+    const regionSteps = performanceFor(slot).regionSteps;
+    const starts = stepIndex % regionSteps === 0 || !sameSlot(previous, slot);
     let padSteps = 0;
     if (starts) {
       do padSteps += 1;
-      while ((stepIndex + padSteps) % 3 !== 0 && sameSlot(take[stepIndex + padSteps], slot));
+      while ((stepIndex + padSteps) % regionSteps !== 0 && sameSlot(take[stepIndex + padSteps], slot));
     }
     transport.layerVoices[layerIndex] ??= { voicing: null, leadMidi: null };
     playPerformanceStep(context, transport, transport.layerVoices[layerIndex], performanceFor(slot), {
@@ -3782,7 +3797,7 @@ function padStepsDuration(score, absoluteStep, steps) {
  * the live key and every recorded layer; `voice` keeps that player's pad
  * voicing and lead glide.
  */
-function playPerformanceStep(context, transport, voice, performance, { stepIndex, at, stepDuration, soundingDuration, padDuration = null, releasable = true, patch = currentFunVoice() }) {
+function playPerformanceStep(context, transport, voice, performance, { stepIndex, absoluteStep = stepIndex, at, stepDuration, soundingDuration, padDuration = null, releasable = true, patch = currentFunVoice() }) {
   const stepInfo = performance.steps[stepIndex];
   if (padDuration !== null) {
     voice.voicing = padVoicing(stepInfo.chord, voice.voicing, performance.lift);
@@ -3806,7 +3821,9 @@ function playPerformanceStep(context, transport, voice, performance, { stepIndex
     });
   } else if (performance.style === "progression" && stepInfo.leadPitch !== null) {
     const midi = leadMidi(stepInfo.leadPitch);
-    scheduleFunLeadNote(context, transport.funBus, midi, at, Math.max(soundingDuration, stepDuration * 0.92), {
+    // On the harmonic clock a lead note holds for its steps (D-044).
+    const held = (stepInfo.leadSteps ?? 1) > 1 && currentScore ? padStepsDuration(currentScore, absoluteStep, stepInfo.leadSteps) : stepDuration;
+    scheduleFunLeadNote(context, transport.funBus, midi, at, Math.max(soundingDuration, held * 0.92), {
       glideFrom: voice.leadMidi ?? null,
       transport,
       voice: patch,
@@ -3869,6 +3886,8 @@ async function playScore(score, { cursor = 0 } = {}) {
       const position = songPosition(song, currentStep);
       const loop = position ? song.loops[position.loopIndex] : null;
       transport.songPosition = position;
+      // The harmony moves on at the loop's downbeat (D-044).
+      if (stepIndex === 0) enterHarmonicPass(transport, harmonicPassAt(currentStep));
       advanceRecorder(stepIndex, position, liveSlot);
       followSong(transport, loop, stepIndex, liveSlot);
 
@@ -3879,17 +3898,21 @@ async function playScore(score, { cursor = 0 } = {}) {
         // The conductor score rests the player only if src/conductor.i stops
         // IGNOREing register :8; the canonical score never does.
       } else {
-        const timing = { stepIndex, at, stepDuration, soundingDuration };
+        const timing = { stepIndex, absoluteStep: currentStep, at, stepDuration, soundingDuration };
         if (liveSlot) {
-          const padDuration = activeFunPerformance.steps[stepIndex].isRegionStart ? padStepsDuration(score, currentStep, 3) : null;
+          const padDuration = activeFunPerformance.steps[stepIndex].isRegionStart ? padStepsDuration(score, currentStep, activeFunPerformance.regionSteps) : null;
           playPerformanceStep(context, transport, liveVoiceOf(transport), activeFunPerformance, { ...timing, padDuration });
         }
         if (loop) playSongLayers(context, transport, score, currentStep, loop, timing);
       }
       const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
+      // The scheduler runs ahead and re-conducts at the next downbeat before
+      // this step sounds, so the readout shows the harmony it was scheduled with.
+      const scheduledHarmony = { pass: currentHarmonicPass, spine: currentConductedSpine, melody: currentConductedMelody, bass: currentBass };
       window.setTimeout(() => {
         if (currentTransport !== transport) return;
         transport.audibleStep = currentStep;
+        heardHarmony = scheduledHarmony;
         if (currentStep % 12 === 11) noteLoopHeard();
         if (currentStep % 12 === 0) {
           transport.audiblePosition = songPosition(song, currentStep);
@@ -4005,18 +4028,32 @@ function updateKapellmeisterUI() {
   const book = genreBook(activeGenre);
   if (elements.kapellmeisterGenreTitle) elements.kapellmeisterGenreTitle.textContent = book.title;
   if (elements.kapellmeisterGenreMotto) elements.kapellmeisterGenreMotto.textContent = book.motto;
+  if (elements.kapellmeisterVariation) {
+    const text = !genreVaried ? "VARIATION: AS WRITTEN (SWITCHED)"
+      : !book.variation?.length ? "VARIATION: THIS RULEBOOK PLAYS AS WRITTEN"
+      : currentVariation.length ? `VARIATION: ${currentVariation.join(" · ")}`
+      : "VARIATION: NONE FOR THIS CREATURE";
+    elements.kapellmeisterVariation.textContent = text;
+    elements.kapellmeisterVariation.title = text;
+  }
+  if (elements.kapellmeisterAsWritten) {
+    elements.kapellmeisterAsWritten.setAttribute("aria-pressed", String(!genreVaried));
+    elements.kapellmeisterAsWritten.classList.toggle("is-active", !genreVaried);
+  }
   if (elements.kapellmeisterTelemetry) {
     const chord0 = currentConductedSpine?.[0];
     const tonicName = currentScore ? chordLabelFor(chord0, currentScore.root) : "C Maj";
     elements.kapellmeisterTelemetry.textContent = `RULEBOOK: ${book.name.toUpperCase()} · TONIC: ${tonicName} · STRICTNESS: G ≤ ${activeStrictness}`;
   }
-  if (currentConductedSpine) {
+  // The compass shows the whole harmonic cycle: one region per pass (D-044).
+  const compassSpine = currentCycleSpine || currentConductedSpine;
+  if (compassSpine) {
     const nodeIds = [elements.nodeText0, elements.nodeText1, elements.nodeText2, elements.nodeText3];
     const steps = [0, 3, 6, 9];
     steps.forEach((stepIdx, i) => {
       const el = nodeIds[i];
-      if (el && currentConductedSpine[stepIdx]) {
-        el.textContent = currentConductedSpine[stepIdx].op || "I";
+      if (el && compassSpine[stepIdx]) {
+        el.textContent = compassSpine[stepIdx].op || "I";
       }
     });
   }
@@ -4044,10 +4081,13 @@ function applyEnsembleConductor() {
     genre: activeGenre,
     consonanceStrictness: activeStrictness,
     customSpine: spineToUse,
-    // Each creature varies its genre by the moves the rulebook permits (D-043).
-    varied: true,
+    // Each creature varies its genre by the moves the rulebook permits (D-043),
+    // unless AS WRITTEN is pressed.
+    varied: genreVaried,
+    harmonicPass: currentHarmonicPass,
   });
   currentConductedSpine = conducted.spine;
+  if (!spineToUse) currentCycleSpine = conducted.cycleSpine;
   currentVariation = conducted.variation;
   currentConductedMelody = conducted.melody;
   if (conducted.bass) currentBass = conducted.bass;
@@ -4067,6 +4107,8 @@ function applyEnsembleConductor() {
 
 function showScore(score) {
   currentScore = score;
+  // A new creature starts its harmonic cycle at home (D-044).
+  currentHarmonicPass = 0;
   showCreatureVoice(score);
   beatMutation = 0;
   bassMutation = 0;
@@ -4572,8 +4614,10 @@ async function renderEnsembleLoop(score, {
   const unit = 60 / bpm / 2;
   const rhythm = RHYTHMS[score.rhythm];
   // With a loop-machine song the render is the whole song (D-039), at most
-  // MAX_SONG_PASSES passes; without one it is a single loop, as before.
-  const passes = Math.max(1, songPasses(song));
+  // MAX_SONG_PASSES passes; without one it is the whole harmonic cycle, four
+  // loops, so the file holds the full progression and still loops (D-044).
+  const passes = songPasses(song) || HARMONIC_PASSES;
+  const livePass = currentHarmonicPass;
   const stepsCount = 12 * passes;
   let loopDuration = 0;
   for (let step = 0; step < stepsCount; step += 1) {
@@ -4603,20 +4647,26 @@ async function renderEnsembleLoop(score, {
     const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
     const position = songPosition(song, step);
     const loop = position ? song.loops[position.loopIndex] : null;
-    if (song.loops.length) {
-      followSong(offlineTransport, loop, step % 12, null);
-      offlineTransport.melody = currentConductedMelody || offlineTransport.melody;
+    // Each loop boundary moves the band to its pass of the harmonic cycle.
+    if (step % 12 === 0 && harmonicPassAt(step) !== currentHarmonicPass) {
+      currentHarmonicPass = harmonicPassAt(step);
+      offlineTransport.followedSlot = "harmonic-pass";
+      if (!song.loops.length) applyEnsembleConductor();
     }
+    if (song.loops.length) followSong(offlineTransport, loop, step % 12, null);
+    offlineTransport.melody = currentConductedMelody || offlineTransport.melody;
     scheduleEnsembleStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration, soundingDuration);
     shapeDrones(offlineTransport, score, step, stepTime);
     if (loop && arrangementPlays("fun", step % 12)) {
-      playSongLayers(offlineCtx, offlineTransport, score, step, loop, { stepIndex: step % 12, at: stepTime, stepDuration, soundingDuration });
+      playSongLayers(offlineCtx, offlineTransport, score, step, loop, { stepIndex: step % 12, absoluteStep: step, at: stepTime, stepDuration, soundingDuration });
     }
     stepTime += stepDuration;
   }
-  // Following the song re-conducted the shared band state; hand it back to
-  // the live loop (a held key, or the band's own score) before rendering.
-  if (song.loops.length) restoreLiveConducting();
+  // Walking the harmonic cycle and following the song re-conducted the shared
+  // band state; hand it back to the live loop (its pass, a held key, or the
+  // band's own score) before rendering.
+  currentHarmonicPass = livePass;
+  restoreLiveConducting();
 
   const buffer = render ? await offlineCtx.startRendering() : null;
   return { buffer, noteLog: offlineTransport.noteLog || [], bpm, loopDuration, stepStarts, passes };
@@ -5572,9 +5622,37 @@ const performanceCache = new Map();
 
 function performanceFor(slot) {
   const tonic = currentScore ? currentScore.root : 0;
-  const key = `${slot.key}:${slot.style}:${activeGenre}:${tonic}`;
-  if (!performanceCache.has(key)) performanceCache.set(key, buildPerformance(slot.key, slot.style, activeGenre, tonic));
+  const key = `${slot.key}:${slot.style}:${activeGenre}:${tonic}:${currentHarmonicPass}`;
+  if (!performanceCache.has(key)) performanceCache.set(key, buildPerformance(slot.key, slot.style, activeGenre, tonic, { pass: currentHarmonicPass }));
   return performanceCache.get(key);
+}
+
+/**
+ * Which pass of the harmonic cycle (D-044) an absolute step falls in. A song
+ * restarts the cycle with itself, so its first loop always opens on home.
+ */
+function harmonicPassAt(absoluteStep) {
+  const passes = songPasses(song);
+  const pass = Math.floor(absoluteStep / 12);
+  return ((passes ? pass % passes : pass) % HARMONIC_PASSES + HARMONIC_PASSES) % HARMONIC_PASSES;
+}
+
+/**
+ * Moves the band to `pass` of the harmonic cycle at a loop boundary: a held
+ * key's progression and the band take that pass's chord, and a recorded
+ * leader is followed afresh.
+ */
+function enterHarmonicPass(transport, pass) {
+  if (pass === currentHarmonicPass) return false;
+  currentHarmonicPass = pass;
+  if (transport) transport.followedSlot = "harmonic-pass";
+  if (activeHeldFunKey !== null && activeFunPerformance) {
+    activeFunPerformance = buildPerformance(activeHeldFunKey, funMachineStyle, activeGenre, currentScore ? currentScore.root : 0, { pass });
+    applyEnsembleConductor(activeFunPerformance.steps.map((step) => step.chord));
+  } else {
+    applyEnsembleConductor();
+  }
+  return true;
 }
 
 function announceLooper(message) {
@@ -5924,6 +6002,18 @@ elements.kapellmeisterGenre?.addEventListener("change", (e) => {
   updateChimeGrid();
   updateChantGrid();
   updateFunKeyboardChordLabels();
+  updateArrangementDisplay(currentTransport?.audibleStep ?? null);
+});
+
+// AS WRITTEN (D-043): the genre's own changes, without this creature's moves.
+elements.kapellmeisterAsWritten?.addEventListener("click", () => {
+  genreVaried = !genreVaried;
+  applyEnsembleConductor();
+  updateKapellmeisterUI();
+  updateBassGrid();
+  updateHarmonyGrid();
+  updateChimeGrid();
+  updateChantGrid();
   updateArrangementDisplay(currentTransport?.audibleStep ?? null);
 });
 

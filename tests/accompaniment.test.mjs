@@ -148,3 +148,18 @@ test("the manual climbs like a keyboard: every voice rises with the key, and C' 
     assert.ok(Math.min(...arpeggio) >= 67 + position, `arpeggio of key ${position} starts above its window`);
   }
 });
+
+test("on the harmonic clock a progression holds one chord per pass, with lead notes held four steps (D-044)", () => {
+  const written = buildPerformance(7, "progression", "victorian_tonnetz", 0);
+  for (let pass = 0; pass < 4; pass += 1) {
+    const slow = buildPerformance(7, "progression", "victorian_tonnetz", 0, { pass });
+    assert.equal(slow.regionSteps, 12);
+    for (const step of slow.steps) assert.deepEqual(step.chord, written.chords[pass], `pass ${pass} holds region ${pass}'s chord`);
+    assert.deepEqual(slow.steps.map((step) => step.isRegionStart), [true, ...Array(11).fill(false)], "one pad, on the downbeat");
+    assert.deepEqual(slow.steps.map((step) => step.leadPitch).filter((pitch) => pitch !== null), written.steps.slice(pass * 3, pass * 3 + 3).map((step) => step.leadPitch));
+    assert.deepEqual(slow.steps.map((step, index) => step.leadPitch !== null ? index : null).filter((index) => index !== null), [0, 4, 8]);
+  }
+  assert.equal(written.regionSteps, 3, "without a pass, the old one-loop progression");
+  const swell = buildPerformance(7, "swell", "victorian_tonnetz", 0, { pass: 2 });
+  assert.equal(swell.regionSteps, 3, "a single-chord style keeps its three-step breath");
+});

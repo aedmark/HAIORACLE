@@ -295,6 +295,8 @@
               <span class="beat-telemetry" id="kapellmeister-telemetry">INFORM 7 · SRC/RULEBOOKS.NI</span>
             </div>
             <p class="kapellmeister-motto" id="kapellmeister-genre-motto"></p>
+            <!-- The moves this creature made on the genre's changes (D-043); one fixed line. -->
+            <p class="kapellmeister-variation" id="kapellmeister-variation">VARIATION: AS WRITTEN</p>
           </div>
           <div class="beat-actions kapellmeister-actions">
             <div class="kapellmeister-select-wrap">
@@ -302,6 +304,7 @@
               <!-- Options come from the genres in src/rulebooks.ni once it loads (D-033). -->
               <select id="kapellmeister-genre" class="kapellmeister-select" aria-label="Select Kapellmeister music-theory genre rulebook" aria-describedby="kapellmeister-genre-motto" disabled></select>
             </div>
+            <button class="fun-chip kapellmeister-as-written" id="kapellmeister-as-written" type="button" aria-pressed="false" aria-describedby="kapellmeister-variation" title="Play the genre exactly as its rulebook wrote it, without this creature's variation">AS WRITTEN</button>
           </div>
         </div>
         <div class="kapellmeister-body">
@@ -668,7 +671,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "2f4434b6a7aa";
+      const ASSET_VERSION = "2934c20e4052";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

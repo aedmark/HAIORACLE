@@ -12,6 +12,8 @@
 
 ### Changed
 
+- Hear the harmony keep step with the band: each chord now lasts a whole loop and changes on the loop's downbeat, so a progression unfolds over four loops (the blues moves every half loop) instead of rushing through one loop with changes between beats. The Fun Machine's progressions follow the same clock, and the readout shows which of the four passes is playing. WAV, stem, and MIDI exports cover the whole four-loop cycle.
+- See and switch each creature's variation: the Kapellmeister names the moves it made (VARIATION: …), and AS WRITTEN plays the genre exactly as its rulebook wrote it.
 - Hear each creature play its own changes: every genre except Raw Chaos now lets the creature vary its progression (rotating it, swapping in relative or tritone substitutes, adding secondary dominants, borrowing chords, choosing its cadence, pushing or delaying the changes), within the moves that genre's rulebook permits. Over 80 creatures a genre now plays 20–70 distinct progressions instead of one.
 - Hear a brighter LOLCODE lead: low-pitched creatures now sing an octave or two higher (from C3 up), the lead keeps its saw and square overtones, and the creature filter is brighter and less resonant.
 - Hear each mycelium as its own species: the eight fungus forms now knock, glint, bloop, tick, chirp, ring, breathe, or drip in their own patterns, shaped by the creature's hyphae, spores, and bloom.

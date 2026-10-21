@@ -1110,3 +1110,23 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Hosting note (same session):** the maintainer deploys to Neocities at `https://oopismcgoopis.com/eefm/`. Just after an upload the console showed `looper.mjs` refused as `application/octet-stream`. Probing showed Neocities' edge cache (`x-cached: HIT`) briefly answering with mixed content types for `.mjs` files (`looper.mjs`, then `session.mjs`) and a stale `app.mjs` (18:46 against 22:29). Within minutes every file answered `application/javascript` with the new upload, so it was propagation, not the code; a hard refresh fixes it. The ASSET_VERSION stamps (D-035) keep versions consistent once edges agree, but cannot fix a wrong content type. If it recurs often, renaming modules to `.js` is the fallback. The Permissions-Policy console warnings come from Neocities' own headers. `index.html` and the generated `manual.html` (via `tools/manual.py`) declare an empty icon (`data:,`), so no favicon is requested anywhere: the maintainer wants a clean console, not an icon.
 
 **Next session should start with:** the maintainer's listen (exported songs, corrected low voices), then P4-02 or P6-01.
+
+### Session 46: 2026-10-20: the lead's drone breathes
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** The maintainer heard a lead-plate note on some phrases that "never drops off or changes in intensity".
+
+**Done:** Incidental fix (no roadmap ID).
+
+**Changed:**
+1. Cause: the three tonic drones (`DRONE_INTERVALS`, root −12/−5/+7, in the score's waveform) connect to the lead bus and sounded at a constant pitch and gain for the whole loop. They ignored chords and arrangement rests, so they stood out most on phrases with sparse melodies or when the lead was soloed.
+2. `src/ensemble.mjs`: each drone now passes through its own envelope gain (`droneEnvelopes`, after the interaction gain that `updateAudioInteraction()` still drives). `droneFrequencies(score, chordRoot)` moves the drones to the chord root by the shorter way (at most a tritone), so they never leap.
+3. `src/app.mjs`: `shapeDrones()` runs every three steps (one harmonic region), live and in exports. It glides to the conducted chord root (the tonic under Raw Chaos), swells to `DRONE_SWELL`, settles to `DRONE_SETTLE`, and fades to silence while `arrangementPlays("lead", …)` is false.
+4. Tests: envelope routing and shortest-path chord following; static checks that both schedulers shape the drones.
+
+**Verified:** 127/127 Node checks. An in-browser offline render of the drones alone at 0.25 s per step, as RMS per step ×1000: before the fix it sat at a flat 19; after, it ran 25 18 12 19 21 23 14 8 3 25…, swelling on each chord and falling to 3 over the rest.
+
+**Not verified:** The maintainer's listen on the phrases that showed it.
+
+**Next session should start with:** that listen, then P4-02 or P6-01.

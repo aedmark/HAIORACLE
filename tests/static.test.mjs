@@ -385,10 +385,16 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   // The LOLCODE lead steps back for a held key or a recorded layer that leads (D-029, D-039).
   assert.match(app, /const duck = \(transport === currentTransport && activeHeldFunKey !== null\) \|\| transport\.songLeading \? LEAD_DUCK_GAIN : 1;/);
   // Phase 5: exports render the whole song with the same layer playback and follow rule.
-  assert.match(app, /const passes = Math\.max\(1, songPasses\(song\)\);\n  const stepsCount = 12 \* passes;/);
+  // Without a song an export renders the whole harmonic cycle (D-044).
+  assert.match(app, /const passes = songPasses\(song\) \|\| HARMONIC_PASSES;/);
+  assert.match(app, /const stepsCount = 12 \* passes;/);
+  // The harmony moves on at each loop's downbeat, live and offline (D-044).
+  assert.match(app, /if \(stepIndex === 0\) enterHarmonicPass\(transport, harmonicPassAt\(currentStep\)\);/);
+  assert.match(app, /if \(step % 12 === 0 && harmonicPassAt\(step\) !== currentHarmonicPass\)/);
+  assert.match(app, /harmonicPass: currentHarmonicPass,/);
   assert.match(app, /followSong\(offlineTransport, loop, step % 12, null\);/);
   assert.match(app, /playSongLayers\(offlineCtx, offlineTransport, score, step, loop,/);
-  assert.match(app, /if \(song\.loops\.length\) restoreLiveConducting\(\);/, "the render hands the band back to the live loop");
+  assert.match(app, /currentHarmonicPass = livePass;\n  restoreLiveConducting\(\);/, "the render hands the band back to the live loop");
   // Each recorded layer plays in the voice it was recorded in (D-040).
   assert.match(app, /performanceFor\(slot\), \{\n      \.\.\.timing,\n      patch: voicePatch\(slot\.voice\),/);
   assert.match(app, /makeSlot\(activeHeldFunKey, funMachineStyle, funVoiceId\)/);

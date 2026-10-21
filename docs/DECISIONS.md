@@ -783,6 +783,37 @@ The default rulebook for a fresh creature (THE CREATURE'S OWN or Victorian Tonne
 - New chords take the genre's colour: ninths in genres written in ninths, with dominants gaining a 9th; dominant sevenths in the all-dom7 blues. That keeps voiced organs inside the chord.
 - Parlor Ragtime also permits relative and tritone substitution, since its runs are too short for pace moves.
 
+## D-044 Harmony moves one chord per loop, on the downbeat (2026-10-20, status: accepted)
+
+**Context:** On 2026-10-20 the maintainer said "the chord progressions move too fast in tempo compared to the overall band. We need to make sure the accompaniment is locked in step with the current tempo always." Measured the same day:
+- **No drift.** The live scheduler and the accompanist read the same live tempo every step, so the parts never drift apart in time.
+- **The harmonic rhythm is the problem.** A step is an eighth note, a loop is 12 steps (4–6 beats), and a genre's twelve-entry spine passed in one loop: a new chord every 3 steps.
+  - In beats, chords lasted 1–1.75 beats.
+  - In four of the six rhythms they changed between beats (rhythm 0 at beats 0, 1.5, 3, 4.5; rhythm 2 at 0, 1, 2.25, 3.25).
+  - Because everything scales with tempo, the slider could not fix it.
+
+**Decision (maintainer's choices: one chord per loop; exports cover the whole cycle):**
+1. **A harmonic cycle of four passes.** `HARMONIC_PASSES` is 4. Pass *p* of the loop plays spine entries 3*p*..3*p*+2, four steps each (`passSpine()`):
+   - a region table (a four-chord progression) holds one chord per pass, changing on the loop's downbeat;
+   - a twelve-row table (the blues) moves every four steps;
+   - a variation's secondary dominant or deceptive turn also lands on a four-step boundary.
+
+   `conductEnsemble({ harmonicPass })` conducts one pass; without it, the whole spine plays in one loop, as the golden fixture records.
+2. **The Fun Machine follows the clock.** `buildPerformance(…, { pass })` holds the progression's chord for the whole pass: one pad, and the region's three lead notes at steps 1, 5, and 9, each held four steps. Single-chord styles keep their three-step breath. A held key, a recorded leader, and loop-machine layers all move with the pass.
+3. **Live and offline.** At each loop downbeat the scheduler enters the pass (`enterHarmonicPass()`), and a song restarts the cycle with itself. The readout shows "step / 12 · pass / 4" and the harmony that is sounding, not the one the scheduler has run ahead to. The compass shows the cycle's four regions and lights the current pass.
+4. **Exports render the whole cycle.** WAV, stems, and MIDI cover four loops when there is no song, so the file holds the full progression and still loops seamlessly. A loop-machine song still renders as recorded.
+
+**Alternatives:**
+- Two chords per loop: livelier, but in two rhythms the mid-loop change still falls between beats.
+- Tempo-relative chord lengths in seconds: these would drift against the beat.
+- Fewer chords per loop: this drops the progression's content.
+
+**Consequences:**
+- Every creature's harmony now breathes four times slower and on the beat.
+- Exports are four times longer without a song.
+- Plates show the current pass's conducted parts, and the golden fixture is unchanged.
+- The four-pass cycle is fixed for now. A creature's `harmony_pace` still shapes changes within it.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

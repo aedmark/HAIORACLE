@@ -87,6 +87,39 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 56: 2026-10-20: harmony keeps step with the band (D-044; P5-30 phase 4 begun)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-30 phase 4. Midway, the maintainer reported that the progressions moved too fast for the band and asked that the accompaniment always stay locked to the tempo.
+
+**Done:** Phase 2 was pushed (06a6d02). D-044 is accepted with the maintainer's choices: one chord per loop, and exports covering the whole cycle. In phase 4, the VARIATION readout and the AS WRITTEN switch are done.
+
+**Changed:**
+1. `index.html`, `styles.css`, `src/app.mjs`:
+   - `#kapellmeister-variation` is one fixed line naming the creature's moves.
+   - `#kapellmeister-as-written` (`aria-pressed`) toggles `genreVaried`, which `applyEnsembleConductor()` passes as `varied`. Not yet saved in sessions.
+2. `src/conductor.mjs`: `HARMONIC_PASSES`, `passSpine()`, and `conductEnsemble({ harmonicPass })`, returning `cycleSpine`.
+3. `src/accompaniment.mjs`: `buildPerformance(…, { pass })` builds a progression one chord per pass, with lead notes at steps 0, 4, and 8 (`leadSteps: 4`). Performances carry `regionSteps` (12, or 3 for single-chord styles).
+4. `src/app.mjs`:
+   - `currentHarmonicPass`, `harmonicPassAt()` (a song restarts the cycle), and `enterHarmonicPass()`, called at each loop downbeat, which re-conducts and rebuilds a held key's performance. `performanceFor()` is cached per pass.
+   - Pads and the key-press bridge use `regionSteps`, lead notes hold their steps, and the offline render walks the four passes (`songPasses(song) || HARMONIC_PASSES`) and hands the band back after.
+   - The readout shows `heardHarmony`, the harmony captured when each step was scheduled, because the scheduler re-conducts about 0.28 s ahead and the readout used to show the next chord on step 12. The compass shows `currentCycleSpine` and lights the pass.
+5. Tests: the harmonic clock (variation test), the per-pass performance (accompaniment test), and static checks for the clock and export wiring.
+
+**Verified:**
+- 153/153 Node checks. The golden and variation fixtures are unchanged.
+- No tempo drift: the band and the accompanist read the same live tempo each step.
+- In the browser (Smoky Jazz, "three pigeons", full tempo), the readout's chord changed at "01 / 12 · 2/4", "· 3/4", and "· 4/4", plus two varied turns at step 09, then returned to ii9 at "01 / 12 · 1/4".
+- A held C walked Cmaj9 → Amin9 → Dmin9 → G7alt, one per pass.
+- The MIDI export covered four loops (4 turnaround markers, 284 notes).
+
+**Found, not fixed:** `#fun-machine-telemetry` is styled and written to by `src/app.mjs`, but the element is gone from `index.html`, so Fun Machine telemetry never shows. This predates this session.
+
+**Verified by ear:** the maintainer: "This is getting better and better."
+
+**Next session should start with:** that listen, then the rest of P5-30 phase 4: sessions v6 with AS WRITTEN (older files open as written), varying Fun Machine progressions, and chord names in MIDI markers.
+
 ### Session 55: 2026-10-20: every creature varies its genre (P5-30 phase 2)
 
 **Contributor:** Claude Code with maintainer direction
@@ -370,23 +403,3 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Not verified:** Nothing audible changed, so no listen is needed yet.
 
 **Next session should start with:** P5-28 phase 2, the six other presets: HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, and ÆTHER CHOIR. Some need patch features that are not in the schema yet: tremolo (THEATRE ORGAN), formant bandpasses (ÆTHER CHOIR), and a rolled pad strum (MUSIC BOX). Each preset is tuned by ear with the maintainer.
-
-### Session 46: 2026-10-20: the lead's drone breathes
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** The maintainer heard a lead-plate note on some phrases that "never drops off or changes in intensity".
-
-**Done:** Incidental fix (no roadmap ID).
-
-**Changed:**
-1. Cause: the three tonic drones (`DRONE_INTERVALS`, root −12/−5/+7, in the score's waveform) connect to the lead bus and sounded at a constant pitch and gain for the whole loop. They ignored chords and arrangement rests, so they stood out most on phrases with sparse melodies or when the lead was soloed.
-2. `src/ensemble.mjs`: each drone now passes through its own envelope gain (`droneEnvelopes`, after the interaction gain that `updateAudioInteraction()` still drives). `droneFrequencies(score, chordRoot)` moves the drones to the chord root by the shorter way (at most a tritone), so they never leap.
-3. `src/app.mjs`: `shapeDrones()` runs every three steps (one harmonic region), live and in exports. It glides to the conducted chord root (the tonic under Raw Chaos), swells to `DRONE_SWELL`, settles to `DRONE_SETTLE`, and fades to silence while `arrangementPlays("lead", …)` is false.
-4. Tests: envelope routing and shortest-path chord following; static checks that both schedulers shape the drones.
-
-**Verified:** 127/127 Node checks. An in-browser offline render of the drones alone at 0.25 s per step, as RMS per step ×1000: before the fix it sat at a flat 19; after, it ran 25 18 12 19 21 23 14 8 3 25…, swelling on each chord and falling to 3 over the rest.
-
-**Not verified:** The maintainer's listen on the phrases that showed it.
-
-**Next session should start with:** that listen, then P4-02 or P6-01.

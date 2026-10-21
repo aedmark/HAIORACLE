@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { GENRES } from "./install-rulebooks.mjs";
-import { buildGenreSpine, buildTriad, genreBook } from "../src/conductor.mjs";
+import { HARMONIC_PASSES, buildGenreSpine, buildTriad, genreBook, passSpine } from "../src/conductor.mjs";
 import { composeScore } from "../src/score.mjs";
 import { VARIATION_MOVES, varySpine } from "../src/variation.mjs";
 import { captureVariations, serializeVariations } from "./variation-capture.mjs";
@@ -62,4 +62,18 @@ test("sample creatures' varied progressions match the frozen fixture", async () 
   const frozen = JSON.parse(fixtureText).entries;
   const changed = Object.keys(frozen).filter((key) => now[key] !== frozen[key]);
   assert.fail(`${changed.length} varied progressions changed (first: ${changed[0]}). If deliberate, run node tools/freeze_variations.mjs --rewrite.`);
+});
+
+test("the harmonic clock spreads a spine over four passes, one region each, changing only on four-step boundaries (D-044)", () => {
+  assert.equal(HARMONIC_PASSES, 4);
+  for (const genre of fettered) {
+    const spine = vary(genre, scores[3]).spine;
+    const walked = Array.from({ length: HARMONIC_PASSES }, (_, pass) => passSpine(spine, pass)).flat();
+    assert.equal(walked.length, 48);
+    walked.forEach((chord, step) => assert.equal(chord, spine[Math.floor(step / 4)], `${genre} step ${step}`));
+    walked.forEach((chord, step) => {
+      if (step % 4 !== 0) assert.equal(chord, walked[step - 1], `${genre}: chords change only on a four-step boundary`);
+    });
+  }
+  assert.deepEqual(passSpine(buildGenreSpine("smoky_jazz", scores[0]), 5), passSpine(buildGenreSpine("smoky_jazz", scores[0]), 1), "passes wrap");
 });

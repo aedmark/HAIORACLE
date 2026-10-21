@@ -458,6 +458,19 @@ function projectWithinGenre(rawSemitone, chord, allowPassing, maxGradus, book) {
 
 const UNISON_OVERTONE = Object.freeze({ ratio: "1/1", value: 1 });
 
+// Harmonic rhythm (D-044). A genre's twelve-entry spine used to pass in one
+// 12-step loop, 1-1.75 beats a chord, often changing between beats. Now the
+// harmony moves on a slower clock: each loop pass holds one region (three
+// spine entries, four steps each), so chords change on the loop's downbeat and
+// a four-chord progression spans four passes.
+export const HARMONIC_PASSES = 4;
+
+/** The twelve chords the band plays on pass `pass` (0..3) of the harmonic cycle. */
+export function passSpine(spine, pass) {
+  const p = ((Math.trunc(pass) % HARMONIC_PASSES) + HARMONIC_PASSES) % HARMONIC_PASSES;
+  return Object.freeze(Array.from({ length: 12 }, (_, step) => spine[p * 3 + Math.floor(step / 4)]));
+}
+
 /**
  * A bass walk names intervals above the chord root, written for the common
  * chord: 3 or 4 means "the third", 6 to 8 "the fifth", 9 to 11 "the seventh".
@@ -509,6 +522,7 @@ export function conductEnsemble({
   parsimonyRadius = 2,
   customSpine = null,
   varied = false,
+  harmonicPass = null,
 }) {
   const book = genreBook(genre);
   const activeGenre = book.code;
@@ -527,6 +541,7 @@ export function conductEnsemble({
       genreName: book.title,
       consonanceStrictness,
       variation: Object.freeze([]),
+      cycleSpine: spine,
     });
   }
 
@@ -537,7 +552,10 @@ export function conductEnsemble({
   const variation = varied && !customSpine
     ? varySpine(writtenSpine, score, book.variation, buildTriad)
     : { spine: writtenSpine, moves: Object.freeze([]) };
-  const baseSpine = variation.spine;
+  // With `harmonicPass` the band plays that pass of the harmonic cycle (D-044);
+  // without it, the whole spine in one loop, as the golden fixture records.
+  const cycleSpine = variation.spine;
+  const baseSpine = harmonicPass === null ? cycleSpine : passSpine(cycleSpine, harmonicPass);
   const spine = customSpine
     ? Object.freeze(baseSpine.map((chord, i) => customSpine[i] || chord))
     : baseSpine;
@@ -714,6 +732,7 @@ export function conductEnsemble({
     chimes: conductedChimes,
     chant: conductedChant,
     variation: variation.moves,
+    cycleSpine,
     genre: activeGenre,
     genreName: book.title,
     consonanceStrictness,

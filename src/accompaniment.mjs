@@ -58,7 +58,7 @@ export function soundingPitchClasses(chord) {
  * step has `chord`, `regionIndex`, `isRegionStart`, and `leadPitch` (semitones
  * above C4, already lifted, or null when the style has no lead line).
  */
-export function buildPerformance(keySemitone, style, genre, tonicRoot = 0) {
+export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pass = null } = {}) {
   if (!ACCOMPANIMENT_STYLES.includes(style)) throw new RangeError(`Unknown accompaniment style: ${style}`);
   const position = Math.max(0, Math.min(12, Math.trunc(keySemitone) || 0));
   const key = position % 12;
@@ -77,6 +77,19 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0) {
     chords = [chord, chord, chord, chord];
     summary = `${chordText(chord)} · ${STYLE_LABELS[style]}`;
   }
+  // On the harmonic clock (D-044) a progression holds one chord for the whole
+  // pass: one pad, and the region's three lead notes held four steps each.
+  if (pass !== null && style === "progression") {
+    const regionIndex = ((Math.trunc(pass) % 4) + 4) % 4;
+    const steps = Array.from({ length: 12 }, (_, index) => Object.freeze({
+      chord: chords[regionIndex],
+      regionIndex,
+      isRegionStart: index === 0,
+      leadPitch: index % 4 === 0 ? leadPitches[regionIndex * 3 + index / 4] : null,
+      leadSteps: 4,
+    }));
+    return Object.freeze({ style, key, lift, chords: Object.freeze([...chords]), steps: Object.freeze(steps), summary, regionSteps: 12 });
+  }
   const steps = Array.from({ length: 12 }, (_, index) => {
     const regionIndex = Math.floor(index / 3);
     return Object.freeze({
@@ -84,9 +97,10 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0) {
       regionIndex,
       isRegionStart: index % 3 === 0,
       leadPitch: leadPitches[index],
+      leadSteps: 1,
     });
   });
-  return Object.freeze({ style, key, lift, chords: Object.freeze([...chords]), steps: Object.freeze(steps), summary });
+  return Object.freeze({ style, key, lift, chords: Object.freeze([...chords]), steps: Object.freeze(steps), summary, regionSteps: 3 });
 }
 
 /**
