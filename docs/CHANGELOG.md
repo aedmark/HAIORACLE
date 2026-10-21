@@ -12,6 +12,7 @@
 
 ### Changed
 
+- Hear each creature play its own changes: every genre except Raw Chaos now lets the creature vary its progression (rotating it, swapping in relative or tritone substitutes, adding secondary dominants, borrowing chords, choosing its cadence, pushing or delaying the changes), within the moves that genre's rulebook permits. Over 80 creatures a genre now plays 20–70 distinct progressions instead of one.
 - Hear a brighter LOLCODE lead: low-pitched creatures now sing an octave or two higher (from C3 up), the lead keeps its saw and square overtones, and the creature filter is brighter and less resonant.
 - Hear each mycelium as its own species: the eight fungus forms now knock, glint, bloop, tick, chirp, ring, breathe, or drip in their own patterns, shaped by the creature's hyphae, spores, and bloom.
 - Read each Kapellmeister genre's motto under its title. The genres themselves (menu, chord colours, changes, progressions, bass walks, voicings, overtones) are now written in plain-English Inform 7 in `src/rulebooks.ni`; the music is unchanged.

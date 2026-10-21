@@ -644,6 +644,8 @@ export function compileRulebooks(source) {
       return progressionId(ref, `${where} progression`);
     }));
     const overtones = readOvertones(story, genre, propertyOf(genre, "overtones"));
+    // Optional (D-043): a genre that names no moves plays as written.
+    const variation = story.kinds.get("variation move") ? Object.freeze(propertyOf(genre, "permitted moves").map(code)) : Object.freeze([]);
 
     const book = {
       code: genreCode,
@@ -655,6 +657,7 @@ export function compileRulebooks(source) {
       colouring,
       progressionByInterval,
       overtones,
+      variation,
     };
 
     if (unfettered) {

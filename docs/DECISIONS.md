@@ -778,6 +778,11 @@ Two causes:
 
 The default rulebook for a fresh creature (THE CREATURE'S OWN or Victorian Tonnetz) is decided when phase 3 can be heard.
 
+**As built (phase 2, 2026-10-20):**
+- The "permits" sentences are written as a list property in the existing subset: "The permitted moves of Smoky Parlor Jazz are {rotation, relative substitution, …}." No new grammar was needed.
+- New chords take the genre's colour: ninths in genres written in ninths, with dominants gaining a 9th; dominant sevenths in the all-dom7 blues. That keeps voiced organs inside the chord.
+- Parlor Ragtime also permits relative and tritone substitution, since its runs are too short for pace moves.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

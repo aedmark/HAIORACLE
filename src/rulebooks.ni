@@ -22,6 +22,9 @@ Melody method is a kind of value. The melody methods are Euler sieving, scale sn
 
 Bass method is a kind of value. The bass methods are cell choosing, walking and contrary motion.
 
+[How a creature may vary a genre's changes (D-043). The creature's own harmony fields choose among the moves its genre permits; a genre that permits none always plays as written.]
+Variation move is a kind of value. The variation moves are rotation, relative substitution, tritone substitution, secondary dominants, modal borrowing, deceptive cadence, plagal cadence, phrygian cadence, authentic cadence and harmonic pace.
+
 Chapter 2 - What every genre knows
 
 A genre has some text called the code. A genre has some text called the title. A genre has some text called the motto.
@@ -34,6 +37,7 @@ A genre has a melody method. A genre has a list of chord members called the melo
 A genre has a bass method. A genre has a list of numbers called the bass walk.
 A genre has a list of chord members called the organ voicing.
 A genre has a table name called the overtones.
+A genre has a list of variation moves called the permitted moves.
 
 A chord quality has a table name called the progression.
 
@@ -57,6 +61,7 @@ Victorian Tonnetz is a genre. The code of Victorian Tonnetz is "victorian_tonnet
 The spine method of Victorian Tonnetz is Tonnetz walking. The changes of Victorian Tonnetz are the Table of Tonnetz Walks.
 The melody method of Victorian Tonnetz is Euler sieving. The bass method of Victorian Tonnetz is cell choosing.
 The overtones of Victorian Tonnetz are the Table of Consonant Overtones.
+The permitted moves of Victorian Tonnetz are {relative substitution, modal borrowing, deceptive cadence, plagal cadence, harmonic pace}.
 
 Colouring rule for Victorian Tonnetz when the interval above the tonic is listed in {0, 5, 7}: rule succeeds with result major.
 Colouring rule for Victorian Tonnetz: rule succeeds with result minor.
@@ -84,6 +89,7 @@ The melody method of Delta Blues is scale snapping.
 The bass method of Delta Blues is walking. The bass walk of Delta Blues is {0, 4, 7, 9, 0, 4, 0, 7, 0, 0, 0, 0}.
 The organ voicing of Delta Blues is {third, fifth, seventh}.
 The overtones of Delta Blues are the Table of Blue Overtones.
+The permitted moves of Delta Blues are {tritone substitution, secondary dominants, plagal cadence, harmonic pace}.
 
 Colouring rule for Delta Blues: rule succeeds with result dom7.
 Progression rule for Delta Blues: rule succeeds with result the Table of Blues Riff.
@@ -116,6 +122,7 @@ The melody method of Smoky Parlor Jazz is member snapping. The melody members of
 The bass method of Smoky Parlor Jazz is walking. The bass walk of Smoky Parlor Jazz is {0, 4, 10, 0, 7, 3, 0, 5, 0, 0, 7, 11}.
 The organ voicing of Smoky Parlor Jazz is {third, seventh, ninth}.
 The overtones of Smoky Parlor Jazz are the Table of Jazz Overtones.
+The permitted moves of Smoky Parlor Jazz are {rotation, relative substitution, tritone substitution, secondary dominants, deceptive cadence, harmonic pace}.
 
 Colouring rule for Smoky Parlor Jazz when the interval above the tonic is listed in {0, 5}: rule succeeds with result maj9.
 Colouring rule for Smoky Parlor Jazz when the interval above the tonic is listed in {1, 6, 11}: rule succeeds with result dom7alt.
@@ -136,6 +143,7 @@ Palestrina Counterpoint is a genre. The code of Palestrina Counterpoint is "rena
 The changes of Palestrina Counterpoint are the Table of Palestrina Changes.
 The melody method of Palestrina Counterpoint is Euler sieving. The bass method of Palestrina Counterpoint is contrary motion.
 The overtones of Palestrina Counterpoint are the Table of Pythagorean Overtones.
+The permitted moves of Palestrina Counterpoint are {relative substitution, phrygian cadence, plagal cadence}.
 
 Colouring rule for Palestrina Counterpoint when the interval above the tonic is listed in {0, 2, 5, 7, 9}: rule succeeds with result minor.
 Colouring rule for Palestrina Counterpoint: rule succeeds with result major.
@@ -165,6 +173,7 @@ The melody method of Mystic Drone is chord snapping.
 The bass method of Mystic Drone is walking. The bass walk of Mystic Drone is {0, 0, 0, 7, 0, 0, 0, 7, 0, 0, 0, 7}.
 The organ voicing of Mystic Drone is {root, fifth, octave}.
 The overtones of Mystic Drone are the Table of Drone Overtones.
+The permitted moves of Mystic Drone are {rotation, phrygian cadence, harmonic pace}.
 
 Colouring rule for Mystic Drone when the interval above the tonic is 1: rule succeeds with result phrygian.
 Colouring rule for Mystic Drone when the interval above the tonic is 6: rule succeeds with result lydian.
@@ -189,6 +198,7 @@ The melody method of Parlor Ragtime is member snapping. The melody members of Pa
 The bass method of Parlor Ragtime is walking. The bass walk of Parlor Ragtime is {0, 7, 0, 7, 0, 7, 0, 7, 0, 7, 2, 4}.
 The organ voicing of Parlor Ragtime is {third, fifth, octave}.
 The overtones of Parlor Ragtime are the Table of Ragtime Overtones.
+The permitted moves of Parlor Ragtime are {relative substitution, tritone substitution, secondary dominants, modal borrowing, deceptive cadence, harmonic pace}.
 
 [Tonic and subdominant ring major; the dominant family (II, III, V, VI, and the flat seventh) gets its seventh; the in-between keys are passing diminished chords.]
 Colouring rule for Parlor Ragtime when the interval above the tonic is listed in {0, 5}: rule succeeds with result major.

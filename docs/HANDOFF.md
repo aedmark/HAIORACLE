@@ -87,6 +87,43 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 55: 2026-10-20: every creature varies its genre (P5-30 phase 2)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-30 phase 2: the Inform 7 permitted moves and the conductor's variation moves (D-043).
+
+**Done:** Phase 1 was committed and pushed (ea94bbb). Phase 2 is done.
+
+**Changed:**
+1. `src/rulebooks.ni` adds a kind, "Variation move" (rotation, relative and tritone substitution, secondary dominants, modal borrowing, deceptive, plagal, Phrygian, and authentic cadence, harmonic pace), and a property, "permitted moves". Every fettered genre lists its moves; Raw Chaos lists none.
+2. `src/inform.mjs` compiles the moves into `book.variation`. The property is optional, so the barbershop fixture still compiles.
+3. New `src/variation.mjs`, `varySpine(spine, score, permitted, makeChord)`. It works on runs of one chord and never swaps the home run:
+   - rotation by `harmony_turn`;
+   - swaps on runs flagged in `harmony_swap`;
+   - borrowing by `harmony_borrow` (major homes only);
+   - a cadence on the last run by `harmony_cadence`;
+   - pushed or lingering changes by `harmony_pace`.
+
+   New chords take the genre's colour (ninths in jazz, dom7 in the blues) and labels like "♭II7 (tritone)" or "V7/ii9".
+4. `src/conductor.mjs`: `conductEnsemble({ varied })` varies only when asked, never over a held key, and returns `variation` (the move names). `src/app.mjs` passes `varied: true` and keeps `currentVariation` for the phase 4 readout. The import map gains `variation.mjs`.
+5. Tests:
+   - new `tests/variation.test.mjs`, `tests/variation-capture.mjs`, `tests/fixtures/variations-golden.json`, and `tools/freeze_variations.mjs`;
+   - varied clash ceilings in `tests/clashes.test.mjs` (jazz 10%).
+
+**Verified:**
+- 151/151 Node checks. The golden fixture ("as written") passes unchanged.
+- Distinct progressions over 80 creatures: Victorian 73, Jazz 69, Blues 51, Ragtime 34, Palestrina 30, Drone 21. Before, each genre had 1, and Victorian 16.
+- Varied clash rates: Victorian 5%, Palestrina 5%, Jazz 8%, Drone 0%, Ragtime 0%, Blues 32% (blue notes).
+- Live in Smoky Jazz, the readout's vector over one loop:
+  - "three pigeons": ii9 → ♭II7alt → Imaj9 → V7/vi9 → V7 (deceptive) → vi9 (deceptive)
+  - "the moth reads braille": vi9 → ii9 → V7/♭II7 → ♭II7alt → Imaj9 → V7/vi9
+  - "velvet ossuary hymn": Imaj9 → vi9 → V7/ii9 → ii9 → V7 (tritone)
+
+**Not verified:** The maintainer's listen. The Fun Machine's PROGRESSION style does not vary yet; that comes with phase 4, along with the readout's VARIATION line and the AS WRITTEN switch.
+
+**Next session should start with:** the maintainer's listen, then P5-30 phase 3 (THE CREATURE'S OWN rulebook) or phase 4 (readout, sessions, AS WRITTEN, Fun Machine progressions).
+
 ### Session 54: 2026-10-20: the creature's harmony fields (P5-30 phase 1)
 
 **Contributor:** Claude Code with maintainer direction
@@ -353,30 +390,3 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Not verified:** The maintainer's listen on the phrases that showed it.
 
 **Next session should start with:** that listen, then P4-02 or P6-01.
-
-### Session 45: 2026-10-20: songs export whole (P5-26 complete)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-26 phase 5: WAV, stem, and MIDI exports render the whole song (D-039).
-
-**Done:** P5-26 (all five phases).
-
-**Changed:**
-1. `src/app.mjs`: `playSongLayers()` is factored out of the live scheduler and shared with `renderEnsembleLoop()`. The render covers `max(1, songPasses(song))` passes (at most 32). Each step re-follows the recorded leaders (`followSong()` on the offline transport, updating its conducted melody), schedules the band, and plays every layer; `restoreLiveConducting()` then hands the shared band state back to the live loop. The lead duck applies to any transport whose layer leads. `arrangementMarkers()` labels every pass ("LOOP 2 (1/2) · I · EXPOSITION GROOVE"), and the stem README describes the song's length.
-2. **Bug found while checking the export:** `scheduleBassStep()`, the organ, and the choir clamped pitches into range (`Math.max(28, …)`, 36–84, 40–82). On low-rooted creatures every bass note became E1, and the organ and choir hit their edges: wrong notes, live and exported, since P5-09. The new `foldIntoRange()` in `src/ensemble.mjs` moves notes by octaves instead, keeping the pitch class, and has a unit test. Creatures that hit the clamp now sound different; they are correct now.
-3. Tests: static checks for the song render, offline follow, layer playback, and the conducting hand-back; the fold rule.
-
-**Verified:** 126/126 Node checks. In the browser on "three pigeons" at 208 BPM:
-- With no song, the MIDI was 2,880 ticks with 5 markers and 0 Fun Machine notes. A two-loop song (the second at ×2) exported 8,640 ticks (×3.00) with 71 Fun Machine notes and loop-labelled markers. The WAV was 6.54 s.
-- The live band was unchanged after export.
-- After the fold fix, the exported bass matched the plate ("A♭ A♭ A♭ E E C♯"), and the choir varied ("B E C♯ E") instead of repeating E2. With the song, the bass followed the G take once the key was held ("… G E♭ E♭ C").
-- No console errors.
-
-**Not verified:** Listening to exported songs and to the corrected bass, organ, and choir pitches; DAW import of song-length MIDI.
-
-**Left undone:** The P4-02 screen-reader pass; P6-01.
-
-**Hosting note (same session):** the maintainer deploys to Neocities at `https://oopismcgoopis.com/eefm/`. Just after an upload the console showed `looper.mjs` refused as `application/octet-stream`. Probing showed Neocities' edge cache (`x-cached: HIT`) briefly answering with mixed content types for `.mjs` files (`looper.mjs`, then `session.mjs`) and a stale `app.mjs` (18:46 against 22:29). Within minutes every file answered `application/javascript` with the new upload, so it was propagation, not the code; a hard refresh fixes it. The ASSET_VERSION stamps (D-035) keep versions consistent once edges agree, but cannot fix a wrong content type. If it recurs often, renaming modules to `.js` is the fallback. The Permissions-Policy console warnings come from Neocities' own headers. `index.html` and the generated `manual.html` (via `tools/manual.py`) declare an empty icon (`data:,`), so no favicon is requested anywhere: the maintainer wants a clean console, not an icon.
-
-**Next session should start with:** the maintainer's listen (exported songs, corrected low voices), then P4-02 or P6-01.

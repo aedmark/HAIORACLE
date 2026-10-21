@@ -91,6 +91,7 @@ Never force-push or rewrite shared history.
 | `src/shakespeare.mjs` | Shakespeare Programming Language interpreter and 12-scene formant vowel choir engine |
 | `src/conductor.i` | Canonical INTERCAL 1972 orchestral conductor score |
 | `src/intercal.mjs` | INTERCAL 1972 virtual machine and 12-step dynamic arrangement orchestrator |
+| `src/variation.mjs` | A creature's variation on its genre's changes: rotation, substitutions, borrowing, cadences, pace (D-043) |
 | `src/conductor.mjs` | Euler *Gradus Suavitatis*, Neo-Riemannian *Tonnetz*, and Euclidean rhythm ensemble conductor |
 | `src/rulebooks.ni` | Canonical Inform 7 (subset) Kapellmeister genre rulebooks |
 | `src/inform.mjs` | Inform 7 subset interpreter and rulebook compiler |
@@ -116,6 +117,7 @@ Never force-push or rewrite shared history.
 | `tools/check_docs.py` | Documentation consistency checker |
 | `tools/manual.py` | 3x documentation manual validator and builder |
 | `tools/freeze_rulebooks.mjs` | One-time freezer for the Kapellmeister rulebook golden fixture (P5-23) |
+| `tools/freeze_variations.mjs` | Freezes sample creatures' varied progressions into `tests/fixtures/variations-golden.json` (D-043) |
 | `tools/stamp_assets.mjs` | Restamps `ASSET_VERSION` in `index.html` from a hash of `src/` (D-035) |
 | `tools/serve.py` | Standard-library dev server that sends `Cache-Control: no-cache` (D-035) |
 

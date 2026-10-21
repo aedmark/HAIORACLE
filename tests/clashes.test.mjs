@@ -34,14 +34,18 @@ const CEILINGS = Object.freeze({
   parlor_ragtime: 3,
 });
 
-function clashRate(genre, phrases) {
+// Varied creatures (D-043 phase 2) may reach chords the genre never wrote;
+// jazz then adds idiomatic rubs (a 6th against a minor 7th).
+const VARIED_CEILINGS = Object.freeze({ ...CEILINGS, smoky_jazz: 10 });
+
+function clashRate(genre, phrases, varied = false) {
   let steps = 0;
   let clashing = 0;
   for (const phrase of phrases) {
     const score = composeScore(oracle, phrase);
     const c = conductEnsemble({
       score, melody: melodyFor(score), beat: composeBeat(beat, score, 0), bass: composeBass(bass, score, 0),
-      harmony: composeHarmony(harmony, score, 0), chimes: composeChimes(piet, fractran, score, 0), chant: composeChant(chant, score, 0), genre,
+      harmony: composeHarmony(harmony, score, 0), chimes: composeChimes(piet, fractran, score, 0), chant: composeChant(chant, score, 0), genre, varied,
     });
     c.spine.forEach((chord, s) => {
       const parts = [[pc(c.melody[s])]];
@@ -68,6 +72,14 @@ test("every fettered genre stays under its clash ceiling", () => {
   for (const genre of genreCodes().filter((code) => code !== "raw_chaos")) {
     const rate = clashRate(genre, phrases);
     assert.ok(rate <= CEILINGS[genre], `${genre} clashes on ${rate.toFixed(1)}% of steps (ceiling ${CEILINGS[genre]}%)`);
+  }
+});
+
+test("varied creatures stay under the clash ceilings too", () => {
+  const phrases = Array.from({ length: 60 }, (_, i) => `clash ceiling ${i}`);
+  for (const genre of genreCodes().filter((code) => code !== "raw_chaos")) {
+    const rate = clashRate(genre, phrases, true);
+    assert.ok(rate <= VARIED_CEILINGS[genre], `${genre} varied clashes on ${rate.toFixed(1)}% of steps (ceiling ${VARIED_CEILINGS[genre]}%)`);
   }
 });
 

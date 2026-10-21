@@ -81,6 +81,12 @@ Goal: expand only where additional complexity creates more play.
   - The spell emits `harmony_turn`, `harmony_swap`, `harmony_borrow`, `harmony_cadence`, `harmony_pace`, and `harmony_character` (divisors 353–383).
   - No existing field changed across 500 phrases. Every value of every field is reached, and the fields are pairwise independent over 20,000 seeds (|z| ≤ 2.5).
   - Nothing reads them yet, so nothing sounds different.
+
+  Phase 2 done 2026-10-20:
+  - Genres list their `permitted moves` in Inform 7, and `src/variation.mjs` (`varySpine()`) applies them under `conductEnsemble({ varied: true })`, which the app passes.
+  - Distinct progressions over 80 creatures, from 1 each (Victorian 16): Victorian 73, Jazz 69, Blues 51, Ragtime 34, Palestrina 30, Drone 21.
+  - Varied clash rates: Victorian 5%, Palestrina 5%, Jazz 8%, Drone 0%, Ragtime 0%, Blues 32%.
+  - The golden fixture still guards "as written" unchanged, and `tests/fixtures/variations-golden.json` freezes 24 creatures' varied progressions. In the browser, three creatures in Smoky Jazz played three different changes.
   Acceptance: distinct progressions across phrases in every fettered genre, the clash ceilings hold, as-written output is unchanged, and the maintainer's listen.
 
 ## Phase 6: Release

@@ -2,6 +2,8 @@
 // in Inform 7 and src/inform.mjs compiles them (D-033). The host installs the
 // compiled rulebooks once at load; every genre-dependent choice below reads
 // them by genre code.
+
+import { varySpine } from "./variation.mjs";
 let installedRulebooks = null;
 
 export function installRulebooks(rulebooks) {
@@ -506,6 +508,7 @@ export function conductEnsemble({
   consonanceStrictness = 8,
   parsimonyRadius = 2,
   customSpine = null,
+  varied = false,
 }) {
   const book = genreBook(genre);
   const activeGenre = book.code;
@@ -523,10 +526,18 @@ export function conductEnsemble({
       genre: activeGenre,
       genreName: book.title,
       consonanceStrictness,
+      variation: Object.freeze([]),
     });
   }
 
-  const baseSpine = buildGenreSpine(activeGenre, score, mutation);
+  // `varied` lets the creature vary its genre's changes by the moves the
+  // rulebook permits (D-043); without it the genre plays as written, which is
+  // what the golden fixture guards. A held key's chords are never varied.
+  const writtenSpine = buildGenreSpine(activeGenre, score, mutation);
+  const variation = varied && !customSpine
+    ? varySpine(writtenSpine, score, book.variation, buildTriad)
+    : { spine: writtenSpine, moves: Object.freeze([]) };
+  const baseSpine = variation.spine;
   const spine = customSpine
     ? Object.freeze(baseSpine.map((chord, i) => customSpine[i] || chord))
     : baseSpine;
@@ -702,6 +713,7 @@ export function conductEnsemble({
     harmony: conductedHarmony,
     chimes: conductedChimes,
     chant: conductedChant,
+    variation: variation.moves,
     genre: activeGenre,
     genreName: book.title,
     consonanceStrictness,

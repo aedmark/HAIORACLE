@@ -1083,3 +1083,30 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P5-26 phase 5 (whole-song WAV, stem, and MIDI export, capped at 32 passes); the P4-02 screen-reader pass; P6-01.
 
 **Next session should start with:** P5-26 phase 5.
+
+### Session 45: 2026-10-20: songs export whole (P5-26 complete)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-26 phase 5: WAV, stem, and MIDI exports render the whole song (D-039).
+
+**Done:** P5-26 (all five phases).
+
+**Changed:**
+1. `src/app.mjs`: `playSongLayers()` is factored out of the live scheduler and shared with `renderEnsembleLoop()`. The render covers `max(1, songPasses(song))` passes (at most 32). Each step re-follows the recorded leaders (`followSong()` on the offline transport, updating its conducted melody), schedules the band, and plays every layer; `restoreLiveConducting()` then hands the shared band state back to the live loop. The lead duck applies to any transport whose layer leads. `arrangementMarkers()` labels every pass ("LOOP 2 (1/2) · I · EXPOSITION GROOVE"), and the stem README describes the song's length.
+2. **Bug found while checking the export:** `scheduleBassStep()`, the organ, and the choir clamped pitches into range (`Math.max(28, …)`, 36–84, 40–82). On low-rooted creatures every bass note became E1, and the organ and choir hit their edges: wrong notes, live and exported, since P5-09. The new `foldIntoRange()` in `src/ensemble.mjs` moves notes by octaves instead, keeping the pitch class, and has a unit test. Creatures that hit the clamp now sound different; they are correct now.
+3. Tests: static checks for the song render, offline follow, layer playback, and the conducting hand-back; the fold rule.
+
+**Verified:** 126/126 Node checks. In the browser on "three pigeons" at 208 BPM:
+- With no song, the MIDI was 2,880 ticks with 5 markers and 0 Fun Machine notes. A two-loop song (the second at ×2) exported 8,640 ticks (×3.00) with 71 Fun Machine notes and loop-labelled markers. The WAV was 6.54 s.
+- The live band was unchanged after export.
+- After the fold fix, the exported bass matched the plate ("A♭ A♭ A♭ E E C♯"), and the choir varied ("B E C♯ E") instead of repeating E2. With the song, the bass followed the G take once the key was held ("… G E♭ E♭ C").
+- No console errors.
+
+**Not verified:** Listening to exported songs and to the corrected bass, organ, and choir pitches; DAW import of song-length MIDI.
+
+**Left undone:** The P4-02 screen-reader pass; P6-01.
+
+**Hosting note (same session):** the maintainer deploys to Neocities at `https://oopismcgoopis.com/eefm/`. Just after an upload the console showed `looper.mjs` refused as `application/octet-stream`. Probing showed Neocities' edge cache (`x-cached: HIT`) briefly answering with mixed content types for `.mjs` files (`looper.mjs`, then `session.mjs`) and a stale `app.mjs` (18:46 against 22:29). Within minutes every file answered `application/javascript` with the new upload, so it was propagation, not the code; a hard refresh fixes it. The ASSET_VERSION stamps (D-035) keep versions consistent once edges agree, but cannot fix a wrong content type. If it recurs often, renaming modules to `.js` is the fallback. The Permissions-Policy console warnings come from Neocities' own headers. `index.html` and the generated `manual.html` (via `tools/manual.py`) declare an empty icon (`data:,`), so no favicon is requested anywhere: the maintainer wants a clean console, not an icon.
+
+**Next session should start with:** the maintainer's listen (exported songs, corrected low voices), then P4-02 or P6-01.

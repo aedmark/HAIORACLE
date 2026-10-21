@@ -269,6 +269,8 @@ let fractranSource = "";
 let chantSource = "";
 let conductorSource = "";
 let currentScore = null;
+// The moves this creature made on its genre's changes (D-043), for the readout.
+let currentVariation = Object.freeze([]);
 let currentArrangement = null;
 let currentBeat = null;
 let currentBass = null;
@@ -4042,8 +4044,11 @@ function applyEnsembleConductor() {
     genre: activeGenre,
     consonanceStrictness: activeStrictness,
     customSpine: spineToUse,
+    // Each creature varies its genre by the moves the rulebook permits (D-043).
+    varied: true,
   });
   currentConductedSpine = conducted.spine;
+  currentVariation = conducted.variation;
   currentConductedMelody = conducted.melody;
   if (conducted.bass) currentBass = conducted.bass;
   if (conducted.harmony) currentHarmony = conducted.harmony;
