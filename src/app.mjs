@@ -2960,16 +2960,20 @@ function getFunMachineDirectDestination(context) {
 const funPadHandles = new Set();
 
 // The voice the Fun Machine plays in, chosen with the VOICE chips: the
-// creature's own (from its score) by default, or a preset. Not saved yet, and
-// recorded takes play in it too: sessions v5 and per-slot voices arrive in
-// P5-28 phase 4 (D-040).
+// creature's own (from its score) by default, or a preset. Sessions keep it,
+// and every recorded slot keeps the voice it was played in (D-040).
 let funVoiceId = CREATURE_VOICE_ID;
 let creatureVoiceCache = { seed: null, voice: null };
-function currentFunVoice() {
-  if (funVoiceId !== CREATURE_VOICE_ID) return voiceById(funVoiceId);
+// The patch for a voice id: a preset, or this creature's own voice.
+function voicePatch(id) {
+  if (id !== CREATURE_VOICE_ID) return voiceById(id);
   const score = currentScore || vision.score;
   if (creatureVoiceCache.seed !== score.seed) creatureVoiceCache = { seed: score.seed, voice: creatureVoice(score) };
   return creatureVoiceCache.voice;
+}
+
+function currentFunVoice() {
+  return voicePatch(funVoiceId);
 }
 
 function funVoiceText() {
@@ -3715,6 +3719,7 @@ function playSongLayers(context, transport, score, absoluteStep, loop, timing) {
     transport.layerVoices[layerIndex] ??= { voicing: null, leadMidi: null };
     playPerformanceStep(context, transport, transport.layerVoices[layerIndex], performanceFor(slot), {
       ...timing,
+      patch: voicePatch(slot.voice),
       padDuration: starts ? padStepsDuration(score, absoluteStep, padSteps) : null,
       releasable: false,
     });
@@ -3750,7 +3755,7 @@ function liveVoiceOf(transport) {
 }
 
 function sameSlot(a, b) {
-  return Boolean(a && b && a.key === b.key && a.style === b.style);
+  return Boolean(a && b && a.key === b.key && a.style === b.style && a.voice === b.voice);
 }
 
 function padStepsDuration(score, absoluteStep, steps) {
@@ -3765,7 +3770,7 @@ function padStepsDuration(score, absoluteStep, steps) {
  * the live key and every recorded layer; `voice` keeps that player's pad
  * voicing and lead glide.
  */
-function playPerformanceStep(context, transport, voice, performance, { stepIndex, at, stepDuration, soundingDuration, padDuration = null, releasable = true }) {
+function playPerformanceStep(context, transport, voice, performance, { stepIndex, at, stepDuration, soundingDuration, padDuration = null, releasable = true, patch = currentFunVoice() }) {
   const stepInfo = performance.steps[stepIndex];
   if (padDuration !== null) {
     voice.voicing = padVoicing(stepInfo.chord, voice.voicing, performance.lift);
@@ -3774,6 +3779,7 @@ function playPerformanceStep(context, transport, voice, performance, { stepIndex
       voicing: voice.voicing,
       transport,
       releasable,
+      voice: patch,
     });
   }
   if (performance.style === "arpeggio") {
@@ -3783,6 +3789,7 @@ function playPerformanceStep(context, transport, voice, performance, { stepIndex
         accent: stepInfo.isRegionStart && k === 0,
         pan: k === 0 ? -0.3 : 0.3,
         transport,
+        voice: patch,
       });
     });
   } else if (performance.style === "progression" && stepInfo.leadPitch !== null) {
@@ -3790,6 +3797,7 @@ function playPerformanceStep(context, transport, voice, performance, { stepIndex
     scheduleFunLeadNote(context, transport.funBus, midi, at, Math.max(soundingDuration, stepDuration * 0.92), {
       glideFrom: voice.leadMidi ?? null,
       transport,
+      voice: patch,
     });
     voice.leadMidi = midi;
   }
@@ -3845,7 +3853,7 @@ async function playScore(score, { cursor = 0 } = {}) {
       // the live accompanist, and every recorded layer on this step.
       const stepIndex = currentStep % 12;
       const at = transport.nextNoteTime;
-      const liveSlot = activeHeldFunKey !== null && activeFunPerformance ? makeSlot(activeHeldFunKey, funMachineStyle) : null;
+      const liveSlot = activeHeldFunKey !== null && activeFunPerformance ? makeSlot(activeHeldFunKey, funMachineStyle, funVoiceId) : null;
       const position = songPosition(song, currentStep);
       const loop = position ? song.loops[position.loopIndex] : null;
       transport.songPosition = position;
@@ -5173,6 +5181,7 @@ function captureSession() {
     },
     funMachine: {
       style: funMachineStyle,
+      voice: funVoiceId,
     },
     song,
     plates: Object.fromEntries(PLATE_IDS.map((id) => [id, {
@@ -5197,6 +5206,7 @@ function syncSessionControls() {
   if (elements.acousticsLevelVal) elements.acousticsLevelVal.textContent = `${Math.round(parlorAcousticsLevel * 100)}%`;
   updateAcousticsStatus();
   setFunStyle(funMachineStyle);
+  setFunVoice(funVoiceId);
   if (elements.volume) elements.volume.value = String(Math.round(masterVolume));
 }
 
@@ -5211,6 +5221,7 @@ function applySession(session) {
   activeGenre = session.genre;
   activeStrictness = session.strictness;
   funMachineStyle = session.funMachine.style;
+  funVoiceId = session.funMachine.voice;
   // The loop machine's song travels with the session (v4); older files bring none.
   song = session.song;
   selectedLoop = clampSelection(song, song.loops.length - 1);

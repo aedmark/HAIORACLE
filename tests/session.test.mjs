@@ -44,18 +44,23 @@ function sampleSession(overrides = {}) {
     genre: "smoky_jazz",
     strictness: 10,
     acoustics: { enabled: true, level: 40, crackle: false, reverb: true, ticks: true },
-    funMachine: { style: "arpeggio" },
+    funMachine: { style: "arpeggio", voice: "glass_harmonica" },
     plates,
     mixer: channels,
-    song: { loops: [{ repeats: 2, layers: [[{ key: 7, style: "progression" }, ...Array(11).fill(null)], [null, null, { key: 12, style: "arpeggio" }, ...Array(9).fill(null)]] }] },
+    song: { loops: [{ repeats: 2, layers: [[{ key: 7, style: "progression", voice: "creature" }, ...Array(11).fill(null)], [null, null, { key: 12, style: "arpeggio", voice: "music_box" }, ...Array(9).fill(null)]] }] },
     ...overrides,
   };
 }
 
-// An older-format sample: versions before 4 carry no song.
+// An older-format sample: versions before 5 carry no voices, and versions
+// before 4 no song.
 function olderSession(version, overrides = {}) {
-  const session = sampleSession({ version, ...overrides });
-  delete session.song;
+  const session = sampleSession({ version, funMachine: { style: "arpeggio" }, ...overrides });
+  if (version === 4) {
+    session.song = { loops: session.song.loops.map((loop) => ({ ...loop, layers: loop.layers.map((take) => take.map((slot) => slot && { key: slot.key, style: slot.style })) })) };
+  } else {
+    delete session.song;
+  }
   return session;
 }
 
@@ -77,14 +82,14 @@ test("session validation rejects anything outside the allowlist, naming the fiel
   delete missing.tempo;
   rejectsAt(missing, "session.tempo");
   rejectsAt(sampleSession({ format: "something-else" }), "session.format");
-  rejectsAt(sampleSession({ version: 5 }), "session.version");
+  rejectsAt(sampleSession({ version: 6 }), "session.version");
   rejectsAt(sampleSession({ song: { loops: [{ repeats: 9, layers: [[{ key: 0, style: "swell" }, ...Array(11).fill(null)]] }] } }), "session.song.loops[0].repeats");
-  rejectsAt(sampleSession({ song: { loops: [{ repeats: 1, layers: [[{ key: 0, style: "organ" }, ...Array(11).fill(null)]] }] } }), "session.song.loops[0].layers[0][0].style");
+  rejectsAt(sampleSession({ song: { loops: [{ repeats: 1, layers: [[{ key: 0, style: "organ", voice: "velvet_pad" }, ...Array(11).fill(null)]] }] } }), "session.song.loops[0].layers[0][0].style");
   const noSong = sampleSession();
   delete noSong.song;
   rejectsAt(noSong, "session.song");
-  rejectsAt({ ...sampleSession(), funMachine: { style: "organ" } }, "session.funMachine.style");
-  rejectsAt({ ...sampleSession(), funMachine: { style: "arpeggio", progression: Array(12).fill(null) } }, "session.funMachine.progression");
+  rejectsAt({ ...sampleSession(), funMachine: { style: "organ", voice: "velvet_pad" } }, "session.funMachine.style");
+  rejectsAt({ ...sampleSession(), funMachine: { style: "arpeggio", voice: "velvet_pad", progression: Array(12).fill(null) } }, "session.funMachine.progression");
   rejectsAt(sampleSession({ tempo: 300 }), "session.tempo");
   rejectsAt(sampleSession({ tempo: 96.5 }), "session.tempo");
   rejectsAt(sampleSession({ volume: "70" }), "session.volume");
@@ -163,7 +168,7 @@ test("version 2 files still open: their punched progression is checked, then dro
   const punched = [[7, "minor"], null, null, [0, "maj9"], null, null, null, null, null, null, null, null];
   const opened = validateSession(v2(punched));
   assert.equal(opened.version, SESSION_VERSION);
-  assert.deepEqual(opened.funMachine, { style: "swell" }, "only the style survives");
+  assert.deepEqual(opened.funMachine, { style: "swell", voice: "velvet_pad" }, "only the style survives, in the voice it was made in");
   assert.equal(JSON.parse(serializeSession(opened)).funMachine.progression, undefined, "a re-save writes v3 without it");
   for (const genre of GENRES) {
     for (let root = 0; root < 12; root += 1) {
@@ -218,7 +223,7 @@ test("version 1 sessions upgrade: chord mode becomes a progression, lead solo an
   assert.equal(upgraded.version, SESSION_VERSION);
   assert.equal(upgraded.funMachine.style, "progression");
   assert.equal(validateSession(v1("lead")).funMachine.style, "arpeggio");
-  assert.deepEqual(upgraded.funMachine, { style: "progression" }, "the old progression is dropped");
+  assert.deepEqual(upgraded.funMachine, { style: "progression", voice: "velvet_pad" }, "the old progression is dropped");
   assert.equal(JSON.parse(serializeSession(upgraded)).version, SESSION_VERSION, "an upgraded session saves as the current version");
   const badMode = v1("theremin");
   assert.throws(() => validateSession(badMode), (error) => error.path === "session.funMachine.mode");
@@ -227,8 +232,7 @@ test("version 1 sessions upgrade: chord mode becomes a progression, lead solo an
 });
 
 test("version 3 files open with an empty song, and a v4 song round-trips with its loops and layers (D-039)", () => {
-  const v3 = sampleSession({ version: 3 });
-  delete v3.song;
+  const v3 = olderSession(3);
   const opened = validateSession(v3);
   assert.deepEqual(opened.song, { loops: [] });
   assert.equal(opened.version, SESSION_VERSION);
@@ -236,6 +240,26 @@ test("version 3 files open with an empty song, and a v4 song round-trips with it
   assert.equal(withSong.song.loops[0].repeats, 2);
   assert.deepEqual(withSong.song.loops[0].layers.map((take) => take.filter(Boolean).map((slot) => slot.key)), [[7], [12]]);
   assert.deepEqual(parseSession(serializeSession(withSong)).song, withSong.song);
-  const v3WithSong = { ...sampleSession({ version: 3 }) };
+  const v3WithSong = { ...sampleSession({ version: 3, funMachine: { style: "arpeggio" } }) };
   rejectsAt(v3WithSong, "session.song");
+});
+
+test("v5 keeps the Fun Machine's voice and each slot's; v4 songs open in VELVET PAD (D-040)", () => {
+  const opened = validateSession(sampleSession());
+  assert.equal(opened.funMachine.voice, "glass_harmonica");
+  assert.deepEqual(opened.song.loops[0].layers.map((take) => take.filter(Boolean).map((slot) => slot.voice)), [["creature"], ["music_box"]]);
+  const v4 = validateSession(olderSession(4));
+  assert.equal(v4.funMachine.voice, "velvet_pad");
+  assert.deepEqual(v4.song.loops[0].layers.flat().filter(Boolean).map((slot) => slot.voice), ["velvet_pad", "velvet_pad"]);
+  assert.equal(v4.version, SESSION_VERSION, "an opened v4 file saves back as v5");
+  assert.equal(validateSession(olderSession(2, { funMachine: { style: "swell", progression: Array(12).fill(null) } })).funMachine.voice, "velvet_pad");
+  rejectsAt(sampleSession({ funMachine: { style: "arpeggio", voice: "calliope" } }), "session.funMachine.voice");
+  rejectsAt(sampleSession({ funMachine: { style: "arpeggio" } }), "session.funMachine.voice");
+  const badSlot = sampleSession();
+  badSlot.song.loops[0].layers[0][0] = { key: 7, style: "progression", voice: "kazoo" };
+  rejectsAt(badSlot, "session.song.loops[0].layers[0][0].voice");
+  const v4WithVoice = olderSession(4);
+  v4WithVoice.song.loops[0].layers[0][0] = { key: 7, style: "progression", voice: "music_box" };
+  rejectsAt(v4WithVoice, "session.song.loops[0].layers[0][0].voice");
+  rejectsAt({ ...olderSession(4), funMachine: { style: "arpeggio", voice: "music_box" } }, "session.funMachine.voice");
 });

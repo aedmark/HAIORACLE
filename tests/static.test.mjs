@@ -389,6 +389,9 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   assert.match(app, /followSong\(offlineTransport, loop, step % 12, null\);/);
   assert.match(app, /playSongLayers\(offlineCtx, offlineTransport, score, step, loop,/);
   assert.match(app, /if \(song\.loops\.length\) restoreLiveConducting\(\);/, "the render hands the band back to the live loop");
+  // Each recorded layer plays in the voice it was recorded in (D-040).
+  assert.match(app, /performanceFor\(slot\), \{\n      \.\.\.timing,\n      patch: voicePatch\(slot\.voice\),/);
+  assert.match(app, /makeSlot\(activeHeldFunKey, funMachineStyle, funVoiceId\)/);
   // The drones breathe with the harmony and rest with the lead, live and in exports.
   assert.equal((app.match(/shapeDrones\((?:transport|offlineTransport), score, (?:currentStep|step), (?:at|stepTime)\);/g) || []).length, 2);
   assert.match(app, /const resting = !arrangementPlays\("lead", stepIndex\);/);

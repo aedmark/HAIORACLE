@@ -7,6 +7,7 @@ import {
   MAX_LOOPS,
   MAX_REPEATS,
   MAX_SONG_PASSES,
+  SLOT_VOICES,
   SongError,
   appendLoop,
   canAppendLoop,
@@ -173,12 +174,27 @@ test("saved songs validate strictly and round-trip", () => {
   rejects({ loops: [{ repeats: 1, layers: [Array(11).fill(null)] }] }, "song.loops[0].layers[0]");
   rejects({ loops: [{ repeats: 1, layers: [Array(12).fill(null)] }] }, "song.loops[0].layers[0]");
   const bad = (slot) => ({ loops: [{ repeats: 1, layers: [[slot, ...Array(11).fill(null)]] }] });
-  rejects(bad({ key: 13, style: "swell" }), "song.loops[0].layers[0][0].key");
-  rejects(bad({ key: 2, style: "organ" }), "song.loops[0].layers[0][0].style");
-  rejects(bad({ key: 2, style: "swell", velocity: 9 }), "song.loops[0].layers[0][0].velocity");
+  rejects(bad({ key: 13, style: "swell", voice: "velvet_pad" }), "song.loops[0].layers[0][0].key");
+  rejects(bad({ key: 2, style: "organ", voice: "velvet_pad" }), "song.loops[0].layers[0][0].style");
+  rejects(bad({ key: 2, style: "swell", voice: "kazoo" }), "song.loops[0].layers[0][0].voice");
+  rejects(bad({ key: 2, style: "swell" }), "song.loops[0].layers[0][0].voice");
+  rejects(bad({ key: 2, style: "swell", voice: "velvet_pad", velocity: 9 }), "song.loops[0].layers[0][0].velocity");
   const long = { loops: Array.from({ length: 5 }, () => ({ repeats: 8, layers: plain.loops[0].layers })) };
   rejects(long, "song.loops");
   assert.throws(() => makeSlot(13, "swell"), RangeError);
+  assert.throws(() => makeSlot(2, "swell", "kazoo"), RangeError);
+});
+
+test("every slot keeps the voice it was played in; songs saved before voices play in VELVET PAD", () => {
+  assert.equal(makeSlot(4, "swell").voice, "velvet_pad");
+  assert.equal(makeSlot(4, "swell", "creature").voice, "creature");
+  assert.ok(SLOT_VOICES.includes("creature") && SLOT_VOICES.includes("aether_choir"));
+  const song = appendLoop(emptySong(), Object.freeze([makeSlot(0, "swell", "music_box"), makeSlot(0, "swell", "harmonium"), ...Array(10).fill(null)]));
+  assert.deepEqual(validateSong(JSON.parse(JSON.stringify(song))), song);
+  const legacy = { loops: [{ repeats: 1, layers: [[{ key: 3, style: "arpeggio" }, ...Array(11).fill(null)]] }] };
+  assert.equal(validateSong(legacy, "song", { legacy: true }).loops[0].layers[0][0].voice, "velvet_pad");
+  assert.throws(() => validateSong({ loops: [{ repeats: 1, layers: [[{ key: 3, style: "arpeggio", voice: "harmonium" }, ...Array(11).fill(null)]] }] }, "song", { legacy: true }),
+    (error) => error.path === "song.loops[0].layers[0][0].voice");
 });
 
 test("the selected loop stays valid after edits", () => {

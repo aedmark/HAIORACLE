@@ -11,13 +11,14 @@
 
 import { ACCOMPANIMENT_STYLES } from "./accompaniment.mjs";
 import { genreCodes } from "./conductor.mjs";
-import { SongError, emptySong, validateSong } from "./looper.mjs";
+import { SLOT_VOICES, SongError, emptySong, validateSong } from "./looper.mjs";
+import { DEFAULT_VOICE_ID } from "./voices.mjs";
 import { MIXER_CHANNEL_IDS } from "./mixer.mjs";
 
 export const SESSION_FORMAT = "edmark-fun-session";
 // Version 2 (D-028) replaced the Fun Machine's mode and chord quality with an
 // accompaniment style. Version 1 files still open and are upgraded on read.
-export const SESSION_VERSION = 4;
+export const SESSION_VERSION = 5;
 export const SESSION_FILE_EXTENSION = "fun";
 export const MAX_SESSION_BYTES = 64 * 1024;
 export const MAX_PHRASE_LENGTH = 72;
@@ -95,15 +96,17 @@ function expectPhrase(value, path) {
  */
 export function validateSession(raw) {
   // v4 adds the loop machine's song (D-039); v1–v3 open with an empty song.
+  // v5 adds the Fun Machine's voice and a voice on every recorded slot
+  // (D-040); v1–v4 open in VELVET PAD, the voice they were made in.
   const keys = [
     "format", "version", "phrase", "tempo", "volume", "genre", "strictness",
     "acoustics", "funMachine", "plates", "mixer",
   ];
   // The version decides which keys belong, so an unknown version is named first.
-  if (isPlainObject(raw) && ![1, 2, 3, SESSION_VERSION].includes(raw.version)) {
-    throw new SessionError("session.version", `must be 1, 2, 3, or ${SESSION_VERSION}`);
+  if (isPlainObject(raw) && ![1, 2, 3, 4, SESSION_VERSION].includes(raw.version)) {
+    throw new SessionError("session.version", `must be 1, 2, 3, 4, or ${SESSION_VERSION}`);
   }
-  expectKeys(raw, "session", raw?.version === SESSION_VERSION ? [...keys, "song"] : keys);
+  expectKeys(raw, "session", raw?.version >= 4 ? [...keys, "song"] : keys);
   if (raw.format !== SESSION_FORMAT) throw new SessionError("session.format", `must be "${SESSION_FORMAT}"`);
 
   expectKeys(raw.acoustics, "session.acoustics", ["enabled", "level", "crackle", "reverb", "ticks"]);
@@ -120,7 +123,12 @@ export function validateSession(raw) {
   // progression that v1 and v2 stored is checked, then dropped, because the
   // loop sequencer that played it was removed (D-038).
   let style;
-  if (raw.version >= 3) {
+  let voice = DEFAULT_VOICE_ID;
+  if (raw.version === SESSION_VERSION) {
+    expectKeys(raw.funMachine, "session.funMachine", ["style", "voice"]);
+    style = expectEnum(raw.funMachine.style, "session.funMachine.style", FUN_STYLES);
+    voice = expectEnum(raw.funMachine.voice, "session.funMachine.voice", SLOT_VOICES);
+  } else if (raw.version >= 3) {
     expectKeys(raw.funMachine, "session.funMachine", ["style"]);
     style = expectEnum(raw.funMachine.style, "session.funMachine.style", FUN_STYLES);
   } else {
@@ -145,12 +153,12 @@ export function validateSession(raw) {
       expectEnum(step[1], `${path}[1]`, CHORD_QUALITY_IDS);
     });
   }
-  const funMachine = Object.freeze({ style });
+  const funMachine = Object.freeze({ style, voice });
 
   let song = emptySong();
-  if (raw.version === SESSION_VERSION) {
+  if (raw.version >= 4) {
     try {
-      song = validateSong(raw.song, "session.song");
+      song = validateSong(raw.song, "session.song", { legacy: raw.version === 4 });
     } catch (error) {
       if (error instanceof SongError) throw new SessionError(error.path, error.message.slice(error.path.length + 1));
       throw error;

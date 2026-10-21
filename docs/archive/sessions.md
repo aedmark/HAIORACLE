@@ -998,3 +998,28 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P5-26 loop machine design; P5-27; the P4-02 screen-reader pass; P6-01.
 
 **Next session should start with:** designing the loop machine (P5-26) with the maintainer.
+
+### Session 41: 2026-10-20: Raw Chaos unfettered; the loop machine designed
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Maintainer: "I've never tested raw unfettered chaos so fix away, then let's design the loop machine."
+
+**Done:** P5-27; D-039 (P5-26 design agreed, build pending).
+
+**Changed:**
+1. `src/app.mjs`: `applyEnsembleConductor()` passes no custom spine with no key held, so Raw Esoteric Chaos takes its unfettered path. A static test pins it.
+2. The maintainer's own `index.html` copy edits, kept at their request: plates renumbered I–V, shorter stage labels, the Fun Machine telemetry line removed (every write to it is guarded). Static tests and the manual's plate titles follow the new numbers.
+3. D-039 records the loop-machine design; ROADMAP gives P5-26 five phases with acceptance; CHANGELOG notes the Raw Chaos fix.
+
+**Verified:** 117/117 Node checks; the golden fixture passes, so fettered genres are unchanged. In the browser, Raw Chaos plates show raw VM output (bass "RT RT OCT RT~ REST 4TH+ …" against Tonnetz "A♭ A♭ A♭+ E~ …"). Holding G conducted the band onto G and release returned it to raw, with no console errors.
+
+**Loop machine design (D-039):** a song of up to 16 loops; each loop is one 12-step pass, ×1–×8 repeats, with up to 4 stacked takes of `{ key, style }` per step. Controls are RECORD NEW LOOP (appends at the next boundary) and OVERDUB (adds a layer to the selected loop). The band follows the newest layer holding a key, and a live key overrides. Chords are derived at playback, so songs re-harmonise with the rulebook. The strip sits under the Fun Machine keys; sessions become v4; exports render the whole song, capped at 32 passes.
+
+**Not verified:** Listening to Raw Chaos.
+
+**Phase 1 (same session):** `src/looper.mjs` is the pure model. It covers frozen songs, loops, and takes; append, overdub, undo-layer, delete, move, and repeat edits that return the same song when not allowed; the 16-loop, 4-layer, 1–8-repeat, and 32-pass limits; `songPosition()` through repeats and wrap-around; and `leadSlotAt()` (newest layer, live override). It also has the recorder state machine (arm new or overdub, start on the next boundary or on the target loop's pass, one pass, empty takes reported) and `validateSong()` for sessions v4. `tests/looper.test.mjs` has six tests; making the follow rule pick the oldest layer failed them. 123/123 Node checks. Not wired into the app yet (it is outside the import map until phase 2 imports it).
+
+**Left undone:** P5-26 phases 2–5 (live recording and playback, the strip, sessions v4, song exports); the P4-02 screen-reader pass; P6-01.
+
+**Next session should start with:** P5-26 phase 2, live recording and song playback in the transport.

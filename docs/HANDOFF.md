@@ -87,6 +87,35 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 51: 2026-10-20: voices travel with takes and sessions (P5-28 phase 4)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-28 phase 4: per-slot voices and sessions v5 (D-040).
+
+**Done:** P5-28 phase 3 was committed and pushed (c9580a2). Phase 4 is done.
+
+**Changed:**
+1. `src/looper.mjs`: slots are `{ key, style, voice }`. `SLOT_VOICES` is `creature` plus the seven presets. `makeSlot()` defaults to VELVET PAD, and `validateSong(raw, path, { legacy })` reads v4 slots as VELVET PAD.
+2. `src/session.mjs`: `SESSION_VERSION` is 5. `funMachine` is `{ style, voice }`. A v4 song is read as legacy, and versions 1–4 open with the Fun Machine in VELVET PAD.
+3. `src/app.mjs`:
+   - The live slot records `funVoiceId`. `playSongLayers()` plays each layer with `voicePatch(slot.voice)` through a new `patch` option on `playPerformanceStep()`, and `sameSlot()` compares voices.
+   - Sessions save `funMachine.voice`, and `applySession()` and `syncSessionControls()` restore it.
+4. D-040 item 5 amended: a creature-voice take stores `creature`, which the saved phrase reproduces exactly.
+5. Tests: the slot-voice model, v5 and v4 session paths, and static checks for per-layer playback and recording.
+
+**Verified:**
+- 141/141 Node checks.
+- In the browser on "three pigeons in a borrowed coat":
+  - Recording a loop in MUSIC BOX and then switching to HARMONIUM saved a v5 file with `funMachine.voice` "harmonium" and all twelve slots "5/progression/music_box".
+  - Loading it back with the voice edited to ÆTHER CHOIR pressed that chip.
+  - The same file downgraded to v4 opened with VELVET PAD pressed.
+- No console errors.
+
+**Not verified:** Hearing layers in different voices together. Phase 5 (exports) still renders through the same `playSongLayers()`, so WAV and stems should already carry the slot voices; MIDI program changes are still to do.
+
+**Next session should start with:** P5-28 phase 5: a MIDI program change whenever the Fun Machine track's voice changes, and a check that the exports carry each layer's voice.
+
 ### Session 50: 2026-10-20: the creature's own voice (P5-28 phase 3)
 
 **Contributor:** Claude Code with maintainer direction
@@ -317,28 +346,3 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Left undone:** P5-26 phases 3–5 (loop tiles with select, repeats, move, delete, and undo; sessions v4; song exports); the P4-02 screen-reader pass; P6-01.
 
 **Next session should start with:** P5-26 phase 3, the full strip.
-
-### Session 41: 2026-10-20: Raw Chaos unfettered; the loop machine designed
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Maintainer: "I've never tested raw unfettered chaos so fix away, then let's design the loop machine."
-
-**Done:** P5-27; D-039 (P5-26 design agreed, build pending).
-
-**Changed:**
-1. `src/app.mjs`: `applyEnsembleConductor()` passes no custom spine with no key held, so Raw Esoteric Chaos takes its unfettered path. A static test pins it.
-2. The maintainer's own `index.html` copy edits, kept at their request: plates renumbered I–V, shorter stage labels, the Fun Machine telemetry line removed (every write to it is guarded). Static tests and the manual's plate titles follow the new numbers.
-3. D-039 records the loop-machine design; ROADMAP gives P5-26 five phases with acceptance; CHANGELOG notes the Raw Chaos fix.
-
-**Verified:** 117/117 Node checks; the golden fixture passes, so fettered genres are unchanged. In the browser, Raw Chaos plates show raw VM output (bass "RT RT OCT RT~ REST 4TH+ …" against Tonnetz "A♭ A♭ A♭+ E~ …"). Holding G conducted the band onto G and release returned it to raw, with no console errors.
-
-**Loop machine design (D-039):** a song of up to 16 loops; each loop is one 12-step pass, ×1–×8 repeats, with up to 4 stacked takes of `{ key, style }` per step. Controls are RECORD NEW LOOP (appends at the next boundary) and OVERDUB (adds a layer to the selected loop). The band follows the newest layer holding a key, and a live key overrides. Chords are derived at playback, so songs re-harmonise with the rulebook. The strip sits under the Fun Machine keys; sessions become v4; exports render the whole song, capped at 32 passes.
-
-**Not verified:** Listening to Raw Chaos.
-
-**Phase 1 (same session):** `src/looper.mjs` is the pure model. It covers frozen songs, loops, and takes; append, overdub, undo-layer, delete, move, and repeat edits that return the same song when not allowed; the 16-loop, 4-layer, 1–8-repeat, and 32-pass limits; `songPosition()` through repeats and wrap-around; and `leadSlotAt()` (newest layer, live override). It also has the recorder state machine (arm new or overdub, start on the next boundary or on the target loop's pass, one pass, empty takes reported) and `validateSong()` for sessions v4. `tests/looper.test.mjs` has six tests; making the follow rule pick the oldest layer failed them. 123/123 Node checks. Not wired into the app yet (it is outside the import map until phase 2 imports it).
-
-**Left undone:** P5-26 phases 2–5 (live recording and playback, the strip, sessions v4, song exports); the P4-02 screen-reader pass; P6-01.
-
-**Next session should start with:** P5-26 phase 2, live recording and song playback in the transport.

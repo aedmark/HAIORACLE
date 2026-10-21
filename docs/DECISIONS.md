@@ -629,7 +629,7 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
    The host applies the two tweaks inside the validator's bounds. The selector's default, **THE CREATURE'S OWN**, plays that result, so the same phrase always sounds the same and every phrase is still a known-good family. This keeps the spell causal: the creature's voice originates in the score.
 4. **The selector.** A row of voice chips under the style chips on the Fun Machine: THE CREATURE'S OWN, then the seven presets. They work like the style chips (`aria-pressed`, keyboard reachable, no layout shift). A rulebook-suggested voice (**MATCH THE RULEBOOK**) is deferred to D-041.
-5. **Recorded takes keep their voice.** A loop-machine slot becomes `{ key, style, voice }`, with voice resolved to a preset id when recorded, so stacked layers can be different instruments. Sessions become v5 with `funMachine.voice`. Files from v1–v4 open with VELVET PAD everywhere, so they sound as they did when saved.
+5. **Recorded takes keep their voice.** A loop-machine slot becomes `{ key, style, voice }`, so stacked layers can be different instruments. As built (2026-10-20), a take played in THE CREATURE'S OWN stores `creature` rather than a preset id. The session saves the phrase, so the take replays the tilted, spread voice exactly, which a preset id could not. Sessions become v5 with `funMachine.voice`. Files from v1–v4 open with VELVET PAD everywhere, so they sound as they did when saved.
 6. **Exports.** The MANUAL stem renders each slot's voice, and the MIDI Fun Machine track sends a program change whenever the voice changes.
 
 **Alternatives:**

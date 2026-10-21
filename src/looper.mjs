@@ -6,12 +6,15 @@
 //   song  = { loops: [loop …] }                    at most MAX_LOOPS
 //   loop  = { repeats, layers: [take …] }           repeats 1..MAX_REPEATS, at most MAX_LAYERS
 //   take  = [slot × 12]                             one slot per loop step
-//   slot  = null | { key, style }                   manual position 0..12, accompaniment style
+//   slot  = null | { key, style, voice }            manual position 0..12, accompaniment style, voice (D-040)
 //
 // Steps are the grain because the accompanist already plays on the step grid,
-// so a slot per step replays exactly what was heard.
+// so a slot per step replays exactly what was heard. A slot keeps the voice it
+// was played in, so stacked layers can be different instruments; "creature"
+// is the session phrase's own voice, which the saved phrase reproduces.
 
 import { ACCOMPANIMENT_STYLES } from "./accompaniment.mjs";
+import { CREATURE_VOICE_ID, DEFAULT_VOICE_ID, VOICE_IDS } from "./voices.mjs";
 
 export const LOOP_STEPS = 12;
 export const MAX_LOOPS = 16;
@@ -20,6 +23,7 @@ export const MAX_REPEATS = 8;
 // Exports render the whole song, so its length is bounded (D-039).
 export const MAX_SONG_PASSES = 32;
 const MAX_KEY = 12;
+export const SLOT_VOICES = Object.freeze([CREATURE_VOICE_ID, ...VOICE_IDS]);
 
 const freezeSong = (loops) => Object.freeze({ loops: Object.freeze(loops) });
 const freezeLoop = (repeats, layers) => Object.freeze({ repeats, layers: Object.freeze(layers) });
@@ -32,10 +36,11 @@ export function emptyTake() {
   return Object.freeze(Array(LOOP_STEPS).fill(null));
 }
 
-export function makeSlot(key, style) {
+export function makeSlot(key, style, voice = DEFAULT_VOICE_ID) {
   if (!Number.isInteger(key) || key < 0 || key > MAX_KEY) throw new RangeError(`A slot's key must be 0..${MAX_KEY}`);
   if (!ACCOMPANIMENT_STYLES.includes(style)) throw new RangeError(`Unknown accompaniment style: ${style}`);
-  return Object.freeze({ key, style });
+  if (!SLOT_VOICES.includes(voice)) throw new RangeError(`Unknown voice: ${voice}`);
+  return Object.freeze({ key, style, voice });
 }
 
 export function isEmptyTake(take) {
@@ -229,7 +234,11 @@ function expectExactKeys(value, path, keys) {
   for (const key of wanted) if (!actual.includes(key)) throw new SongError(`${path}.${key}`, "is required");
 }
 
-export function validateSong(raw, path = "song") {
+/**
+ * `legacy` reads songs saved before slots kept a voice (sessions v4): their
+ * slots are `{ key, style }` and play in VELVET PAD, as they did when saved.
+ */
+export function validateSong(raw, path = "song", { legacy = false } = {}) {
   expectExactKeys(raw, path, ["loops"]);
   if (!Array.isArray(raw.loops) || raw.loops.length > MAX_LOOPS) throw new SongError(`${path}.loops`, `must list at most ${MAX_LOOPS} loops`);
   const loops = raw.loops.map((loop, loopIndex) => {
@@ -247,10 +256,12 @@ export function validateSong(raw, path = "song") {
       const slots = take.map((slot, step) => {
         const slotPath = `${takePath}[${step}]`;
         if (slot === null) return null;
-        expectExactKeys(slot, slotPath, ["key", "style"]);
+        expectExactKeys(slot, slotPath, legacy ? ["key", "style"] : ["key", "style", "voice"]);
         if (!Number.isInteger(slot.key) || slot.key < 0 || slot.key > MAX_KEY) throw new SongError(`${slotPath}.key`, `must be an integer 0..${MAX_KEY}`);
         if (!ACCOMPANIMENT_STYLES.includes(slot.style)) throw new SongError(`${slotPath}.style`, `must be one of ${ACCOMPANIMENT_STYLES.join(", ")}`);
-        return Object.freeze({ key: slot.key, style: slot.style });
+        const voice = legacy ? DEFAULT_VOICE_ID : slot.voice;
+        if (!SLOT_VOICES.includes(voice)) throw new SongError(`${slotPath}.voice`, `must be one of ${SLOT_VOICES.join(", ")}`);
+        return Object.freeze({ key: slot.key, style: slot.style, voice });
       });
       if (slots.every((slot) => slot === null)) throw new SongError(takePath, "must hold at least one key");
       return Object.freeze(slots);
