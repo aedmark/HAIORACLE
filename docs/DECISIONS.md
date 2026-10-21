@@ -687,6 +687,8 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Open choices:** which wave-1 genres to keep or swap; whether wave 3 (feel) is wanted at all.
 
+**Related:** D-043 (proposed 2026-10-20) adds a goal to this redesign: every creature varies its genre or writes its own. New genres are then written with the variation moves they permit.
+
 ## D-042 Only the lead wears the creature filter; the lead sings above C3; every fungus has its own voice (2026-10-20, status: accepted)
 
 **Context:** On 2026-10-20 the maintainer reported four problems:
@@ -718,6 +720,63 @@ Exported stems on four phrases showed why:
 - The determinism contract holds, since all of it derives from the score.
 - The creature's colour now lives in the lead alone.
 - This supersedes the routing in D-018 item 2 and D-023's "chimes, choir, and fungal voices pass through" note.
+
+## D-043 Every creature varies its rulebook, or writes its own; nothing clashes with the chord (2026-10-20, status: accepted)
+
+**Context:** On 2026-10-20 the maintainer said they were "tired of hearing the same exact chord progression. They often clash." They asked for a new goal in the D-041 redesign: each creature generates its own rulebook, or its own variation of an existing one. Measured the same day:
+- **Same progressions.** Over 200 phrases, five of the seven genres (Delta Blues, Smoky Jazz, Palestrina, Mystic Drone, Parlor Ragtime) play one identical four-region progression for every creature, transposed to its tonic. Only Victorian Tonnetz varies (16 variants), and Raw Chaos has none by design.
+- **Clashes.** In exported MIDI (4 phrases × 6 genres), parts sounded a semitone apart in 15–68% of samples. Even the triad-only Victorian Tonnetz scored 0.54.
+
+| Genre | Chimes off the chord | Melody off the chord |
+| --- | --- | --- |
+| Victorian Tonnetz | 71% | 43% |
+| Parlor Ragtime | 41% | 16% |
+| Palestrina | 9% | 46% |
+
+The bass, organ, and choir sit on the chord (0–8% off).
+
+Two causes:
+1. **The chimes ignore the chord.** Each chime picks a ratio from the genre's overtone table regardless of chord quality. The table of consonant overtones lists 1/1, 9/8, 6/5, 5/4, 4/3, 3/2, and 5/3, so on a major chord a chime can ring 6/5 (a minor third) or 4/3 (a fourth), each a semitone from the organ's major third.
+2. **The melody keeps "avoid notes".** Euler sieving accepts any low-Gradus interval, including a perfect fourth over a major triad, a semitone above its third. The lead now sings higher (D-042), so this is easier to hear.
+
+**Decision:**
+1. **Phase 0: nothing clashes with the chord.** These are fixes, needed before any variety.
+   - Chimes pick only overtones that are members of the sounding chord, or tensions its quality allows (the 7th of a dom7, the 9th of a maj9 or min9). They fall back to 1/1 when no table entry fits.
+   - The melody keeps an avoid-note rule per chord quality: no pitch a semitone above a chord tone of the sounding chord (the fourth over a major chord, the minor sixth over a minor chord), unless the genre names it as a passing tone on weak steps.
+   - An executable clash check guards both: the semitone-collision measure above, computed in Node from the conducted parts, with a ceiling per genre. Jazz and blues are allowed their 7ths and 9ths.
+2. **The creature's harmony fields.** The spell emits new score fields, drawn with unused divisors so that no existing field changes, as D-040 did:
+   - `harmony_turn` (0..3): which region the progression starts from;
+   - `harmony_swap` (0..15): a mask of which regions may take a substitution;
+   - `harmony_borrow` (0..3): how far to reach outside the key;
+   - `harmony_cadence` (0..3): how the loop turns home;
+   - `harmony_pace` (0..2): one chord per 3, 6, or 12 steps in places.
+3. **Genres declare their variations in Inform 7.** Each genre keeps its changes table as its "as written" form, and gains sentences naming the moves it permits. For example: "Smoky Parlor Jazz permits tritone substitution, relative substitution and secondary dominants." "Palestrina Counterpoint permits relative substitution and a Phrygian cadence."
+   - The moves are a fixed JavaScript menu: rotation, relative substitution (I↔vi, IV↔ii), tritone substitution, a secondary dominant before a target, modal borrowing (iv or ♭VI in major), a deceptive cadence (V→vi), a plagal or Phrygian cadence, and pedal or harmonic-rhythm changes.
+   - The creature's fields choose among the moves its genre permits, deterministically. A genre that permits nothing still plays as written.
+4. **THE CREATURE'S OWN rulebook.** A new entry, first in the RULEBOOK menu. The creature writes its own changes:
+   - Its chords are built from the creature's own scale (`score.scale`, already used by its melody), so the harmony and the melody share their notes and clash less.
+   - A functional grammar written in Inform 7 tables walks tonic, predominant, and dominant regions, steered by the harmony fields.
+   - Bass walk, organ voicing, melody method, and overtones come from a small genre "character" the spell picks (`harmony_character`, 0..N, drawn from the existing genres).
+5. **Determinism and the fixture.** "As written" stays exactly reproducible: the golden fixture keeps guarding the canonical tables with variation off. A second fixture freezes the varied spines for a phrase sample, so an unintended change to a creature's progression is caught.
+6. **Visibility.** The Kapellmeister readout names the variation, for example "VARIATION: TRITONE SUB · ROTATED · DECEPTIVE CADENCE". MIDI markers carry the chord names. Sessions save the rulebook choice, with "creature" valid in place of a genre code. Whether a named genre plays varied or as written is a session setting, defaulting to varied (open choice below).
+
+**Alternatives:**
+- Random chords per phrase: variety, but no genre identity, and more clashes.
+- More genres alone (D-041): more flavours, but each still plays one progression for every creature.
+- Freeing the chimes and melody from the chord: removes clashes by giving up on harmony.
+
+**Consequences:**
+- Most creatures' progressions change, deliberately.
+- The rulebook subset grows a little (a "permits" sentence and the functional-grammar tables).
+- The conductor gains a variation step between the spine and the parts.
+- New D-041 genres are written with their permitted moves from the start.
+
+**Maintainer answers (2026-10-20):** accepted with the recommendations:
+- phase 0 (the clash fixes) ships first, on its own;
+- named genres play varied by default, with an AS WRITTEN switch;
+- the Fun Machine's progressions vary through the same fields.
+
+The default rulebook for a fresh creature (THE CREATURE'S OWN or Victorian Tonnetz) is decided when phase 3 can be heard.
 
 ## Open questions
 
