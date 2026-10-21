@@ -71,6 +71,11 @@ Goal: expand only where additional complexity creates more play.
   (2) Inform 7 "permits" sentences and the conductor's variation moves, with the golden fixture guarding "as written" and a second fixture freezing the varied spines;
   (3) THE CREATURE'S OWN rulebook from the creature's scale and a functional grammar in Inform 7;
   (4) the readout, sessions, MIDI markers, and the AS WRITTEN switch.
+  Phase 0 done 2026-10-20:
+  - Chimes keep to chord tones and genre colours (`chordOvertones()`), and the melody resolves avoid notes (`avoidNoteResolution()`).
+  - Two more causes were found and fixed. Chord members are taken from a chord's own tones, with honest defaults: dom7alt and Lydian had minor thirds, and diminished chords perfect fifths. Walks land on chord members (`walkTone()`).
+  - Clash share of steps, before → after: Victorian 29 → 5%, Palestrina 20 → 5%, Jazz 33 → 3%, Ragtime 6 → 0%, Drone 7 → 0%, Blues 46 → 30% (blue notes).
+  - `tests/clashes.test.mjs` holds per-genre ceilings, and the golden fixture was re-frozen deliberately: spines, colours, and progressions unchanged.
   Acceptance: distinct progressions across phrases in every fettered genre, the clash ceilings hold, as-written output is unchanged, and the maintainer's listen.
 
 ## Phase 6: Release

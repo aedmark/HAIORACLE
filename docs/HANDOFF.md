@@ -87,6 +87,47 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 53: 2026-10-20: the band agrees with its chords (P5-30 phase 0, D-043)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** The maintainer was "tired of hearing the same exact chord progression. They often clash." Specify per-creature rulebooks (D-043), then fix the clashes first.
+
+**Done:**
+- P5-28 phase 5 was pushed (165f705).
+- D-043 was accepted with the recommendations and committed (41620bf, not pushed). The fresh-creature default waits for phase 3.
+- P5-30 phase 0 is done.
+
+**Changed (`src/conductor.mjs`):**
+1. `chordOvertones()`: chimes ring only overtones on the chord, a ninth chord's 9th, or the genre's melody colours (so Ragtime's sixth still rings). The unison is the fallback.
+2. `avoidNoteResolution()`: after any melody method, a pitch a semitone above a chord tone it is not part of resolves down onto that tone.
+3. `buildTriad()` takes third, fifth, seventh, and ninth from the chord's own tones, so the organ and choir voice what the rulebook wrote. The defaults are corrected: dom7alt and Lydian get major thirds, and dim gets ♭5 and 𝄫7. An open fifth lends its suspended tone to the third.
+4. `walkTone()`: walks written to 3/4, 6–8, or 10/11 land on the chord's own third, fifth, or seventh. Other walk tones are passing tones.
+5. Tests:
+   - new `tests/clashes.test.mjs`: per-genre ceilings over 60 phrases, plus unit checks;
+   - `tests/inform.test.mjs` cross-checks updated to the new rules;
+   - the golden fixture re-frozen with `--rewrite`.
+
+**Verified:**
+- 145/145 Node checks.
+- Golden fixture diff: genres, colours, progressions, and spines are unchanged. Chord entries changed only for dom7alt, dim, lydian, phrygian, and modal open, each member now one of the chord's own tones. Projection and ensembles changed as intended (chimes, melody, and the Palestrina bass, which follows the melody).
+- Share of steps with a clash outside the chord, in Node over 80 phrases:
+
+| Genre | Before | After |
+| --- | --- | --- |
+| Victorian Tonnetz | 29% | 5% |
+| Delta Blues | 46% | 30% (blue notes, by design) |
+| Smoky Jazz | 33% | 3% |
+| Palestrina | 20% | 5% |
+| Mystic Drone | 7% | 0% |
+| Parlor Ragtime | 6% | 0% |
+
+- Exported MIDI in the browser (any semitone between parts, chord-internal 7ths included): Victorian 0.54 → 0.12, Ragtime 0.32 → 0.20, Jazz 0.60 → 0.47, Blues 0.68 → 0.47.
+
+**Verified by ear:** the maintainer listened across genres: "it sounds so much richer and coherent!"
+
+**Next session should start with:** P5-30 phase 1 (the spell's `harmony_*` fields).
+
 ### Session 52: 2026-10-20: voices in the exports (P5-28 complete)
 
 **Contributor:** Claude Code with maintainer direction
@@ -327,22 +368,3 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Left undone:** P5-26 phase 5 (whole-song WAV, stem, and MIDI export, capped at 32 passes); the P4-02 screen-reader pass; P6-01.
 
 **Next session should start with:** P5-26 phase 5.
-
-### Session 43: 2026-10-20: the loop strip (P5-26 phase 3)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-26 phase 3: the full loop strip (D-039).
-
-**Changed:**
-1. `index.html` and `styles.css`: `#looper-tiles`, a sideways-scrolling row of fixed height (so adding or playing loops never moves the page). Each tile is one select button (`aria-pressed`, a spoken summary of layers and repeats); the playing tile gets `is-playing`. Below it, `#looper-edit` acts on the selected loop: repeats − / + (with a `×n` readout), ◀ EARLIER, LATER ▶, UNDO LAYER, and DELETE LOOP. Every edit button starts disabled.
-2. `src/app.mjs`: `renderLooperTiles()` rebuilds only when the song or selection changes, so focus survives playback; the playing mark comes from `audiblePosition` at loop boundaries. `renderLooperEdit()` enables only what applies and locks move, undo, and delete while a take is armed or recording. `editSong()` applies an edit, keeps the selection valid (`clampSelection()`), lets the band re-follow, and announces the result or the reason for a refusal (8-repeat cap, 32-pass limit).
-3. `src/looper.mjs`: `clampSelection()`, with a unit test; static checks cover the tiles, edit row, fixed height, and recording lock.
-
-**Verified:** 124/124 Node checks. In the browser, three recordings made three tiles with the newest selected, and the playing mark walked loop 1 → 2. Loop 1 at ×3, moved later, undone (removed, as it had one layer), and a delete each landed with an announcement. Move and delete were disabled while armed; the page height stayed constant throughout; no console errors.
-
-**Not verified:** Listening; keyboard-only and screen-reader use of the strip.
-
-**Left undone:** P5-26 phase 4 (sessions v4) and phase 5 (song exports); the P4-02 screen-reader pass; P6-01.
-
-**Next session should start with:** P5-26 phase 4, saving songs in sessions and presets.

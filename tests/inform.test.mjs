@@ -206,10 +206,21 @@ test("melody methods reproduce the conductor's melody projection", () => {
           const octave = Math.floor(pitch / 12) * 12;
           const pc = ((pitch % 12) + 12) % 12;
           const { melody } = genre;
-          if (melody.method === "scale") assert.equal(actual, octave + snap(pc, melody.tonesByStrictness[strictness].map((t) => (chord.root + t) % 12)));
-          else if (melody.method === "members") assert.equal(actual, octave + snap(pc, [...melody.members.map((m) => chord[m]), ...melody.extensions.map((t) => (chord.root + t) % 12)]));
-          else if (melody.method === "chord") assert.equal(actual, octave + snap(pc, chord.pitchClasses));
+          // Every method then resolves an avoid note (a semitone above a chord
+          // tone it is not part of) down onto that tone (D-043).
+          const resolved = (value) => {
+            const vpc = ((value % 12) + 12) % 12;
+            const below = (vpc + 11) % 12;
+            return !chord.pitchClasses.includes(vpc) && chord.pitchClasses.includes(below) ? value - 1 : value;
+          };
+          if (melody.method === "scale") assert.equal(actual, resolved(octave + snap(pc, melody.tonesByStrictness[strictness].map((t) => (chord.root + t) % 12))));
+          else if (melody.method === "members") assert.equal(actual, resolved(octave + snap(pc, [...melody.members.map((m) => chord[m]), ...melody.extensions.map((t) => (chord.root + t) % 12)])));
+          else if (melody.method === "chord") assert.equal(actual, resolved(octave + snap(pc, chord.pitchClasses)));
           else if (melody.method === "unfettered") assert.equal(actual, pitch);
+          if (melody.method !== "unfettered") {
+            const apc = ((actual % 12) + 12) % 12;
+            assert.ok(chord.pitchClasses.includes(apc) || !chord.pitchClasses.includes((apc + 11) % 12), `${genre.code} sings no avoid note`);
+          }
         }
       }
     }
@@ -232,12 +243,28 @@ test("bass walks, organ voicings, and overtones match the conducted ensemble", (
     for (const genre of books.genres.filter((g) => !g.unfettered)) {
       const conducted = conductEnsemble({ ...parts, genre: genre.code });
       conducted.spine.forEach((chord, step) => {
-        if (genre.bass.method === "walk") assert.equal(conducted.bass.steps[step].interval, (chord.root + genre.bass.walk[step]) % 12, `${genre.code} bass ${step}`);
+        if (genre.bass.method === "walk") {
+          // The walk lands on the chord's own third, fifth, or seventh when its
+          // written interval is not in the chord; passing tones play as written (D-043).
+          const interval = genre.bass.walk[step];
+          const written = (chord.root + interval) % 12;
+          const inChord = chord.pitchClasses.includes(written);
+          const member = interval === 3 || interval === 4 ? chord.third
+            : interval >= 6 && interval <= 8 ? chord.fifth
+            : (interval === 10 || interval === 11) && chord.pitchClasses.includes(chord.seventh) ? chord.seventh
+            : written;
+          assert.equal(conducted.bass.steps[step].interval, inChord ? written : member, `${genre.code} bass ${step}`);
+        }
         if (genre.organ.method === "voiced") {
           assert.deepEqual([...conducted.harmony.steps[step].chord].sort((a, b) => a - b), genre.organ.members.map((m) => chordMember(chord, m)).sort((a, b) => a - b), `${genre.code} organ ${step}`);
         }
+        // Chimes ring only overtones on the chord, a ninth chord's 9th, or the
+        // genre's own colour tones (D-043).
         const raw = parts.chimes.steps[step];
-        const overtone = genre.overtones[(raw.hueIndex + raw.exponents.e2 + raw.exponents.e3 + step) % genre.overtones.length];
+        const allowed = new Set([...chord.pitchClasses.map((pc) => (pc - chord.root + 12) % 12), ...(["maj9", "min9"].includes(chord.quality) ? [2] : []), ...(genre.melody.extensions ?? []).map((t) => t % 12)]);
+        const fits = genre.overtones.filter((o) => allowed.has(((Math.round(12 * Math.log2(o.value)) % 12) + 12) % 12));
+        const pool = fits.length ? fits : [{ ratio: "1/1", value: 1 }];
+        const overtone = pool[(raw.hueIndex + raw.exponents.e2 + raw.exponents.e3 + step) % pool.length];
         assert.equal(conducted.chimes.steps[step].ratioLabel, overtone.ratio, `${genre.code} chime ${step}`);
         assert.equal(conducted.chimes.steps[step].ratioValue, Number((overtone.value * 2 ** (chord.root / 12)).toFixed(4)));
       });

@@ -1047,3 +1047,22 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P5-26 phases 3–5 (loop tiles with select, repeats, move, delete, and undo; sessions v4; song exports); the P4-02 screen-reader pass; P6-01.
 
 **Next session should start with:** P5-26 phase 3, the full strip.
+
+### Session 43: 2026-10-20: the loop strip (P5-26 phase 3)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-26 phase 3: the full loop strip (D-039).
+
+**Changed:**
+1. `index.html` and `styles.css`: `#looper-tiles`, a sideways-scrolling row of fixed height (so adding or playing loops never moves the page). Each tile is one select button (`aria-pressed`, a spoken summary of layers and repeats); the playing tile gets `is-playing`. Below it, `#looper-edit` acts on the selected loop: repeats − / + (with a `×n` readout), ◀ EARLIER, LATER ▶, UNDO LAYER, and DELETE LOOP. Every edit button starts disabled.
+2. `src/app.mjs`: `renderLooperTiles()` rebuilds only when the song or selection changes, so focus survives playback; the playing mark comes from `audiblePosition` at loop boundaries. `renderLooperEdit()` enables only what applies and locks move, undo, and delete while a take is armed or recording. `editSong()` applies an edit, keeps the selection valid (`clampSelection()`), lets the band re-follow, and announces the result or the reason for a refusal (8-repeat cap, 32-pass limit).
+3. `src/looper.mjs`: `clampSelection()`, with a unit test; static checks cover the tiles, edit row, fixed height, and recording lock.
+
+**Verified:** 124/124 Node checks. In the browser, three recordings made three tiles with the newest selected, and the playing mark walked loop 1 → 2. Loop 1 at ×3, moved later, undone (removed, as it had one layer), and a delete each landed with an announcement. Move and delete were disabled while armed; the page height stayed constant throughout; no console errors.
+
+**Not verified:** Listening; keyboard-only and screen-reader use of the strip.
+
+**Left undone:** P5-26 phase 4 (sessions v4) and phase 5 (song exports); the P4-02 screen-reader pass; P6-01.
+
+**Next session should start with:** P5-26 phase 4, saving songs in sessions and presets.

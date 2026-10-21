@@ -24,6 +24,7 @@
 
 ### Fixed
 
+- Hear the band agree with its chords: the chimes no longer ring a minor third over a major chord (or a fourth against its third), the melody no longer sits a semitone above a chord tone, walking basses land on each chord's own fifth and seventh, and altered, diminished, Lydian, Phrygian, and open-fifth chords are voiced with their own notes. Measured clashes fell from 20–33% of steps to 0–5% in every genre except the blues, whose blue notes stay.
 - Hear the Befunge organ and the chimes: the creature filter could silence the organ even while its meter moved, and dulled the chimes and mycelium. Only the LOLCODE lead passes through it now, and the organ and chimes sit level with the band.
 - Stop the lead from droning on one note: the three tonic drones under the lead used to hold one pitch at one level for the whole loop. They now follow each chord's root, swell when it lands and settle back, and fall silent while the arrangement rests the lead.
 - Stop favicon 404s in the console: the app and the manual declare an empty icon, so browsers request none.

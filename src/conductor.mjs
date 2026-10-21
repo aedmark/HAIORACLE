@@ -126,24 +126,32 @@ export function applyTonnetzOperation(triad, op) {
   return buildTriad(nextRoot, nextQuality, op);
 }
 
+// The members a quality implies when a chord names no tones of its own.
+// Altered dominants and Lydian chords have a major third; a diminished chord
+// a flat fifth and a diminished seventh (D-043: these used to default to a
+// minor third and a perfect fifth, which the organ and choir then sang a
+// semitone against the chord's own tones).
+const MAJOR_THIRD_QUALITIES = new Set(["major", "dom7", "maj9", "dom7alt", "lydian"]);
+
 export function buildTriad(root, quality = "minor", op = "I", customPcs = null) {
   const r = ((root % 12) + 12) % 12;
-  let thirdOffset = 3;
-  let seventhOffset = 10;
-  if (quality === "major" || quality === "dom7" || quality === "maj9") {
-    thirdOffset = 4;
-  }
-  if (quality === "major" || quality === "maj9") {
-    seventhOffset = 11;
-  }
-
-  const third = (r + thirdOffset) % 12;
-  const fifth = (r + 7) % 12;
-  const seventh = (r + seventhOffset) % 12;
-  const ninth = (r + 2) % 12;
+  const thirdOffset = MAJOR_THIRD_QUALITIES.has(quality) ? 4 : 3;
+  const fifthOffset = quality === "dim" ? 6 : 7;
+  const seventhOffset = quality === "dim" ? 9 : (quality === "major" || quality === "maj9" ? 11 : 10);
   const pitchClasses = customPcs
     ? Object.freeze([...customPcs].map((pc) => ((pc % 12) + 12) % 12))
-    : Object.freeze([r, third, fifth]);
+    : null;
+  // A chord that names its tones takes its members from them, so the organ
+  // and choir voice the chord the rulebook wrote: the first interval present
+  // from each list, else the quality's default. A chord with no third (an open
+  // fifth) lends its suspended tone to the "third".
+  const intervals = new Set((pitchClasses ?? []).map((pc) => (pc - r + 12) % 12));
+  const member = (choices, fallback) => (r + (choices.find((interval) => intervals.has(interval)) ?? fallback)) % 12;
+  const third = member(thirdOffset === 4 ? [4, 3, 2, 5] : [3, 4, 2, 5], thirdOffset);
+  const fifth = member([fifthOffset, 7, 6, 8], fifthOffset);
+  const seventh = member([seventhOffset, 10, 11, 9], seventhOffset);
+  const ninth = member([2, 1], 2);
+  const tones = pitchClasses ?? Object.freeze([r, third, fifth]);
 
   return Object.freeze({
     root: r,
@@ -155,7 +163,7 @@ export function buildTriad(root, quality = "minor", op = "I", customPcs = null) 
     fifth,
     seventh,
     ninth,
-    pitchClasses,
+    pitchClasses: tones,
   });
 }
 
@@ -374,11 +382,30 @@ const chordMember = (chord, member) => (member === "octave" ? chord.root + 12 : 
  * Projects an arbitrary semitone interval onto the nearest pitch that is consonant
  * (low Euler Gradus Suavitatis) with the active Tonnetz or genre chord.
  */
+/**
+ * Avoid notes (D-043): a pitch class that is not in the chord but sits a
+ * semitone above one of its tones, such as the fourth over a major triad or
+ * the minor sixth over a minor one, rubs against the organ holding that tone.
+ * Returns the chord tone to resolve down to, or null when `pc` is safe.
+ */
+export function avoidNoteResolution(pc, chord) {
+  if (!chord || chord.quality === "raw" || chord.pitchClasses.includes(pc)) return null;
+  const below = (pc + 11) % 12;
+  return chord.pitchClasses.includes(below) ? below : null;
+}
+
 export function projectConsonantPitch(rawSemitone, chord, allowPassing = false, maxGradus = 8, genre = null) {
   const book = genreBook(genre);
   if (book.unfettered || !chord || chord.quality === "raw") {
     return rawSemitone;
   }
+  const projected = projectWithinGenre(rawSemitone, chord, allowPassing, maxGradus, book);
+  const octave = Math.floor(projected / 12) * 12;
+  const resolution = avoidNoteResolution(((projected % 12) + 12) % 12, chord);
+  return resolution === null ? projected : octave + resolution + (resolution > ((projected % 12) + 12) % 12 ? -12 : 0);
+}
+
+function projectWithinGenre(rawSemitone, chord, allowPassing, maxGradus, book) {
 
   const octave = Math.floor(rawSemitone / 12) * 12;
   const pc = ((Math.trunc(rawSemitone) % 12) + 12) % 12;
@@ -425,6 +452,41 @@ export function projectConsonantPitch(rawSemitone, chord, allowPassing = false, 
     }
   }
   return octave + bestPc;
+}
+
+const UNISON_OVERTONE = Object.freeze({ ratio: "1/1", value: 1 });
+
+/**
+ * A bass walk names intervals above the chord root, written for the common
+ * chord: 3 or 4 means "the third", 6 to 8 "the fifth", 9 to 11 "the seventh".
+ * Those land on the chord's own member, so a walk to the fifth plays a flat
+ * fifth under a diminished chord, and to the seventh a major seventh under a
+ * maj9, instead of a semitone against the organ (D-043). Other intervals are
+ * passing tones and play as written. 9 stays a sixth unless the chord holds a
+ * seventh to land on.
+ */
+export function walkTone(chord, interval) {
+  const written = (chord.root + interval) % 12;
+  const has = (pc) => chord.pitchClasses.includes(pc);
+  if (interval === 3 || interval === 4) return has(written) ? written : chord.third;
+  if (interval >= 6 && interval <= 8) return has(written) ? written : chord.fifth;
+  if (interval === 10 || interval === 11) return has(written) ? written : (has(chord.seventh) ? chord.seventh : written);
+  return written;
+}
+
+/**
+ * The overtones of a genre's table that sound a member of `chord` above its
+ * root (rounded to the nearest semitone), the 9th of a ninth chord, or a
+ * colour tone the genre names for its melody (Parlor Ragtime's sixth). Falls
+ * back to the unison when none fit; unfettered chords keep the whole table.
+ */
+export function chordOvertones(ratios, chord, colours = []) {
+  if (!chord || chord.quality === "raw") return ratios;
+  const allowed = new Set(chord.pitchClasses.map((pc) => (((pc - chord.root) % 12) + 12) % 12));
+  if (chord.quality === "maj9" || chord.quality === "min9") allowed.add(2);
+  for (const tone of colours) allowed.add(((tone % 12) + 12) % 12);
+  const fitting = ratios.filter((overtone) => allowed.has(((Math.round(12 * Math.log2(overtone.value)) % 12) + 12) % 12));
+  return fitting.length ? fitting : [UNISON_OVERTONE];
 }
 
 /**
@@ -494,7 +556,7 @@ export function conductEnsemble({
 
           if (book.bass.method === "walk") {
             // The genre's bass walk: one interval above the chord root per step.
-            harmonizedInterval = (chord.root + book.bass.walk[stepIndex % book.bass.walk.length]) % 12;
+            harmonizedInterval = walkTone(chord, book.bass.walk[stepIndex % book.bass.walk.length]);
           } else if (book.bass.method === "contrary") {
             // Modal cantus firmus contrary motion to melody
             const mel = conductedMelody[stepIndex] % 12;
@@ -583,7 +645,11 @@ export function conductEnsemble({
           const chord = spine[stepIndex];
           const ratios = book.overtones;
 
-          const chosen = ratios[(step.hueIndex + step.exponents.e2 + step.exponents.e3 + stepIndex) % ratios.length];
+          // Only overtones that land on the chord (or a tension its quality
+          // carries, such as a 9th) may ring; the table's other ratios used to
+          // ring against the organ, 71% off the chord in places (D-043).
+          const fitting = chordOvertones(ratios, chord, book.melody.extensions ?? []);
+          const chosen = fitting[(step.hueIndex + step.exponents.e2 + step.exponents.e3 + stepIndex) % fitting.length];
           const chordRootFactor = Math.pow(2, chord.root / 12);
           const hocketGate = step.gate > 0 && (chimeHocketMask[stepIndex] === 1 || leadMask[stepIndex] === 0 || stepIndex % 3 === 0)
             ? step.gate
