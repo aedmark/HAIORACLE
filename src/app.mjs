@@ -4022,14 +4022,29 @@ function buildGenreMenu() {
   own.value = CREATURE_GENRE;
   own.textContent = "THE CREATURE'S OWN";
   own.title = "A rulebook this creature writes from its own scale";
-  menu.replaceChildren(own, ...genreCodes().map((code) => {
+  // Genres group into their rulebook families (D-041), in source order of
+  // each family's first genre; a genre with no family stands on its own.
+  const groups = new Map();
+  const entries = [own];
+  for (const code of genreCodes()) {
     const book = genreBook(code);
     const option = document.createElement("option");
     option.value = code;
     option.textContent = book.title;
     option.title = book.motto;
-    return option;
-  }));
+    if (!book.family) {
+      entries.push(option);
+      continue;
+    }
+    if (!groups.has(book.family)) {
+      const group = document.createElement("optgroup");
+      group.label = book.family;
+      groups.set(book.family, group);
+      entries.push(group);
+    }
+    groups.get(book.family).append(option);
+  }
+  menu.replaceChildren(...entries);
   menu.value = activeGenre;
   menu.disabled = false;
 }

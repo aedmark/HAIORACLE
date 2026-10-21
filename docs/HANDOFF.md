@@ -4,22 +4,23 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-21, session 58, on `main`._
+_Last updated: 2026-10-21, session 59, on `main`._
 
 - P5-28 is complete: Fun Machine voices, each creature's own by default (D-040).
 - D-042 freed the organ, chimes, and mycelium from the creature filter.
 - P5-30 is complete (D-043): clashes cut, every creature varying its genre's changes, the VARIATION readout, AS WRITTEN, sessions v6, and THE CREATURE'S OWN rulebook.
 - D-044 moves harmony one chord per loop, on the downbeat.
 - A fresh creature opens in THE CREATURE'S OWN (maintainer's choice, 2026-10-21).
-- Next: D-041 wave 1 (P5-29; the RULEBOOK menu has THE CREATURE'S OWN plus the seven genres, and no new genres yet) or P4-02.
+- P5-29 wave 1 is done and approved by ear: six new Inform 7 genres and menu families, 13 genres in all.
+- Next: D-041 wave 2 (six chord qualities, then six genres).
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 wave 1, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-20, session 45, local Linux environment)
+**Verified** (2026-10-21, session 59, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **126/126 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **160/160 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -93,6 +94,46 @@ _Last updated: 2026-10-21, session 58, on `main`._
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 59: 2026-10-21: six new genres, all in Inform 7 (P5-29 wave 1)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Restore the Fun Machine's status line, then P5-29 wave 1 (D-041): six genres with no new chord qualities, plus menu families.
+
+**Done:**
+- The status line was pushed (f53b4d9).
+- D-041 is accepted for wave 1. Wave 1 is done.
+
+**Changed:**
+1. `src/rulebooks.ni` adds Chapters 7–12 (Raw Chaos moves to 13), each with changes, a Fun Machine progression, melody, bass walk, overtones, and permitted moves:
+   - Doo-Wop Parlor Ballad: I-vi-IV-V7.
+   - Sacred Harp: open i5 and ♭VII5, then ♭III and v.
+   - Andalusian Flamenco: i-♭VII-♭VI-V Phrygian ♭9.
+   - Klezmer Freygish: a Phrygian-dominant I, iv, ♭vii, ♭II, with melody tone rules admitting ♭2 and ♭6 when loose.
+   - Sea Shanty & Hornpipe: I-IV-I-V.
+   - Silent-Film Lydian: Imaj9-II-vii-I Lydian.
+
+   Six new Fun Machine progression tables, plus a `family` property for every genre.
+2. `src/inform.mjs` reads `family` (optional). `src/app.mjs` `buildGenreMenu()` groups options into optgroups by family, in source order, with THE CREATURE'S OWN first.
+3. Tests:
+   - genre order, insistence, and families (inform);
+   - the octave member in the melody cross-check reference;
+   - 13 genres (oracle);
+   - clash ceilings and variety floors for the new genres;
+   - the static menu check.
+
+   Golden and variation fixtures re-frozen with additions only.
+
+**Verified:**
+- 160/160 Node checks.
+- Golden fixture: 677 existing entries identical once interned indices are resolved (Raw Chaos's chord moved from index 176 to 193), and 544 added; it is now 1.29 MB. Variation fixture: 144 unchanged, 144 added.
+- New genres clash on 0–6% of steps as written and at most 8% varied, with 15–42 distinct varied progressions over 80 creatures.
+- In the browser, the menu shows five families, and all six new genres played with titles and VARIATION lines. The keyboard and Kapellmeister body never moved.
+
+**Verified by ear:** The maintainer listened across the new genres and approved ("in love").
+
+**Next session should start with:** D-041 wave 2 (six chord qualities, then six genres) or P4-02.
 
 ### Session 58: 2026-10-21: every creature writes its own rulebook (P5-30 complete)
 
@@ -387,41 +428,3 @@ _Last updated: 2026-10-21, session 58, on `main`._
 **Not verified:** How the tilted and spread extremes sound (DARKEST, BRIGHTEST, NARROWEST, WIDEST).
 
 **Next session should start with:** P5-28 phase 4: per-slot voices in the loop machine, and sessions v5 with `funMachine.voice`. Files from v1–v4 open with VELVET PAD.
-
-### Session 49: 2026-10-20: the lead, organ, chimes, and mycelium come out from under the filter
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** The maintainer reported:
-- the LOLCODE lead and mycelium always sounded muffled;
-- the mycelium sounded alike across phrases;
-- the Befunge organ was inaudible although its meter moved;
-- the chimes were far too quiet.
-
-**Done:** D-042 (incidental fixes; no roadmap ID).
-
-**Changed:**
-1. `src/ensemble.mjs`:
-   - Only the lead passes through the creature filter. Organ, chimes, and mycelium go straight to the compressor and delay.
-   - `creatureFilter()` (about 2.0–5.2 kHz, Q 0.9–3.4) is shared with the live sweep in `updateAudioInteraction()`.
-   - Lowpass creatures get a 0.3 dry lead tap.
-   - `leadOctaveShift()` and `LEAD_FLOOR` (48).
-   - Voicing trims: organ +4 dB, chimes +6 dB, mycelium +4 dB.
-2. `src/app.mjs`:
-   - The lead is raised by `leadOctaveShift()` (MIDI exports included). Its primary voice uses the creature's waveform, sawtooth included, and its stacks mix in saw and square.
-   - `scheduleFungalBioStep()` plays `myceliumEvents()`.
-3. New `src/mycelium.mjs`: eight per-form sounds (spikes, drops, puffs, patterns), shaped by hyphae, spores, and bloom. It joins the import map. Tests: `tests/mycelium.test.mjs` and updated routing tests.
-
-**Verified:** 138/138 Node checks. Exported stems in the browser, measured by octave bands:
-- **Organ:** −60 → −31 dB on a bandpass creature, and about −38 → −33 dB on lowpass ones.
-- **Chimes:** −52 → −26 dB and −33 → −25 dB.
-- **Bass:** unchanged at about −35 dB.
-- **Lead:** centroid up 30–130%, its share of 1–8 kHz up 2–6 dB, and about 1–2 dB louder.
-- **Mycelium:** the spread between phrases rose from 1.6 to 6.9 dB, with centroids from 384 Hz (CUP PEZIZA) to 3.4 kHz (BIOLUMINESCENT BONNET).
-- **Live:** playback ran with no console errors.
-
-**Not verified:** The maintainer's listen, especially organ and chime balance against the lead, and whether any fungus form grates.
-
-**Verified by ear:** the maintainer: "Much better." P5-28 phase 2 and D-042 were committed separately.
-
-**Next session should start with:** P5-28 phase 3.

@@ -251,7 +251,7 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.doesNotMatch(html, /<option value="(victorian_tonnetz|smoky_jazz|raw_chaos)"/, "no genre is hard-coded in index.html");
   assert.match(html, /<select id="kapellmeister-genre"[^>]*aria-describedby="kapellmeister-genre-motto"[^>]*disabled><\/select>/);
   assert.match(html, /<p class="kapellmeister-motto" id="kapellmeister-genre-motto"><\/p>/);
-  assert.match(app, /function buildGenreMenu\(\) \{[\s\S]*?genreCodes\(\)\.map[\s\S]*?option\.title = book\.motto;/);
+  assert.match(app, /function buildGenreMenu\(\) \{[\s\S]*?for \(const code of genreCodes\(\)\)[\s\S]*?option\.title = book\.motto;[\s\S]*?group\.label = book\.family;/);
   assert.ok(app.indexOf("buildGenreMenu();", install) > install, "the menu is built after the rulebooks install");
   // Changing text never reflows the Perform wing (fixed line boxes, minmax columns).
   assert.match(styles, /\.kapellmeister-motto \{[^}]*height: 4\.2em;[^}]*-webkit-line-clamp: 3;/);

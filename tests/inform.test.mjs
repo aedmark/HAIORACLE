@@ -152,9 +152,16 @@ const snap = (pc, candidates) => {
 
 test("genre codes, flags, and menu order are as the rulebooks state", () => {
   assert.deepEqual(books.genres.map((genre) => genre.code), GENRES);
-  assert.deepEqual(GENRES, ["victorian_tonnetz", "blues_twelve_bar", "smoky_jazz", "renaissance_counterpoint", "modal_drone", "parlor_ragtime", "raw_chaos"]);
+  assert.deepEqual(GENRES, [
+    "victorian_tonnetz", "blues_twelve_bar", "smoky_jazz", "renaissance_counterpoint", "modal_drone", "parlor_ragtime",
+    // D-041 wave 1, written only in Inform 7.
+    "doowop_ballad", "sacred_harp", "andalusian_flamenco", "klezmer_freygish", "sea_shanty", "silent_film_lydian",
+    "raw_chaos",
+  ]);
   assert.deepEqual(books.genres.filter((g) => g.unfettered).map((g) => g.code), ["raw_chaos"]);
-  assert.deepEqual(books.genres.filter((g) => g.insistent).map((g) => g.code), ["blues_twelve_bar", "smoky_jazz", "modal_drone", "parlor_ragtime"]);
+  assert.deepEqual(books.genres.filter((g) => g.insistent).map((g) => g.code), ["blues_twelve_bar", "smoky_jazz", "modal_drone", "parlor_ragtime", "sacred_harp", "andalusian_flamenco", "klezmer_freygish", "sea_shanty"]);
+  // Every genre names a menu family (D-041).
+  assert.deepEqual([...new Set(books.genres.map((g) => g.family))], ["PARLOR", "NIGHT CLUB", "SACRED & EARLY", "ESOTERIC", "FOLK & DANCE"]);
 });
 
 test("colouring and progression rules match the Fun Machine's chord colours and progressions", () => {
@@ -214,7 +221,7 @@ test("melody methods reproduce the conductor's melody projection", () => {
             return !chord.pitchClasses.includes(vpc) && chord.pitchClasses.includes(below) ? value - 1 : value;
           };
           if (melody.method === "scale") assert.equal(actual, resolved(octave + snap(pc, melody.tonesByStrictness[strictness].map((t) => (chord.root + t) % 12))));
-          else if (melody.method === "members") assert.equal(actual, resolved(octave + snap(pc, [...melody.members.map((m) => chord[m]), ...melody.extensions.map((t) => (chord.root + t) % 12)])));
+          else if (melody.method === "members") assert.equal(actual, resolved(octave + snap(pc, [...melody.members.map((m) => (m === "octave" ? chord.root + 12 : chord[m])), ...melody.extensions.map((t) => (chord.root + t) % 12)])));
           else if (melody.method === "chord") assert.equal(actual, resolved(octave + snap(pc, chord.pitchClasses)));
           else if (melody.method === "unfettered") assert.equal(actual, pitch);
           if (melody.method !== "unfettered") {

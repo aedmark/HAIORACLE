@@ -24,7 +24,10 @@ test("every genre's permitted moves come from the rulebook and name real moves",
 });
 
 test("creatures no longer share one progression: every fettered genre varies widely", () => {
-  const floors = { victorian_tonnetz: 50, blues_twelve_bar: 30, smoky_jazz: 50, renaissance_counterpoint: 20, modal_drone: 15, parlor_ragtime: 20 };
+  const floors = {
+    victorian_tonnetz: 50, blues_twelve_bar: 30, smoky_jazz: 50, renaissance_counterpoint: 20, modal_drone: 15, parlor_ragtime: 20,
+    doowop_ballad: 15, sacred_harp: 10, andalusian_flamenco: 15, klezmer_freygish: 12, sea_shanty: 15, silent_film_lydian: 30,
+  };
   for (const genre of fettered) {
     const distinct = new Set(scores.map((score) => vary(genre, score).spine.map((c) => `${c.root}${c.quality}`).join(" ")));
     assert.ok(distinct.size >= floors[genre], `${genre}: ${distinct.size} distinct progressions over 80 creatures`);

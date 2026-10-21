@@ -1191,3 +1191,41 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Not verified:** How they sound. These are first-pass numbers for the maintainer to tune by ear.
 
 **Next session should start with:** the maintainer's listen and tuning notes, then phase 3 (the creature's own voice from the spell).
+
+### Session 49: 2026-10-20: the lead, organ, chimes, and mycelium come out from under the filter
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** The maintainer reported:
+- the LOLCODE lead and mycelium always sounded muffled;
+- the mycelium sounded alike across phrases;
+- the Befunge organ was inaudible although its meter moved;
+- the chimes were far too quiet.
+
+**Done:** D-042 (incidental fixes; no roadmap ID).
+
+**Changed:**
+1. `src/ensemble.mjs`:
+   - Only the lead passes through the creature filter. Organ, chimes, and mycelium go straight to the compressor and delay.
+   - `creatureFilter()` (about 2.0–5.2 kHz, Q 0.9–3.4) is shared with the live sweep in `updateAudioInteraction()`.
+   - Lowpass creatures get a 0.3 dry lead tap.
+   - `leadOctaveShift()` and `LEAD_FLOOR` (48).
+   - Voicing trims: organ +4 dB, chimes +6 dB, mycelium +4 dB.
+2. `src/app.mjs`:
+   - The lead is raised by `leadOctaveShift()` (MIDI exports included). Its primary voice uses the creature's waveform, sawtooth included, and its stacks mix in saw and square.
+   - `scheduleFungalBioStep()` plays `myceliumEvents()`.
+3. New `src/mycelium.mjs`: eight per-form sounds (spikes, drops, puffs, patterns), shaped by hyphae, spores, and bloom. It joins the import map. Tests: `tests/mycelium.test.mjs` and updated routing tests.
+
+**Verified:** 138/138 Node checks. Exported stems in the browser, measured by octave bands:
+- **Organ:** −60 → −31 dB on a bandpass creature, and about −38 → −33 dB on lowpass ones.
+- **Chimes:** −52 → −26 dB and −33 → −25 dB.
+- **Bass:** unchanged at about −35 dB.
+- **Lead:** centroid up 30–130%, its share of 1–8 kHz up 2–6 dB, and about 1–2 dB louder.
+- **Mycelium:** the spread between phrases rose from 1.6 to 6.9 dB, with centroids from 384 Hz (CUP PEZIZA) to 3.4 kHz (BIOLUMINESCENT BONNET).
+- **Live:** playback ran with no console errors.
+
+**Not verified:** The maintainer's listen, especially organ and chime balance against the lead, and whether any fungus form grates.
+
+**Verified by ear:** the maintainer: "Much better." P5-28 phase 2 and D-042 were committed separately.
+
+**Next session should start with:** P5-28 phase 3.

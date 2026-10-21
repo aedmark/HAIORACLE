@@ -4,6 +4,7 @@
 
 ### Added
 
+- Choose among six more rulebooks: DOO-WOP PARLOR BALLAD, SACRED HARP SHAPE-NOTE HYMNODY, ANDALUSIAN FLAMENCO CADENCE, KLEZMER FREYGISH DANCE, SEA SHANTY & HORNPIPE, and SILENT-FILM LYDIAN DREAM, all written in Inform 7. The RULEBOOK menu now groups its genres into families (PARLOR, NIGHT CLUB, SACRED & EARLY, FOLK & DANCE, ESOTERIC).
 - Let each creature write its own rulebook: THE CREATURE'S OWN, first in the Kapellmeister menu, builds its changes from the creature's own scale (tonic, predominant, dominant, in an order the creature chooses) and borrows a genre's character for its bass and bells. Over 200 creatures it wrote 103 different progressions. It is now the rulebook a fresh creature opens in.
 - Hear each creature's own Fun Machine voice: its phrase picks one of seven parlor presets and tilts it brighter or darker, wider or narrower (THE CREATURE'S OWN, the default; hover it to see which). Or choose a preset yourself: VELVET PAD (the original), HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, or ÆTHER CHOIR. Sessions and presets keep your choice (format v5), and every recorded loop layer keeps the voice it was played in, so a harmonium loop can carry a music-box overdub. Older files open in VELVET PAD, as they sounded. MIDI exports give each voice its own MANUAL track and General MIDI instrument.
 

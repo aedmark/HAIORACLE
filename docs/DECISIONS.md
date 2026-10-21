@@ -649,7 +649,7 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 - MATCH THE RULEBOOK waits for D-041, so each new genre ships with a suggested voice.
 - CALLIOPE is dropped, leaving seven presets.
 
-## D-041 Many more Kapellmeister genres, in waves, written in Inform 7 (2026-10-20, status: proposed)
+## D-041 Many more Kapellmeister genres, in waves, written in Inform 7 (2026-10-20, status: accepted for wave 1, 2026-10-21)
 
 **Context:** Seven genres ship: Victorian Tonnetz, Delta Blues, Smoky Parlor Jazz, Palestrina, Mystic Drone, Parlor Ragtime, and Raw Chaos. P5-24 proved a genre can be added in `src/rulebooks.ni` alone. The maintainer asked on 2026-10-20 for "way more musical genres".
 
@@ -687,7 +687,14 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Open choices:** which wave-1 genres to keep or swap; whether wave 3 (feel) is wanted at all.
 
-**Related:** D-043 (proposed 2026-10-20) adds a goal to this redesign: every creature varies its genre or writes its own. New genres are then written with the variation moves they permit.
+**Wave 1 as built (2026-10-21):**
+- Six genres were written in Inform 7 only: Doo-Wop Parlor Ballad, Sacred Harp Shape-Note Hymnody, Andalusian Flamenco Cadence, Klezmer Freygish Dance, Sea Shanty & Hornpipe, and Silent-Film Lydian Dream. Each comes with its changes, Fun Machine progression, bass walk, melody, overtones, and permitted variation moves (D-043).
+- Menu families are an optional `family` text property: PARLOR, NIGHT CLUB, SACRED & EARLY, ESOTERIC, FOLK & DANCE. The RULEBOOK menu groups them as optgroups, with THE CREATURE'S OWN first.
+- The only JavaScript change is reading `family` and building the groups.
+- The golden fixture was re-frozen with additions only: 677 existing entries identical once indices are resolved, and 544 added.
+- As a consequence, `harmony_character` now spans 12 fettered genres, so some creatures' own rulebooks borrow a different character than before.
+
+**Related:** D-043 (accepted 2026-10-20) adds a goal to this redesign: every creature varies its genre or writes its own. New genres are then written with the variation moves they permit.
 
 ## D-042 Only the lead wears the creature filter; the lead sings above C3; every fungus has its own voice (2026-10-20, status: accepted)
 
