@@ -18,7 +18,7 @@ import { MIXER_CHANNEL_IDS } from "./mixer.mjs";
 export const SESSION_FORMAT = "edmark-fun-session";
 // Version 2 (D-028) replaced the Fun Machine's mode and chord quality with an
 // accompaniment style. Version 1 files still open and are upgraded on read.
-export const SESSION_VERSION = 5;
+export const SESSION_VERSION = 6;
 export const SESSION_FILE_EXTENSION = "fun";
 export const MAX_SESSION_BYTES = 64 * 1024;
 export const MAX_PHRASE_LENGTH = 72;
@@ -98,15 +98,18 @@ export function validateSession(raw) {
   // v4 adds the loop machine's song (D-039); v1–v3 open with an empty song.
   // v5 adds the Fun Machine's voice and a voice on every recorded slot
   // (D-040); v1–v4 open in VELVET PAD, the voice they were made in.
+  // v6 adds `varied`: whether the creature varies its genre (D-043). Older
+  // files were made before variation existed, so they open AS WRITTEN.
   const keys = [
     "format", "version", "phrase", "tempo", "volume", "genre", "strictness",
     "acoustics", "funMachine", "plates", "mixer",
   ];
   // The version decides which keys belong, so an unknown version is named first.
-  if (isPlainObject(raw) && ![1, 2, 3, 4, SESSION_VERSION].includes(raw.version)) {
-    throw new SessionError("session.version", `must be 1, 2, 3, 4, or ${SESSION_VERSION}`);
+  if (isPlainObject(raw) && ![1, 2, 3, 4, 5, SESSION_VERSION].includes(raw.version)) {
+    throw new SessionError("session.version", `must be 1 to ${SESSION_VERSION}`);
   }
-  expectKeys(raw, "session", raw?.version >= 4 ? [...keys, "song"] : keys);
+  const versionKeys = [...keys, ...(raw?.version >= 4 ? ["song"] : []), ...(raw?.version >= 6 ? ["varied"] : [])];
+  expectKeys(raw, "session", versionKeys);
   if (raw.format !== SESSION_FORMAT) throw new SessionError("session.format", `must be "${SESSION_FORMAT}"`);
 
   expectKeys(raw.acoustics, "session.acoustics", ["enabled", "level", "crackle", "reverb", "ticks"]);
@@ -124,7 +127,7 @@ export function validateSession(raw) {
   // loop sequencer that played it was removed (D-038).
   let style;
   let voice = DEFAULT_VOICE_ID;
-  if (raw.version === SESSION_VERSION) {
+  if (raw.version >= 5) {
     expectKeys(raw.funMachine, "session.funMachine", ["style", "voice"]);
     style = expectEnum(raw.funMachine.style, "session.funMachine.style", FUN_STYLES);
     voice = expectEnum(raw.funMachine.voice, "session.funMachine.voice", SLOT_VOICES);
@@ -203,6 +206,7 @@ export function validateSession(raw) {
     // before they are installed throws instead of rejecting every genre.
     genre: expectEnum(raw.genre, "session.genre", genreCodes()),
     strictness: expectInt(raw.strictness, "session.strictness", 3, 14),
+    varied: raw.version >= 6 ? expectBool(raw.varied, "session.varied") : false,
     acoustics,
     funMachine,
     plates: Object.freeze(plates),

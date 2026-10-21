@@ -783,6 +783,11 @@ The default rulebook for a fresh creature (THE CREATURE'S OWN or Victorian Tonne
 - New chords take the genre's colour: ninths in genres written in ninths, with dominants gaining a 9th; dominant sevenths in the all-dom7 blues. That keeps voiced organs inside the chord.
 - Parlor Ragtime also permits relative and tritone substitution, since its runs are too short for pace moves.
 
+**As built (phase 4, 2026-10-21):**
+- The Fun Machine varies with the band's fields and genre moves, but never by rotation (the held key's chord sounds first) or harmonic pace (its pad strikes on the clock). A lead note written for a replaced chord moves to that chord's nearest tone.
+- Sessions v6 store `varied`. Files from before variation existed (v1–v5) open AS WRITTEN, so they sound as saved.
+- MIDI markers name every chord change.
+
 ## D-044 Harmony moves one chord per loop, on the downbeat (2026-10-20, status: accepted)
 
 **Context:** On 2026-10-20 the maintainer said "the chord progressions move too fast in tempo compared to the overall band. We need to make sure the accompaniment is locked in step with the current tempo always." Measured the same day:

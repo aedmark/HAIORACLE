@@ -91,7 +91,11 @@ Goal: expand only where additional complexity creates more play.
   Phase 4 in progress 2026-10-20:
   - The VARIATION line and the AS WRITTEN switch are done.
   - The maintainer found the progressions too fast for the band, so D-044 came first: a four-pass harmonic cycle, one chord per loop on the downbeat, the Fun Machine on the same clock, and exports covering the cycle.
-  - Still to do: sessions v6 (AS WRITTEN; older files open as written), varying Fun Machine progressions, and chord names in MIDI markers.
+  - Phase 4 done 2026-10-21:
+    - Sessions v6 save `varied`; v1–v5 open AS WRITTEN.
+    - The Fun Machine's progressions vary by the same fields and genre moves, never rotation or pace, so the held key sounds first and the pad strikes on the clock. A moved chord gets its lead note on its own tones.
+    - MIDI files mark every chord change ("CHORD · E7 (♭VI7 (tritone))").
+    - In the browser a held C in Parlor Ragtime played C → C7 → F → G7 as written and C → C7 → Fm → D7 → G7 → Am varied.
   Acceptance: distinct progressions across phrases in every fettered genre, the clash ceilings hold, as-written output is unchanged, and the maintainer's listen.
 
 ## Phase 6: Release

@@ -378,7 +378,8 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   assert.match(app, /function scheduleFunLeadNote\(/);
   assert.match(app, /function releaseFunPads\(/);
   assert.doesNotMatch(app, /scheduleFunMachineChord|scheduleFunMachineLeadNote|startFunMachineVoice|frequency\.setValueAtTime\(5\.5/);
-  assert.match(app, /buildPerformance\(normSemi, funMachineStyle, activeGenre/);
+  assert.match(app, /const performance = performanceOf\(normSemi, funMachineStyle\)/);
+  assert.match(app, /return buildPerformance\(key, style, activeGenre, currentScore \? currentScore\.root : 0, \{\n    pass: currentHarmonicPass,\n    score: currentScore,\n    varied: genreVaried,/, "every performance follows the clock and the creature (D-043, D-044)");
   assert.match(app, /applyEnsembleConductor\(performance\.steps\.map\(\(step\) => step\.chord\)\)/);
   // Raw Esoteric Chaos is unfettered unless a key is held (P5-27): no empty spine stands in.
   assert.match(app, /const spineToUse = overrideProgression\n    \? overrideProgression\.map\([^\n]*\n    : null;/);
@@ -392,6 +393,11 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   assert.match(app, /if \(stepIndex === 0\) enterHarmonicPass\(transport, harmonicPassAt\(currentStep\)\);/);
   assert.match(app, /if \(step % 12 === 0 && harmonicPassAt\(step\) !== currentHarmonicPass\)/);
   assert.match(app, /harmonicPass: currentHarmonicPass,/);
+  // MIDI markers name every chord change; sessions keep AS WRITTEN (D-043).
+  assert.match(app, /\.\.\.arrangementMarkers\(stepStarts\), \.\.\.chordMarkers\(stepStarts, stepChords, score\)/);
+  assert.match(app, /stepChords\.push\(currentConductedSpine\?\.\[step % 12\] \?\? null\);/);
+  assert.match(app, /    varied: genreVaried,\n    funMachine: \{/);
+  assert.match(app, /genreVaried = session\.varied;/);
   assert.match(app, /followSong\(offlineTransport, loop, step % 12, null\);/);
   assert.match(app, /playSongLayers\(offlineCtx, offlineTransport, score, step, loop,/);
   assert.match(app, /currentHarmonicPass = livePass;\n  restoreLiveConducting\(\);/, "the render hands the band back to the live loop");

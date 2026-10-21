@@ -163,3 +163,29 @@ test("on the harmonic clock a progression holds one chord per pass, with lead no
   const swell = buildPerformance(7, "swell", "victorian_tonnetz", 0, { pass: 2 });
   assert.equal(swell.regionSteps, 3, "a single-chord style keeps its three-step breath");
 });
+
+test("a creature varies the Fun Machine's progression too, never moving off the key it holds (D-043)", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { composeScore } = await import("../src/score.mjs");
+  const oracle = await readFile(new URL("../src/oracle.lol", import.meta.url), "utf8");
+  const scores = Array.from({ length: 40 }, (_, i) => composeScore(oracle, `fun variation ${i}`));
+  const cycle = (score, varied) => [0, 1, 2, 3].flatMap((pass) => buildPerformance(5, "progression", "smoky_jazz", 0, { pass, score, varied }).steps);
+  const shape = (steps) => steps.map((step) => `${step.chord.rootPc}${step.chord.quality}`).join(" ");
+  const written = shape(cycle(scores[0], false));
+  const distinct = new Set(scores.map((score) => shape(cycle(score, true))));
+  assert.ok(distinct.size >= 8, `${distinct.size} distinct Fun Machine cycles over 40 creatures`);
+  assert.equal(new Set(scores.map((score) => shape(cycle(score, false)))).size, 1, "AS WRITTEN: one progression for everyone");
+  for (const score of scores) {
+    const steps = cycle(score, true);
+    assert.equal(shape(steps.slice(0, 1)), written.split(" ")[0], "the held key's chord sounds first");
+    assert.deepEqual(cycle(score, true), steps, "deterministic");
+    const asWritten = cycle(score, false);
+    steps.forEach((step, index) => {
+      const moved = `${step.chord.rootPc}${step.chord.quality}` !== `${asWritten[index].chord.rootPc}${asWritten[index].chord.quality}`;
+      if (step.leadPitch !== null && moved) assert.ok(step.chord.pitchClasses.includes(((step.leadPitch % 12) + 12) % 12), "a moved chord gets a lead note on its own tones");
+      if (index % 12 > 0) assert.equal(step.isRegionStart, step.chord !== steps[index - 1].chord, "the pad strikes exactly where the chord changes");
+    });
+  }
+  const varied = buildPerformance(5, "progression", "smoky_jazz", 0, { pass: 0, score: scores.find((score) => buildPerformance(5, "progression", "smoky_jazz", 0, { pass: 0, score, varied: true }).variation.length), varied: true });
+  assert.ok(varied.variation.length > 0 && !varied.variation.includes("ROTATED") && !varied.variation.some((move) => /CHANGES/.test(move)), "no rotation or pace for the Fun Machine");
+});

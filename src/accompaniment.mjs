@@ -4,7 +4,8 @@
 // arpeggio, or sing a line over it. The host schedules the sound in the band's
 // own rhythm and re-conducts the band onto the performance's chords.
 
-import { buildFunChord, buildFunProgression } from "./conductor.mjs";
+import { buildFunChord, buildFunProgression, buildTriad, genreBook } from "./conductor.mjs";
+import { varySpine } from "./variation.mjs";
 
 export const ACCOMPANIMENT_STYLES = Object.freeze(["swell", "arpeggio", "progression"]);
 export const DEFAULT_ACCOMPANIMENT_STYLE = "progression";
@@ -58,7 +59,7 @@ export function soundingPitchClasses(chord) {
  * step has `chord`, `regionIndex`, `isRegionStart`, and `leadPitch` (semitones
  * above C4, already lifted, or null when the style has no lead line).
  */
-export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pass = null } = {}) {
+export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pass = null, score = null, varied = false } = {}) {
   if (!ACCOMPANIMENT_STYLES.includes(style)) throw new RangeError(`Unknown accompaniment style: ${style}`);
   const position = Math.max(0, Math.min(12, Math.trunc(keySemitone) || 0));
   const key = position % 12;
@@ -77,18 +78,26 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
     chords = [chord, chord, chord, chord];
     summary = `${chordText(chord)} · ${STYLE_LABELS[style]}`;
   }
-  // On the harmonic clock (D-044) a progression holds one chord for the whole
-  // pass: one pad, and the region's three lead notes held four steps each.
+  // On the harmonic clock (D-044) a progression holds one region per pass:
+  // a pad struck on the downbeat (and again wherever a variation changes the
+  // chord), and the region's three lead notes held four steps each.
   if (pass !== null && style === "progression") {
     const regionIndex = ((Math.trunc(pass) % 4) + 4) % 4;
-    const steps = Array.from({ length: 12 }, (_, index) => Object.freeze({
-      chord: chords[regionIndex],
-      regionIndex,
-      isRegionStart: index === 0,
-      leadPitch: index % 4 === 0 ? leadPitches[regionIndex * 3 + index / 4] : null,
-      leadSteps: 4,
-    }));
-    return Object.freeze({ style, key, lift, chords: Object.freeze([...chords]), steps: Object.freeze(steps), summary, regionSteps: 12 });
+    const { spine, moves } = varied && score ? varyProgression(chords, key, genre, score) : { spine: chords.flatMap((chord) => [chord, chord, chord]), moves: [] };
+    const steps = Array.from({ length: 12 }, (_, index) => {
+      const entry = regionIndex * 3 + Math.floor(index / 4);
+      const chord = spine[entry];
+      const previous = index > 0 ? spine[regionIndex * 3 + Math.floor((index - 1) / 4)] : null;
+      let leadPitch = index % 4 === 0 ? leadPitches[entry] : null;
+      // A note written for the old chord moves to the new chord's nearest tone.
+      if (leadPitch !== null && chord !== chords[regionIndex]) leadPitch = nearestChordTone(leadPitch, chord);
+      return Object.freeze({ chord, regionIndex, isRegionStart: chord !== previous, leadPitch, leadSteps: 4 });
+    });
+    const shown = spine.filter((chord, index) => index === 0 || chord !== spine[index - 1]);
+    return Object.freeze({
+      style, key, lift, chords: Object.freeze([...chords]), steps: Object.freeze(steps), regionSteps: 12,
+      summary: moves.length ? shown.map(chordText).join(" → ") : summary, variation: Object.freeze([...moves]),
+    });
   }
   const steps = Array.from({ length: 12 }, (_, index) => {
     const regionIndex = Math.floor(index / 3);
@@ -101,6 +110,44 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
     });
   });
   return Object.freeze({ style, key, lift, chords: Object.freeze([...chords]), steps: Object.freeze(steps), summary, regionSteps: 3 });
+}
+
+/**
+ * The creature's variation on a Fun Machine progression (D-043), by the same
+ * harmony fields and genre moves as the band, except rotation (the key you
+ * hold always sounds first) and harmonic pace (the pad strikes on the clock).
+ * Returns twelve absolute chords (three per region) and the moves made; an
+ * unchanged entry is the original chord object.
+ */
+function varyProgression(chords, key, genre, score) {
+  const relative = chords.flatMap((chord) => {
+    const root = (chord.rootPc - key + 12) % 12;
+    const tones = chord.pitchClasses.map((pc) => (pc - key + 12) % 12);
+    const triad = buildTriad(root, chord.quality, chord.op, tones);
+    return [triad, triad, triad];
+  });
+  const permitted = genreBook(genre).variation.filter((move) => move !== "rotation" && move !== "harmonic_pace");
+  const { spine, moves } = varySpine(relative, score, permitted, buildTriad);
+  const absolute = spine.map((chord, index) => (chord === relative[index]
+    ? chords[Math.floor(index / 3)]
+    : buildTriad((chord.root + key) % 12, chord.quality, chord.op, chord.pitchClasses.map((pc) => (pc + key) % 12))));
+  return { spine: absolute, moves };
+}
+
+function nearestChordTone(pitch, chord) {
+  for (let distance = 0; distance <= 6; distance += 1) {
+    for (const candidate of [pitch - distance, pitch + distance]) {
+      if (chord.pitchClasses.includes(((candidate % 12) + 12) % 12)) return candidate;
+    }
+  }
+  return pitch;
+}
+
+/** Steps a chord struck at `stepIndex` holds before the performance strikes again. */
+export function strikeLength(performance, stepIndex) {
+  let length = 1;
+  while (stepIndex + length < 12 && !performance.steps[stepIndex + length].isRegionStart) length += 1;
+  return length;
 }
 
 /**

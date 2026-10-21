@@ -4,7 +4,13 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, with songs exporting whole (P5-26). Low voices now fold by octaves instead of clamping onto wrong notes. Session 44 saved songs in sessions v4._
+_Last updated: 2026-10-21, session 57, on `main`._
+
+- P5-28 is complete: Fun Machine voices, each creature's own by default (D-040).
+- D-042 freed the organ, chimes, and mycelium from the creature filter.
+- P5-30 phases 0–2 and 4 are done (D-043): clashes cut, every creature varying its genre's changes, the VARIATION readout, AS WRITTEN, and sessions v6.
+- D-044 moves harmony one chord per loop, on the downbeat.
+- Next: P5-30 phase 3, THE CREATURE'S OWN rulebook._
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-27 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
@@ -86,6 +92,43 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 57: 2026-10-21: variation, saved and played (P5-30 phase 4 complete)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Finish P5-30 phase 4: sessions v6 with AS WRITTEN, Fun Machine progressions that vary, and chord names in MIDI markers.
+
+**Done:** D-044 and the phase 4 readout and switch were pushed (96815d9) after the maintainer's "This is getting better and better." Phase 4 is complete.
+
+**Changed:**
+1. `src/session.mjs`: `SESSION_VERSION` 6 with top-level `varied` (boolean). Versions 1–5 open with `varied: false`. `funMachine.voice` is read from v5 on.
+2. `src/app.mjs`: sessions save and restore `genreVaried`.
+3. `src/accompaniment.mjs`:
+   - `buildPerformance(…, { pass, score, varied })` varies a progression through `varyProgression()`: key-relative chords run through `varySpine()` without rotation or pace, and unchanged chords keep their objects.
+   - Pads strike wherever the chord changes, and moved chords get the lead pitch's nearest chord tone. `strikeLength()` is new.
+4. `src/app.mjs`:
+   - `performanceOf()` builds every performance: the live key, recorded slots, and pass changes. The cache key includes AS WRITTEN and the seed.
+   - Pads, bridges, and layer replay hold until the performance strikes again.
+   - The AS WRITTEN toggle rebuilds a held key's performance.
+   - The offline render records `stepChords`, and `chordMarkers()` adds a "CHORD · …" marker at each change.
+5. Tests: the v6 session paths, the varied Fun Machine (at least 8 distinct cycles over 40 creatures, the held key first, strikes exactly at changes, moved chords' leads on chord tones), and static checks for markers and sessions.
+
+**Verified:**
+- 155/155 Node checks.
+- In the browser on "three pigeons" in Parlor Ragtime:
+  - VARIATION read RELATIVE SUB · TRITONE SUB · DECEPTIVE CADENCE.
+  - MIDI markers ran A♭ → A♭7 → B♭m (relative) → D° → Fm (relative) → F7 → E7 (tritone) → E♭7 (deceptive) → Fm (deceptive).
+  - AS WRITTEN switched the readout and saved a v6 file with `varied: false`.
+  - A held C walked C → C7 → F → G7 as written, and C → C7 → Fm → D7 → G7 → Am varied.
+  - STOP rewinds the cycle to pass 1/4; PAUSE and PLAY keep it.
+- No console errors from the app.
+
+**Not verified:** The maintainer's listen on the varied Fun Machine.
+
+**Still open:** `#fun-machine-telemetry` is missing from `index.html` (see Session 56).
+
+**Next session should start with:** the maintainer's listen and tuning notes on the variation moves, then P5-30 phase 3 (THE CREATURE'S OWN rulebook).
 
 ### Session 56: 2026-10-20: harmony keeps step with the band (D-044; P5-30 phase 4 begun)
 
@@ -371,35 +414,3 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 **Not verified:** How they sound. These are first-pass numbers for the maintainer to tune by ear.
 
 **Next session should start with:** the maintainer's listen and tuning notes, then phase 3 (the creature's own voice from the spell).
-
-### Session 47: 2026-10-20: Fun Machine voices, phase 1 (P5-28)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** The maintainer asked for a voice selector so the one-finger accompaniment is not always the same pad, with deterministic per-phrase voices and good presets. The spec is D-040.
-
-**Done:** D-040 accepted, with the maintainer's answers:
-- voices are kept per recorded slot;
-- THE CREATURE'S OWN is the default;
-- MATCH THE RULEBOOK waits for D-041;
-- CALLIOPE is dropped, leaving seven presets.
-
-D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
-
-**Changed:**
-1. New `src/voices.mjs`:
-   - a strictly validated voice patch (`validateVoice()`, `VoiceError` paths) with three parts (`pad`, `pluck`, `lead`), bounded layer counts, frequencies, Q, and levels;
-   - `VOICE_PRESETS`, which holds only VELVET PAD for now, and `voiceById()`, which falls back to it;
-   - `scheduleVoicePad()`, `scheduleVoicePluck()`, and `scheduleVoiceLead()`.
-2. `src/app.mjs`: `schedulePadChord()`, `scheduleArpNote()`, and `scheduleFunLeadNote()` are now thin wrappers that clamp times, log notes, and track live pads. They take an optional `voice`, defaulting to `currentFunVoice()`, which is VELVET PAD until phase 4 adds the selector.
-3. `index.html`: `voices.mjs` joins the versioned module list, and the stamp is restamped. Tests: `tests/voices.test.mjs`.
-4. The patch key is `base` rather than `from`, because `tests/assets.test.mjs` scans for `from "…"` import specifiers.
-
-**Verified:**
-- 131/131 Node checks.
-- Parity: the old synth source (from the pre-change `app.mjs`) and the new patch synths were rendered offline in the browser for the pad, two plucks (accent and plain), and two leads (with and without glide), each at vitrine hold 0 and 0.6. The largest sample difference was 1.6×10⁻⁷ (about −136 dB), which is float rounding; the plucks were bit-identical.
-- Live: SWELL, ARPEGGIO, and PROGRESSION each played with a key held, with no console errors.
-
-**Not verified:** Nothing audible changed, so no listen is needed yet.
-
-**Next session should start with:** P5-28 phase 2, the six other presets: HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, and ÆTHER CHOIR. Some need patch features that are not in the schema yet: tremolo (THEATRE ORGAN), formant bandpasses (ÆTHER CHOIR), and a rolled pad strum (MUSIC BOX). Each preset is tuned by ear with the maintainer.

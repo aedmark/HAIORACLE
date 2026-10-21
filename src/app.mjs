@@ -30,6 +30,7 @@ import {
   chordText,
   leadMidi,
   padVoicing,
+  strikeLength,
   toTonicRelative,
 } from "./accompaniment.mjs";
 import { myceliumEvents } from "./mycelium.mjs";
@@ -3597,7 +3598,7 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   for (const other of elements.funKeyboard?.querySelectorAll(".fun-key.is-pressed") || []) other.classList.remove("is-pressed");
   keyBtn?.classList.add("is-pressed");
 
-  const performance = buildPerformance(normSemi, funMachineStyle, activeGenre, currentScore ? currentScore.root : 0, { pass: currentHarmonicPass });
+  const performance = performanceOf(normSemi, funMachineStyle);
   activeFunPerformance = performance;
   unlockDrawer("held-key");
 
@@ -3623,8 +3624,8 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   const level = FUN_PAD_LEVEL[performance.style];
   if (transport?.funBus && currentScore) {
     const nextStep = transport.step;
-    const regionSteps = performance.regionSteps;
-    const stepsUntilRegion = (regionSteps - ((nextStep % 12) % regionSteps)) % regionSteps;
+    const nextIndex = nextStep % 12;
+    const stepsUntilRegion = performance.steps[nextIndex].isRegionStart ? 0 : strikeLength(performance, nextIndex);
     let regionStart = transport.nextNoteTime;
     for (let k = 0; k < stepsUntilRegion; k += 1) regionStart += loopStepDuration(currentScore, nextStep + k);
     const bridge = regionStart - context.currentTime;
@@ -3736,12 +3737,12 @@ function playSongLayers(context, transport, score, absoluteStep, loop, timing) {
   for (const { layerIndex, slot } of slotsAt(loop, stepIndex)) {
     const take = loop.layers[layerIndex];
     const previous = stepIndex > 0 ? take[stepIndex - 1] : null;
-    const regionSteps = performanceFor(slot).regionSteps;
-    const starts = stepIndex % regionSteps === 0 || !sameSlot(previous, slot);
+    const performance = performanceFor(slot);
+    const starts = performance.steps[stepIndex].isRegionStart || !sameSlot(previous, slot);
     let padSteps = 0;
     if (starts) {
       do padSteps += 1;
-      while ((stepIndex + padSteps) % regionSteps !== 0 && sameSlot(take[stepIndex + padSteps], slot));
+      while (stepIndex + padSteps < 12 && !performance.steps[stepIndex + padSteps].isRegionStart && sameSlot(take[stepIndex + padSteps], slot));
     }
     transport.layerVoices[layerIndex] ??= { voicing: null, leadMidi: null };
     playPerformanceStep(context, transport, transport.layerVoices[layerIndex], performanceFor(slot), {
@@ -3900,7 +3901,7 @@ async function playScore(score, { cursor = 0 } = {}) {
       } else {
         const timing = { stepIndex, absoluteStep: currentStep, at, stepDuration, soundingDuration };
         if (liveSlot) {
-          const padDuration = activeFunPerformance.steps[stepIndex].isRegionStart ? padStepsDuration(score, currentStep, activeFunPerformance.regionSteps) : null;
+          const padDuration = activeFunPerformance.steps[stepIndex].isRegionStart ? padStepsDuration(score, currentStep, strikeLength(activeFunPerformance, stepIndex)) : null;
           playPerformanceStep(context, transport, liveVoiceOf(transport), activeFunPerformance, { ...timing, padDuration });
         }
         if (loop) playSongLayers(context, transport, score, currentStep, loop, timing);
@@ -4640,6 +4641,8 @@ async function renderEnsembleLoop(score, {
 
   let stepTime = LOOP_START_OFFSET;
   const stepStarts = [];
+  // The chord the band plays on each step, for the MIDI file's chord markers.
+  const stepChords = [];
   for (let step = 0; step < stepsCount; step += 1) {
     stepStarts.push(stepTime - LOOP_START_OFFSET);
     const stepDuration = unit * rhythm[step % rhythm.length];
@@ -4655,6 +4658,7 @@ async function renderEnsembleLoop(score, {
     }
     if (song.loops.length) followSong(offlineTransport, loop, step % 12, null);
     offlineTransport.melody = currentConductedMelody || offlineTransport.melody;
+    stepChords.push(currentConductedSpine?.[step % 12] ?? null);
     scheduleEnsembleStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration, soundingDuration);
     shapeDrones(offlineTransport, score, step, stepTime);
     if (loop && arrangementPlays("fun", step % 12)) {
@@ -4669,7 +4673,7 @@ async function renderEnsembleLoop(score, {
   restoreLiveConducting();
 
   const buffer = render ? await offlineCtx.startRendering() : null;
-  return { buffer, noteLog: offlineTransport.noteLog || [], bpm, loopDuration, stepStarts, passes };
+  return { buffer, noteLog: offlineTransport.noteLog || [], bpm, loopDuration, stepStarts, stepChords, passes };
 }
 
 function restoreLiveConducting() {
@@ -4790,6 +4794,20 @@ function arrangementMarkers(stepStarts) {
   return markers.sort((x, y) => x.at - y.at);
 }
 
+// A marker wherever the band's chord changes (D-043, D-044), so a DAW shows
+// the creature's own changes, variations included, on its timeline.
+function chordMarkers(stepStarts, stepChords, score) {
+  const markers = [];
+  let previous = null;
+  stepChords.forEach((chord, step) => {
+    if (!chord) return;
+    const text = `CHORD · ${chordLabelFor(chord, score.root)}${chord.op && chord.quality !== "raw" ? ` (${chord.op})` : ""}`;
+    if (text !== previous) markers.push({ at: stepStarts[step], text });
+    previous = text;
+  });
+  return markers;
+}
+
 function arrangementReadme(stepStarts) {
   const markers = arrangementMarkers(stepStarts);
   if (!markers.length) return ["Arrangement: RAW CHAOS · every voice plays every step.", ""];
@@ -4809,7 +4827,7 @@ async function exportSpecimenMidi() {
     doneText: "MIDI WRITTEN ✦",
     failStatus: "MIDI EXPORT FAILED",
   }, async () => {
-    const { noteLog, bpm, loopDuration, stepStarts } = await renderEnsembleLoop(score, { engageAll: true, captureNotes: true, render: false });
+    const { noteLog, bpm, loopDuration, stepStarts, stepChords } = await renderEnsembleLoop(score, { engageAll: true, captureNotes: true, render: false });
     // The MANUAL part splits into one track per voice it was played in.
     const parts = MIDI_TRACKS.flatMap((track) => {
       const events = noteLog.filter((event) => event.channel === track.id);
@@ -4827,7 +4845,9 @@ async function exportSpecimenMidi() {
         })),
       };
     });
-    const markers = arrangementMarkers(stepStarts).map(({ at, text }) => ({ tick: ticksForSeconds(at, bpm), text }));
+    const markers = [...arrangementMarkers(stepStarts), ...chordMarkers(stepStarts, stepChords, score)]
+      .sort((x, y) => x.at - y.at)
+      .map(({ at, text }) => ({ tick: ticksForSeconds(at, bpm), text }));
     const bytes = buildMidiFile({ bpm, tracks, lengthTicks: ticksForSeconds(loopDuration, bpm), title: score.name, markers });
     downloadBlob(new Blob([bytes], { type: "audio/midi" }), specimenFilenameFor(score, "mid"));
     elements.status.textContent = `MIDI SCORE WRITTEN · ${noteLog.length} NOTES`;
@@ -5248,6 +5268,7 @@ function captureSession() {
       reverb: parlorReverbEnabled,
       ticks: parlorTickEnabled,
     },
+    varied: genreVaried,
     funMachine: {
       style: funMachineStyle,
       voice: funVoiceId,
@@ -5291,6 +5312,8 @@ function applySession(session) {
   activeStrictness = session.strictness;
   funMachineStyle = session.funMachine.style;
   funVoiceId = session.funMachine.voice;
+  // Files from before variation existed open AS WRITTEN (D-043).
+  genreVaried = session.varied;
   // The loop machine's song travels with the session (v4); older files bring none.
   song = session.song;
   selectedLoop = clampSelection(song, song.loops.length - 1);
@@ -5622,9 +5645,21 @@ const performanceCache = new Map();
 
 function performanceFor(slot) {
   const tonic = currentScore ? currentScore.root : 0;
-  const key = `${slot.key}:${slot.style}:${activeGenre}:${tonic}:${currentHarmonicPass}`;
-  if (!performanceCache.has(key)) performanceCache.set(key, buildPerformance(slot.key, slot.style, activeGenre, tonic, { pass: currentHarmonicPass }));
+  const key = `${slot.key}:${slot.style}:${activeGenre}:${tonic}:${currentHarmonicPass}:${genreVaried}:${currentScore?.seed}`;
+  if (!performanceCache.has(key)) performanceCache.set(key, performanceOf(slot.key, slot.style));
   return performanceCache.get(key);
+}
+
+/**
+ * A key's performance on this pass of the harmonic cycle (D-044), varied by
+ * this creature unless AS WRITTEN is pressed (D-043).
+ */
+function performanceOf(key, style) {
+  return buildPerformance(key, style, activeGenre, currentScore ? currentScore.root : 0, {
+    pass: currentHarmonicPass,
+    score: currentScore,
+    varied: genreVaried,
+  });
 }
 
 /**
@@ -5647,7 +5682,7 @@ function enterHarmonicPass(transport, pass) {
   currentHarmonicPass = pass;
   if (transport) transport.followedSlot = "harmonic-pass";
   if (activeHeldFunKey !== null && activeFunPerformance) {
-    activeFunPerformance = buildPerformance(activeHeldFunKey, funMachineStyle, activeGenre, currentScore ? currentScore.root : 0, { pass });
+    activeFunPerformance = performanceOf(activeHeldFunKey, funMachineStyle);
     applyEnsembleConductor(activeFunPerformance.steps.map((step) => step.chord));
   } else {
     applyEnsembleConductor();
@@ -6008,7 +6043,13 @@ elements.kapellmeisterGenre?.addEventListener("change", (e) => {
 // AS WRITTEN (D-043): the genre's own changes, without this creature's moves.
 elements.kapellmeisterAsWritten?.addEventListener("click", () => {
   genreVaried = !genreVaried;
-  applyEnsembleConductor();
+  if (currentTransport) currentTransport.followedSlot = "as-written";
+  if (activeHeldFunKey !== null && activeFunPerformance) {
+    activeFunPerformance = performanceOf(activeHeldFunKey, funMachineStyle);
+    applyEnsembleConductor(activeFunPerformance.steps.map((step) => step.chord));
+  } else {
+    applyEnsembleConductor();
+  }
   updateKapellmeisterUI();
   updateBassGrid();
   updateHarmonyGrid();
