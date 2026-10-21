@@ -22,6 +22,35 @@ export const MIDI_TRACKS = Object.freeze([
   Object.freeze({ id: "chant", name: "CHOIR · SHAKESPEARE", channel: 5, program: 52 }),
 ]);
 
+// The Fun Machine plays in voices (D-040), and stacked loop layers can sound
+// in different voices at the same moment. One MIDI channel holds one program,
+// so each voice used gets its own MANUAL track and channel: the first keeps
+// channel 1, the rest take the channels no other part uses.
+export const FUN_VOICE_CHANNELS = Object.freeze([1, 6, 7, 8, 10, 11, 12, 13]);
+
+/**
+ * Splits the Fun Machine's events into one track per voice, in order of first
+ * appearance. Each event carries `voice: { key, label, program }`; events with
+ * none fall back to `base` (the stock MANUAL track). One voice gives one track
+ * named for it. Returns `[{ ...base, name, channel, program, events }]`.
+ */
+export function funVoiceTracks(base, events) {
+  const groups = new Map();
+  for (const event of events) {
+    const voice = event.voice ?? { key: "stock", label: null, program: base.program };
+    if (!groups.has(voice.key)) groups.set(voice.key, { voice, events: [] });
+    groups.get(voice.key).events.push(event);
+  }
+  if (groups.size === 0) return [{ ...base, events: [] }];
+  return [...groups.values()].slice(0, FUN_VOICE_CHANNELS.length).map(({ voice, events: grouped }, index) => ({
+    ...base,
+    name: voice.label ? `${base.name} · ${voice.label}` : base.name,
+    channel: FUN_VOICE_CHANNELS[index],
+    program: voice.program,
+    events: grouped,
+  }));
+}
+
 const textEncoder = new TextEncoder();
 
 export function encodeVlq(value) {

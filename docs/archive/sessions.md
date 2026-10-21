@@ -1023,3 +1023,27 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Left undone:** P5-26 phases 2–5 (live recording and playback, the strip, sessions v4, song exports); the P4-02 screen-reader pass; P6-01.
 
 **Next session should start with:** P5-26 phase 2, live recording and song playback in the transport.
+
+### Session 42: 2026-10-20: the loop machine records and plays (P5-26 phase 2)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-26 phase 2: live recording and song playback in the transport (D-039).
+
+**Changed:**
+1. `src/app.mjs`: the scheduler now runs `advanceRecorder()` (one slot per step from the live key, the same moment the accompanist reads), then `followSong()` (a live key leads; otherwise the newest recorded layer holding a key re-conducts the band, only when the leader changes), then the band, then the live key and every recorded layer through the new `playPerformanceStep()`. Recorded pads use `releasable: false`, so a live key release no longer fades them. The LOLCODE lead and drones duck for a leading layer (`songLeading`). Arming starts playback; stop, pause, and restart cancel a take; empty takes are announced and discarded; a landed take opens the Keep drawer.
+2. `index.html` and `styles.css`: the `#looper` strip under the keys, with RECORD NEW LOOP, OVERDUB, and CLEAR SONG (`aria-pressed` while armed or recording), a fixed-line readout, and `#looper-announcer`. `looper.mjs` joins the import map.
+3. Tests: static checks for the strip, the conduct-before-play order, layer playback, and non-releasable recorded pads; the duck assertion includes `songLeading`.
+
+**Verified:** 123/123 Node checks. In the browser on "three pigeons" at 208 BPM:
+- RECORD NEW LOOP started the transport and recorded from step 1.
+- Holding G landed "LOOP 1 ADDED TO THE SONG". With no key held, the band then followed the take (bass "G G G+ E♭~" against its own "A♭ A♭ A♭+ E~").
+- An overdub holding D♯ landed "LAYER ADDED TO LOOP 1" and took the lead (bass "E♭ E♭ E♭+ C~").
+- Stopping while armed said "RECORDING STOPPED · NOTHING WAS KEPT", and CLEAR SONG returned the band to its own score.
+- No console errors. One bug was caught and fixed along the way: arming cancelled itself because cancellation sat in `stopCurrentSound()`, which `playScore()` also calls; it now runs only on stop, pause, or restart.
+
+**Not verified:** Listening to stacked layers, especially two pads at once.
+
+**Left undone:** P5-26 phases 3–5 (loop tiles with select, repeats, move, delete, and undo; sessions v4; song exports); the P4-02 screen-reader pass; P6-01.
+
+**Next session should start with:** P5-26 phase 3, the full strip.

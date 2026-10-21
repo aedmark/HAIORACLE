@@ -4,7 +4,7 @@
 
 ### Added
 
-- Hear each creature's own Fun Machine voice: its phrase picks one of seven parlor presets and tilts it brighter or darker, wider or narrower (THE CREATURE'S OWN, the default; hover it to see which). Or choose a preset yourself: VELVET PAD (the original), HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, or ÆTHER CHOIR. Sessions and presets keep your choice (format v5), and every recorded loop layer keeps the voice it was played in, so a harmonium loop can carry a music-box overdub. Older files open in VELVET PAD, as they sounded.
+- Hear each creature's own Fun Machine voice: its phrase picks one of seven parlor presets and tilts it brighter or darker, wider or narrower (THE CREATURE'S OWN, the default; hover it to see which). Or choose a preset yourself: VELVET PAD (the original), HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, or ÆTHER CHOIR. Sessions and presets keep your choice (format v5), and every recorded loop layer keeps the voice it was played in, so a harmonium loop can carry a music-box overdub. Older files open in VELVET PAD, as they sounded. MIDI exports give each voice its own MANUAL track and General MIDI instrument.
 
 ### Removed
 

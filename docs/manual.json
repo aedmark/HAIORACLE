@@ -876,7 +876,7 @@
               "Each channel stem renders the loop with only that strip open at its fader and pan (`stemSettings()`), mute and solo ignored, keeping its own chamber reverb; the room stem renders with every strip closed.",
               "`createStoredZip()` writes STORED entries with CRC-32 and the DOS epoch date, so the same stems always make the same archive, and rejects path-traversal entry names.",
               "During a schedule-only pass, each pitched scheduler records its note through `logNote()`, so MIDI comes from the code that makes the sound.",
-              "`buildMidiFile()` writes 480 PPQ tracks with General MIDI programs (drums on channel 10), clips notes to the loop, trims overlapping repeats, merges unisons, and scales velocity from each part's loudest event."
+              "`buildMidiFile()` writes 480 PPQ tracks with General MIDI programs (drums on channel 10), clips notes to the loop, trims overlapping repeats, merges unisons, and scales velocity from each part's loudest event. `funVoiceTracks()` gives each Fun Machine voice in the loop its own MANUAL track, channel, and program, so stacked layers in different voices open as separate instruments."
             ]
           },
           "why": "Players wanted to carry a creature into a real studio (roadmap P5-21). Rendering through the shared graph means stems sound exactly like their channel in the mix; capturing notes from the schedulers keeps MIDI from drifting away from the audio. Both writers are a few hundred lines of browser-native code, keeping the zero-dependency boundary (ADR D-025).",

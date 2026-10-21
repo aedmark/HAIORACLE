@@ -5,7 +5,9 @@ import {
   DRUM_CHANNEL,
   GM_DRUMS,
   MIDI_PPQ,
+  FUN_VOICE_CHANNELS,
   MIDI_TRACKS,
+  funVoiceTracks,
   buildMidiFile,
   encodeVlq,
   loopSafeNotes,
@@ -209,4 +211,24 @@ test("velocities scale each part from its loudest event and tracks cover every p
   assert.deepEqual(MIDI_TRACKS.map((t) => t.id), ["lead", "fun", "beat", "bass", "harmony", "chime", "chant"]);
   assert.equal(new Set(MIDI_TRACKS.map((t) => t.channel)).size, MIDI_TRACKS.length, "one MIDI channel per part");
   assert.equal(MIDI_TRACKS.find((t) => t.id === "beat").channel, DRUM_CHANNEL);
+});
+
+test("the MANUAL part splits into one track and channel per voice it was played in (D-040)", () => {
+  const base = MIDI_TRACKS.find((track) => track.id === "fun");
+  const music = { key: "music_box", label: "MUSIC BOX", program: 10 };
+  const organ = { key: "harmonium", label: "HARMONIUM", program: 20 };
+  const events = [{ voice: music, midi: 60 }, { voice: organ, midi: 64 }, { voice: music, midi: 67 }];
+  const tracks = funVoiceTracks(base, events);
+  assert.deepEqual(tracks.map((t) => [t.name, t.channel, t.program, t.events.length]), [
+    ["MANUAL · FUN MACHINE · MUSIC BOX", 1, 10, 2],
+    ["MANUAL · FUN MACHINE · HARMONIUM", 6, 20, 1],
+  ]);
+  assert.deepEqual(funVoiceTracks(base, []).map((t) => [t.name, t.channel, t.program]), [[base.name, 1, base.program]], "no notes, one stock track");
+  const used = new Set(MIDI_TRACKS.filter((t) => t.id !== "fun").map((t) => t.channel));
+  assert.ok(FUN_VOICE_CHANNELS.every((channel) => !used.has(channel)), "voice channels never collide with another part");
+  assert.equal(new Set(FUN_VOICE_CHANNELS).size, 8, "one channel for each of the eight voices");
+  const file = buildMidiFile({ bpm: 120, lengthTicks: 1920, tracks: tracks.map(({ events: e, ...t }) => ({ ...t, notes: e.map((n, i) => ({ tick: i * 100, duration: 50, midi: n.midi, velocity: 90 })) })) });
+  const bytes = [...file];
+  const hasProgram = (channel, program) => bytes.some((b, i) => b === (0xc0 | channel) && bytes[i + 1] === program);
+  assert.ok(hasProgram(1, 10) && hasProgram(6, 20), "each voice track announces its own program");
 });

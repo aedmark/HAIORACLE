@@ -87,6 +87,30 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 52: 2026-10-20: voices in the exports (P5-28 complete)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-28 phase 5: exports carry the voices (D-040).
+
+**Done:** Phase 4 was committed and pushed (b92ee0c). P5-28 is complete (all five phases).
+
+**Changed:**
+1. `src/midi.mjs`: `FUN_VOICE_CHANNELS` is 1, 6, 7, 8, 10, 11, 12, and 13, none of them used by another part. `funVoiceTracks(base, events)` splits the MANUAL part into one track per voice, in order of first appearance, named "MANUAL · FUN MACHINE · <voice>" with that voice's program. A part with no notes stays one stock track.
+2. `src/app.mjs`:
+   - `logNote()` takes an optional voice. The three Fun Machine synths log `midiVoiceOf(voice)`, which names the creature's voice as "THE CREATURE'S OWN (HARMONIUM · BRIGHTER · NARROW)".
+   - `exportSpecimenMidi()` expands the MANUAL part with `funVoiceTracks()`. Velocity now scales within each voice track.
+3. D-040 item 6, as built: one track and channel per voice rather than program changes on one track. Stacked layers sound at the same moment, and a channel holds one program.
+
+**Verified:**
+- 142/142 Node checks.
+- In the browser on "three pigeons in a borrowed coat" at full tempo: a loop recorded in MUSIC BOX with a HARMONIUM overdub exported MIDI with "MANUAL · FUN MACHINE · MUSIC BOX" (channel 1, program 10) and "MANUAL · FUN MACHINE · HARMONIUM" (channel 6, program 20).
+- The MIDI log comes from the same scheduler calls that render WAV and stems, so those carry each layer's voice.
+
+**Not verified:** DAW import of multi-voice MIDI, and listening to stacked voices in an exported WAV.
+
+**Next session should start with:** the maintainer's listen, then D-041 wave 1 (more genres, which also brings the rulebook-suggested voice), P4-02, or P6-01.
+
 ### Session 51: 2026-10-20: voices travel with takes and sessions (P5-28 phase 4)
 
 **Contributor:** Claude Code with maintainer direction
@@ -322,27 +346,3 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Left undone:** P5-26 phase 4 (sessions v4) and phase 5 (song exports); the P4-02 screen-reader pass; P6-01.
 
 **Next session should start with:** P5-26 phase 4, saving songs in sessions and presets.
-
-### Session 42: 2026-10-20: the loop machine records and plays (P5-26 phase 2)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-26 phase 2: live recording and song playback in the transport (D-039).
-
-**Changed:**
-1. `src/app.mjs`: the scheduler now runs `advanceRecorder()` (one slot per step from the live key, the same moment the accompanist reads), then `followSong()` (a live key leads; otherwise the newest recorded layer holding a key re-conducts the band, only when the leader changes), then the band, then the live key and every recorded layer through the new `playPerformanceStep()`. Recorded pads use `releasable: false`, so a live key release no longer fades them. The LOLCODE lead and drones duck for a leading layer (`songLeading`). Arming starts playback; stop, pause, and restart cancel a take; empty takes are announced and discarded; a landed take opens the Keep drawer.
-2. `index.html` and `styles.css`: the `#looper` strip under the keys, with RECORD NEW LOOP, OVERDUB, and CLEAR SONG (`aria-pressed` while armed or recording), a fixed-line readout, and `#looper-announcer`. `looper.mjs` joins the import map.
-3. Tests: static checks for the strip, the conduct-before-play order, layer playback, and non-releasable recorded pads; the duck assertion includes `songLeading`.
-
-**Verified:** 123/123 Node checks. In the browser on "three pigeons" at 208 BPM:
-- RECORD NEW LOOP started the transport and recorded from step 1.
-- Holding G landed "LOOP 1 ADDED TO THE SONG". With no key held, the band then followed the take (bass "G G G+ E♭~" against its own "A♭ A♭ A♭+ E~").
-- An overdub holding D♯ landed "LAYER ADDED TO LOOP 1" and took the lead (bass "E♭ E♭ E♭+ C~").
-- Stopping while armed said "RECORDING STOPPED · NOTHING WAS KEPT", and CLEAR SONG returned the band to its own score.
-- No console errors. One bug was caught and fixed along the way: arming cancelled itself because cancellation sat in `stopCurrentSound()`, which `playScore()` also calls; it now runs only on stop, pause, or restart.
-
-**Not verified:** Listening to stacked layers, especially two pads at once.
-
-**Left undone:** P5-26 phases 3–5 (loop tiles with select, repeats, move, delete, and undo; sessions v4; song exports); the P4-02 screen-reader pass; P6-01.
-
-**Next session should start with:** P5-26 phase 3, the full strip.

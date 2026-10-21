@@ -18,7 +18,7 @@ import { CHIME_NAMES, composeChimes, cycleChimeCell } from "./fractran.mjs";
 import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
 import { composeScore, WAVEFORMS } from "./score.mjs";
-import { GM_DRUMS, MIDI_TRACKS, buildMidiFile, ticksForSeconds, velocitiesFor } from "./midi.mjs";
+import { GM_DRUMS, MIDI_TRACKS, buildMidiFile, funVoiceTracks, ticksForSeconds, velocitiesFor } from "./midi.mjs";
 import { createStoredZip } from "./zip.mjs";
 import {
   ACCOMPANIMENT_STYLES,
@@ -2283,8 +2283,17 @@ function transportEngages(transport, id) {
   return transport.engageAll === true || channelEngaged(id);
 }
 
-function logNote(transport, channel, midi, at, duration, peak) {
-  transport.noteLog?.push({ channel, midi: Math.round(midi), at, duration, peak });
+function logNote(transport, channel, midi, at, duration, peak, voice = null) {
+  transport.noteLog?.push({ channel, midi: Math.round(midi), at, duration, peak, ...(voice ? { voice } : {}) });
+}
+
+// How a Fun Machine note names its voice in the MIDI export (one track per
+// voice, D-040): the creature's own voice is named with the preset it chose.
+function midiVoiceOf(voice) {
+  const label = voice.id === CREATURE_VOICE_ID
+    ? `THE CREATURE'S OWN (${creatureVoiceLabel(currentScore || vision.score)})`
+    : voice.label;
+  return { key: voice.id, label, program: voice.program };
 }
 
 function scheduleNote(context, transport, score, step, at, duration) {
@@ -2994,7 +3003,7 @@ function schedulePadChord(context, destination, chord, at, duration, { level = 1
   const start = Math.max(context.currentTime + 0.01, at);
   const sounding = Math.max(0.3, duration);
   const { env, oscillators, stopAt, peak } = scheduleVoicePad(context, destination, voice, notes, { start, sounding, level, hold: interaction.hold });
-  if (transport) for (const midi of notes) logNote(transport, "fun", midi, start, sounding, peak);
+  if (transport) for (const midi of notes) logNote(transport, "fun", midi, start, sounding, peak, midiVoiceOf(voice));
 
   const handle = { env, oscillators, stopAt };
   // Only live pads can be released; offline renders keep their own clock, and
@@ -3028,14 +3037,14 @@ function releaseFunPads(context, fade = 0.5) {
 function scheduleArpNote(context, destination, midi, at, duration, { accent = false, pan = 0, transport = null, voice = currentFunVoice() } = {}) {
   const start = Math.max(context.currentTime + 0.005, at);
   const { decay, peak } = scheduleVoicePluck(context, destination, voice, midi, { start, duration, accent, pan, hold: interaction.hold });
-  if (transport) logNote(transport, "fun", midi, start, decay, peak);
+  if (transport) logNote(transport, "fun", midi, start, decay, peak, midiVoiceOf(voice));
 }
 
 // The composer's line, gliding from the previous note, in the current voice.
 function scheduleFunLeadNote(context, destination, midi, at, duration, { glideFrom = null, transport = null, voice = currentFunVoice() } = {}) {
   const start = Math.max(context.currentTime + 0.01, at);
   const { sounding, peak } = scheduleVoiceLead(context, destination, voice, midi, { start, duration, glideFrom, hold: interaction.hold });
-  if (transport) logNote(transport, "fun", midi, start, sounding, peak);
+  if (transport) logNote(transport, "fun", midi, start, sounding, peak, midiVoiceOf(voice));
 }
 
 // A negative step clears every plate's playhead (transport stopped).
@@ -4745,8 +4754,12 @@ async function exportSpecimenMidi() {
     failStatus: "MIDI EXPORT FAILED",
   }, async () => {
     const { noteLog, bpm, loopDuration, stepStarts } = await renderEnsembleLoop(score, { engageAll: true, captureNotes: true, render: false });
-    const tracks = MIDI_TRACKS.map((track) => {
+    // The MANUAL part splits into one track per voice it was played in.
+    const parts = MIDI_TRACKS.flatMap((track) => {
       const events = noteLog.filter((event) => event.channel === track.id);
+      return track.id === "fun" ? funVoiceTracks(track, events) : [{ ...track, events }];
+    });
+    const tracks = parts.map(({ events, ...track }) => {
       const velocities = velocitiesFor(events.map((event) => event.peak));
       return {
         ...track,
