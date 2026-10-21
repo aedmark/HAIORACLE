@@ -741,7 +741,7 @@
             "lead": "`src/accompaniment.mjs` turns a key into a performance; `src/app.mjs` voices and schedules it on the band's grid:",
             "points": [
               "`buildPerformance(key, style, genre, tonic)` returns four region chords and twelve steps; the genre colours each chord through `buildFunChord(key, \"auto\", …)`.",
-              "`schedulePadChord()` builds a stereo pad from two saws detuned ±8 cents and a triangle under a slowly opening lowpass, with an attack scaled to the chord's length and a release that crossfades into the next; `padVoicing()` voice-leads each change.",
+              "`schedulePadChord()` plays the chord in the current voice: a validated patch from `src/voices.mjs` (D-040). The default, VELVET PAD, is two saws detuned ±8 cents and a triangle under a slowly opening lowpass, with an attack scaled to the chord's length and a release that crossfades into the next. `padVoicing()` voice-leads each change.",
               "`scheduleArpNote()` plucks `arpeggioNotes()` two per step in each step's real duration; `scheduleFunLeadNote()` glides between progression notes with late-arriving vibrato. The Fun Machine strip feeds the delay and chamber reverb.",
               "A held key calls `applyEnsembleConductor()` with the performance's chords converted by `toTonicRelative()`, so the band plays the pad's chord in the right key, and ducks the LOLCODE lead and drones by 10 dB until release."
             ]
@@ -749,7 +749,8 @@
           "why": "The maintainer wanted pressing a key to feel like a composer leading a band, not like playing a combo organ. Playing on the band's own rhythm and room, re-conducting the band to the held chord, and letting the lead step back makes the player's part the lead (ADR D-029).",
           "evidence": [
             {"label": "Accompanist styles, voicing, arpeggios", "target": "src/accompaniment.mjs"},
-            {"label": "Fun Machine voices, keys, and scheduler", "target": "src/app.mjs"},
+            {"label": "Fun Machine voice patches and synths", "target": "src/voices.mjs"},
+            {"label": "Fun Machine keys, and scheduler", "target": "src/app.mjs"},
             {"label": "Accompanist tests", "target": "tests/accompaniment.test.mjs"},
             {"label": "Architecture Record D-020", "target": "docs/DECISIONS.md"},
             {"label": "Architecture Record D-029", "target": "docs/DECISIONS.md"}

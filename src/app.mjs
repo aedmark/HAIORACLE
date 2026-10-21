@@ -32,6 +32,7 @@ import {
   stepsToRegionBoundary,
   toTonicRelative,
 } from "./accompaniment.mjs";
+import { DEFAULT_VOICE_ID, scheduleVoiceLead, scheduleVoicePad, scheduleVoicePluck, voiceById } from "./voices.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
@@ -2985,79 +2986,25 @@ function getFunMachineDirectDestination(context) {
 // can fade them instead of letting an old chord ring under a new one.
 const funPadHandles = new Set();
 
+// The voice the Fun Machine plays in. Phase 1 of P5-28 has only VELVET PAD;
+// the selector and the creature's own voice arrive in later phases (D-040).
+let funVoiceId = DEFAULT_VOICE_ID;
+function currentFunVoice() {
+  return voiceById(funVoiceId);
+}
+
 /**
- * Schedules one pad chord. Two saws detuned ±8 cents sit hard left and right
- * with a triangle in the middle, under one slowly opening lowpass and one
+ * Schedules one pad chord in the current Fun Machine voice (D-040), under one
  * envelope whose attack scales with the chord's length. The release overlaps
  * the next chord so changes crossfade. Returns a handle for releaseFunPads().
  */
-function schedulePadChord(context, destination, chord, at, duration, { level = 1, voicing = null, transport = null, releasable = true } = {}) {
+function schedulePadChord(context, destination, chord, at, duration, { level = 1, voicing = null, transport = null, releasable = true, voice = currentFunVoice() } = {}) {
   if (!chord) return null;
   const notes = voicing || padVoicing(chord);
   const start = Math.max(context.currentTime + 0.01, at);
   const sounding = Math.max(0.3, duration);
-  const attack = Math.min(0.7, Math.max(0.16, sounding * 0.32));
-  const release = 0.9;
-  const end = start + sounding;
-  const peak = 0.34 * level * (1 + interaction.hold * 0.15) / Math.sqrt(notes.length);
-
-  const env = context.createGain();
-  env.gain.setValueAtTime(0.0001, start);
-  env.gain.linearRampToValueAtTime(peak, start + attack);
-  env.gain.setTargetAtTime(peak * 0.82, start + attack, 0.4);
-  env.gain.setTargetAtTime(0.0001, end, release / 4);
-
-  const filter = context.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.Q.setValueAtTime(0.6, start);
-  filter.frequency.setValueAtTime(420, start);
-  filter.frequency.exponentialRampToValueAtTime(1750, start + attack);
-  filter.frequency.setTargetAtTime(1250, start + attack, 0.5);
-  filter.connect(env).connect(destination);
-
-  const left = context.createStereoPanner ? context.createStereoPanner() : null;
-  const right = context.createStereoPanner ? context.createStereoPanner() : null;
-  left?.pan.setValueAtTime(-0.55, start);
-  right?.pan.setValueAtTime(0.55, start);
-  left?.connect(filter);
-  right?.connect(filter);
-
-  // One slow chorus LFO breathes across every saw in the chord.
-  const lfo = context.createOscillator();
-  const lfoDepth = context.createGain();
-  lfo.frequency.setValueAtTime(0.23, start);
-  lfoDepth.gain.setValueAtTime(6, start);
-  lfo.connect(lfoDepth);
-
-  const stopAt = end + release * 1.6;
-  const oscillators = [lfo];
-  for (const [index, midi] of notes.entries()) {
-    const freq = midiToFrequency(midi);
-    const isRoot = index === 0;
-    const voices = isRoot
-      ? [{ type: "triangle", detune: 0, gain: 0.55, out: filter }]
-      : [
-        { type: "sawtooth", detune: -8, gain: 0.3, out: left || filter },
-        { type: "sawtooth", detune: 8, gain: 0.3, out: right || filter },
-        { type: "triangle", detune: 0, gain: 0.32, out: filter },
-      ];
-    for (const voice of voices) {
-      const osc = context.createOscillator();
-      const gain = context.createGain();
-      osc.type = voice.type;
-      osc.frequency.setValueAtTime(freq, start);
-      osc.detune.setValueAtTime(voice.detune, start);
-      if (voice.type === "sawtooth") lfoDepth.connect(osc.detune);
-      gain.gain.setValueAtTime(voice.gain, start);
-      osc.connect(gain).connect(voice.out);
-      osc.start(start);
-      osc.stop(stopAt);
-      oscillators.push(osc);
-    }
-    if (transport) logNote(transport, "fun", midi, start, sounding, peak);
-  }
-  lfo.start(start);
-  lfo.stop(stopAt);
+  const { env, oscillators, stopAt, peak } = scheduleVoicePad(context, destination, voice, notes, { start, sounding, level, hold: interaction.hold });
+  if (transport) for (const midi of notes) logNote(transport, "fun", midi, start, sounding, peak);
 
   const handle = { env, oscillators, stopAt };
   // Only live pads can be released; offline renders keep their own clock, and
@@ -3087,90 +3034,17 @@ function releaseFunPads(context, fade = 0.5) {
   funPadHandles.clear();
 }
 
-// A soft pluck: triangle plus a quiet pulse through a closing lowpass.
-function scheduleArpNote(context, destination, midi, at, duration, { accent = false, pan = 0, transport = null } = {}) {
+// A pluck for each arpeggio note, in the current voice.
+function scheduleArpNote(context, destination, midi, at, duration, { accent = false, pan = 0, transport = null, voice = currentFunVoice() } = {}) {
   const start = Math.max(context.currentTime + 0.005, at);
-  const decay = Math.min(0.55, Math.max(0.14, duration * 1.6));
-  const peak = (accent ? 0.15 : 0.11) * (1 + interaction.hold * 0.15);
-  const freq = midiToFrequency(midi);
-
-  const env = context.createGain();
-  env.gain.setValueAtTime(0.0001, start);
-  env.gain.linearRampToValueAtTime(peak, start + 0.006);
-  env.gain.exponentialRampToValueAtTime(0.0001, start + decay);
-
-  const filter = context.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.Q.setValueAtTime(1.2, start);
-  filter.frequency.setValueAtTime(accent ? 3600 : 3000, start);
-  filter.frequency.exponentialRampToValueAtTime(700, start + decay);
-
-  const panner = context.createStereoPanner ? context.createStereoPanner() : null;
-  panner?.pan.setValueAtTime(pan, start);
-  filter.connect(env);
-  (panner ? env.connect(panner) : env).connect(destination);
-
-  const body = context.createOscillator();
-  body.type = "triangle";
-  body.frequency.setValueAtTime(freq, start);
-  const edge = context.createOscillator();
-  edge.type = "square";
-  edge.frequency.setValueAtTime(freq, start);
-  edge.detune.setValueAtTime(4, start);
-  const edgeGain = context.createGain();
-  edgeGain.gain.setValueAtTime(0.18, start);
-  body.connect(filter);
-  edge.connect(edgeGain).connect(filter);
-  for (const osc of [body, edge]) {
-    osc.start(start);
-    osc.stop(start + decay + 0.05);
-  }
+  const { decay, peak } = scheduleVoicePluck(context, destination, voice, midi, { start, duration, accent, pan, hold: interaction.hold });
   if (transport) logNote(transport, "fun", midi, start, decay, peak);
 }
 
-// The composer's line: sine and triangle with a quiet octave, gliding from the
-// previous note, with vibrato that only arrives once the note has settled.
-function scheduleFunLeadNote(context, destination, midi, at, duration, { glideFrom = null, transport = null } = {}) {
+// The composer's line, gliding from the previous note, in the current voice.
+function scheduleFunLeadNote(context, destination, midi, at, duration, { glideFrom = null, transport = null, voice = currentFunVoice() } = {}) {
   const start = Math.max(context.currentTime + 0.01, at);
-  const sounding = Math.max(0.14, duration);
-  const freq = midiToFrequency(midi);
-  const fromFreq = glideFrom ? midiToFrequency(glideFrom) : freq;
-  const peak = 0.2 * (1 + interaction.hold * 0.15);
-
-  const env = context.createGain();
-  env.gain.setValueAtTime(0.0001, start);
-  env.gain.linearRampToValueAtTime(peak, start + 0.035);
-  env.gain.setTargetAtTime(peak * 0.8, start + 0.035, 0.2);
-  env.gain.setTargetAtTime(0.0001, start + sounding, 0.06);
-
-  const filter = context.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.setValueAtTime(2600, start);
-  filter.Q.setValueAtTime(0.7, start);
-  filter.connect(env).connect(destination);
-
-  const vibrato = context.createOscillator();
-  const vibratoDepth = context.createGain();
-  vibrato.frequency.setValueAtTime(5.2, start);
-  vibratoDepth.gain.setValueAtTime(0, start);
-  vibratoDepth.gain.linearRampToValueAtTime(9, start + Math.min(0.45, sounding * 0.6));
-  vibrato.connect(vibratoDepth);
-
-  const stopAt = start + sounding + 0.3;
-  for (const [type, ratio, gain] of [["sine", 1, 0.6], ["triangle", 1, 0.32], ["sine", 2, 0.08]]) {
-    const osc = context.createOscillator();
-    const level = context.createGain();
-    osc.type = type;
-    osc.frequency.setValueAtTime(fromFreq * ratio, start);
-    osc.frequency.exponentialRampToValueAtTime(freq * ratio, start + (glideFrom ? 0.07 : 0.005));
-    vibratoDepth.connect(osc.detune);
-    level.gain.setValueAtTime(gain, start);
-    osc.connect(level).connect(filter);
-    osc.start(start);
-    osc.stop(stopAt);
-  }
-  vibrato.start(start);
-  vibrato.stop(stopAt);
+  const { sounding, peak } = scheduleVoiceLead(context, destination, voice, midi, { start, duration, glideFrom, hold: interaction.hold });
   if (transport) logNote(transport, "fun", midi, start, sounding, peak);
 }
 

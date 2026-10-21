@@ -598,11 +598,11 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 
 **Consequences:** The Fun Machine gains a real arrangement surface. Exports grow with the song. Sessions change format again (v4). Build in phases (P5-26).
 
-## D-040 The Fun Machine chooses a voice: the creature's own, or a parlor preset (2026-10-20, status: proposed)
+## D-040 The Fun Machine chooses a voice: the creature's own, or a parlor preset (2026-10-20, status: accepted)
 
 **Context:** Every phrase plays the Fun Machine through the same velvet pad (two detuned saws and a triangle per note, a 0.23 Hz chorus, and a lowpass that opens on the attack), the same triangle-and-square pluck for arpeggios, and the same sine lead. The maintainer asked on 2026-10-20 for a voice selector, so it is "not always the same synth pad": each phrase should be able to choose its own voice deterministically, and there should be presets that are known to sound good.
 
-**Decision (proposed):**
+**Decision:**
 1. **A voice is a patch, not code.** `src/voices.mjs` holds frozen, validated patch objects. Each patch has three parts, one per accompaniment role (`pad`, `pluck` for arpeggios, `lead`). Each part gives:
    - up to three oscillator layers, each with a type, a frequency ratio, detune, gain, and stereo spread;
    - an optional sub layer;
@@ -612,24 +612,23 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
    - a chorus LFO (rate and depth) and a delayed vibrato (rate and depth).
 
    `schedulePadChord()`, `scheduleArpNote()`, and `scheduleFunLeadNote()` read a patch instead of hard-coded numbers. A validator bounds every field: at most 3 layers per note, filter 80–8000 Hz, Q ≤ 8, and attack and release within the current ranges. That limits oscillator count and stops a bad patch from clipping or screeching.
-2. **Presets, tuned by ear.** There are eight curated presets, in parlor language:
+2. **Presets, tuned by ear.** There are seven curated presets, in parlor language:
    - **VELVET PAD**: today's sound, bit for bit. It is the reference and the fallback.
    - **HARMONIUM**: a reed square, a slow bellows swell, and a little nasal bandpass.
    - **GLASS HARMONICA**: sine partials at 1 and 2.76, a soft attack, and long tails.
    - **THEATRE ORGAN**: drawbar-style stacked sines at 1, 2, 3, and 4 with a tremulant.
    - **STRING MACHINE**: an ensemble of three detuned saws with a fast chorus. It is a Solina homage.
    - **MUSIC BOX**: struck triangles at 1 and 4 with a short decay. The pad becomes a rolled chord.
-   - **CALLIOPE**: breathy pulse, with wide vibrato and noise.
    - **ÆTHER CHOIR**: two formant bandpasses over a saw, sharing vowel tables with Plate VI.
 
    Each preset names the General MIDI program its MIDI track announces.
 3. **The creature's own voice (deterministic).** `src/oracle.lol` gains three score fields, drawn with new, unused divisors so that no existing field changes:
-   - `fun_voice` picks one of the eight presets;
+   - `fun_voice` picks one of the seven presets;
    - `fun_bright` (−3..3) shifts the filter by octave-fractions;
    - `fun_spread` (0..4) scales detune and stereo width.
 
    The host applies the two tweaks inside the validator's bounds. The selector's default, **THE CREATURE'S OWN**, plays that result, so the same phrase always sounds the same and every phrase is still a known-good family. This keeps the spell causal: the creature's voice originates in the score.
-4. **The selector.** A row of voice chips under the style chips on the Fun Machine: THE CREATURE'S OWN, then the eight presets. They work like the style chips (`aria-pressed`, keyboard reachable, no layout shift). Optionally, a rulebook may name a voice that suits it ("The suggested voice of Gospel Shout is theatre organ."), and a ninth chip, **MATCH THE RULEBOOK**, follows it (D-041).
+4. **The selector.** A row of voice chips under the style chips on the Fun Machine: THE CREATURE'S OWN, then the seven presets. They work like the style chips (`aria-pressed`, keyboard reachable, no layout shift). A rulebook-suggested voice (**MATCH THE RULEBOOK**) is deferred to D-041.
 5. **Recorded takes keep their voice.** A loop-machine slot becomes `{ key, style, voice }`, with voice resolved to a preset id when recorded, so stacked layers can be different instruments. Sessions become v5 with `funMachine.voice`. Files from v1–v4 open with VELVET PAD everywhere, so they sound as they did when saved.
 6. **Exports.** The MANUAL stem renders each slot's voice, and the MIDI Fun Machine track sends a program change whenever the voice changes.
 
@@ -644,7 +643,11 @@ The excerpt matches `src/rulebooks.ni` as built in phase 2.
 - Creatures' Fun Machine sound changes by default. That is the point, but VELVET PAD is one click away.
 - CPU stays bounded by the layer cap.
 
-**Open choices (recommendations first):** voice per slot, so layers can differ (recommended), or per song; whether to ship MATCH THE RULEBOOK with D-041 wave 1 or later.
+**Maintainer answers (2026-10-20):**
+- Voices are kept per recorded slot, so layers can differ.
+- THE CREATURE'S OWN is the default.
+- MATCH THE RULEBOOK waits for D-041, so each new genre ships with a suggested voice.
+- CALLIOPE is dropped, leaving seven presets.
 
 ## D-041 Many more Kapellmeister genres, in waves, written in Inform 7 (2026-10-20, status: proposed)
 

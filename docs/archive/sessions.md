@@ -906,3 +906,23 @@ Older sessions: [archive/sessions.md](sessions.md).
 **Next session should start with:** the maintainer's listen, then P5-23 phase 5.
 
 Older sessions: [archive/sessions.md](sessions.md).
+
+### Session 37: 2026-10-20: Inform 7 rulebooks, phase 5 (P5-23 complete)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-23 phase 5: prove a genre written only in Inform 7 plays with no JavaScript change (D-033).
+
+**Done:** P5-23 (all five phases).
+
+**Changed:**
+1. `tests/fixtures/barbershop.ni`: a barbershop quartet. Changes I → VI7 → II7 → V7, a major tonic with every other key coloured dom7, a "Barbershop Tag" progression, a root–fifth bass walk, organ voicing {third, fifth, seventh}, melody snapping to {root, third, fifth, seventh}, and overtones ringing 7/4. It reuses the canonical kinds and adds its own three tables.
+2. `tests/seventh-genre.test.mjs`: appends it to `src/rulebooks.ni`, installs the result, and checks that the six canonical genres compile identically. It then checks key colours, the progression summary ("D Maj → B7 → E7 → A7"), the accompanist's chords and lifted lead, the conducted spine, bass walk and insistent gates, organ voicing, melody on chord members, and overtones. Sessions accept the new code but still refuse "polka", and no `src/*.mjs` or `index.html` mentions "barbershop".
+
+**Verified:** 112/112 Node checks; the new suite passed on its first run.
+
+**Not verified:** The barbershop genre in the browser. It is test-only and never shipped.
+
+**Left undone:** A seventh playable genre in `src/rulebooks.ni` (the maintainer's follow-up); listening passes; P4-02; P6-01.
+
+**Next session should start with:** the maintainer's choice: ship a seventh genre, the outstanding listening passes, or P4-02 / P6-01.

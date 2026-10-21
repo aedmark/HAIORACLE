@@ -87,6 +87,38 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 47: 2026-10-20: Fun Machine voices, phase 1 (P5-28)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** The maintainer asked for a voice selector so the one-finger accompaniment is not always the same pad, with deterministic per-phrase voices and good presets. The spec is D-040.
+
+**Done:** D-040 accepted, with the maintainer's answers:
+- voices are kept per recorded slot;
+- THE CREATURE'S OWN is the default;
+- MATCH THE RULEBOOK waits for D-041;
+- CALLIOPE is dropped, leaving seven presets.
+
+D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
+
+**Changed:**
+1. New `src/voices.mjs`:
+   - a strictly validated voice patch (`validateVoice()`, `VoiceError` paths) with three parts (`pad`, `pluck`, `lead`), bounded layer counts, frequencies, Q, and levels;
+   - `VOICE_PRESETS`, which holds only VELVET PAD for now, and `voiceById()`, which falls back to it;
+   - `scheduleVoicePad()`, `scheduleVoicePluck()`, and `scheduleVoiceLead()`.
+2. `src/app.mjs`: `schedulePadChord()`, `scheduleArpNote()`, and `scheduleFunLeadNote()` are now thin wrappers that clamp times, log notes, and track live pads. They take an optional `voice`, defaulting to `currentFunVoice()`, which is VELVET PAD until phase 4 adds the selector.
+3. `index.html`: `voices.mjs` joins the versioned module list, and the stamp is restamped. Tests: `tests/voices.test.mjs`.
+4. The patch key is `base` rather than `from`, because `tests/assets.test.mjs` scans for `from "…"` import specifiers.
+
+**Verified:**
+- 131/131 Node checks.
+- Parity: the old synth source (from the pre-change `app.mjs`) and the new patch synths were rendered offline in the browser for the pad, two plucks (accent and plain), and two leads (with and without glide), each at vitrine hold 0 and 0.6. The largest sample difference was 1.6×10⁻⁷ (about −136 dB), which is float rounding; the plucks were bit-identical.
+- Live: SWELL, ARPEGGIO, and PROGRESSION each played with a key held, with no console errors.
+
+**Not verified:** Nothing audible changed, so no listen is needed yet.
+
+**Next session should start with:** P5-28 phase 2, the six other presets: HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, and ÆTHER CHOIR. Some need patch features that are not in the schema yet: tremolo (THEATRE ORGAN), formant bandpasses (ÆTHER CHOIR), and a rolled pad strum (MUSIC BOX). Each preset is tuned by ear with the maintainer.
+
 ### Session 46: 2026-10-20: the lead's drone breathes
 
 **Contributor:** Claude Code with maintainer direction
@@ -290,23 +322,3 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 **Left undone:** Listening passes; P4-02; P6-01.
 
 **Next session should start with:** the maintainer's listen to Parlor Ragtime.
-
-### Session 37: 2026-10-20: Inform 7 rulebooks, phase 5 (P5-23 complete)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-23 phase 5: prove a genre written only in Inform 7 plays with no JavaScript change (D-033).
-
-**Done:** P5-23 (all five phases).
-
-**Changed:**
-1. `tests/fixtures/barbershop.ni`: a barbershop quartet. Changes I → VI7 → II7 → V7, a major tonic with every other key coloured dom7, a "Barbershop Tag" progression, a root–fifth bass walk, organ voicing {third, fifth, seventh}, melody snapping to {root, third, fifth, seventh}, and overtones ringing 7/4. It reuses the canonical kinds and adds its own three tables.
-2. `tests/seventh-genre.test.mjs`: appends it to `src/rulebooks.ni`, installs the result, and checks that the six canonical genres compile identically. It then checks key colours, the progression summary ("D Maj → B7 → E7 → A7"), the accompanist's chords and lifted lead, the conducted spine, bass walk and insistent gates, organ voicing, melody on chord members, and overtones. Sessions accept the new code but still refuse "polka", and no `src/*.mjs` or `index.html` mentions "barbershop".
-
-**Verified:** 112/112 Node checks; the new suite passed on its first run.
-
-**Not verified:** The barbershop genre in the browser. It is test-only and never shipped.
-
-**Left undone:** A seventh playable genre in `src/rulebooks.ni` (the maintainer's follow-up); listening passes; P4-02; P6-01.
-
-**Next session should start with:** the maintainer's choice: ship a seventh genre, the outstanding listening passes, or P4-02 / P6-01.
