@@ -179,6 +179,19 @@
             <span class="fun-style-hint">HOLD A KEY · THE BAND FOLLOWS YOU · GENRE PICKS THE CHORD COLOURS</span>
           </div>
 
+          <div class="fun-quality-bar" role="group" aria-label="Accompaniment voice">
+            <span class="fun-quality-label">VOICE:</span>
+            <div class="fun-quality-chips" id="fun-voice-chips">
+              <button class="fun-chip is-active" data-voice="velvet_pad" type="button" aria-pressed="true" title="Warm detuned saws under a slowly opening filter">VELVET PAD</button>
+              <button class="fun-chip" data-voice="harmonium" type="button" aria-pressed="false" title="A pump organ: reedy and nasal, slow to speak">HARMONIUM</button>
+              <button class="fun-chip" data-voice="glass_harmonica" type="button" aria-pressed="false" title="Pure glass partials that bloom slowly and ring long">GLASS HARMONICA</button>
+              <button class="fun-chip" data-voice="theatre_organ" type="button" aria-pressed="false" title="Drawbar sines with a deep tremulant, like a cinema organ">THEATRE ORGAN</button>
+              <button class="fun-chip" data-voice="string_machine" type="button" aria-pressed="false" title="A 1970s ensemble string machine swimming in chorus">STRING MACHINE</button>
+              <button class="fun-chip" data-voice="music_box" type="button" aria-pressed="false" title="Rolled, struck chords that ring and fade like a wind-up cylinder">MUSIC BOX</button>
+              <button class="fun-chip" data-voice="aether_choir" type="button" aria-pressed="false" title="Saws sung through the formants of a spectral choir">ÆTHER CHOIR</button>
+            </div>
+          </div>
+
           <div class="fun-keyboard-wrap">
             <div class="fun-keyboard" id="fun-keyboard" role="group" aria-label="Edmark's Esoteric Fun Machine Real-Time Play-Along Keyboard Manual">
               <button class="fun-key fun-key-white" data-semitone="0" data-key="KeyA" type="button" aria-label="Key C (shortcut A)">
@@ -654,7 +667,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "1dbf2a1a1a99";
+      const ASSET_VERSION = "b8acc87ea612";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

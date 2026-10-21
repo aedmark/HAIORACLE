@@ -88,10 +88,34 @@ export class VoiceError extends Error {
 const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value)
   && Object.getPrototypeOf(value) === Object.prototype;
 
-function expectKeys(value, path, keys) {
+function expectKeys(value, path, keys, optional = []) {
   if (!isPlainObject(value)) throw new VoiceError(path, "must be an object");
-  for (const key of Object.keys(value)) if (!keys.includes(key)) throw new VoiceError(`${path}.${key}`, "is not allowed");
+  for (const key of Object.keys(value)) if (!keys.includes(key) && !optional.includes(key)) throw new VoiceError(`${path}.${key}`, "is not allowed");
   for (const key of keys) if (!(key in value)) throw new VoiceError(`${path}.${key}`, "is required");
+}
+
+// Optional colour shared by pad and lead: an amplitude tremolo (the theatre
+// organ's tremulant) and up to three parallel formant bandpasses (the choir).
+function checkTremolo(tremolo, path) {
+  expectKeys(tremolo, path, ["rate", "depth"]);
+  expectNumber(tremolo.rate, `${path}.rate`, 0.1, 12);
+  expectNumber(tremolo.depth, `${path}.depth`, 0, 0.5);
+}
+
+function checkFormants(formants, path) {
+  if (!Array.isArray(formants) || formants.length < 1 || formants.length > 3) throw new VoiceError(path, "must list 1..3 formants");
+  formants.forEach((formant, index) => {
+    const at = `${path}[${index}]`;
+    expectKeys(formant, at, ["freq", "q", "gain"]);
+    expectNumber(formant.freq, `${at}.freq`, 150, 5000);
+    expectNumber(formant.q, `${at}.q`, 0.5, 12);
+    expectNumber(formant.gain, `${at}.gain`, 0, 2);
+  });
+}
+
+function checkColour(part, path) {
+  if ("tremolo" in part) checkTremolo(part.tremolo, `${path}.tremolo`);
+  if ("formants" in part) checkFormants(part.formants, `${path}.formants`);
 }
 
 function expectNumber(value, path, min, max) {
@@ -123,7 +147,15 @@ function checkLayers(layers, path, keys) {
 const FREQUENCY = [80, 8000];
 
 function checkPad(pad, path) {
-  expectKeys(pad, path, ["level", "attack", "sustain", "sustainTau", "release", "tail", "filter", "width", "chorus", "root", "upper"]);
+  expectKeys(pad, path, ["level", "attack", "sustain", "sustainTau", "release", "tail", "filter", "width", "chorus", "root", "upper"], ["tremolo", "formants", "strike"]);
+  checkColour(pad, path);
+  // A struck pad (the music box): each note rolls in `strum` seconds after the
+  // last and every layer dies away over `decay`, instead of sustaining.
+  if ("strike" in pad) {
+    expectKeys(pad.strike, `${path}.strike`, ["strum", "decay"]);
+    expectNumber(pad.strike.strum, `${path}.strike.strum`, 0, 0.2);
+    expectNumber(pad.strike.decay, `${path}.strike.decay`, 0.1, 4);
+  }
   expectNumber(pad.level, `${path}.level`, 0, 0.5);
   expectKeys(pad.attack, `${path}.attack`, ["share", "min", "max"]);
   expectNumber(pad.attack.share, `${path}.attack.share`, 0, 1);
@@ -165,7 +197,8 @@ function checkPluck(pluck, path) {
 }
 
 function checkLead(lead, path) {
-  expectKeys(lead, path, ["level", "attack", "sustain", "sustainTau", "releaseTau", "minLength", "tail", "glide", "filter", "vibrato", "layers"]);
+  expectKeys(lead, path, ["level", "attack", "sustain", "sustainTau", "releaseTau", "minLength", "tail", "glide", "filter", "vibrato", "layers"], ["tremolo", "formants"]);
+  checkColour(lead, path);
   expectNumber(lead.level, `${path}.level`, 0, 0.35);
   expectNumber(lead.attack, `${path}.attack`, 0.002, 1);
   expectNumber(lead.sustain, `${path}.sustain`, 0, 1);
@@ -198,8 +231,279 @@ export function validateVoice(raw, path = "voice") {
   return deepFreeze(structuredClone(raw));
 }
 
-// The shipped presets, in chip order. Phase 2 adds the other six (D-040).
-export const VOICE_PRESETS = Object.freeze([VELVET_PAD].map((voice) => validateVoice(voice)));
+// The parlor presets (D-040), first-pass numbers to be tuned by ear. Levels are
+// set so each sits near VELVET PAD's loudness on the Fun Machine strip.
+const layer = (type, ratio, detune, gain, side = "center", chorus = false) => ({ type, ratio, detune, gain, side, chorus });
+const tone = (type, ratio, detune, gain) => ({ type, ratio, detune, gain });
+
+// A pump organ: reedy squares under a nasal resonance, slow to speak.
+const HARMONIUM = deepFreeze({
+  id: "harmonium",
+  label: "HARMONIUM",
+  program: 20, // Reed Organ
+  pad: {
+    level: 0.39,
+    attack: { share: 0.45, min: 0.25, max: 0.9 },
+    sustain: 0.9,
+    sustainTau: 0.6,
+    release: 0.5,
+    tail: 1.6,
+    filter: { type: "lowpass", q: 2.2, base: 700, peak: 2200, settle: 1700, settleTau: 0.6 },
+    width: 0.4,
+    chorus: { rate: 0.4, depth: 3 },
+    tremolo: { rate: 4.6, depth: 0.06 },
+    root: [layer("square", 1, 0, 0.36), layer("sawtooth", 2, 0, 0.1)],
+    upper: [layer("square", 1, -4, 0.24, "left", true), layer("square", 1, 4, 0.24, "right", true), layer("sawtooth", 1, 0, 0.12)],
+  },
+  pluck: {
+    level: 0.1,
+    accentLevel: 0.14,
+    attack: 0.012,
+    decay: { share: 1.4, min: 0.14, max: 0.5 },
+    tail: 0.05,
+    filter: { type: "lowpass", q: 2, base: 2400, accentBase: 2900, to: 900 },
+    layers: [tone("square", 1, 0, 0.5), tone("triangle", 1, 3, 0.6)],
+  },
+  lead: {
+    level: 0.21,
+    attack: 0.06,
+    sustain: 0.9,
+    sustainTau: 0.3,
+    releaseTau: 0.07,
+    minLength: 0.14,
+    tail: 0.3,
+    glide: 0.05,
+    filter: { type: "lowpass", q: 1.5, base: 1900 },
+    vibrato: { rate: 5, depth: 5, delayMax: 0.5, delayShare: 0.6 },
+    layers: [tone("square", 1, 0, 0.35), tone("triangle", 1, 0, 0.45), tone("sawtooth", 2, 0, 0.05)],
+  },
+});
+
+// Wet fingers on spinning glass: pure partials at 1 and 2.76, slow to bloom
+// and slow to fade, with the faint beating of a glass bowl.
+const GLASS_HARMONICA = deepFreeze({
+  id: "glass_harmonica",
+  label: "GLASS HARMONICA",
+  program: 98, // FX 3 (crystal)
+  pad: {
+    level: 0.31,
+    attack: { share: 0.5, min: 0.3, max: 1.2 },
+    sustain: 0.75,
+    sustainTau: 0.8,
+    release: 1.8,
+    tail: 1.6,
+    filter: { type: "lowpass", q: 0.5, base: 2400, peak: 4200, settle: 3200, settleTau: 0.8 },
+    width: 0.6,
+    chorus: { rate: 0.15, depth: 4 },
+    tremolo: { rate: 3.2, depth: 0.1 },
+    root: [layer("sine", 1, 0, 0.6), layer("sine", 2.76, 0, 0.08)],
+    upper: [layer("sine", 1, -3, 0.4, "left", true), layer("sine", 1, 3, 0.4, "right", true), layer("sine", 2.76, 0, 0.06)],
+  },
+  pluck: {
+    level: 0.086,
+    accentLevel: 0.115,
+    attack: 0.02,
+    decay: { share: 2.5, min: 0.3, max: 1.2 },
+    tail: 0.1,
+    filter: { type: "lowpass", q: 0.5, base: 5000, accentBase: 6000, to: 2500 },
+    layers: [tone("sine", 1, 0, 1), tone("sine", 2.76, 0, 0.18)],
+  },
+  lead: {
+    level: 0.2,
+    attack: 0.09,
+    sustain: 0.8,
+    sustainTau: 0.4,
+    releaseTau: 0.15,
+    minLength: 0.18,
+    tail: 0.6,
+    glide: 0.1,
+    filter: { type: "lowpass", q: 0.5, base: 4000 },
+    vibrato: { rate: 4.5, depth: 5, delayMax: 0.5, delayShare: 0.6 },
+    layers: [tone("sine", 1, 0, 0.75), tone("triangle", 1, 0, 0.15), tone("sine", 2.76, 0, 0.05)],
+  },
+});
+
+// A cinema Wurlitzer: drawbar sines at 8', 4', and 2 2/3' with a deep tibia
+// tremulant; it speaks at once and stops at once.
+const THEATRE_ORGAN = deepFreeze({
+  id: "theatre_organ",
+  label: "THEATRE ORGAN",
+  program: 16, // Drawbar Organ
+  pad: {
+    level: 0.2,
+    attack: { share: 0.05, min: 0.02, max: 0.06 },
+    sustain: 1,
+    sustainTau: 0.5,
+    release: 0.3,
+    tail: 2,
+    filter: { type: "lowpass", q: 0.5, base: 3500, peak: 3500, settle: 3500, settleTau: 0.5 },
+    width: 0.35,
+    chorus: { rate: 0.5, depth: 2 },
+    tremolo: { rate: 6.8, depth: 0.22 },
+    root: [layer("sine", 1, 0, 0.5), layer("sine", 2, 0, 0.3), layer("sine", 3, 0, 0.16)],
+    upper: [layer("sine", 1, 0, 0.5), layer("sine", 2, 0, 0.3, "left", true), layer("sine", 3, 0, 0.16, "right", true)],
+  },
+  pluck: {
+    level: 0.176,
+    accentLevel: 0.246,
+    attack: 0.004,
+    decay: { share: 1.2, min: 0.12, max: 0.4 },
+    tail: 0.05,
+    filter: { type: "lowpass", q: 0.5, base: 4200, accentBase: 5000, to: 2400 },
+    layers: [tone("sine", 1, 0, 0.6), tone("sine", 2, 0, 0.35), tone("sine", 3, 0, 0.2)],
+  },
+  lead: {
+    level: 0.31,
+    attack: 0.012,
+    sustain: 1,
+    sustainTau: 0.3,
+    releaseTau: 0.04,
+    minLength: 0.14,
+    tail: 0.25,
+    glide: 0.04,
+    filter: { type: "lowpass", q: 0.5, base: 4500 },
+    vibrato: { rate: 6.8, depth: 10, delayMax: 0.2, delayShare: 0.4 },
+    tremolo: { rate: 6.8, depth: 0.2 },
+    layers: [tone("sine", 1, 0, 0.55), tone("sine", 2, 0, 0.28), tone("sine", 4, 0, 0.1)],
+  },
+});
+
+// A 1970s ensemble string machine: three saws a little apart, swimming in a
+// fast chorus under a soft lowpass.
+const STRING_MACHINE = deepFreeze({
+  id: "string_machine",
+  label: "STRING MACHINE",
+  program: 50, // Synth Strings 1
+  pad: {
+    level: 0.5,
+    attack: { share: 0.4, min: 0.2, max: 0.8 },
+    sustain: 0.9,
+    sustainTau: 0.5,
+    release: 1.2,
+    tail: 1.6,
+    filter: { type: "lowpass", q: 0.7, base: 800, peak: 2600, settle: 2000, settleTau: 0.6 },
+    width: 0.7,
+    chorus: { rate: 4.8, depth: 7 },
+    root: [layer("sawtooth", 1, -6, 0.3, "left", true), layer("sawtooth", 1, 6, 0.3, "right", true), layer("sawtooth", 1, 0, 0.25)],
+    upper: [layer("sawtooth", 1, -6, 0.3, "left", true), layer("sawtooth", 1, 6, 0.3, "right", true), layer("sawtooth", 1, 0, 0.25)],
+  },
+  pluck: {
+    level: 0.127,
+    accentLevel: 0.178,
+    attack: 0.01,
+    decay: { share: 1.8, min: 0.16, max: 0.6 },
+    tail: 0.05,
+    filter: { type: "lowpass", q: 1, base: 2800, accentBase: 3400, to: 800 },
+    layers: [tone("sawtooth", 1, -5, 0.4), tone("sawtooth", 1, 5, 0.4), tone("triangle", 1, 0, 0.4)],
+  },
+  lead: {
+    level: 0.35,
+    attack: 0.05,
+    sustain: 0.85,
+    sustainTau: 0.3,
+    releaseTau: 0.1,
+    minLength: 0.14,
+    tail: 0.4,
+    glide: 0.08,
+    filter: { type: "lowpass", q: 0.8, base: 2200 },
+    vibrato: { rate: 5.5, depth: 10, delayMax: 0.4, delayShare: 0.6 },
+    layers: [tone("sawtooth", 1, -5, 0.5), tone("sawtooth", 1, 5, 0.5), tone("triangle", 1, 0, 0.2)],
+  },
+});
+
+// A wind-up cylinder: every chord is rolled and struck, tines ringing a
+// faint two-octave overtone, and nothing sustains.
+const MUSIC_BOX = deepFreeze({
+  id: "music_box",
+  label: "MUSIC BOX",
+  program: 10, // Music Box
+  pad: {
+    level: 0.5,
+    attack: { share: 0, min: 0.005, max: 0.005 },
+    sustain: 1,
+    sustainTau: 0.5,
+    release: 0.6,
+    tail: 1.6,
+    filter: { type: "lowpass", q: 0.5, base: 6000, peak: 6000, settle: 6000, settleTau: 0.5 },
+    width: 0.5,
+    chorus: { rate: 0.2, depth: 1 },
+    strike: { strum: 0.04, decay: 1.4 },
+    root: [layer("triangle", 1, 0, 0.9), layer("sine", 4, 0, 0.16)],
+    upper: [layer("triangle", 1, 0, 0.85, "left"), layer("sine", 4, 0, 0.14, "right"), layer("sine", 2, 0, 0.16)],
+  },
+  pluck: {
+    level: 0.12,
+    accentLevel: 0.16,
+    attack: 0.003,
+    decay: { share: 3, min: 0.25, max: 1.2 },
+    tail: 0.05,
+    filter: { type: "lowpass", q: 0.5, base: 6000, accentBase: 7000, to: 3000 },
+    layers: [tone("triangle", 1, 0, 0.9), tone("sine", 4, 0, 0.2)],
+  },
+  lead: {
+    level: 0.29,
+    attack: 0.004,
+    sustain: 0.2,
+    sustainTau: 0.3,
+    releaseTau: 0.2,
+    minLength: 0.14,
+    tail: 0.8,
+    glide: 0.005,
+    filter: { type: "lowpass", q: 0.5, base: 6000 },
+    vibrato: { rate: 0.1, depth: 0, delayMax: 0.1, delayShare: 0.5 },
+    layers: [tone("triangle", 1, 0, 0.65), tone("sine", 4, 0, 0.12), tone("sine", 2, 0, 0.1)],
+  },
+});
+
+// A spectral parlour chorus: saws sung through the formants of "ah" (pad) and
+// "oh" (lead), with a slow shimmer and a singer's vibrato.
+const AETHER_CHOIR = deepFreeze({
+  id: "aether_choir",
+  label: "ÆTHER CHOIR",
+  program: 52, // Choir Aahs
+  pad: {
+    level: 0.5,
+    attack: { share: 0.5, min: 0.25, max: 1 },
+    sustain: 0.85,
+    sustainTau: 0.6,
+    release: 1.4,
+    tail: 1.6,
+    filter: { type: "lowpass", q: 0.5, base: 1500, peak: 3500, settle: 3000, settleTau: 0.6 },
+    width: 0.6,
+    chorus: { rate: 0.3, depth: 8 },
+    formants: [{ freq: 730, q: 6, gain: 2 }, { freq: 1090, q: 8, gain: 1.25 }, { freq: 2440, q: 8, gain: 0.75 }],
+    root: [layer("sawtooth", 1, 0, 0.8, "center", true), layer("triangle", 1, 0, 0.3)],
+    upper: [layer("sawtooth", 1, -7, 0.7, "left", true), layer("sawtooth", 1, 7, 0.7, "right", true), layer("triangle", 1, 0, 0.2)],
+  },
+  pluck: {
+    level: 0.11,
+    accentLevel: 0.15,
+    attack: 0.03,
+    decay: { share: 2, min: 0.2, max: 0.7 },
+    tail: 0.08,
+    filter: { type: "lowpass", q: 0.8, base: 1600, accentBase: 2000, to: 600 },
+    layers: [tone("sawtooth", 1, 0, 0.35), tone("triangle", 1, 0, 0.7)],
+  },
+  lead: {
+    level: 0.35,
+    attack: 0.08,
+    sustain: 0.85,
+    sustainTau: 0.4,
+    releaseTau: 0.12,
+    minLength: 0.16,
+    tail: 0.5,
+    glide: 0.09,
+    filter: { type: "lowpass", q: 0.5, base: 3200 },
+    vibrato: { rate: 5, depth: 14, delayMax: 0.35, delayShare: 0.5 },
+    formants: [{ freq: 450, q: 6, gain: 2 }, { freq: 800, q: 8, gain: 1.25 }, { freq: 2830, q: 8, gain: 0.6 }],
+    layers: [tone("sawtooth", 1, 0, 0.8), tone("triangle", 1, 0, 0.3)],
+  },
+});
+
+// The shipped presets, in chip order (D-040).
+export const VOICE_PRESETS = Object.freeze([
+  VELVET_PAD, HARMONIUM, GLASS_HARMONICA, THEATRE_ORGAN, STRING_MACHINE, MUSIC_BOX, AETHER_CHOIR,
+].map((voice) => validateVoice(voice)));
 const PRESETS_BY_ID = new Map(VOICE_PRESETS.map((voice) => [voice.id, voice]));
 export const VOICE_IDS = Object.freeze(VOICE_PRESETS.map((voice) => voice.id));
 
@@ -213,6 +517,42 @@ export function voiceById(id) {
 // times already clamped by the caller; `hold` is the vitrine press (0..1).
 
 const midiToFrequency = (midi) => 440 * 2 ** ((midi - 69) / 12);
+
+// Routes `source` (the part's filter) to `env`, through formants when the part
+// has them. Returns nothing; the formant nodes live as long as the filter.
+function connectThroughFormants(context, source, env, formants, start) {
+  if (!formants) {
+    source.connect(env);
+    return;
+  }
+  for (const formant of formants) {
+    const band = context.createBiquadFilter();
+    const level = context.createGain();
+    band.type = "bandpass";
+    band.frequency.setValueAtTime(formant.freq, start);
+    band.Q.setValueAtTime(formant.q, start);
+    level.gain.setValueAtTime(formant.gain, start);
+    source.connect(band).connect(level).connect(env);
+  }
+}
+
+// Sends `env` to `destination`, through a tremolo when the part has one.
+// Returns the tremolo LFO (to start and stop with the note), or null.
+function connectThroughTremolo(context, env, destination, tremolo, start) {
+  if (!tremolo) {
+    env.connect(destination);
+    return null;
+  }
+  const swell = context.createGain();
+  const lfo = context.createOscillator();
+  const depth = context.createGain();
+  swell.gain.setValueAtTime(1 - tremolo.depth, start);
+  lfo.frequency.setValueAtTime(tremolo.rate, start);
+  depth.gain.setValueAtTime(tremolo.depth, start);
+  lfo.connect(depth).connect(swell.gain);
+  env.connect(swell).connect(destination);
+  return lfo;
+}
 
 /** One pad chord. Returns the nodes a live release needs, and the peak for the note log. */
 export function scheduleVoicePad(context, destination, voice, notes, { start, sounding, level = 1, hold = 0 }) {
@@ -233,7 +573,8 @@ export function scheduleVoicePad(context, destination, voice, notes, { start, so
   filter.frequency.setValueAtTime(pad.filter.base, start);
   filter.frequency.exponentialRampToValueAtTime(pad.filter.peak, start + attack);
   filter.frequency.setTargetAtTime(pad.filter.settle, start + attack, pad.filter.settleTau);
-  filter.connect(env).connect(destination);
+  connectThroughFormants(context, filter, env, pad.formants, start);
+  const tremolo = connectThroughTremolo(context, env, destination, pad.tremolo, start);
 
   const left = context.createStereoPanner ? context.createStereoPanner() : null;
   const right = context.createStereoPanner ? context.createStereoPanner() : null;
@@ -251,25 +592,36 @@ export function scheduleVoicePad(context, destination, voice, notes, { start, so
   lfo.connect(lfoDepth);
 
   const stopAt = end + pad.release * pad.tail;
-  const oscillators = [lfo];
+  const oscillators = tremolo ? [lfo, tremolo] : [lfo];
+  const strike = pad.strike;
   for (const [index, midi] of notes.entries()) {
     const freq = midiToFrequency(midi);
+    // A rolled chord never takes more than half the chord's length to arrive.
+    const noteStart = strike ? start + Math.min(index * strike.strum, sounding / 2) : start;
     for (const layer of index === 0 ? pad.root : pad.upper) {
       const osc = context.createOscillator();
       const gain = context.createGain();
       osc.type = layer.type;
-      osc.frequency.setValueAtTime(freq * layer.ratio, start);
-      osc.detune.setValueAtTime(layer.detune, start);
+      osc.frequency.setValueAtTime(freq * layer.ratio, noteStart);
+      osc.detune.setValueAtTime(layer.detune, noteStart);
       if (layer.chorus) lfoDepth.connect(osc.detune);
-      gain.gain.setValueAtTime(layer.gain, start);
+      if (strike) {
+        gain.gain.setValueAtTime(0.0001, noteStart);
+        gain.gain.linearRampToValueAtTime(layer.gain, noteStart + 0.004);
+        gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + strike.decay);
+      } else {
+        gain.gain.setValueAtTime(layer.gain, start);
+      }
       osc.connect(gain).connect(sides[layer.side]);
-      osc.start(start);
+      osc.start(noteStart);
       osc.stop(stopAt);
       oscillators.push(osc);
     }
   }
-  lfo.start(start);
-  lfo.stop(stopAt);
+  for (const modulator of tremolo ? [lfo, tremolo] : [lfo]) {
+    modulator.start(start);
+    modulator.stop(stopAt);
+  }
   return { env, oscillators, stopAt, peak };
 }
 
@@ -328,7 +680,8 @@ export function scheduleVoiceLead(context, destination, voice, midi, { start, du
   filter.type = lead.filter.type;
   filter.frequency.setValueAtTime(lead.filter.base, start);
   filter.Q.setValueAtTime(lead.filter.q, start);
-  filter.connect(env).connect(destination);
+  connectThroughFormants(context, filter, env, lead.formants, start);
+  const tremolo = connectThroughTremolo(context, env, destination, lead.tremolo, start);
 
   // Vibrato only arrives once the note has settled.
   const vibrato = context.createOscillator();
@@ -352,7 +705,9 @@ export function scheduleVoiceLead(context, destination, voice, midi, { start, du
     osc.start(start);
     osc.stop(stopAt);
   }
-  vibrato.start(start);
-  vibrato.stop(stopAt);
+  for (const modulator of tremolo ? [vibrato, tremolo] : [vibrato]) {
+    modulator.start(start);
+    modulator.stop(stopAt);
+  }
   return { sounding, peak };
 }

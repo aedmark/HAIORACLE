@@ -2986,8 +2986,9 @@ function getFunMachineDirectDestination(context) {
 // can fade them instead of letting an old chord ring under a new one.
 const funPadHandles = new Set();
 
-// The voice the Fun Machine plays in. Phase 1 of P5-28 has only VELVET PAD;
-// the selector and the creature's own voice arrive in later phases (D-040).
+// The voice the Fun Machine plays in, chosen with the VOICE chips. Not saved
+// yet, and recorded takes play in it too: sessions v5 and per-slot voices
+// arrive in P5-28 phase 4, the creature's own voice in phase 3 (D-040).
 let funVoiceId = DEFAULT_VOICE_ID;
 function currentFunVoice() {
   return voiceById(funVoiceId);
@@ -5945,6 +5946,30 @@ for (const chip of document.querySelectorAll(".fun-chip[data-style]")) {
       elements.funMachineTelemetry.textContent = `STYLE: ${STYLE_LABELS[funMachineStyle]} · HOLD A KEY AND THE BAND FOLLOWS`;
     }
     // A held key switches style on the spot.
+    if (activeHeldFunKey !== null) {
+      const held = activeHeldFunKey;
+      activeHeldFunKey = null;
+      triggerFunKey(held, true);
+    }
+  });
+}
+
+function setFunVoice(id) {
+  funVoiceId = voiceById(id).id;
+  for (const chip of document.querySelectorAll(".fun-chip[data-voice]")) {
+    const active = chip.dataset.voice === funVoiceId;
+    chip.classList.toggle("is-active", active);
+    chip.setAttribute("aria-pressed", String(active));
+  }
+}
+
+for (const chip of document.querySelectorAll(".fun-chip[data-voice]")) {
+  chip.addEventListener("click", () => {
+    setFunVoice(chip.dataset.voice);
+    if (elements.funMachineTelemetry) {
+      elements.funMachineTelemetry.textContent = `VOICE: ${currentFunVoice().label} · HOLD A KEY TO HEAR IT`;
+    }
+    // A held key changes voice on the spot, as it does for a style.
     if (activeHeldFunKey !== null) {
       const held = activeHeldFunKey;
       activeHeldFunKey = null;

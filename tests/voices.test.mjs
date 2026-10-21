@@ -89,3 +89,39 @@ test("the app plays the Fun Machine only through voices", async () => {
   }
   assert.doesNotMatch(app, /type: "sawtooth", detune: -8/, "the pad's layers live in src/voices.mjs");
 });
+
+test("the VOICE chips name every preset, in order, with VELVET PAD pressed", async () => {
+  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  const chips = [...html.matchAll(/<button class="fun-chip( is-active)?" data-voice="([a-z_]+)" type="button" aria-pressed="(true|false)" title="[^"]+">([^<]+)<\/button>/g)];
+  assert.deepEqual(chips.map((m) => m[2]), [...VOICE_IDS]);
+  assert.deepEqual(chips.map((m) => m[4]), VOICE_PRESETS.map((voice) => voice.label));
+  assert.deepEqual(chips.filter((m) => m[3] === "true").map((m) => [m[2], Boolean(m[1])]), [["velvet_pad", true]]);
+});
+
+test("tremolo, formants, and a struck rolled chord build bounded extra nodes", () => {
+  const organ = fakeContext();
+  const { oscillators } = scheduleVoicePad(organ, {}, voiceById("theatre_organ"), [48, 55, 60], { start: 0, sounding: 1 });
+  assert.equal(oscillators.length, 2 + 3 * 3, "chorus and tremulant LFOs are released with the pad");
+
+  const choir = fakeContext();
+  scheduleVoicePad(choir, {}, voiceById("aether_choir"), [48, 55, 60], { start: 0, sounding: 1 });
+  assert.equal(choir.counts.filter, 1 + 3, "a lowpass feeding three formant bands");
+
+  const box = fakeContext();
+  const original = box.createOscillator;
+  const starts = [];
+  box.createOscillator = () => { const osc = original(); osc.start = (at) => starts.push(at); return osc; };
+  scheduleVoicePad(box, {}, voiceById("music_box"), [48, 55, 60, 64], { start: 1, sounding: 0.06 });
+  const noteStarts = [...new Set(starts.slice(0, -1))];
+  assert.deepEqual(noteStarts, [1, 1.03], "the roll never takes more than half the chord's length");
+
+  const bad = structuredClone(voiceById("aether_choir"));
+  bad.pad.formants.push({ freq: 3000, q: 8, gain: 1 });
+  assert.throws(() => validateVoice(bad), (error) => error.path === "voice.pad.formants");
+  const fast = structuredClone(voiceById("theatre_organ"));
+  fast.lead.tremolo.depth = 0.9;
+  assert.throws(() => validateVoice(fast), (error) => error.path === "voice.lead.tremolo.depth");
+  const pluckFormants = structuredClone(velvet);
+  pluckFormants.pluck.formants = [];
+  assert.throws(() => validateVoice(pluckFormants), (error) => error.path === "voice.pluck.formants");
+});

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Choose the Fun Machine's voice: VELVET PAD (the original), HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, or ÆTHER CHOIR. The choice is not saved yet, and recorded loops play in the current voice.
+
 ### Removed
 
 - Remove the Fun Machine's 12-step loop progression, punch-in recording, and RESET PROGRESSION. Holding keys works as before. Sessions and presets saved earlier still open; any punched chords in them are left out. A proper loop machine is planned.

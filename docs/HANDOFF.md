@@ -87,6 +87,35 @@ _Last updated: 2026-10-20, session 45, on `main`: the loop machine is complete, 
 
 ## Session log
 
+### Session 48: 2026-10-20: Fun Machine voices, phase 2 (P5-28)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-28 phase 2: the six other presets (D-040).
+
+**Changed:**
+1. `src/voices.mjs`:
+   - Patches gain optional colour: `tremolo` ({rate, depth}) and `formants` (1–3 bandpasses) on pad and lead, plus `strike` on the pad (a roll of up to 0.2 s per note, capped at half the chord; each layer decays instead of sustaining). The tremolo LFO is in the pad's oscillator list, so releasing a live pad stops it too.
+   - Six presets, each with its General MIDI program:
+     - HARMONIUM: reed squares, a nasal Q, slow speech.
+     - GLASS HARMONICA: sines at 1 and 2.76 with a slow bloom and a 3.2 Hz beat.
+     - THEATRE ORGAN: drawbar sines at 1, 2, and 3 with a 6.8 Hz tremulant.
+     - STRING MACHINE: three saws in a fast chorus.
+     - MUSIC BOX: a struck, rolled triangle chord with a two-octave tine.
+     - ÆTHER CHOIR: saws through "ah" formants on the pad and "oh" formants on the lead.
+2. `index.html` and `src/app.mjs`: a VOICE chip row under ACCOMPANIMENT STYLE (`setFunVoice()`). A held key re-voices on the spot. The choice is live only: it is not in sessions, and recorded takes play in the current voice until phase 4.
+3. Tests: colour node counts, roll timing, colour validation, and that the chips match `VOICE_PRESETS`.
+
+**Verified:**
+- 133/133 Node checks.
+- Offline loudness against VELVET PAD (RMS over the sounding part of a four-note pad, eight plucks, and a four-note lead): every role of every preset is within ±0.7 dB, except MUSIC BOX's decaying pad and lead, which are −3.4 and −2.9 dB with higher peaks. No peak exceeds 0.5.
+- Live: all 21 voice × style combinations played with a key held, with no console errors.
+- The row wraps cleanly at phone and desktop widths, and selecting a chip moves nothing.
+
+**Not verified:** How they sound. These are first-pass numbers for the maintainer to tune by ear.
+
+**Next session should start with:** the maintainer's listen and tuning notes, then phase 3 (the creature's own voice from the spell).
+
 ### Session 47: 2026-10-20: Fun Machine voices, phase 1 (P5-28)
 
 **Contributor:** Claude Code with maintainer direction
@@ -300,25 +329,3 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 **Left undone:** The P4-02 assistive-technology pass; P6-01.
 
 **Next session should start with:** a screen-reader pass of discovery mode, or the maintainer's feel for the drawer triggers.
-
-### Session 38: 2026-10-20: Parlor Ragtime, written in Inform 7
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Ship a seventh Kapellmeister genre written only in Inform 7 (follow-up to P5-23). The maintainer chose Parlor Ragtime over Sea Shanty Dorian and Gamelan Slendro.
-
-**Done:** P5-24.
-
-**Changed:**
-1. `src/rulebooks.ni`: Chapter 6, Parlor Ragtime (`parlor_ragtime`, insistent, voiced). Twelve-step changes I · I · I7 · IV · IV · ♯iv° · I · I · VI7 · II7 · V7 · V7. Colours: major on 0 and 5, dom7 on 2/4/7/9/10, passing diminished elsewhere. A "Table of Parlor Rag" progression (I → I7 → IV → V7) and member snapping {root, third, fifth} plus the major sixth. A stride bass walk {0, 7, …, 0, 7, 2, 4} (climbs A, B over V7 back to C), organ {third, fifth, octave}, and Ragtime Overtones including 5/3 and 7/4. Raw Esoteric Chaos moves to Chapter 7 so it stays last in the menu. No `src/*.mjs` changed.
-2. `tests/fixtures/rulebooks-golden.json` re-frozen with `--rewrite`. After resolving interned chord indices, every entry of the original six genres is identical; the fixture only gained ragtime entries (colours 14, progressions 8, spines 24, projection 14, ensembles 36).
-3. Tests: genre lists include ragtime; a new suite pins its changes, colours, Fun Machine summary ("C Maj → C7 → F Maj → G7"), stride bass, organ, and sixth overtone. The barbershop fixture test now calls itself an extra, test-only genre.
-4. Docs: README, manual (Kapellmeister and Inform entries), ARCHITECTURE, TESTING, ROADMAP (P5-24), CHANGELOG. `ASSET_VERSION` restamped.
-
-**Verified:** 113/113 Node checks. In the browser: seven menu entries with ragtime sixth; title, motto, compass (I, IV, I, II7), and key colours update; one page height and nothing clipped at 340, 400, 720, and 1390 px across all seven genres; holding a key during play works; no console errors.
-
-**Not verified:** Nothing further; the maintainer listened on 2026-10-20 ("its beautiful").
-
-**Left undone:** Listening passes; P4-02; P6-01.
-
-**Next session should start with:** the maintainer's listen to Parlor Ragtime.
