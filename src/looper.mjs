@@ -166,13 +166,14 @@ export function leadSlotAt(loop, step, liveSlot = null) {
 // slot per step for a full pass, and then hands the take back.
 
 export function idleRecorder() {
-  return Object.freeze({ mode: "idle", kind: null, loopIndex: null, take: null });
+  return Object.freeze({ mode: "idle", kind: null, loopIndex: null, take: null, countIn: 0, step: null });
 }
 
 /**
  * Events:
- *  - `{ type: "arm", kind: "new" }` or `{ type: "arm", kind: "overdub", loopIndex }`
+ *  - `{ type: "arm", kind: "new", countIn }` or `{ type: "arm", kind: "overdub", loopIndex, countIn }`
  *  - `{ type: "cancel" }`
+ *  - `{ type: "slot", step, slot }`: set or update a recorded slot during active recording.
  *  - `{ type: "step", step, loopIndex, held }`: a loop step is about to sound.
  *    `step` is 0..11, `loopIndex` is the song loop playing (null with no song),
  *    and `held` is the live slot (or null).
@@ -182,23 +183,39 @@ export function idleRecorder() {
  */
 export function recorderReduce(recorder, event) {
   if (event.type === "arm") {
+    const countIn = Math.max(0, Number.isInteger(event.countIn) ? event.countIn : (event.countIn ? LOOP_STEPS : 0));
     if (event.kind === "new") {
-      return { recorder: Object.freeze({ mode: "armed", kind: "new", loopIndex: null, take: null }), finished: null };
+      return { recorder: Object.freeze({ mode: "armed", kind: "new", loopIndex: null, take: null, countIn, step: null }), finished: null };
     }
     if (event.kind === "overdub" && Number.isInteger(event.loopIndex) && event.loopIndex >= 0) {
-      return { recorder: Object.freeze({ mode: "armed", kind: "overdub", loopIndex: event.loopIndex, take: null }), finished: null };
+      return { recorder: Object.freeze({ mode: "armed", kind: "overdub", loopIndex: event.loopIndex, take: null, countIn, step: null }), finished: null };
     }
     return { recorder, finished: null };
   }
   if (event.type === "cancel") return { recorder: idleRecorder(), finished: null };
+  if (event.type === "slot") {
+    if (recorder.mode !== "recording" || !recorder.take) return { recorder, finished: null };
+    const step = Number.isInteger(event.step) ? ((event.step % LOOP_STEPS) + LOOP_STEPS) % LOOP_STEPS : null;
+    if (step === null) return { recorder, finished: null };
+    const take = [...recorder.take];
+    take[step] = event.slot ?? null;
+    return { recorder: Object.freeze({ ...recorder, take: Object.freeze(take) }), finished: null };
+  }
   if (event.type !== "step" || recorder.mode === "idle") return { recorder, finished: null };
 
   let current = recorder;
   if (current.mode === "armed") {
+    if (current.countIn > 0) {
+      const nextCountIn = current.countIn - 1;
+      return {
+        recorder: Object.freeze({ ...current, countIn: nextCountIn, step: event.step }),
+        finished: null,
+      };
+    }
     const atBoundary = event.step === 0;
     const onTarget = current.kind === "new" || event.loopIndex === current.loopIndex;
-    if (!atBoundary || !onTarget) return { recorder: current, finished: null };
-    current = Object.freeze({ ...current, mode: "recording", take: emptyTake() });
+    if (!atBoundary || !onTarget) return { recorder: Object.freeze({ ...current, step: event.step }), finished: null };
+    current = Object.freeze({ ...current, mode: "recording", take: emptyTake(), countIn: 0, step: 0 });
   }
   const take = [...current.take];
   take[event.step] = event.held ?? null;
@@ -208,7 +225,7 @@ export function recorderReduce(recorder, event) {
       finished: Object.freeze({ kind: current.kind, loopIndex: current.loopIndex, take: Object.freeze(take) }),
     };
   }
-  return { recorder: Object.freeze({ ...current, take: Object.freeze(take) }), finished: null };
+  return { recorder: Object.freeze({ ...current, take: Object.freeze(take), step: event.step }), finished: null };
 }
 
 // ---------------------------------------------------------------------------

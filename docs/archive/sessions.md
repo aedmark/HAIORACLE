@@ -1255,3 +1255,33 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** P5-28 phase 4: per-slot voices in the loop machine, and sessions v5 with `funMachine.voice`. Files from v1–v4 open with VELVET PAD.
 
+### Session 51: 2026-10-20: voices travel with takes and sessions (P5-28 phase 4)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-28 phase 4: per-slot voices and sessions v5 (D-040).
+
+**Done:** P5-28 phase 3 was committed and pushed (c9580a2). Phase 4 is done.
+
+**Changed:**
+1. `src/looper.mjs`: slots are `{ key, style, voice }`. `SLOT_VOICES` is `creature` plus the seven presets. `makeSlot()` defaults to VELVET PAD, and `validateSong(raw, path, { legacy })` reads v4 slots as VELVET PAD.
+2. `src/session.mjs`: `SESSION_VERSION` is 5. `funMachine` is `{ style, voice }`. A v4 song is read as legacy, and versions 1–4 open with the Fun Machine in VELVET PAD.
+3. `src/app.mjs`:
+   - The live slot records `funVoiceId`. `playSongLayers()` plays each layer with `voicePatch(slot.voice)` through a new `patch` option on `playPerformanceStep()`, and `sameSlot()` compares voices.
+   - Sessions save `funMachine.voice`, and `applySession()` and `syncSessionControls()` restore it.
+4. D-040 item 5 amended: a creature-voice take stores `creature`, which the saved phrase reproduces exactly.
+5. Tests: the slot-voice model, v5 and v4 session paths, and static checks for per-layer playback and recording.
+
+**Verified:**
+- 141/141 Node checks.
+- In the browser on "three pigeons in a borrowed coat":
+  - Recording a loop in MUSIC BOX and then switching to HARMONIUM saved a v5 file with `funMachine.voice` "harmonium" and all twelve slots "5/progression/music_box".
+  - Loading it back with the voice edited to ÆTHER CHOIR pressed that chip.
+  - The same file downgraded to v4 opened with VELVET PAD pressed.
+- No console errors.
+
+**Not verified:** Hearing layers in different voices together. Phase 5 (exports) still renders through the same `playSongLayers()`, so WAV and stems should already carry the slot voices; MIDI program changes are still to do.
+
+**Next session should start with:** P5-28 phase 5: a MIDI program change whenever the Fun Machine track's voice changes, and a check that the exports carry each layer's voice.
+
+

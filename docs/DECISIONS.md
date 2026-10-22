@@ -840,6 +840,39 @@ The default rulebook for a fresh creature (THE CREATURE'S OWN or Victorian Tonne
 - Plates show the current pass's conducted parts, and the golden fixture is unchanged.
 - The four-pass cycle is fixed for now. A creature's `harmony_pace` still shapes changes within it.
 
+## D-045 Armed downbeat sync, 1-loop count-in, and 12-step tracker for the Fun Machine loop machine (2026-10-21, status: accepted)
+
+**Context:** The maintainer reported that the Loop Machine (P5-26, D-039) was difficult to use because it was unclear when a loop was starting and stopping its recording, and asked for a way to arm and sync it.
+Investigation revealed:
+- Starting from stopped instantly engaged recording on step 0 with 0ms notice, so the first step was invariably missed before the player could strike a key.
+- Mid-loop recording engaged on the downbeat, but there was no countdown or step indicator, leaving the player guessing when downbeat would land.
+- The button showed identical red styling whether armed (waiting) or actively recording.
+- During recording, the readout statically displayed "● RECORDING A NEW LOOP" without showing which step (1..12) was being captured.
+- Notes struck on audible beats could be missed or shifted due to the 280ms look-ahead scheduler sampling `activeHeldFunKey` in advance of sound playback.
+
+**Decision (maintainer-approved):**
+1. **1-Loop Count-In & Downbeat Sync:**
+   - When stopped, arming (`RECORD NEW LOOP` or `OVERDUB`) initiates a 1-loop (12-step) count-in pass. The band plays to establish the groove, and recording begins automatically on the downbeat of the next pass.
+   - When playing, arming syncs to the next downbeat, counting down the remaining steps of the current loop.
+2. **Audible Count-In Metronome:**
+   - While armed or recording, the mechanical clockwork tick sounds on quarter-beats with a sharp accented click on step 1 (downbeat) so the tempo and meter are immediately legible by ear.
+3. **12-Step Visual Progress Tracker:**
+   - A dedicated 12-cell step ribbon (`#looper-steps`) inside `#looper` displays:
+     - in normal play: a gold playhead tracking the current audible step (1..12);
+     - in armed count-in: amber countdown cells;
+     - in recording: vibrant recording-red cells displaying the captured note names (or pips);
+     - on take landing: clean transition into playing the newly added loop.
+4. **Distinct Button & Readout States:**
+   - Buttons display pulsing amber `ARMED · SYNCING` while waiting, and pulsing red `● RECORDING` while capturing.
+   - The readout narrates every audible step in real time (e.g. `ARMED · COUNT-IN STEP 4 OF 12`, `● RECORDING · STEP 1 OF 12 [C]`).
+5. **Audible-Step Keystroke Capture:**
+   - Live keypresses during active recording immediately write to the audible step in `recorder.take`, preventing any look-ahead scheduling dropouts.
+
+**Consequences:**
+- The loop machine is transparent, musical, and effortless to play along with.
+- Zero extra dependencies, fully accessible (0.6rem text floor, prefers-reduced-motion respected).
+- All 161 automated tests pass.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

@@ -4,6 +4,10 @@
 
 ### Added
 
+- Arm and sync the Loop Machine (D-045): `RECORD NEW LOOP` and `OVERDUB` now arm with downbeat sync. Starting from stopped plays a 1-loop (12-step) count-in pass, while arming mid-loop counts down the remaining steps to the downbeat. A mechanical clockwork tick metronome automatically sounds during count-in and recording with an accented downbeat.
+- See loop recording progress in real time: a dedicated 12-step progress tracker ribbon (`#looper-steps`) displays the advancing playhead during playback, amber countdown steps during armed count-in, and vibrant red cells displaying recorded notes during takes. The readout narrates every step (`STEP 1 OF 12`, `FINAL STEP`), and buttons pulse amber while armed and red while recording.
+- Capture keystrokes right on the beat: live key strikes during recording immediately register on the audible step, eliminating look-ahead scheduling latency mismatches.
+
 - Choose among six more rulebooks: BOSSA NOVA SALON, BAROQUE CHORALE, GOTHIC HORROR ORGAN, GOSPEL SHOUT & REVIVAL, TANGO HABANERA, and NEO-SOUL LO-FI, bringing the Kapellmeister catalog to nineteen genres.
 - Play six new chord qualities: minor 7th (`min7`), major 7th (`maj7`), half-diminished 7th (`m7♭5`), augmented triad, suspended 4th (`sus4`), and major 6th (`major_6`), integrated across Inform 7 rulebooks, conductor voicings, Fun Machine variations, and sessions.
 - Choose among six more rulebooks: DOO-WOP PARLOR BALLAD, SACRED HARP SHAPE-NOTE HYMNODY, ANDALUSIAN FLAMENCO CADENCE, KLEZMER FREYGISH DANCE, SEA SHANTY & HORNPIPE, and SILENT-FILM LYDIAN DREAM, all written in Inform 7. The RULEBOOK menu now groups its genres into families (PARLOR, NIGHT CLUB, SACRED & EARLY, FOLK & DANCE, ESOTERIC).

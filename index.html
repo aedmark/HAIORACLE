@@ -272,6 +272,7 @@
             <button class="beat-button looper-button" id="looper-overdub" type="button" aria-pressed="false" disabled>OVERDUB</button>
             <button class="beat-button looper-button" id="looper-clear" type="button" disabled>CLEAR SONG</button>
             <output class="looper-readout" id="looper-readout" aria-live="off">NO LOOPS YET · HOLD KEYS AND RECORD WHAT YOU PLAY</output>
+            <div class="looper-steps" id="looper-steps" role="group" aria-label="12-step loop progress tracker"></div>
             <ol class="looper-tiles" id="looper-tiles" aria-label="Loops in the song, in playing order"></ol>
             <div class="looper-edit" id="looper-edit" role="group" aria-label="Selected loop">
               <span class="looper-edit-label" id="looper-edit-label">NO LOOP SELECTED</span>
@@ -673,7 +674,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "ae35645dac6b";
+      const ASSET_VERSION = "457e60b0aeea";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

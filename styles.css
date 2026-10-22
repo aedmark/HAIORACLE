@@ -113,6 +113,100 @@ select:focus-visible {
   background: rgba(139, 46, 56, 0.55);
 }
 
+.looper-button.is-armed {
+  border-color: #e0aa3e !important;
+  color: #fff5db !important;
+  background: rgba(130, 85, 15, 0.75) !important;
+  box-shadow: 0 0 10px rgba(224, 170, 62, 0.5);
+  animation: looper-pulse-amber 1s ease-in-out infinite;
+}
+
+.looper-button.is-recording {
+  border-color: #e04444 !important;
+  color: #ffffff !important;
+  background: rgba(160, 25, 35, 0.85) !important;
+  box-shadow: 0 0 12px rgba(224, 68, 68, 0.6);
+  animation: looper-pulse-red 800ms ease-in-out infinite;
+}
+
+@keyframes looper-pulse-amber {
+  0%, 100% { border-color: #e0aa3e; box-shadow: 0 0 6px rgba(224, 170, 62, 0.4); }
+  50% { border-color: #ffd875; box-shadow: 0 0 14px rgba(255, 216, 117, 0.7); }
+}
+
+@keyframes looper-pulse-red {
+  0%, 100% { border-color: #e04444; box-shadow: 0 0 8px rgba(224, 68, 68, 0.5); }
+  50% { border-color: #ff6b6b; box-shadow: 0 0 16px rgba(255, 107, 107, 0.85); }
+}
+
+/* 12-step visual progress and sync tracker for the loop machine (D-045). */
+.looper-steps {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.25rem;
+  flex: 1 0 100%;
+  margin: 0.2rem 0 0.35rem;
+}
+
+.looper-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  padding: 0.22rem 0.1rem;
+  border: 1px solid rgba(184, 146, 73, 0.28);
+  background: rgba(20, 15, 12, 0.85);
+  color: rgba(228, 215, 190, 0.65);
+  border-radius: 2px;
+  min-height: 1.85rem;
+  font-family: var(--mono-ledger);
+  transition: border-color 90ms ease, background 90ms ease, box-shadow 90ms ease;
+}
+
+.looper-step-num {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: rgba(212, 175, 101, 0.8);
+}
+
+.looper-step-val {
+  font-size: 0.6rem;
+  color: rgba(228, 215, 190, 0.9);
+  min-height: 0.75rem;
+  line-height: 0.75rem;
+}
+
+.looper-step.is-current {
+  border-color: var(--brass-bright);
+  background: rgba(60, 45, 25, 0.8);
+  box-shadow: 0 0 6px rgba(212, 175, 101, 0.4);
+}
+
+.looper-step.is-count-in {
+  border-color: #d4a035;
+  background: rgba(140, 95, 20, 0.6);
+  color: #fff2d0;
+  box-shadow: 0 0 8px rgba(212, 160, 53, 0.55);
+}
+
+.looper-step.is-recording {
+  border-color: #e04444;
+  background: rgba(160, 30, 40, 0.9);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(224, 68, 68, 0.7);
+}
+
+.looper-step.has-note {
+  border-color: rgba(184, 146, 73, 0.5);
+  background: rgba(35, 25, 20, 0.92);
+}
+
+.looper-step.has-note .looper-step-val {
+  color: var(--brass-bright);
+  font-weight: 700;
+}
+
 /* Loop tiles scroll sideways at a fixed height, so adding or playing loops
    never moves the page. */
 .looper-tiles {
@@ -2473,7 +2567,8 @@ noscript {
     letter-spacing: 0.1em;
   }
 
-  .beat-grid {
+  .beat-grid,
+  .looper-steps {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 

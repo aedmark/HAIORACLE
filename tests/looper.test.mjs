@@ -204,3 +204,41 @@ test("the selected loop stays valid after edits", () => {
   assert.equal(clampSelection(song, null), 0);
   assert.equal(clampSelection(emptySong(), 0), null, "an empty song selects nothing");
 });
+
+test("the recorder supports count-in passes and slot updates", () => {
+  let recorder = recorderReduce(idleRecorder(), { type: "arm", kind: "new", countIn: 12 }).recorder;
+  assert.equal(recorder.mode, "armed");
+  assert.equal(recorder.countIn, 12);
+
+  // 12 steps of count-in pass (steps 0..11)
+  for (let s = 0; s < LOOP_STEPS; s += 1) {
+    const { recorder: next, finished } = recorderReduce(recorder, { type: "step", step: s, held: null });
+    assert.equal(finished, null);
+    assert.equal(next.mode, "armed");
+    recorder = next;
+  }
+  assert.equal(recorder.countIn, 0);
+
+  // Next step 0 begins recording pass
+  let result = recorderReduce(recorder, { type: "step", step: 0, held: makeSlot(0, "swell") });
+  recorder = result.recorder;
+  assert.equal(recorder.mode, "recording");
+  assert.equal(recorder.take[0]?.key, 0);
+
+  // Live slot update on step 2
+  recorder = recorderReduce(recorder, { type: "slot", step: 2, slot: makeSlot(7, "swell") }).recorder;
+  assert.equal(recorder.take[2]?.key, 7);
+
+  // Remaining steps 1..11
+  let finishedTake = null;
+  for (let s = 1; s < LOOP_STEPS; s += 1) {
+    const res = recorderReduce(recorder, { type: "step", step: s, held: s === 2 ? recorder.take[2] : null });
+    recorder = res.recorder;
+    if (res.finished) finishedTake = res.finished;
+  }
+  assert.equal(recorder.mode, "idle");
+  assert.ok(finishedTake);
+  assert.equal(finishedTake.take[0]?.key, 0);
+  assert.equal(finishedTake.take[2]?.key, 7);
+});
+
