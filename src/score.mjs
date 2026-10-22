@@ -60,11 +60,13 @@ const REQUIRED_RANGES = Object.freeze({
   harmony_cadence: [0, 3],
   harmony_pace: [0, 2],
   harmony_character: [0, 11],
-  name_a: [0, 31],
-  name_b: [0, 31],
-  name_c: [0, 47],
-  name_d: [0, 23],
-  name_form: [0, 5],
+  name_a: [0, 63],
+  name_b: [0, 63],
+  name_c: [0, 63],
+  name_d: [0, 31],
+  name_form: [0, 9],
+  bell_jar: [1, 99],
+  folio_series: [0, 15],
   ...Object.fromEntries(Array.from({ length: 12 }, (_, index) => [`step_${index}`, [0, 8]])),
 });
 
@@ -74,12 +76,20 @@ const NAME_PARTS = Object.freeze({
     "SLEEPY", "ELECTRIC", "WAYWARD", "GENTLE", "FURIOUS", "GLASS", "SECRET", "MOSSY",
     "INFINITE", "PAPER", "SIDEWAYS", "HONEYED", "ASTRAL", "WILD", "LOST", "GIGGLING",
     "ORANGE", "TENDER", "UNLICENSED", "FIZZY", "IMPOSSIBLE", "SOFT", "FERAL", "NEON",
+    "AERATED", "AETHERIAL", "AMBER", "ASTRONOMICAL", "BEWILDERED", "BRASS", "CADMIUM", "CHRONIC",
+    "CINNABAR", "CLOCKWORK", "DAMASK", "ECCENTRIC", "GILDED", "INDIGO", "INSOLENT", "LACQUERED",
+    "MAGNETIC", "MELANCHOLY", "METEORIC", "NOCTURNAL", "OBSIDIAN", "OPALESCENT", "PARLOR", "PHOSPHORESCENT",
+    "PNEUMATIC", "PYRITE", "QUICKSILVER", "SELENITE", "SUBTERRANEAN", "TAROT", "VERDIGRIS", "VICTORIAN",
   ],
   second: [
     "POTATO", "MOTH", "TURNIP", "COMET", "PUDDLE", "TEAPOT", "ORBIT", "MARMALADE",
     "THUNDER", "SNAIL", "MOON", "CABBAGE", "GHOST", "SPOON", "CLOUD", "FERN",
     "ACCORDION", "TADPOLE", "MIRROR", "BISCUIT", "PLANET", "MUSHROOM", "KETTLE", "SHADOW",
     "VOLCANO", "PIGEON", "LANTERN", "ONION", "JELLYFISH", "WALRUS", "DOORKNOB", "MELODY",
+    "ANVIL", "APPARATUS", "ASTROLABE", "AUTOMATON", "BELLOWS", "BELL JAR", "CARILLON", "CARTOGRAPHY",
+    "CHANDELIER", "CONSTELLATION", "CORRIDOR", "CRICKET", "DIALECT", "DIVIDER", "ENCYCLOPEDIA", "ESCAPEMENT",
+    "FOSSIL", "GRAMOPHONE", "HOROLOGE", "INKWELL", "LABYRINTH", "METEOR", "MONOCLE", "OCTAVE",
+    "ORRERY", "PENDULUM", "PHONOGRAPH", "PRISM", "SALON", "SKELETON", "SPECTACLE", "TELESCOPE",
   ],
   third: [
     "REMEMBERS", "IS LISTENING", "HAS QUESTIONS", "SINGS SIDEWAYS", "REFUSES GRAVITY", "KNOWS A DOOR",
@@ -93,6 +103,10 @@ const NAME_PARTS = Object.freeze({
     "RUNS ON CRUMBS", "HAS A UNION CARD", "IS LATE FOR INFINITY", "KEEPS ONE EYE OPEN", "TASTES LIKE RADIO",
     "APPLAUDS THE VOID", "HAS NO FURTHER NOTES", "IS WEARING THE MOON", "LEFT THE OVEN ON",
     "HUMS YOUR TRUE NAME", "BROUGHT EXTRA NAPKINS",
+    "AVOIDS PARLIAMENT", "BROKE THE CONSTELLATION", "CHALLENGES THE TIDE", "DISPUTES THE MEASUREMENT",
+    "DISPENSES UNPROVOKED COUNSEL", "FORGIVES THE ARCHITECTURE", "HAUNTS THE OCTAVE", "INVENTED THE OCTOPUS",
+    "LEVITATES CONSERVATIVELY", "OPENS AT DAWN ONLY", "PETITIONS THE EQUATOR", "POSSESSES A RETURN TICKET",
+    "RESENTS THE THERMODYNAMICS", "SOLVES FOR VELVET", "SUBMITS A REBUTTAL", "TASTES OF THUNDER",
   ],
   fourth: [
     "VELVET WEATHER", "THE OUTER PANTRY", "A BORROWED TUESDAY", "THE LAST PICNIC", "MARMALADE TIME",
@@ -101,8 +115,34 @@ const NAME_PARTS = Object.freeze({
     "A GENTLE EMERGENCY", "THE FORBIDDEN GARDEN", "A VERY LONG MINUTE", "THE STATIC BETWEEN STARS",
     "THE DEPARTMENT OF MYSTERIES", "A SMALLER INFINITY", "THE SUBMERGED LIBRARY", "THE NEON MEADOW",
     "THE UNFINISHED PARADE",
+    "THE ARCHIVE OF LOST COATS", "THE BOTANICAL ASYLUM", "THE CLOCKMAKER'S BASEMENT", "THE FOG OVER GREENWICH",
+    "THE PARLOR OF PERPETUAL AUTUMN", "THE SUB-AETHER CORRIDOR", "THE MIDNIGHT EXPOSITION", "THE TAXONOMIST'S PARLOUR",
   ],
 });
+
+export const ROMAN_NUMERALS = Object.freeze([
+  "I", "II", "III", "IV", "V", "VI", "VII", "VIII",
+  "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI",
+]);
+
+export const CURIOSA_CLASSES = Object.freeze([
+  "CLASS I · CELESTIAL APPARITION",
+  "CLASS II · HYPOGEAL SPORE-WEAVER",
+  "CLASS III · HARMONIC RESONATOR",
+  "CLASS IV · CLOCKWORK AUTOMATON",
+  "CLASS V · LUMINOUS METEORITE",
+  "CLASS VI · CRYPTOZOOLOGICAL SPECIMEN",
+  "CLASS VII · PARLOR ECTOPLASM",
+  "CLASS VIII · AEOLIAN CHIMERA",
+  "CLASS IX · GEOMETRIC PHANTASM",
+  "CLASS X · SUBMERGED ANOMALY",
+  "CLASS XI · CHRONO-KINETIC VORTEX",
+  "CLASS XII · SPECTRAL ORNAMENT",
+  "CLASS XIII · FULGURITE DEVOTION",
+  "CLASS XIV · ALCHEMICAL CHRYSALIS",
+  "CLASS XV · ASTRAL CARTOGRAPHY",
+  "CLASS XVI · ABYSSAL RESONANCE",
+]);
 
 export const WAVEFORMS = Object.freeze(["SINE", "TRIANGLE", "SQUARE", "SAWTOOTH"]);
 export const SHAPE_NAMES = Object.freeze([
@@ -131,8 +171,18 @@ function creatureName(values) {
     `${adjective} ${noun}, ${action}`,
     `${noun} NUMBER ${values.name_d + 3}: ${action}`,
     `${realm}'S ${adjective} ${noun}`,
+    `ORDER OF THE ${adjective} ${noun}`,
+    `${realm}'S ${noun}, WHO ${action}`,
+    `THE ${adjective} ${noun} FROM ${realm}`,
+    `${noun} OF ${realm}, ${action}`,
   ];
   return forms[values.name_form];
+}
+
+function formatFolioId(seed, folioSeries, bellJar) {
+  const roman = ROMAN_NUMERALS[folioSeries] ?? "I";
+  const accession = 1000 + ((Math.imul(seed ^ (bellJar * 101), 0x45d9f3b) >>> 0) % 9000);
+  return `FOLIO ${roman}-${accession}`;
 }
 
 export function hashPhrase(phrase) {
@@ -231,6 +281,11 @@ export function parseScore(lines, seed, phrase) {
     harmonyCadence: values.harmony_cadence,
     harmonyPace: values.harmony_pace,
     harmonyCharacter: values.harmony_character,
+    bellJar: `BELL JAR Nº ${String(values.bell_jar).padStart(2, "0")}`,
+    bellJarNumber: values.bell_jar,
+    folioSeries: values.folio_series,
+    curiosaClass: CURIOSA_CLASSES[values.folio_series],
+    folioId: formatFolioId(seed, values.folio_series, values.bell_jar),
     steps: Object.freeze(steps),
     name: creatureName(values),
   });

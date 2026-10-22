@@ -94,7 +94,7 @@
               "Splits stdout into lines, verifies `key=value` format, and rejects duplicates or unauthorized field names.",
               "Validates numerical ranges for visual traits (hue 0..359, size 36..100, shape 0..9, symmetry 2..15, bloom 0..100, edge 0..100, motion 0..100, eyes 1..9, irisStyle 0..7, pupilShape 0..7, irisHue 0..359, eyeLayout 0..5, kineticMode 0..7, kineticSpeed 20..100, kineticDepth 20..100, kineticTilt 0..7, fluxMode 0..7).",
               "Validates numerical ranges for lead audio (pulse 42..167, waveform 0..3, voice 0..5, rhythm 0..5, melodyMode 0..11, melodyTurn 0..11, root 36..60, scale 0..7, gate 40..95) and accompaniment engines (beatMode 0..7, beatDensity 35..100, bassMode 0..7, bassGlide 20..100, harmonyMode 0..7, harmonyStrum 15..100, chimeMode 0..7, chimeShimmer 20..100, chantMode 0..7, chantFormant 25..100).",
-              "Composes an evocative multi-tier ceremonial name using seed-driven vocabulary matrices (`THE <ADJECTIVE> <VESSEL> OF <DOMAIN>`).",
+              "Composes an evocative multi-tier ceremonial name using seed-driven vocabulary matrices (64 adjectives, 64 nouns, 64 actions, 32 realms, 10 grammatical templates) along with deterministic specimen folio identifiers, bell jar numbers, and archival curiosa classes.",
               "Returns a deeply frozen `Object.freeze()` score structure."
             ]
           },

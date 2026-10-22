@@ -23,7 +23,7 @@ import { CHIME_NAMES, composeChimes, cycleChimeCell, runFractran, runPiet } from
 import { runLolcode } from "../src/lolcode.mjs";
 import { BEAT_NAMES, composeBeat, crazy, cycleBeatStep, rotr, runMalbolge } from "../src/malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "../src/music.mjs";
-import { FUNGAL_NAMES, composeScore, hashPhrase, parseScore } from "../src/score.mjs";
+import { CURIOSA_CLASSES, FUNGAL_NAMES, ROMAN_NUMERALS, composeScore, hashPhrase, parseScore } from "../src/score.mjs";
 import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "../src/share.mjs";
 import { CHANT_NAMES, FORMANT_VOWELS, PERSONA_ROLES, composeChant, cycleChantCell, runShakespeare } from "../src/shakespeare.mjs";
 import {
@@ -83,7 +83,20 @@ test("the LOLCODE spell produces every required score field", () => {
   assert.ok(score.fungalSpores >= 10 && score.fungalSpores <= 100);
   assert.ok(score.fungalBloom >= 10 && score.fungalBloom <= 100);
   assert.ok(FUNGAL_NAMES.includes(score.fungalName));
+  assert.ok(score.bellJarNumber >= 1 && score.bellJarNumber <= 99);
+  assert.match(score.bellJar, /^BELL JAR Nº \d{2}$/);
+  assert.ok(score.folioSeries >= 0 && score.folioSeries <= 15);
+  assert.match(score.folioId, /^FOLIO (I|II|III|IV|V|VI|VII|VIII|IX|X|XI|XII|XIII|XIV|XV|XVI)-\d{4}$/);
+  assert.ok(CURIOSA_CLASSES.includes(score.curiosaClass));
   assert.equal(melodyFor(score).length, 12);
+});
+
+test("catalogue manifestation names and accession folio identifiers span the expanded lexicon and classes", () => {
+  const scores = Array.from({ length: 512 }, (_, index) => composeScore(source, `catalogue folio omen ${index}`));
+  assert.ok(new Set(scores.map((s) => s.name)).size >= 500, "names have high variety across 512 phrases");
+  assert.equal(new Set(scores.map((s) => s.curiosaClass)).size, 16, "all 16 Curiosa classes are exercised");
+  assert.equal(new Set(scores.map((s) => s.folioSeries)).size, 16, "all 16 folio series are exercised");
+  assert.ok(new Set(scores.map((s) => s.bellJarNumber)).size >= 70, "bell jars span wide distribution");
 });
 
 test("the spell gives every creature its own harmony fields, each spread across its range (D-043)", () => {

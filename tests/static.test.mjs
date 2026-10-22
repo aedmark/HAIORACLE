@@ -597,3 +597,15 @@ test("every element the app looks up by id exists in the page", async () => {
   assert.deepEqual(missing, [], `the app looks for ${missing.join(", ")}`);
   assert.match(html, /<span class="beat-telemetry" id="fun-machine-telemetry">/);
 });
+
+test("the urn holds an expansive spectrum of at least 60 distinct slips", async () => {
+  const app = await readFile(new URL("../src/app.mjs", import.meta.url), "utf8");
+  const surprisesMatch = app.match(/const SURPRISES = Object\.freeze\(\[([\s\S]*?)\]\);/);
+  assert.ok(surprisesMatch, "SURPRISES array found in src/app.mjs");
+  const slips = Array.from(surprisesMatch[1].matchAll(/"([^"]+)"/g), (m) => m[1]);
+  assert.ok(slips.length >= 60, `the urn must carry at least 60 slips, found ${slips.length}`);
+  assert.equal(new Set(slips).size, slips.length, "every slip in the urn must be unique");
+  for (const slip of slips) {
+    assert.ok(slip.length > 5, "slips must be substantial text phrases");
+  }
+});

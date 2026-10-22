@@ -4,22 +4,22 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-21, session 62, on `main`._
+_Last updated: 2026-10-22, session 63, on `main`._
 
 - P5-28/D-040: Fun Machine voices, each creature's own by default; D-042 freed accompaniments from creature filter.
 - P5-30/D-043/D-044: clashes cut, variations, VARIATION readout, AS WRITTEN, sessions v6, THE CREATURE'S OWN rulebook, and downbeat harmony moves.
 - P5-29 waves 1 & 2: six new chord qualities, twelve new Inform 7 genres, 19 genres in all.
 - D-045/D-046: armed downbeat sync, 1-loop count-in, tick metronome, interactive 12-step tracker ribbon with note sequencer & STEP REC, and downbeat anticipation latching.
-- Comprehensive system & mechanics audit completed (`tests/audit.test.mjs`): all 8 architectural dimensions verified and wired together.
+- D-047: expanded manifestation lexicon (83.8M permutations), specimen folio IDs, 16 curiosa classes, dynamic bell jars, and 72-slip urn treasury.
 - Next: maintainer testing of note sequencer and STEP REC mode, or Wave 3 (feel) / P4-02.
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-21, session 62, local Linux environment)
+**Verified** (2026-10-22, session 63, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **173/173 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **175/175 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 

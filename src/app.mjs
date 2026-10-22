@@ -161,10 +161,71 @@ const SURPRISES = Object.freeze([
   "three pigeons in a borrowed coat",
   "gravity has submitted its resignation",
   "an accordion at the edge of time",
+  "a polite ghost inquiring about tea",
+  "the brass raven swallowed a pocket watch",
+  "marmalade under excessive pressure",
+  "the library on the dark side of the mantelpiece",
+  "the pendulum swings both ways and sideways",
+  "eighty-four buttons on an invisible waistcoat",
+  "the barometer predicts velvet",
+  "a turnip with an unlisted telephone number",
+  "the taxidermied owl has an opinion",
+  "four spoons arguing about soup",
+  "an astrolabe calibrated for longing",
+  "the parlour organ hums when nobody is looking",
+  "the telegram arrived before it was sent",
+  "the moth reads braille on the velvet curtain",
+  "six biscuits in a state of grace",
+  "the fog refuses to give a statement",
+  "a gentle mutiny among the teaspoons",
+  "the gramophone plays only yesterday",
+  "an emergency meeting of the small rocks",
+  "the conductor has misplaced the downbeat",
+  "a quiet velvet bell",
+  "the velvet settee remembers the prime minister",
+  "an encyclopedia of forgotten Wednesdays",
+  "the ceiling is considering a divorce",
+  "a very dignified potato",
+  "the kettle whistles in minor thirds",
+  "the clock struck thirteen out of spite",
+  "a slow parade of damp matchboxes",
+  "the cat has been knighted in absentia",
+  "the chandelier whispers to the floorboards",
+  "a small brass compass that points toward tea",
+  "the ghost in the scullery has good references",
+  "a conspiracy of pocket handkerchiefs",
+  "the barometer is leaking purple ink",
+  "an umbrella that only opens underwater",
+  "the antimacassar has achieved sentience",
+  "thirty-two walnuts and a confession",
+  "the drawing room is drifting out to sea",
+  "a pocket watch filled with dried lavender",
+  "the grandfather clock is losing its patience",
+  "a confidential memo to the constellation Orion",
+  "the canary sings exclusively in German",
+  "a solemn toast to the third dimension",
+  "the carpet pattern is slowly rearranging itself",
+  "a mechanical nightingale with a loose spring",
+  "the fireplace emits a polite clearing of the throat",
+  "two snails conducting a census of the windowsill",
+  "the teacup contains a localized low-pressure system",
+  "a brass padlock with no keyhole",
+  "the sofa cushion is hiding seventeen pennies",
+  "a diplomatic envoy from the subterranean kingdom",
+  "the mirror reflects everything five seconds late",
+  "the omnibus to the end of the world is running late",
+  "a tin of peppermint lozenges from 1888",
+  "the parlor palm is listening very closely",
+  "a secret society of retired stationmasters",
+  "the bellows breathe in sync with the moon",
+  "a treatise on the emotional life of doorknobs",
+  "the coal scuttle harbors an ancient grievance",
+  "an unfinished portrait of a respectable cabbage",
 ]);
 
 const elements = {
   canvas: document.querySelector("#vision"),
+  stageBellJar: document.querySelector("#stage-bell-jar"),
   form: document.querySelector("#oracle-controls"),
   phrase: document.querySelector("#phrase"),
   surprise: document.querySelector("#surprise"),
@@ -197,6 +258,7 @@ const elements = {
   volumeValue: document.querySelector("#volume-value"),
   tempo: document.querySelector("#tempo-bpm"),
   tempoValue: document.querySelector("#tempo-value"),
+  folioReadout: document.querySelector("#folio-readout"),
   name: document.querySelector("#creature-name"),
   pulse: document.querySelector("#score-pulse"),
   wave: document.querySelector("#score-wave"),
@@ -4248,6 +4310,8 @@ function showScore(score) {
   if (elements.bandstandMutateAll) elements.bandstandMutateAll.disabled = false;
   updateBandstandStatus();
   elements.name.textContent = score.name;
+  if (elements.stageBellJar) elements.stageBellJar.textContent = score.bellJar;
+  if (elements.folioReadout) elements.folioReadout.textContent = `${score.folioId} · ${score.curiosaClass}`;
   setTempoBpm(score.pulse);
   elements.wave.textContent = WAVEFORMS[score.wave];
   elements.formValue.textContent = score.shapeName;
@@ -4422,7 +4486,7 @@ function renderSpecimenBroadsheetCanvas(score) {
   pctx.textAlign = "left";
   pctx.fillText("PLATE I · LIVE SPECIMEN CAPTURE", vitrineX + 22, vitrineY + 30);
   pctx.textAlign = "right";
-  pctx.fillText(`BELL JAR Nº 01 · ${score.shapeName}`, vitrineX + vitrineW - 22, vitrineY + 30);
+  pctx.fillText(`${score.bellJar ?? "BELL JAR Nº 01"} · ${score.shapeName}`, vitrineX + vitrineW - 22, vitrineY + 30);
 
   const bannerY = 788;
   pctx.fillStyle = "#16110e";
@@ -4433,8 +4497,11 @@ function renderSpecimenBroadsheetCanvas(score) {
 
   pctx.textAlign = "center";
   pctx.fillStyle = "#dab56b";
-  pctx.font = '700 13px "Courier New", Courier, monospace';
-  pctx.fillText("CATALOGUED MANIFESTATION", width * 0.5, bannerY + 32);
+  pctx.font = '700 12px "Courier New", Courier, monospace';
+  pctx.fillText(`${score.folioId ?? "FOLIO I-0000"} · ${score.curiosaClass ?? "CLASS I"}`, width * 0.5, bannerY + 25);
+  pctx.fillStyle = "#b89249";
+  pctx.font = '700 11px "Courier New", Courier, monospace';
+  pctx.fillText("CATALOGUED MANIFESTATION", width * 0.5, bannerY + 43);
 
   pctx.fillStyle = "#faf3e6";
   pctx.font = '700 32px "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif';
@@ -4807,6 +4874,7 @@ async function exportSpecimenStems() {
         "EDMARK'S ESOTERIC FUN MACHINE · STEM BUNDLE",
         "",
         `Specimen: ${score.name}`,
+        `Folio: ${score.folioId ?? "FOLIO I"} · ${score.curiosaClass ?? ""} · ${score.bellJar ?? "BELL JAR Nº 01"}`,
         `Seed: 0x${seedHex}`,
         `Tempo: ${bpm} BPM · ${passes > 1 ? `a song of ${passes} passes (12 steps each)` : "one 12-step loop"} lasting ${loopDuration.toFixed(3)} s plus a ${LOOP_TAIL_SECONDS} s tail`,
         `Format: 16-bit PCM WAV, 44.1 kHz stereo. Every stem starts at 0 s; the loop begins at ${LOOP_START_OFFSET} s.`,

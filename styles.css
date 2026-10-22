@@ -1004,11 +1004,21 @@ h1 em {
 }
 
 .reading-label {
-  margin: 0 0 0.45rem;
+  margin: 0 0 0.25rem;
   color: var(--brass-bright);
   font-family: var(--mono-ledger);
   font-size: 0.6rem;
   letter-spacing: 0.2em;
+}
+
+.reading-meta {
+  margin: 0 0 0.45rem;
+  color: var(--gold-pale);
+  font-family: var(--mono-ledger);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .reading h2 {

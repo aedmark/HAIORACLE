@@ -68,7 +68,7 @@
             <line x1="570" y1="244" x2="590" y2="244" stroke="currentColor" stroke-width="0.9" opacity="0.45" />
           </svg>
           <span class="stage-marker stage-marker-left">LIVE SPECIMEN</span>
-          <span class="stage-marker stage-marker-right">BELL JAR Nº 01</span>
+          <span class="stage-marker stage-marker-right" id="stage-bell-jar">BELL JAR Nº 01</span>
           <canvas id="vision" aria-label="The oracle's animated audiovisual creature"></canvas>
           <p class="stage-caption">ECTOPLASMIC APPARITION · DO NOT TAP THE VITRINE</p>
         </div>
@@ -97,6 +97,7 @@
     <section class="reading" id="reading" aria-live="polite" aria-atomic="true">
       <div class="reading-identity">
         <p class="reading-label">CATALOGUED MANIFESTATION</p>
+        <p class="reading-meta" id="folio-readout">FOLIO I-0000 · CLASS I · CELESTIAL APPARITION</p>
         <h2 id="creature-name">THE ORACLE IS LISTENING</h2>
       </div>
       <div class="score-card" aria-label="Generated score">
@@ -676,7 +677,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "85de018b7501";
+      const ASSET_VERSION = "129097897d8d";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

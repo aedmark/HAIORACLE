@@ -903,6 +903,31 @@ Investigation revealed two distinct factors:
 - Downbeat notes struck right before the count-in downbeat are captured reliably.
 - Accessible, zero external dependencies, 163 tests passing.
 
+## D-047 Expanded manifestation lexicon, specimen folio identifiers, and 72-slip urn treasury (2026-10-22, status: accepted)
+
+**Context:** The maintainer requested an expanded lexicon of words used to generate catalogue manifestation names and other unique identifiers, as well as a much broader spectrum of randomized phrases drawn from the urn (`#surprise`).
+
+**Decision (maintainer-approved):**
+1. **11x Combinatorial Lexicon Expansion:**
+   - Expanded `NAME_PARTS.first` (adjectives) from 32 to 64 words, adding Victorian, astronomical, and curious adjectives (AERATED, AETHERIAL, ASTRONOMICAL, CLOCKWORK, DAMASK, GILDED, LACQUERED, OPALESCENT, PNEUMATIC, PYRITE, SELENITE, etc.).
+   - Expanded `NAME_PARTS.second` (nouns) from 32 to 64 words, introducing curious instruments, parlor fixtures, and cosmic relics (APPARATUS, ASTROLABE, AUTOMATON, CARILLON, CARTOGRAPHY, CHANDELIER, ESCAPEMENT, FOSSIL, HOROLOGE, LABYRINTH, ORRERY, PHONOGRAPH, PRISM, etc.).
+   - Expanded `NAME_PARTS.third` (actions/verbs) from 48 to 64 phrases with dry Victorian and cosmic punchlines (AVOIDS PARLIAMENT, CHALLENGES THE TIDE, DISPENSES UNPROVOKED COUNSEL, FORGIVES THE ARCHITECTURE, HAUNTS THE OCTAVE, LEVITATES CONSERVATIVELY, TASTES OF THUNDER, etc.).
+   - Expanded `NAME_PARTS.fourth` (realms/locations) from 24 to 32 evocative locations (THE ARCHIVE OF LOST COATS, THE BOTANICAL ASYLUM, THE CLOCKMAKER'S BASEMENT, THE FOG OVER GREENWICH, THE PARLOR OF PERPETUAL AUTUMN, THE SUB-AETHER CORRIDOR, THE MIDNIGHT EXPOSITION, THE TAXONOMIST'S PARLOUR).
+   - Expanded `creatureName` sentence templates from 6 to 10 forms, introducing ceremonial orders and designations (`ORDER OF THE [ADJ] [NOUN]`, `[REALM]'S [NOUN], WHO [ACTION]`, etc.).
+   - Total combinatorial name space expands from 7,077,888 to **83,886,080** unique permutations.
+2. **Specimen Folio & Accession Identifiers:**
+   - Added `bell_jar` ($1\dots 99$, prime divisor 389) and `folio_series` ($0\dots 15$, prime divisor 397) to the LOLCODE spell (`src/oracle.lol`) and validated score schema.
+   - Generated deterministic specimen folio accession codes (`score.folioId`, e.g. `FOLIO IX-3841`) and dynamic bell jar numbers (`score.bellJar`, e.g. `BELL JAR Nº 07`).
+   - Introduced 16 Victorian Archival Curiosa Classes (`score.curiosaClass`, e.g. `CLASS III · HARMONIC RESONATOR`, `CLASS IV · CLOCKWORK AUTOMATON`, `CLASS IX · GEOMETRIC PHANTASM`).
+   - Displayed dynamically on the apparition vitrine stage marker (`#stage-bell-jar`), the score reading strip (`#folio-readout`), stem bundle `README.txt`, and the engraved 1200×1520 broadsheet PNG banner.
+3. **72-Slip Urn Treasury:**
+   - Expanded `SURPRISES` in `src/app.mjs` from 12 to 72 hand-crafted, delightfully surreal Victorian parlor, clockwork, and cosmic slips drawn from the urn on `#surprise`.
+
+**Consequences:**
+- Tremendously richer variety of creature names and visual curiosity identifiers.
+- Determinism contract strictly preserved: every parameter remains causal and originates in the LOLCODE score output.
+- All 175 tests passing, zero warnings in docs and manual.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)
