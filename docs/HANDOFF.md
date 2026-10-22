@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-21, session 61, on `main`._
+_Last updated: 2026-10-21, session 62, on `main`._
 
 - P5-28 is complete: Fun Machine voices, each creature's own by default (D-040).
 - D-042 freed the organ, chimes, and mycelium from the creature filter.
@@ -13,15 +13,16 @@ _Last updated: 2026-10-21, session 61, on `main`._
 - A fresh creature opens in THE CREATURE'S OWN (maintainer's choice, 2026-10-21).
 - P5-29 wave 1 and wave 2 are done: six new chord qualities, twelve new Inform 7 genres, 19 genres in all.
 - D-045 armed downbeat sync, 1-loop count-in, tick metronome, and 12-step tracker ribbon for the Fun Machine loop machine.
-- Next: maintainer testing of loop machine arming & sync, or Wave 3 (feel) / P4-02.
+- D-046 note sequencer: interactive 12-step tracker ribbon with click-to-edit note placement/clearing, auto-advancing STEP REC mode, and downbeat anticipation latching.
+- Next: maintainer testing of note sequencer and STEP REC mode, or Wave 3 (feel) / P4-02.
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-21, session 61, local Linux environment)
+**Verified** (2026-10-21, session 62, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **161/161 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **163/163 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -95,6 +96,34 @@ _Last updated: 2026-10-21, session 61, on `main`._
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 62: 2026-10-21: note sequencer and downbeat anticipation latching (D-046)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Address timing at the start of loop recording and provide a step sequencer in addition to live loop capture (D-046).
+
+**Done:** D-046 implemented and verified. All 163 checks pass.
+
+**Changed:**
+1. `src/looper.mjs`:
+   - Added pure `setLoopSlot(song, loopIndex, layerIndex, step, slot)` helper to program individual steps or create an initial loop on demand.
+   - Added `{ type: "anticipate", slot }` event to `recorderReduce()` so keystrokes struck during armed count-in latch onto step 0 when recording begins.
+2. `src/app.mjs`:
+   - Made each cell in `#looper-steps` an accessible interactive button; clicking any step selects it (`selectedStepIndex`), and clicking an already-selected step with a note clears it to a rest.
+   - Pressing keys on the Fun Machine manual (`C..C'`) or computer keys (`[A..K]`) while a step is selected sets that note, style, and voice into the loop layer and plays an audition sound.
+   - Added `STEP REC` (`#looper-step-rec`) and `REST (—)` (`#looper-rest`) buttons: in STEP REC mode, striking keys automatically advances selection to the next step, while REST clears the step and advances.
+   - In `triggerFunKey`: latched downbeat anticipation during armed count-in (and during the step 11 lookahead window) into `recorder.anticipatedSlot`, and rendered the anticipated note on step 1 of `#looper-steps`.
+   - Updated `looperReadoutText()` to display live step-record and anticipated-note progress.
+3. `index.html` & `styles.css`: Added `#looper-step-rec` and `#looper-rest` buttons, `.is-selected-step` (bright brass focus glow), and `.is-step-rec` button styling.
+4. `docs/DECISIONS.md`: Recorded D-046.
+5. `docs/manual.json` & `manual.html`: Documented note sequencing and downbeat anticipation in `esoteric-fun-machine`.
+
+**Verified:**
+- 163/163 Node checks (including new unit tests for `setLoopSlot` and downbeat anticipation in `tests/looper.test.mjs`, and static UI checks in `tests/static.test.mjs`).
+- `python3 tools/check_docs.py` and `python3 tools/manual.py check docs/manual.json` pass with 0 errors.
+
+**Next session should start with:** Maintainer testing of the interactive 12-step note sequencer and STEP REC mode, or P5-29 Wave 3 (feel) / P4-02.
 
 ### Session 61: 2026-10-21: loop machine arming, count-in, downbeat sync, and step tracker (D-045)
 
@@ -416,27 +445,4 @@ _Last updated: 2026-10-21, session 61, on `main`._
 
 **Next session should start with:** P5-30 phase 1 (the spell's `harmony_*` fields).
 
-### Session 52: 2026-10-20: voices in the exports (P5-28 complete)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-28 phase 5: exports carry the voices (D-040).
-
-**Done:** Phase 4 was committed and pushed (b92ee0c). P5-28 is complete (all five phases).
-
-**Changed:**
-1. `src/midi.mjs`: `FUN_VOICE_CHANNELS` is 1, 6, 7, 8, 10, 11, 12, and 13, none of them used by another part. `funVoiceTracks(base, events)` splits the MANUAL part into one track per voice, in order of first appearance, named "MANUAL · FUN MACHINE · <voice>" with that voice's program. A part with no notes stays one stock track.
-2. `src/app.mjs`:
-   - `logNote()` takes an optional voice. The three Fun Machine synths log `midiVoiceOf(voice)`, which names the creature's voice as "THE CREATURE'S OWN (HARMONIUM · BRIGHTER · NARROW)".
-   - `exportSpecimenMidi()` expands the MANUAL part with `funVoiceTracks()`. Velocity now scales within each voice track.
-3. D-040 item 6, as built: one track and channel per voice rather than program changes on one track. Stacked layers sound at the same moment, and a channel holds one program.
-
-**Verified:**
-- 142/142 Node checks.
-- In the browser on "three pigeons in a borrowed coat" at full tempo: a loop recorded in MUSIC BOX with a HARMONIUM overdub exported MIDI with "MANUAL · FUN MACHINE · MUSIC BOX" (channel 1, program 10) and "MANUAL · FUN MACHINE · HARMONIUM" (channel 6, program 20).
-- The MIDI log comes from the same scheduler calls that render WAV and stems, so those carry each layer's voice.
-
-**Not verified:** DAW import of multi-voice MIDI, and listening to stacked voices in an exported WAV.
-
-**Next session should start with:** the maintainer's listen, then D-041 wave 1 (more genres, which also brings the rulebook-suggested voice), P4-02, or P6-01.
 

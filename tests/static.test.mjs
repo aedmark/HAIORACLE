@@ -410,13 +410,18 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   assert.match(app, /const resting = !arrangementPlays\("lead", stepIndex\);/);
   // The loop machine (P5-26 phase 2): record, follow, and play every layer on the step grid.
   assert.match(html, /<div class="looper" id="looper" role="group" aria-label="Loop machine">/);
-  for (const id of ["looper-record", "looper-overdub", "looper-clear"]) assert.match(html, new RegExp(`id="${id}"`));
+  for (const id of ["looper-record", "looper-overdub", "looper-step-rec", "looper-rest", "looper-clear"]) assert.match(html, new RegExp(`id="${id}"`));
   assert.match(html, /<output class="looper-readout" id="looper-readout" aria-live="off">/);
   assert.match(html, /<div class="looper-steps" id="looper-steps"/, "looper has 12-step progress ribbon");
   assert.match(styles, /\.looper-steps \{[^}]*display: grid;/, "12-step tracker grid");
   assert.match(styles, /\.looper-step\.is-count-in/, "amber count-in styling");
   assert.match(styles, /\.looper-step\.is-recording/, "red recording styling");
+  assert.match(styles, /\.looper-step\.is-selected-step/, "selected step styling");
+  assert.match(styles, /\.looper-button\.is-step-rec/, "step record button styling");
   assert.match(app, /function renderLooperSteps\(/);
+  assert.match(app, /function toggleStepRec\(/);
+  assert.match(app, /function handleStepClick\(/);
+  assert.match(app, /function handleRestStep\(/);
   assert.match(app, /advanceRecorder\(stepIndex, position, liveSlot\);\n      followSong\(transport, loop, stepIndex, liveSlot\);\n\n      scheduleEnsembleStep\(/, "the band is conducted before it plays the step");
   assert.match(app, /for \(const \{ layerIndex, slot \} of slotsAt\(loop, stepIndex\)\)/);
   assert.match(app, /releasable: false,/, "recorded pads ring out when a live key lets go");

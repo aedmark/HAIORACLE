@@ -873,6 +873,36 @@ Investigation revealed:
 - Zero extra dependencies, fully accessible (0.6rem text floor, prefers-reduced-motion respected).
 - All 161 automated tests pass.
 
+## D-046 Note sequencer with interactive 12-step tracker, auto-advancing STEP REC, and downbeat anticipation latching (2026-10-21, status: accepted)
+
+**Context:** The maintainer reported that timing at the start of live recording remained challenging, and asked for a note sequencer alongside live loop capture.
+Investigation revealed two distinct factors:
+1. **Downbeat Anticipation Timing Gap:** When musicians play along with an audible count-in, keystrokes for beat 1 are naturally struck slightly before or right on the beat. Because Web Audio schedules up to 280ms ahead of real audio time, step 0 of the recording pass was scheduled while `activeHeldFunKey` was still null. Meanwhile, the user's keystroke landed while the audible engine was still in count-in step 11 or while `recorder.mode` was still `"armed"`. As a result, the keystroke was ignored by the recorder, and when step 0 actually sounded, the key was already held, missing the initial note entirely.
+2. **Performance Pressure:** Composing a full 12-step chord progression live on a computer keyboard or screen keys without pauses or mistakes is demanding.
+
+**Decision (maintainer-approved):**
+1. **Interactive 12-Step Tracker Ribbon (`#looper-steps`):**
+   - Each of the 12 cells in `#looper-steps` is an accessible interactive button.
+   - Clicking any step selects it (`selectedStepIndex`).
+   - Striking a key on the Fun Machine manual (`C..C'`) or computer keys (`[A..K]`) assigns that note, style, and voice to the selected step, plays an audition preview, and updates the song in memory via `setLoopSlot()`.
+   - Clicking an already-selected step with a note clears it to a rest (`null`).
+2. **Auto-Advancing STEP REC Mode:**
+   - A dedicated `STEP REC` button (`#looper-step-rec`) toggles step-by-step entry.
+   - Striking a key on the manual records that note to the current step and automatically advances selection to the next step (`(step + 1) % 12`).
+   - A `REST (—)` button (`#looper-rest`) clears the selected step and advances to the next step.
+   - If the song is empty when step entry begins, loop 1 is created automatically.
+3. **Downbeat Anticipation Latching:**
+   - Keystrokes struck during armed count-in (or during the step 11 lookahead window) are latched as `anticipatedSlot`.
+   - The Step 1 cell immediately illuminates with the anticipated note name.
+   - When the recorder transitions to step 0 on the downbeat, `take[0]` receives the latched slot, guaranteeing that downbeat keystrokes are never dropped.
+4. **Full Compatibility:**
+   - Step-sequenced loops use the exact same data structure as live takes (`loop.layers`). They stack up to 4 layers, chain up to 16 loops, follow the lead rule, save to `.fun` sessions, and export to WAV, stems, and MIDI without any format changes.
+
+**Consequences:**
+- Players can compose loops either in real time with armed count-in and latching, or step-by-step with zero timing pressure.
+- Downbeat notes struck right before the count-in downbeat are captured reliably.
+- Accessible, zero external dependencies, 163 tests passing.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

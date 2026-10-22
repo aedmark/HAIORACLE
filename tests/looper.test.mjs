@@ -23,6 +23,7 @@ import {
   moveLoop,
   overdubLayer,
   recorderReduce,
+  setLoopSlot,
   setRepeats,
   slotsAt,
   songPasses,
@@ -241,4 +242,48 @@ test("the recorder supports count-in passes and slot updates", () => {
   assert.equal(finishedTake.take[0]?.key, 0);
   assert.equal(finishedTake.take[2]?.key, 7);
 });
+
+test("setLoopSlot programs individual steps and creates a loop on demand", () => {
+  let song = emptySong();
+  // Setting a slot on an empty song creates a 1-loop, 1-layer song
+  song = setLoopSlot(song, null, null, 0, makeSlot(5, "arpeggio"));
+  assert.equal(song.loops.length, 1);
+  assert.equal(song.loops[0].layers[0][0]?.key, 5);
+  assert.equal(song.loops[0].layers[0][1], null);
+
+  // Updating step 4
+  song = setLoopSlot(song, 0, 0, 4, makeSlot(9, "swell"));
+  assert.equal(song.loops[0].layers[0][4]?.key, 9);
+
+  // Clearing step 4
+  song = setLoopSlot(song, 0, 0, 4, null);
+  assert.equal(song.loops[0].layers[0][4], null);
+  assert.equal(song.loops[0].layers[0][0]?.key, 5);
+});
+
+test("downbeat anticipation latches keystrokes during count-in onto step 0", () => {
+  let recorder = recorderReduce(idleRecorder(), { type: "arm", kind: "new", countIn: 12 }).recorder;
+  assert.equal(recorder.mode, "armed");
+
+  // Advance 11 steps of count-in
+  for (let s = 0; s < 11; s += 1) {
+    recorder = recorderReduce(recorder, { type: "step", step: s, held: null }).recorder;
+  }
+  assert.equal(recorder.countIn, 1);
+
+  // User strikes downbeat early during the final count-in step
+  recorder = recorderReduce(recorder, { type: "anticipate", slot: makeSlot(3, "progression") }).recorder;
+  assert.equal(recorder.anticipatedSlot?.key, 3);
+
+  // Advance step 11 (countIn reaches 0)
+  recorder = recorderReduce(recorder, { type: "step", step: 11, held: null }).recorder;
+  assert.equal(recorder.countIn, 0);
+
+  // Downbeat step 0 arrives: anticipated slot latches onto take[0]
+  const { recorder: recordingState } = recorderReduce(recorder, { type: "step", step: 0, held: null });
+  assert.equal(recordingState.mode, "recording");
+  assert.equal(recordingState.take[0]?.key, 3);
+  assert.equal(recordingState.anticipatedSlot, null);
+});
+
 

@@ -112,6 +112,7 @@ import {
   moveLoop,
   overdubLayer,
   recorderReduce,
+  setLoopSlot,
   setRepeats,
   slotsAt,
   songPasses,
@@ -3608,9 +3609,30 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   unlockDrawer("held-key");
 
   if (recorder.mode === "recording" && currentTransport) {
-    const curStep = ((currentTransport.audibleStep % 12) + 12) % 12;
+    const audible = ((currentTransport.audibleStep % 12) + 12) % 12;
+    // Downbeat anticipation grace: if audible step is 11 and take[0] is still empty, latch onto step 0
+    const curStep = (audible === 11 && recorder.take && recorder.take[0] === null) ? 0 : audible;
     const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId);
     recorder = recorderReduce(recorder, { type: "slot", step: curStep, slot: liveSlot }).recorder;
+    renderLooper();
+  } else if (recorder.mode === "armed") {
+    // Downbeat anticipation latching during count-in
+    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId);
+    recorder = recorderReduce(recorder, { type: "anticipate", slot: liveSlot }).recorder;
+    renderLooper();
+  } else if (selectedStepIndex !== null) {
+    // Step Sequencer: program the selected step
+    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId);
+    song = setLoopSlot(song, selectedLoop ?? 0, null, selectedStepIndex, liveSlot);
+    if (selectedLoop === null) selectedLoop = 0;
+    const noteName = FUN_KEY_MAP[normSemi]?.note ?? normSemi;
+    if (isStepRecActive) {
+      const advancedStep = (selectedStepIndex + 1) % 12;
+      announceLooper(`STEP ${selectedStepIndex + 1}: ${noteName} SET · ADVANCED TO STEP ${advancedStep + 1}`);
+      selectedStepIndex = advancedStep;
+    } else {
+      announceLooper(`STEP ${selectedStepIndex + 1}: ${noteName} SET`);
+    }
     renderLooper();
   }
 
@@ -5680,6 +5702,8 @@ renderCabinet();
 let song = emptySong();
 let recorder = idleRecorder();
 let selectedLoop = null;
+let selectedStepIndex = null;
+let isStepRecActive = false;
 const performanceCache = new Map();
 
 function performanceFor(slot) {
@@ -5804,6 +5828,8 @@ function armRecorder(kind) {
   const stepsRemaining = (12 - currentAudible) % 12 || 12;
   const countIn = isStopped ? LOOP_STEPS : 0;
 
+  isStepRecActive = false;
+  selectedStepIndex = null;
   recorder = recorderReduce(
     idleRecorder(),
     kind === "new"
@@ -5832,6 +5858,8 @@ function cancelRecording() {
 function clearSong() {
   song = emptySong();
   selectedLoop = null;
+  selectedStepIndex = null;
+  isStepRecActive = false;
   recorder = idleRecorder();
   if (currentTransport) currentTransport.followedSlot = null;
   if (currentTransport) currentTransport.songLeading = false;
@@ -5848,6 +5876,11 @@ function looperReadoutText() {
   const audibleNum = audible !== null ? audible + 1 : 1;
 
   if (recorder.mode === "armed") {
+    if (recorder.anticipatedSlot) {
+      const remaining = recorder.countIn > 0 ? recorder.countIn : (audible !== null ? (12 - audible) % 12 || 12 : 1);
+      const antNote = FUN_KEY_MAP[recorder.anticipatedSlot.key]?.note ?? recorder.anticipatedSlot.key;
+      return `ARMED · [${antNote}] LATCHED FOR STEP 1 · ${remaining} STEP${remaining === 1 ? "" : "S"} TO RECORD`;
+    }
     if (recorder.countIn > 0) {
       const remaining = recorder.countIn;
       return `ARMED · COUNT-IN STEP ${audibleNum} OF 12 · ${remaining} STEP${remaining === 1 ? "" : "S"} TO RECORD`;
@@ -5869,6 +5902,22 @@ function looperReadoutText() {
     return `● OVERDUBBING LOOP ${recorder.loopIndex + 1} · STEP ${stepNum} OF 12${finalTag}${keyTag}`;
   }
 
+  if (isStepRecActive && selectedStepIndex !== null) {
+    const currentLoop = selectedLoop !== null ? song.loops[selectedLoop] : null;
+    const recordedSlots = currentLoop ? currentLoop.layers[currentLoop.layers.length - 1] : null;
+    const curSlot = recordedSlots ? recordedSlots[selectedStepIndex] : null;
+    const curNote = curSlot ? ` [${FUN_KEY_MAP[curSlot.key]?.note ?? curSlot.key}]` : " [—]";
+    return `STEP REC · STEP ${selectedStepIndex + 1} OF 12${curNote} · PLAY KEY TO ENTER OR REST`;
+  }
+
+  if (selectedStepIndex !== null) {
+    const currentLoop = selectedLoop !== null ? song.loops[selectedLoop] : null;
+    const recordedSlots = currentLoop ? currentLoop.layers[currentLoop.layers.length - 1] : null;
+    const curSlot = recordedSlots ? recordedSlots[selectedStepIndex] : null;
+    const curNote = curSlot ? ` [${FUN_KEY_MAP[curSlot.key]?.note ?? curSlot.key}]` : " [—]";
+    return `STEP ${selectedStepIndex + 1} OF 12${curNote} · PLAY KEY TO SET OR CLICK TO CLEAR`;
+  }
+
   if (!song.loops.length) return "NO LOOPS YET · HOLD KEYS AND RECORD WHAT YOU PLAY";
   const playing = currentTransport?.songPosition;
   const now = playing ? `NOW LOOP ${playing.loopIndex + 1} · ` : "";
@@ -5876,14 +5925,71 @@ function looperReadoutText() {
   return `${now}${plural(song.loops.length, "LOOP")} · ${plural(songPasses(song), "PASS")}${target}`.replace("PASSS", "PASSES");
 }
 
+function handleStepClick(stepIndex) {
+  if (recorder.mode !== "idle") return;
+  const currentLoop = selectedLoop !== null ? song.loops[selectedLoop] : null;
+  const recordedSlots = currentLoop ? currentLoop.layers[currentLoop.layers.length - 1] : null;
+  const existingSlot = recordedSlots ? recordedSlots[stepIndex] : null;
+
+  if (selectedStepIndex === stepIndex) {
+    if (existingSlot) {
+      song = setLoopSlot(song, selectedLoop ?? 0, null, stepIndex, null);
+      announceLooper(`STEP ${stepIndex + 1} CLEARED`);
+      renderLooper();
+      return;
+    }
+    selectedStepIndex = null;
+    renderLooper();
+    return;
+  }
+
+  selectedStepIndex = stepIndex;
+  if (existingSlot) {
+    announceLooper(`STEP ${stepIndex + 1}: ${FUN_KEY_MAP[existingSlot.key]?.note ?? existingSlot.key} SELECTED · CLICK AGAIN TO CLEAR OR STRIKE A KEY TO CHANGE`);
+  } else {
+    announceLooper(`STEP ${stepIndex + 1} SELECTED · STRIKE A KEY ON THE MANUAL TO SET NOTE`);
+  }
+  renderLooper();
+}
+
+function toggleStepRec() {
+  if (recorder.mode !== "idle") {
+    cancelRecording();
+  }
+  isStepRecActive = !isStepRecActive;
+  if (isStepRecActive) {
+    if (selectedStepIndex === null) selectedStepIndex = 0;
+    announceLooper(`STEP RECORD MODE · STEP ${selectedStepIndex + 1} SELECTED · STRIKE KEYS ON MANUAL OR PRESS REST`);
+  } else {
+    selectedStepIndex = null;
+    announceLooper("STEP RECORD FINISHED");
+  }
+  renderLooper();
+}
+
+function handleRestStep() {
+  if (selectedStepIndex === null) return;
+  song = setLoopSlot(song, selectedLoop ?? 0, null, selectedStepIndex, null);
+  if (isStepRecActive) {
+    const nextStep = (selectedStepIndex + 1) % 12;
+    announceLooper(`STEP ${selectedStepIndex + 1}: REST · ADVANCED TO STEP ${nextStep + 1}`);
+    selectedStepIndex = nextStep;
+  } else {
+    announceLooper(`STEP ${selectedStepIndex + 1}: REST`);
+  }
+  renderLooper();
+}
+
 function renderLooperSteps() {
   const container = document.querySelector("#looper-steps");
   if (!container) return;
   if (container.children.length !== 12) {
     container.replaceChildren(...Array.from({ length: 12 }, (_, i) => {
-      const cell = document.createElement("div");
+      const cell = document.createElement("button");
+      cell.type = "button";
       cell.className = "looper-step";
       cell.dataset.step = String(i);
+      cell.setAttribute("aria-label", `Step ${i + 1}`);
       const num = document.createElement("b");
       num.className = "looper-step-num";
       num.textContent = String(i + 1);
@@ -5891,6 +5997,7 @@ function renderLooperSteps() {
       val.className = "looper-step-val";
       val.textContent = "·";
       cell.append(num, val);
+      cell.addEventListener("click", () => handleStepClick(i));
       return cell;
     }));
   }
@@ -5908,11 +6015,19 @@ function renderLooperSteps() {
     const val = cell.querySelector(".looper-step-val");
     const isAudible = audible === i;
 
-    cell.classList.remove("is-current", "is-count-in", "is-recording", "has-note");
+    cell.classList.remove("is-current", "is-count-in", "is-recording", "has-note", "is-selected-step");
+    if (selectedStepIndex === i) {
+      cell.classList.add("is-selected-step");
+    }
 
     if (recorder.mode === "armed") {
       if (isAudible) cell.classList.add("is-count-in");
-      if (val) val.textContent = isAudible ? "▶" : "·";
+      if (i === 0 && recorder.anticipatedSlot) {
+        cell.classList.add("has-note");
+        if (val) val.textContent = FUN_KEY_MAP[recorder.anticipatedSlot.key]?.note ?? "●";
+      } else {
+        if (val) val.textContent = isAudible ? "▶" : "·";
+      }
     } else if (recorder.mode === "recording") {
       const takeSlot = activeTake ? activeTake[i] : null;
       if (isAudible) cell.classList.add("is-recording");
@@ -6037,12 +6152,28 @@ function renderLooper() {
     overdub.disabled = !song.loops.length;
   }
 
+  const stepRec = document.querySelector("#looper-step-rec");
+  const rest = document.querySelector("#looper-rest");
+
+  if (stepRec) {
+    stepRec.setAttribute("aria-pressed", String(isStepRecActive));
+    stepRec.classList.toggle("is-step-rec", isStepRecActive);
+    stepRec.disabled = recorder.mode !== "idle";
+    stepRec.textContent = isStepRecActive ? "STEP REC: ON" : "STEP REC";
+  }
+
+  if (rest) {
+    rest.disabled = selectedStepIndex === null || recorder.mode !== "idle";
+  }
+
   if (clear) clear.disabled = !song.loops.length && recorder.mode === "idle";
   if (readout) readout.value = looperReadoutText();
 }
 
 document.querySelector("#looper-record")?.addEventListener("click", () => armRecorder("new"));
 document.querySelector("#looper-overdub")?.addEventListener("click", () => armRecorder("overdub"));
+document.querySelector("#looper-step-rec")?.addEventListener("click", toggleStepRec);
+document.querySelector("#looper-rest")?.addEventListener("click", handleRestStep);
 document.querySelector("#looper-clear")?.addEventListener("click", clearSong);
 document.querySelector("#looper-repeats-down")?.addEventListener("click", () => {
   const loop = song.loops[selectedLoop];

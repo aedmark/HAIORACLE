@@ -1284,4 +1284,29 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** P5-28 phase 5: a MIDI program change whenever the Fun Machine track's voice changes, and a check that the exports carry each layer's voice.
 
+### Session 52: 2026-10-20: voices in the exports (P5-28 complete)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-28 phase 5: exports carry the voices (D-040).
+
+**Done:** Phase 4 was committed and pushed (b92ee0c). P5-28 is complete (all five phases).
+
+**Changed:**
+1. `src/midi.mjs`: `FUN_VOICE_CHANNELS` is 1, 6, 7, 8, 10, 11, 12, and 13, none of them used by another part. `funVoiceTracks(base, events)` splits the MANUAL part into one track per voice, in order of first appearance, named "MANUAL · FUN MACHINE · <voice>" with that voice's program. A part with no notes stays one stock track.
+2. `src/app.mjs`:
+   - `logNote()` takes an optional voice. The three Fun Machine synths log `midiVoiceOf(voice)`, which names the creature's voice as "THE CREATURE'S OWN (HARMONIUM · BRIGHTER · NARROW)".
+   - `exportSpecimenMidi()` expands the MANUAL part with `funVoiceTracks()`. Velocity now scales within each voice track.
+3. D-040 item 6, as built: one track and channel per voice rather than program changes on one track. Stacked layers sound at the same moment, and a channel holds one program.
+
+**Verified:**
+- 142/142 Node checks.
+- In the browser on "three pigeons in a borrowed coat" at full tempo: a loop recorded in MUSIC BOX with a HARMONIUM overdub exported MIDI with "MANUAL · FUN MACHINE · MUSIC BOX" (channel 1, program 10) and "MANUAL · FUN MACHINE · HARMONIUM" (channel 6, program 20).
+- The MIDI log comes from the same scheduler calls that render WAV and stems, so those carry each layer's voice.
+
+**Not verified:** DAW import of multi-voice MIDI, and listening to stacked voices in an exported WAV.
+
+**Next session should start with:** the maintainer's listen, then D-041 wave 1 (more genres, which also brings the rulebook-suggested voice), P4-02, or P6-01.
+
+
 

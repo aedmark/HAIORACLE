@@ -4,6 +4,9 @@
 
 ### Added
 
+- Program loop notes with a 12-step note sequencer (D-046): click any step on the 12-step ribbon (`#looper-steps`) to select and assign notes with the keyboard manual or computer keys, playing an instant audition preview, or click again to clear.
+- Auto-advance step recording (`STEP REC`): toggle `STEP REC` (`#looper-step-rec`) to step through 1..12 automatically on each key strike on the manual, with a dedicated `REST (—)` button (`#looper-rest`) to insert rests.
+- Latch anticipated downbeat keystrokes: striking a key during the armed count-in pass immediately latches onto step 1 and illuminates the step with the note name, eliminating downbeat misses from look-ahead timing.
 - Arm and sync the Loop Machine (D-045): `RECORD NEW LOOP` and `OVERDUB` now arm with downbeat sync. Starting from stopped plays a 1-loop (12-step) count-in pass, while arming mid-loop counts down the remaining steps to the downbeat. A mechanical clockwork tick metronome automatically sounds during count-in and recording with an accented downbeat.
 - See loop recording progress in real time: a dedicated 12-step progress tracker ribbon (`#looper-steps`) displays the advancing playhead during playback, amber countdown steps during armed count-in, and vibrant red cells displaying recorded notes during takes. The readout narrates every step (`STEP 1 OF 12`, `FINAL STEP`), and buttons pulse amber while armed and red while recording.
 - Capture keystrokes right on the beat: live key strikes during recording immediately register on the audible step, eliminating look-ahead scheduling latency mismatches.

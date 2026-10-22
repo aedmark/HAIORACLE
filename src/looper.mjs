@@ -102,6 +102,30 @@ export function moveLoop(song, loopIndex, delta) {
   return freezeSong(loops);
 }
 
+/**
+ * Sets or clears a single step's slot in a loop layer. If the song is empty
+ * and a slot is provided, a new loop with one layer is created.
+ */
+export function setLoopSlot(song, loopIndex, layerIndex, step, slot = null) {
+  if (!Number.isInteger(step) || step < 0 || step >= LOOP_STEPS) return song;
+  if (!song.loops.length) {
+    if (!slot) return song;
+    const take = Array(LOOP_STEPS).fill(null);
+    take[step] = slot;
+    return freezeSong([freezeLoop(1, [Object.freeze(take)])]);
+  }
+  const lIdx = Math.max(0, Math.min(song.loops.length - 1, loopIndex ?? (song.loops.length - 1)));
+  const loop = song.loops[lIdx];
+  const layIdx = Math.max(0, Math.min(loop.layers.length - 1, layerIndex ?? (loop.layers.length - 1)));
+  const take = [...loop.layers[layIdx]];
+  take[step] = slot ?? null;
+  const layers = [...loop.layers];
+  layers[layIdx] = Object.freeze(take);
+  const loops = [...song.loops];
+  loops[lIdx] = freezeLoop(loop.repeats, layers);
+  return freezeSong(loops);
+}
+
 /** Sets a loop's repeats, clamped to 1..MAX_REPEATS and to the song's pass budget. */
 export function setRepeats(song, loopIndex, repeats) {
   const loop = song.loops[loopIndex];
@@ -166,7 +190,7 @@ export function leadSlotAt(loop, step, liveSlot = null) {
 // slot per step for a full pass, and then hands the take back.
 
 export function idleRecorder() {
-  return Object.freeze({ mode: "idle", kind: null, loopIndex: null, take: null, countIn: 0, step: null });
+  return Object.freeze({ mode: "idle", kind: null, loopIndex: null, take: null, countIn: 0, step: null, anticipatedSlot: null });
 }
 
 /**
@@ -174,6 +198,7 @@ export function idleRecorder() {
  *  - `{ type: "arm", kind: "new", countIn }` or `{ type: "arm", kind: "overdub", loopIndex, countIn }`
  *  - `{ type: "cancel" }`
  *  - `{ type: "slot", step, slot }`: set or update a recorded slot during active recording.
+ *  - `{ type: "anticipate", slot }`: latch an incoming keystroke struck during armed count-in onto step 0.
  *  - `{ type: "step", step, loopIndex, held }`: a loop step is about to sound.
  *    `step` is 0..11, `loopIndex` is the song loop playing (null with no song),
  *    and `held` is the live slot (or null).
@@ -185,14 +210,18 @@ export function recorderReduce(recorder, event) {
   if (event.type === "arm") {
     const countIn = Math.max(0, Number.isInteger(event.countIn) ? event.countIn : (event.countIn ? LOOP_STEPS : 0));
     if (event.kind === "new") {
-      return { recorder: Object.freeze({ mode: "armed", kind: "new", loopIndex: null, take: null, countIn, step: null }), finished: null };
+      return { recorder: Object.freeze({ mode: "armed", kind: "new", loopIndex: null, take: null, countIn, step: null, anticipatedSlot: null }), finished: null };
     }
     if (event.kind === "overdub" && Number.isInteger(event.loopIndex) && event.loopIndex >= 0) {
-      return { recorder: Object.freeze({ mode: "armed", kind: "overdub", loopIndex: event.loopIndex, take: null, countIn, step: null }), finished: null };
+      return { recorder: Object.freeze({ mode: "armed", kind: "overdub", loopIndex: event.loopIndex, take: null, countIn, step: null, anticipatedSlot: null }), finished: null };
     }
     return { recorder, finished: null };
   }
   if (event.type === "cancel") return { recorder: idleRecorder(), finished: null };
+  if (event.type === "anticipate") {
+    if (recorder.mode !== "armed") return { recorder, finished: null };
+    return { recorder: Object.freeze({ ...recorder, anticipatedSlot: event.slot ?? null }), finished: null };
+  }
   if (event.type === "slot") {
     if (recorder.mode !== "recording" || !recorder.take) return { recorder, finished: null };
     const step = Number.isInteger(event.step) ? ((event.step % LOOP_STEPS) + LOOP_STEPS) % LOOP_STEPS : null;
@@ -218,7 +247,8 @@ export function recorderReduce(recorder, event) {
     current = Object.freeze({ ...current, mode: "recording", take: emptyTake(), countIn: 0, step: 0 });
   }
   const take = [...current.take];
-  take[event.step] = event.held ?? null;
+  take[event.step] = (event.step === 0 && current.anticipatedSlot) ? current.anticipatedSlot : (event.held ?? null);
+  current = current.anticipatedSlot ? Object.freeze({ ...current, anticipatedSlot: null }) : current;
   if (event.step === LOOP_STEPS - 1) {
     return {
       recorder: idleRecorder(),

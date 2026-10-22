@@ -129,6 +129,13 @@ select:focus-visible {
   animation: looper-pulse-red 800ms ease-in-out infinite;
 }
 
+.looper-button.is-step-rec {
+  border-color: #ffd875 !important;
+  color: #fff8e6 !important;
+  background: rgba(130, 85, 15, 0.85) !important;
+  box-shadow: 0 0 10px rgba(255, 216, 117, 0.55);
+}
+
 @keyframes looper-pulse-amber {
   0%, 100% { border-color: #e0aa3e; box-shadow: 0 0 6px rgba(224, 170, 62, 0.4); }
   50% { border-color: #ffd875; box-shadow: 0 0 14px rgba(255, 216, 117, 0.7); }
@@ -161,7 +168,20 @@ select:focus-visible {
   border-radius: 2px;
   min-height: 1.85rem;
   font-family: var(--mono-ledger);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
   transition: border-color 90ms ease, background 90ms ease, box-shadow 90ms ease;
+}
+
+.looper-step:hover:not(:disabled) {
+  border-color: rgba(212, 175, 101, 0.6);
+  background: rgba(45, 32, 22, 0.9);
+}
+
+.looper-step:focus-visible {
+  outline: 2px solid var(--brass-bright);
+  outline-offset: 1px;
 }
 
 .looper-step-num {
@@ -205,6 +225,16 @@ select:focus-visible {
 .looper-step.has-note .looper-step-val {
   color: var(--brass-bright);
   font-weight: 700;
+}
+
+.looper-step.is-selected-step {
+  border-color: #ffd875 !important;
+  background: rgba(85, 65, 25, 0.95) !important;
+  box-shadow: 0 0 10px rgba(255, 216, 117, 0.7) !important;
+}
+
+.looper-step.is-selected-step .looper-step-num {
+  color: #fff9e6;
 }
 
 /* Loop tiles scroll sideways at a fixed height, so adding or playing loops
