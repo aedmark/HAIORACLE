@@ -97,13 +97,16 @@ import {
 } from "./session.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
 import {
+  DEFAULT_LOOP_ROLE,
+  LOOP_ROLES,
+  LOOP_STEPS,
+  MAX_LAYERS,
+  MAX_LOOPS,
   MAX_REPEATS,
   MAX_SONG_PASSES,
   appendLoop,
   canAppendLoop,
   canOverdub,
-  DEFAULT_LOOP_ROLE,
-  LOOP_ROLES,
   clampSelection,
   deleteLoop,
   emptySong,
@@ -2886,7 +2889,8 @@ function updateAudioInteraction() {
   const fifthWeight = (0.035 + field.radius * 0.065 * (0.5 - 0.5 * Math.cos(field.angle * 2))) * (1 - ((interaction.sulk || 0) * 0.4));
   const shimmerWeight = (field.radius * 0.058 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5))) * (1 - ((interaction.sulk || 0) * 0.5));
   // The tonic drones step back with the lead while the band follows a held key.
-  const isKeyTransition = (performance.now() - lastFunKeyReleaseTime) < 220;
+  const nowMs = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+  const isKeyTransition = (nowMs - lastFunKeyReleaseTime) < 220;
   const leadDuck = activeHeldFunKey !== null || isKeyTransition || currentTransport?.songLeading ? LEAD_DUCK_GAIN : 1;
   const targetDroneGains = [subWeight * leadDuck, fifthWeight * leadDuck, shimmerWeight * leadDuck];
 
@@ -4454,7 +4458,7 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   if (!isKeyDown) {
     if (activeHeldFunKey !== normSemi) return;
     activeHeldFunKey = null;
-    lastFunKeyReleaseTime = performance.now();
+    lastFunKeyReleaseTime = globalThis.performance ? globalThis.performance.now() : Date.now();
     keyBtn?.classList.remove("is-pressed");
     releaseFunPads(audioContext, 0.9);
     if (currentTransport) currentTransport.liveVoice = { voicing: currentTransport.liveVoice?.voicing ?? null, leadMidi: null };

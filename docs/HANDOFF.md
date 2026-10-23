@@ -122,6 +122,9 @@ _Last updated: 2026-10-22, session 68, on `main`._
    - Added section color badges and active chip styling (gold intro, sage main, violet bridge, ruby outro) with font sizes compliant with the accessibility floor ($\ge 0.6\text{rem}$).
 4. Tests:
    - Added sustained arpeggio/swell hold test and section role state machine/validation tests in `tests/looper.test.mjs`.
+5. Browser runtime hotfix:
+   - Imported `LOOP_STEPS` from `./looper.mjs` in `src/app.mjs`.
+   - Used `globalThis.performance ? globalThis.performance.now() : Date.now()` in `triggerFunKey` to eliminate lexical scope TDZ collisions when releasing keys.
 
 **Verified:**
 - 180/180 Node tests pass across all test suites.
