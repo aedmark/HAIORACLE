@@ -178,11 +178,18 @@
               <button class="fun-chip" id="chip-style-swell" data-style="swell" type="button" aria-pressed="false" title="One soft pad chord on your key; the band settles onto it">SWELL</button>
               <button class="fun-chip" id="chip-style-arpeggio" data-style="arpeggio" type="button" aria-pressed="false" title="A pad with chord tones rippling in the band's rhythm">ARPEGGIO</button>
               <button class="fun-chip is-active" id="chip-style-progression" data-style="progression" type="button" aria-pressed="true" title="A pad walking the genre's four-chord progression from your key, with a singing lead line">PROGRESSION</button>
-              <button class="fun-chip" id="chip-style-intro" data-style="intro" type="button" aria-pressed="false" title="A tonic vamp prelude in the active rulebook leading to the downbeat">INTRO</button>
-              <button class="fun-chip" id="chip-style-bridge" data-style="bridge" type="button" aria-pressed="false" title="A contrasting B-section progression with subdominant and secondary dominants from the active rulebook">BRIDGE</button>
-              <button class="fun-chip" id="chip-style-outro" data-style="outro" type="button" aria-pressed="false" title="A closing cadence resolving to home tonic in the active rulebook">OUTRO</button>
             </div>
             <span class="fun-style-hint">HOLD A KEY · THE BAND FOLLOWS YOU · GENRE PICKS THE CHORD COLOURS</span>
+          </div>
+
+          <div class="fun-quality-bar fun-casio-bar" role="group" aria-label="Casio arranger section buttons">
+            <span class="fun-quality-label">CASIO SECTIONS:</span>
+            <div class="fun-quality-chips fun-casio-buttons">
+              <button class="fun-chip fun-casio-button" id="casio-intro" type="button" aria-pressed="false" title="Play a 1-pass intro prelude from the active rulebook, then roll directly into the groove">INTRO</button>
+              <button class="fun-chip fun-casio-button" id="casio-bridge" type="button" aria-pressed="false" title="Play a 1-pass contrasting bridge departure, then automatically return to the groove">BRIDGE</button>
+              <button class="fun-chip fun-casio-button" id="casio-outro" type="button" aria-pressed="false" title="Play the closing cadence and automatically stop when finished">OUTRO</button>
+            </div>
+            <span class="fun-style-hint">1-PASS CASIO SECTIONS · INTRO ROLLS IN · BRIDGE AUTO-RETURNS · OUTRO STOPS</span>
           </div>
 
           <div class="fun-quality-bar" role="group" aria-label="Accompaniment voice">
@@ -276,22 +283,12 @@
             <button class="beat-button looper-button" id="looper-overdub" type="button" aria-pressed="false" disabled>OVERDUB</button>
             <button class="beat-button looper-button" id="looper-step-rec" type="button" aria-pressed="false">STEP REC</button>
             <button class="beat-button looper-button" id="looper-rest" type="button" disabled>REST (—)</button>
-            <button class="beat-button looper-button looper-gen-button" id="looper-gen-intro" type="button" title="Generate an Intro loop from the active rulebook">+ INTRO</button>
-            <button class="beat-button looper-button looper-gen-button" id="looper-gen-bridge" type="button" title="Generate a Bridge loop from the active rulebook">+ BRIDGE</button>
-            <button class="beat-button looper-button looper-gen-button" id="looper-gen-outro" type="button" title="Generate an Outro loop from the active rulebook">+ OUTRO</button>
-            <button class="beat-button looper-button" id="looper-cue-outro" type="button" aria-pressed="false" disabled>CUE OUTRO</button>
             <button class="beat-button looper-button" id="looper-clear" type="button" disabled>CLEAR SONG</button>
             <output class="looper-readout" id="looper-readout" aria-live="off">NO LOOPS YET · HOLD KEYS AND RECORD WHAT YOU PLAY</output>
             <div class="looper-steps" id="looper-steps" role="group" aria-label="12-step loop progress tracker and note sequencer"></div>
             <ol class="looper-tiles" id="looper-tiles" aria-label="Loops in the song, in playing order"></ol>
             <div class="looper-edit" id="looper-edit" role="group" aria-label="Selected loop">
               <span class="looper-edit-label" id="looper-edit-label">NO LOOP SELECTED</span>
-              <div class="looper-role-chips" id="looper-role-chips" role="group" aria-label="Loop section role">
-                <button class="beat-button looper-button looper-role-button" id="looper-role-intro" type="button" data-role="intro" disabled>INTRO</button>
-                <button class="beat-button looper-button looper-role-button" id="looper-role-main" type="button" data-role="main" disabled>MAIN</button>
-                <button class="beat-button looper-button looper-role-button" id="looper-role-bridge" type="button" data-role="bridge" disabled>BRIDGE</button>
-                <button class="beat-button looper-button looper-role-button" id="looper-role-outro" type="button" data-role="outro" disabled>OUTRO</button>
-              </div>
               <button class="beat-button looper-button" id="looper-repeats-down" type="button" aria-label="Play the selected loop fewer times" disabled>−</button>
               <output class="looper-repeats" id="looper-repeats" aria-live="off">×1</output>
               <button class="beat-button looper-button" id="looper-repeats-up" type="button" aria-label="Play the selected loop more times" disabled>+</button>
@@ -690,7 +687,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "65db832436ec";
+      const ASSET_VERSION = "407fe3620f11";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

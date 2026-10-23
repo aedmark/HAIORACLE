@@ -166,31 +166,14 @@ export function clampSelection(song, index) {
  * step): the loop, which of its repeats, and the step within the loop. The song
  * starts over after its last pass. Returns null for an empty song.
  */
-export function songPosition(song, absoluteStep, { cueOutro = false, isExport = false } = {}) {
+export function songPosition(song, absoluteStep) {
   const passes = songPasses(song);
   if (passes === 0) return null;
   const step = ((Math.trunc(absoluteStep) % LOOP_STEPS) + LOOP_STEPS) % LOOP_STEPS;
   const rawPass = Math.floor(absoluteStep / LOOP_STEPS);
   if (rawPass < 0) return null;
 
-  const introPasses = song.loops.filter((l) => l.role === "intro").reduce((sum, l) => sum + l.repeats, 0);
-  const bodyPasses = song.loops.filter((l) => (l.role ?? DEFAULT_LOOP_ROLE) === "main" || l.role === "bridge").reduce((sum, l) => sum + l.repeats, 0);
-  const outroPasses = song.loops.filter((l) => l.role === "outro").reduce((sum, l) => sum + l.repeats, 0);
-
-  let targetPass;
-  if (isExport || bodyPasses === 0) {
-    targetPass = ((rawPass % passes) + passes) % passes;
-  } else if (rawPass < introPasses) {
-    targetPass = rawPass;
-  } else if (cueOutro && outroPasses > 0) {
-    const outroOffset = rawPass - introPasses;
-    targetPass = introPasses + bodyPasses + (outroOffset % outroPasses);
-  } else {
-    const bodyOffset = (rawPass - introPasses) % bodyPasses;
-    targetPass = introPasses + bodyOffset;
-  }
-
-  let p = targetPass;
+  let p = ((rawPass % passes) + passes) % passes;
   for (let loopIndex = 0; loopIndex < song.loops.length; loopIndex += 1) {
     const { repeats } = song.loops[loopIndex];
     if (p < repeats) return Object.freeze({ loopIndex, repeat: p, step, role: song.loops[loopIndex].role ?? DEFAULT_LOOP_ROLE });

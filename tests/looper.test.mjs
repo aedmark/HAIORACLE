@@ -338,22 +338,12 @@ test("loop section roles (intro, main, bridge, outro), progression state machine
   assert.equal(song.loops[1].role, "main");
   assert.equal(setLoopRole(song, 1, "invalid_role"), song, "invalid role refused");
 
-  // Continuous playback: pass 0 is Intro; pass 1 is Main; pass 2 is Bridge; pass 3 loops back to Main (skips Intro)!
-  assert.equal(songPosition(song, 0 * LOOP_STEPS).loopIndex, 0, "pass 0 = intro");
-  assert.equal(songPosition(song, 1 * LOOP_STEPS).loopIndex, 1, "pass 1 = main");
-  assert.equal(songPosition(song, 2 * LOOP_STEPS).loopIndex, 2, "pass 2 = bridge");
-  assert.equal(songPosition(song, 3 * LOOP_STEPS).loopIndex, 1, "pass 3 = cycles back to main body, skipping intro");
-  assert.equal(songPosition(song, 4 * LOOP_STEPS).loopIndex, 2, "pass 4 = cycles body to bridge");
-  assert.equal(songPosition(song, 5 * LOOP_STEPS).loopIndex, 1, "pass 5 = cycles body to main");
-
-  // Cue Outro: transitions to Outro
-  assert.equal(songPosition(song, 3 * LOOP_STEPS, { cueOutro: true }).loopIndex, 3, "cued outro plays outro loop");
-
-  // Export: full linear render
-  assert.equal(songPosition(song, 0 * LOOP_STEPS, { isExport: true }).loopIndex, 0);
-  assert.equal(songPosition(song, 1 * LOOP_STEPS, { isExport: true }).loopIndex, 1);
-  assert.equal(songPosition(song, 2 * LOOP_STEPS, { isExport: true }).loopIndex, 2);
-  assert.equal(songPosition(song, 3 * LOOP_STEPS, { isExport: true }).loopIndex, 3);
+  // Continuous playback: plays all loops sequentially in order, then loops back
+  assert.equal(songPosition(song, 0 * LOOP_STEPS).loopIndex, 0, "pass 0 = loop 0");
+  assert.equal(songPosition(song, 1 * LOOP_STEPS).loopIndex, 1, "pass 1 = loop 1");
+  assert.equal(songPosition(song, 2 * LOOP_STEPS).loopIndex, 2, "pass 2 = loop 2");
+  assert.equal(songPosition(song, 3 * LOOP_STEPS).loopIndex, 3, "pass 3 = loop 3");
+  assert.equal(songPosition(song, 4 * LOOP_STEPS).loopIndex, 0, "pass 4 = cycles cleanly back to loop 0");
 
   // Validation
   const plain = JSON.parse(JSON.stringify(song));

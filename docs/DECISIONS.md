@@ -1072,30 +1072,26 @@ Investigation identified four root causes in the recording engine:
    - `followSong()` is guarded during new loop recording, ensuring the band follows only the player's live Fun Machine chord.
 3. **Synchronized 1-Loop Count-In Pass:**
    - Both new loop and overdub arming schedule a synchronized 1-loop count-in pass (`countIn = isStopped ? LOOP_STEPS : (stepsRemaining + LOOP_STEPS)`) with real-time countdown telemetry and metronome escapement clicks, giving the player a reliable 12-step pre-roll.
-4. **Musical Section Roles (`intro`, `main`, `bridge`, `outro`):**
-   - Added `LOOP_ROLES = ["intro", "main", "bridge", "outro"]` and `DEFAULT_LOOP_ROLE = "main"` in `src/looper.mjs`.
-   - Added `setLoopRole(song, loopIndex, role)` and role chips `#looper-role-chips` in the UI.
-   - `songPosition()` implements a role-aware progression state machine:
-     - Intro loops play once on initial start.
-     - Body loops (`main` and `bridge`) cycle continuously, skipping Intro loops.
-     - Outro loops play when cued via `#looper-cue-outro` (`CUE OUTRO`) and automatically stop the transport on completion.
-     - Offline WAV and SMF Type 1 MIDI exports render the complete linear arc (`Intro -> Body -> Outro -> Reverb ring-out`).
-   - Session schema and preset storage maintain 100% backwards compatibility with legacy v1–v6 sessions without explicit roles.
+4. **Casio-Style Arranger Section Engine (Intro, Bridge, Outro):**
+   - Following maintainer direction to keep the experience as simple and straightforward as a classic Casio keyboard, section controls are streamlined into 3 dedicated real-time arranger buttons on the Fun Machine (`#casio-intro`, `#casio-bridge`, `#casio-outro`):
+     - **INTRO:** Plays a 1-pass prelude from the active rulebook, then rolls directly and seamlessly into the normal groove.
+     - **BRIDGE:** Cues on the next downbeat, plays a 1-pass contrasting harmonic departure, and automatically returns to the groove—never getting trapped in an endless bridge loop.
+     - **OUTRO:** Cues on the next downbeat, plays the closing cadence resolving home, and automatically halts the transport and rests.
+   - Restored the 13-key manual style chips to pure playing modes (`SWELL`, `ARPEGGIO`, `PROGRESSION`).
+   - Decluttered the Loop Machine by removing role chips, quick-generate buttons, and cue toggles, restoring pure, sequential loop playback without trapping tracks in loops.
 
-5. **Rulebook-Driven Section Progressions & One-Finger Accompaniment Generation:**
+5. **Rulebook-Driven Section Progressions:**
    - Extended one-finger accompaniment styles in `src/accompaniment.mjs`: `ACCOMPANIMENT_STYLES = ["swell", "arpeggio", "progression", "intro", "bridge", "outro"]`.
    - Added `buildFunSectionProgression(key, section, genre, tonicRoot)` to synthesize authentic 4-chord progressions and 12-step lead motifs from the active Inform 7 rulebook:
      - **Intro:** Preparatory tonic vamp/pedal (I -> IV -> I -> V/♭II7 turnaround setup) with a melodic call-and-response and breath on step 11 before the downbeat.
      - **Bridge:** Contrasting harmonic departure to subdominant (IV) or relative minor (vi), secondary dominant (V/V / II7) or modal borrowing (♭VI), predominant, and dominant suspension (V7) pointing home.
      - **Outro:** Executes the genre's specific permitted cadence: Phrygian descent (`iv -> ♭III -> ♭II -> I`) for Andalusian Flamenco/Palestrina/Tango; Plagal "Amen" (`I -> IV -> IV -> I`) for Gospel/Delta Blues/Doo-Wop; or authentic cadence (`ii -> V -> V7 -> I`), with a sustained home tonic held through steps 9..11.
-   - Added INTRO, BRIDGE, and OUTRO style chips on the keyboard manual for live playing and auditioning.
-   - Added quick-generate buttons in the Loop Machine (`+ INTRO`, `+ BRIDGE`, `+ OUTRO`) to synthesize full 12-step section loops directly from the active rulebook and key with a single click.
 
 **Consequences:**
 - Overdubbing and live loop recording work smoothly and reliably without playback clutter or timing thrashing.
 - Sustained arpeggio ripples and swell pads sustain cleanly across all held steps.
-- Songs can be arranged into complete musical forms with Intro, Main, Bridge, and Outro sections, both by live keyboard performance and by one-click rulebook synthesis.
-- 181 automated tests passing; zero runtime dependencies.
+- Real-time Casio arranger buttons make Intro, Bridge, and Outro immediate, musical, and playful with zero configuration or trapped loops.
+- 182 automated tests passing; zero runtime dependencies.
 
 ## Open questions
 

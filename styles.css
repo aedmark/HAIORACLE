@@ -300,71 +300,87 @@ select:focus-visible {
   opacity: 0.85;
 }
 
-.looper-role-chips {
+.fun-casio-bar {
+  margin-top: 0.25rem;
+}
+
+.fun-casio-buttons {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.35rem;
 }
 
-.looper-gen-button {
+.fun-casio-button {
+  letter-spacing: 0.08em;
   font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  padding: 0.25rem 0.5rem;
+  font-weight: 600;
+  transition: all 0.15s ease-out;
 }
 
-#looper-gen-intro:hover:not(:disabled) {
-  border-color: rgba(255, 216, 117, 0.85);
-  color: #fff;
-}
-
-#looper-gen-bridge:hover:not(:disabled) {
-  border-color: rgba(190, 130, 240, 0.85);
-  color: #fff;
-}
-
-#looper-gen-outro:hover:not(:disabled) {
-  border-color: rgba(240, 90, 100, 0.85);
-  color: #fff;
-}
-
-.looper-role-button {
-  min-width: 3.2rem;
-  padding: 0.2rem 0.4rem;
-  font-size: 0.6rem;
-}
-
-.looper-role-button[aria-pressed="true"] {
-  color: #fff;
-  border-color: var(--brass-bright);
-  background: rgba(85, 65, 25, 0.95);
-  box-shadow: 0 0 6px rgba(255, 216, 117, 0.4);
-}
-
-.looper-role-button[data-role="intro"][aria-pressed="true"] {
+#casio-intro:hover:not(:disabled),
+#casio-intro.is-cued,
+#casio-intro.is-active {
   border-color: rgba(255, 216, 117, 0.9);
-  background: rgba(100, 75, 20, 0.9);
-}
-
-.looper-role-button[data-role="bridge"][aria-pressed="true"] {
-  border-color: rgba(190, 130, 240, 0.9);
-  background: rgba(75, 30, 100, 0.9);
-}
-
-.looper-role-button[data-role="outro"][aria-pressed="true"] {
-  border-color: rgba(240, 90, 100, 0.9);
-  background: rgba(110, 25, 35, 0.9);
-}
-
-#looper-cue-outro.is-cued {
   color: #fff;
-  border-color: rgba(240, 90, 100, 0.9);
-  background: rgba(140, 30, 45, 0.95);
-  box-shadow: 0 0 10px rgba(240, 90, 100, 0.6);
-  animation: pulse-cue 1.2s ease-in-out infinite alternate;
 }
 
-@keyframes pulse-cue {
-  from { opacity: 0.8; }
-  to { opacity: 1; transform: scale(1.02); }
+#casio-intro.is-active {
+  background: rgba(120, 90, 25, 0.95);
+  box-shadow: 0 0 8px rgba(255, 216, 117, 0.5);
+}
+
+#casio-intro.is-cued {
+  background: rgba(70, 55, 15, 0.95);
+  box-shadow: 0 0 6px rgba(255, 216, 117, 0.35);
+  animation: casio-pulse 1s infinite alternate;
+}
+
+#casio-bridge:hover:not(:disabled),
+#casio-bridge.is-cued,
+#casio-bridge.is-active {
+  border-color: rgba(190, 130, 240, 0.9);
+  color: #fff;
+}
+
+#casio-bridge.is-active {
+  background: rgba(90, 35, 120, 0.95);
+  box-shadow: 0 0 8px rgba(190, 130, 240, 0.5);
+}
+
+#casio-bridge.is-cued {
+  background: rgba(55, 20, 75, 0.95);
+  box-shadow: 0 0 6px rgba(190, 130, 240, 0.35);
+  animation: casio-pulse 1s infinite alternate;
+}
+
+#casio-outro:hover:not(:disabled),
+#casio-outro.is-cued,
+#casio-outro.is-active {
+  border-color: rgba(240, 90, 100, 0.9);
+  color: #fff;
+}
+
+#casio-outro.is-active {
+  background: rgba(130, 30, 40, 0.95);
+  box-shadow: 0 0 8px rgba(240, 90, 100, 0.5);
+}
+
+#casio-outro.is-cued {
+  background: rgba(80, 20, 25, 0.95);
+  box-shadow: 0 0 6px rgba(240, 90, 100, 0.35);
+  animation: casio-pulse 1s infinite alternate;
+}
+
+@keyframes casio-pulse {
+  0% { opacity: 0.75; }
+  100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #casio-intro.is-cued,
+  #casio-bridge.is-cued,
+  #casio-outro.is-cued {
+    animation: none;
+  }
 }
 
 .looper-edit {
