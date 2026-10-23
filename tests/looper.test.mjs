@@ -369,6 +369,34 @@ test("loop section roles (intro, main, bridge, outro), progression state machine
   assert.throws(() => validateSong(badRole), (err) => err instanceof SongError && err.path === "song.loops[0].role");
 });
 
+test("section loop slots (intro, bridge, outro) enforce manual key bounds 0..12", () => {
+  // MIDI root notes (30..65) must be mapped to manual keys (0..12) before makeSlot
+  for (const midiRoot of [36, 48, 55, 60, 65]) {
+    assert.throws(() => makeSlot(midiRoot, "intro"), (err) => err instanceof RangeError);
+    const key = ((midiRoot % 12) + 12) % 12;
+    assert.ok(key >= 0 && key <= 12);
+    for (const role of ["intro", "bridge", "outro"]) {
+      const slot = makeSlot(key, role);
+      assert.equal(slot.key, key);
+      assert.equal(slot.style, role);
+    }
+  }
+
+  // A generated section loop with 12 steps appends and validates cleanly
+  let song = emptySong();
+  for (const role of ["intro", "bridge", "outro"]) {
+    const slot = makeSlot(0, role);
+    const fullTake = Object.freeze(Array(LOOP_STEPS).fill(slot));
+    song = appendLoop(song, fullTake, role);
+  }
+  assert.equal(song.loops.length, 3);
+  assert.equal(song.loops[0].role, "intro");
+  assert.equal(song.loops[1].role, "bridge");
+  assert.equal(song.loops[2].role, "outro");
+  const validated = validateSong(JSON.parse(JSON.stringify(song)));
+  assert.deepEqual(validated, song);
+});
+
 
 
 

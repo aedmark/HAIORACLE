@@ -20,7 +20,7 @@ _Last updated: 2026-10-22, session 68, on `main`._
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **181/181 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **182/182 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -133,13 +133,15 @@ _Last updated: 2026-10-22, session 68, on `main`._
    - Added section color badges and active chip styling (gold intro, sage main, violet bridge, ruby outro) with font sizes compliant with the accessibility floor ($\ge 0.6\text{rem}$).
 5. Tests:
    - Added sustained arpeggio/swell hold test and section role state machine/validation tests in `tests/looper.test.mjs`.
+   - Added unit test in `tests/looper.test.mjs` verifying that section loop slots (`intro`, `bridge`, `outro`) enforce manual key bounds $0..12$ and that MIDI root pitches correctly map to manual pitch classes.
    - Added 11 unit tests in `tests/accompaniment.test.mjs` verifying intro, bridge, outro progressions across 19 genres and 13 keys.
-6. Browser runtime hotfix:
+6. Browser runtime hotfixes:
    - Imported `LOOP_STEPS` from `./looper.mjs` in `src/app.mjs`.
    - Used `globalThis.performance ? globalThis.performance.now() : Date.now()` in `triggerFunKey` to eliminate lexical scope TDZ collisions when releasing keys.
+   - Mapped `currentScore.root` to the manual key semitone (`((root % 12) + 12) % 12`) in `generateSectionLoop()` to eliminate `RangeError: A slot's key must be 0..12` when auto-generating sections without a held key.
 
 **Verified:**
-- 181/181 Node tests pass across all test suites.
+- 182/182 Node tests pass across all test suites.
 - `python3 tools/check_docs.py` reports 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json` passes with 0 warnings.
 

@@ -6938,14 +6938,18 @@ function generateSectionLoop(role) {
     announceLooper("THE SONG IS FULL");
     return;
   }
-  const key = activeHeldFunKey ?? (currentScore ? currentScore.root : 0);
+  const rawKey = activeHeldFunKey !== null
+    ? activeHeldFunKey
+    : (currentScore ? (((currentScore.root % 12) + 12) % 12) : 0);
+  const key = Math.max(0, Math.min(12, Math.trunc(rawKey) || 0));
   const voice = funVoiceId;
   const slot = makeSlot(key, role, voice);
   const take = Array(LOOP_STEPS).fill(slot);
   song = appendLoop(song, take, role);
   selectedLoop = song.loops.length - 1;
   const genreTitle = genreBook(activeGenre)?.title ?? activeGenre;
-  announceLooper(`GENERATED ${role.toUpperCase()} LOOP (${genreTitle})`);
+  const noteName = FUN_KEY_MAP[key]?.note ?? key;
+  announceLooper(`GENERATED ${role.toUpperCase()} LOOP [${noteName}] (${genreTitle})`);
   renderLooper();
   unlockDrawer("change");
 }
