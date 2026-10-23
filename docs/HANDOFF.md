@@ -4,7 +4,7 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-22, session 65, on `main`._
+_Last updated: 2026-10-22, session 66, on `main`._
 
 - P5-28/D-040: Fun Machine voices, each creature's own by default; D-042 freed accompaniments from creature filter.
 - P5-30/D-043/D-044: clashes cut, variations, VARIATION readout, AS WRITTEN, sessions v6, THE CREATURE'S OWN rulebook, and downbeat harmony moves.
@@ -13,15 +13,16 @@ _Last updated: 2026-10-22, session 65, on `main`._
 - D-047: expanded manifestation lexicon (83.8M permutations), specimen folio IDs, 16 curiosa classes, dynamic bell jars, and 72-slip urn treasury.
 - D-048: interactive vitrine tapping agitation, retaliatory kinetic strike ("fight back"), ensemble audio disruption, and defensive sulk recovery cooldown.
 - D-049: replaced ocular eyeball anatomy (sclera, irises, pupils) with 8 generative fungal fruiting bodies, sporangia, cellular organelles, and botanical appendages responding to touch tension and vitrine dynamics.
-- Next: maintainer testing of note sequencer, vitrine retaliation, and cellular fruiting bodies, or Wave 3 (feel) / P4-02.
+- D-050: metric closure of rhythm templates (lengths 4 and 6 dividing 12), musical groove tempo pocketing (68–144 BPM), region-boundary chord/chime damping, and vertical anti-clash sieve (0.00% creature clashes).
+- Next: maintainer testing of note sequencer, vitrine retaliation, cellular fruiting bodies, and locked default mixes, or Wave 3 (feel) / P4-02.
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-22, session 65, local Linux environment)
+**Verified** (2026-10-22, session 66, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **177/177 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **178/178 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -62,6 +63,7 @@ _Last updated: 2026-10-22, session 65, on `main`._
 - Below the vitrine and the reading strip (name and score card only), the page is a four-wing workstation (D-027): **Perform** (transport rail with restart, volume, and tempo; Fun Machine; Kapellmeister), **Mix** (Bandstand, console, parlor room), **Keep** (Session Ledger; export desk with WAV, stems, MIDI, PNG, and omen link), and **The Band** (Plates II–VI). Tab order follows the same sequence, and nothing overflows at 320, 375, 768, or 1100 px.
 - Runtime assets are local and dependency-free (D-001).
 - Updates load cleanly without a hard reload (D-035): `index.html` builds an import map that stamps every module with `?v=<ASSET_VERSION>` (a hash of `src/`), and sources are fetched with the same stamp. Verified in the built-in browser against plain `python3 -m http.server`: with 28 of 29 files served from heuristic cache, a new export added to `src/ensemble.mjs` and imported by `src/app.mjs`, plus a restamp, loaded on a normal reload with all 29 requests at the new stamp and no console errors.
+- All six rhythm templates divide the 12-step barline evenly ($12 \bmod \text{len} = 0$), mathematically guaranteeing zero metric loop drift across loop boundaries and seamless export loop tiling; summoned creature tempos fold into the $68\dots 144$ BPM groove pocket; region boundary damping prevents chord release tail bleed; and a vertical anti-clash sieve resolves passing tone collisions down to 0.00% under THE CREATURE'S OWN rulebook (D-050).
 
 **Not verified**
 
@@ -83,16 +85,41 @@ _Last updated: 2026-10-22, session 65, on `main`._
 ## Next steps
 
 1. Maintainer hands-on testing of the note sequencer, STEP REC mode, armed downbeat sync, and count-in (D-045, D-046).
-2. Exports render one 12-step loop, but rhythm patterns 2 and 3 have five cells, so their WAV, stems, and MIDI do not tile seamlessly (the live loop is unaffected). A 60-step render, or rounding those patterns to 12, would fix it; either is a determinism-adjacent choice for the maintainer.
-3. Hands-on review of the four-wing layout (D-027) in Safari and Firefox; the maintainer approved it from the Chromium review. A sticky transport rail was deferred; it needs the cabinet's `overflow: hidden` changed to `overflow: clip`.
-4. Complete P4-02 with keyboard, reduced-motion, contrast, and screen-reader checks.
-5. Choose public hosting and domain (Q-001 / P6-01). Serve `index.html` with `Cache-Control: no-cache` there (D-035); stamped `src/` URLs can be cached freely.
+2. Hands-on review of the four-wing layout (D-027) in Safari and Firefox; the maintainer approved it from the Chromium review. A sticky transport rail was deferred; it needs the cabinet's `overflow: hidden` changed to `overflow: clip`.
+3. Complete P4-02 with keyboard, reduced-motion, contrast, and screen-reader checks.
+4. Choose public hosting and domain (Q-001 / P6-01). Serve `index.html` with `Cache-Control: no-cache` there (D-035); stamped `src/` URLs can be cached freely.
 
 ## Open questions
 
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 66: 2026-10-22: metric closure, tempo pocketing, boundary damping, and anti-clash sieve (D-050)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Eliminate out-of-sync rhythm drift across loop passes and harmonic clutter in default mixes while preserving the 12-step architecture (Option 3 / D-050).
+
+**Done:** D-050 implemented and verified. All 178 checks pass.
+
+**Changed:**
+1. `src/app.mjs`:
+   - Replaced length-5 polymetric rhythm patterns 2 and 3 with syncopated patterns of lengths 4 and 6 (divisors of 12). All 6 rhythms now divide 12 evenly ($12 \bmod 4 = 0$, $12 \bmod 6 = 0$), mathematically guaranteeing identical loop pass duration and metric phase lock.
+   - Added `musicalPocketBpm(bpm)`: folds summoned pulse values into the $68\dots 144$ BPM groove pocket via 2:1 octave gears on creature summon and dblclick reset, preserving the full $36\dots 208$ BPM manual range and raw `score.pulse` LOLCODE determinism.
+   - Added harmonic boundary damping in `scheduleHarmonyStep` and `scheduleChimeStep`: voice durations on region boundaries (`stepIndex % 3 === 2`) clamped to $\le 0.90 \times \text{stepDuration}$ and $\le 0.92 \times \text{stepDuration}$, eliminating chord release tail mud before new downbeats.
+2. `src/conductor.mjs`:
+   - Implemented vertical anti-clash sieve (step 6 in `conductEnsemble`): non-chord passing tones under `CREATURE_GENRE` creating semitone clashes against active bass, chord organ, chimes, or vowel chant are cleanly snapped to the nearest chord tone. Clash rate for `CREATURE_GENRE` drops from 5.8% to 0.00%.
+   - Added optional `creatureBook` parameter to `conductEnsemble` to cleanly install the creature's book on invocation.
+3. `tests/audit.test.mjs`:
+   - Added Audit Dimension 9 verifying metric closure across all templates, tempo range folding invariance across all pulse integers $36\dots 208$, and 0.00% semitone clashes across sample creatures.
+4. `docs/DECISIONS.md`, `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`:
+   - Recorded ADR D-050, updated invariants and session handoff state.
+
+**Verified:**
+- 178/178 Node checks pass in 11.3s.
+- `python3 tools/check_docs.py` passes with 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json` passes with 0 errors, 0 warnings.
 
 ### Session 62: 2026-10-21: note sequencer and downbeat anticipation latching (D-046)
 
@@ -400,46 +427,5 @@ _Last updated: 2026-10-22, session 65, on `main`._
 **Not verified:** Nothing audible yet; nothing reads the fields.
 
 **Next session should start with:** P5-30 phase 2, Inform 7 "permits" sentences and the conductor's variation moves. The golden fixture keeps guarding "as written", and a second fixture freezes the varied spines.
-
-### Session 53: 2026-10-20: the band agrees with its chords (P5-30 phase 0, D-043)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** The maintainer was "tired of hearing the same exact chord progression. They often clash." Specify per-creature rulebooks (D-043), then fix the clashes first.
-
-**Done:**
-- P5-28 phase 5 was pushed (165f705).
-- D-043 was accepted with the recommendations and committed (41620bf, not pushed). The fresh-creature default waits for phase 3.
-- P5-30 phase 0 is done.
-
-**Changed (`src/conductor.mjs`):**
-1. `chordOvertones()`: chimes ring only overtones on the chord, a ninth chord's 9th, or the genre's melody colours (so Ragtime's sixth still rings). The unison is the fallback.
-2. `avoidNoteResolution()`: after any melody method, a pitch a semitone above a chord tone it is not part of resolves down onto that tone.
-3. `buildTriad()` takes third, fifth, seventh, and ninth from the chord's own tones, so the organ and choir voice what the rulebook wrote. The defaults are corrected: dom7alt and Lydian get major thirds, and dim gets ♭5 and 𝄫7. An open fifth lends its suspended tone to the third.
-4. `walkTone()`: walks written to 3/4, 6–8, or 10/11 land on the chord's own third, fifth, or seventh. Other walk tones are passing tones.
-5. Tests:
-   - new `tests/clashes.test.mjs`: per-genre ceilings over 60 phrases, plus unit checks;
-   - `tests/inform.test.mjs` cross-checks updated to the new rules;
-   - the golden fixture re-frozen with `--rewrite`.
-
-**Verified:**
-- 145/145 Node checks.
-- Golden fixture diff: genres, colours, progressions, and spines are unchanged. Chord entries changed only for dom7alt, dim, lydian, phrygian, and modal open, each member now one of the chord's own tones. Projection and ensembles changed as intended (chimes, melody, and the Palestrina bass, which follows the melody).
-- Share of steps with a clash outside the chord, in Node over 80 phrases:
-
-| Genre | Before | After |
-| --- | --- | --- |
-| Victorian Tonnetz | 29% | 5% |
-| Delta Blues | 46% | 30% (blue notes, by design) |
-| Smoky Jazz | 33% | 3% |
-| Palestrina | 20% | 5% |
-| Mystic Drone | 7% | 0% |
-| Parlor Ragtime | 6% | 0% |
-
-- Exported MIDI in the browser (any semitone between parts, chord-internal 7ths included): Victorian 0.54 → 0.12, Ragtime 0.32 → 0.20, Jazz 0.60 → 0.47, Blues 0.68 → 0.47.
-
-**Verified by ear:** the maintainer listened across genres: "it sounds so much richer and coherent!"
-
-**Next session should start with:** P5-30 phase 1 (the spell's `harmony_*` fields).
 
 

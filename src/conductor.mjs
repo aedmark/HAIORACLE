@@ -560,7 +560,9 @@ export function conductEnsemble({
   customSpine = null,
   varied = false,
   harmonicPass = null,
+  creatureBook: explicitCreatureBook = null,
 }) {
+  if (explicitCreatureBook) installCreatureBook(explicitCreatureBook);
   const book = genreBook(genre);
   const activeGenre = book.code;
 
@@ -766,9 +768,37 @@ export function conductEnsemble({
     })
     : null;
 
+  // 6. Vertical Anti-Clash Sieve on weak steps: eliminates accidental semitone rubs
+  const sievedMelody = Object.freeze(
+    conductedMelody.map((melMidi, stepIndex) => {
+      if (book.unfettered || activeGenre !== CREATURE_GENRE) return melMidi;
+      const chord = spine[stepIndex];
+      const held = new Set(chord.pitchClasses);
+      const melPc = ((Math.trunc(melMidi) % 12) + 12) % 12;
+      if (held.has(melPc)) return melMidi;
+
+      const soundingPcs = [];
+      if (conductedBass?.steps[stepIndex]?.gate) soundingPcs.push(((Math.trunc(conductedBass.steps[stepIndex].interval) % 12) + 12) % 12);
+      if (conductedHarmony?.steps[stepIndex]?.gate) {
+        for (const intv of conductedHarmony.steps[stepIndex].chord) soundingPcs.push(((Math.trunc(intv) % 12) + 12) % 12);
+      }
+      if (conductedChant?.steps[stepIndex]?.gate) soundingPcs.push(((Math.trunc(conductedChant.steps[stepIndex].interval) % 12) + 12) % 12);
+      if (conductedChimes?.steps[stepIndex]?.gate) {
+        soundingPcs.push(((Math.round(12 * Math.log2(conductedChimes.steps[stepIndex].ratioValue)) % 12) + 12) % 12);
+      }
+
+      const hasClash = soundingPcs.some((pc) => Math.min((melPc - pc + 12) % 12, (pc - melPc + 12) % 12) === 1);
+      if (!hasClash) return melMidi;
+
+      const safePc = snapToNearest(melPc, chord.pitchClasses);
+      const octave = Math.floor(melMidi / 12) * 12;
+      return octave + safePc;
+    }),
+  );
+
   return Object.freeze({
     spine,
-    melody: conductedMelody,
+    melody: sievedMelody,
     beat,
     bass: conductedBass,
     harmony: conductedHarmony,

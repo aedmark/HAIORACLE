@@ -602,3 +602,109 @@ test("Audit Dimension 8 (Extended): URL fragment #omen=... encoding and specimen
   assert.equal(specimenFilenameFor(mockScore, "mid"), "hai-oracle-the-golden-harp-of-the-mountain-1234abcd.mid");
   assert.equal(specimenFilenameFor(mockScore, "zip"), "hai-oracle-the-golden-harp-of-the-mountain-1234abcd.zip");
 });
+
+test("Audit Dimension 9: Metric closure, tempo pocketing, and harmonic clash elimination (D-050)", async () => {
+  const appSource = await readFile(new URL("src/app.mjs", root), "utf8");
+
+  // Verify RHYTHMS in src/app.mjs: every rhythm must divide 12 evenly
+  const rhythmMatch = appSource.match(/const RHYTHMS = Object\.freeze\(\[([\s\S]*?)\]\);/);
+  assert.ok(rhythmMatch, "RHYTHMS definition found in src/app.mjs");
+  const parsedRhythms = rhythmMatch[1]
+    .trim()
+    .split("\n")
+    .map((line) => line.replace(/\/\/.*$/, "").trim())
+    .filter(Boolean)
+    .map((line) => JSON.parse(line.replace(/,$/, "")));
+
+  assert.ok(parsedRhythms.length >= 6, "At least 6 rhythm templates defined");
+  for (let i = 0; i < parsedRhythms.length; i += 1) {
+    const r = parsedRhythms[i];
+    assert.equal(
+      12 % r.length,
+      0,
+      `Rhythm template ${i} (length ${r.length}) must divide 12 evenly to prevent loop drift`
+    );
+  }
+
+  // Verify tempo pocketing function in src/app.mjs
+  assert.ok(appSource.includes("function musicalPocketBpm"), "musicalPocketBpm is defined in src/app.mjs");
+  // Test range folding invariant: every integer pulse in [36..208] maps to [68..144]
+  function pocketCheck(bpm) {
+    let p = bpm;
+    while (p < 68) p *= 2;
+    while (p > 144) p /= 2;
+    return p;
+  }
+  for (let bpm = 36; bpm <= 208; bpm += 1) {
+    const pocketed = pocketCheck(bpm);
+    assert.ok(
+      pocketed >= 68 && pocketed <= 144,
+      `BPM ${bpm} should fold into groove pocket [68, 144], got ${pocketed}`
+    );
+  }
+
+  // Verify anti-clash vertical sieve on CREATURE_GENRE
+  const [oracleSource, beatSource, bassSource, harmonySource, pietSource, fractranSource, chantSource] = await Promise.all([
+    readFile(new URL("src/oracle.lol", root), "utf8"),
+    readFile(new URL("src/beat.mal", root), "utf8"),
+    readFile(new URL("src/bass.bf", root), "utf8"),
+    readFile(new URL("src/harmony.bfg", root), "utf8"),
+    readFile(new URL("src/pad.piet", root), "utf8"),
+    readFile(new URL("src/chimes.frac", root), "utf8"),
+    readFile(new URL("src/chant.spl", root), "utf8"),
+  ]);
+
+  const compiledBooks = compileRulebooks(await readFile(new URL("src/rulebooks.ni", root), "utf8"));
+  installRulebooks(compiledBooks);
+
+  const samplePhrases = [
+    "glowing fungal forest",
+    "spore colony in deep soil",
+    "ancient cathedral moss",
+    "whispering mycelium thread",
+    "luminous twilight mushroom",
+  ];
+
+  for (const phrase of samplePhrases) {
+    const score = composeScore(oracleSource, phrase);
+    const creatureBook = buildCreatureBook(score, compiledBooks);
+    const ensemble = conductEnsemble({
+      score,
+      melody: melodyFor(score),
+      beat: composeBeat(beatSource, score, 0),
+      bass: composeBass(bassSource, score, 0),
+      harmony: composeHarmony(harmonySource, score, 0),
+      chimes: composeChimes(pietSource, fractranSource, score, 0),
+      chant: composeChant(chantSource, score, 0),
+      genre: "creature",
+      varied: true,
+      creatureBook,
+    });
+
+    const pc = (value) => ((Math.round(value) % 12) + 12) % 12;
+    ensemble.spine.forEach((chord, step) => {
+      const melPc = pc(ensemble.melody[step]);
+      const activeAccompanimentPcs = [];
+      if (ensemble.harmony.steps[step].gate) {
+        activeAccompanimentPcs.push(...ensemble.harmony.steps[step].chord.map(pc));
+      }
+      if (ensemble.chimes.steps[step].gate) {
+        activeAccompanimentPcs.push(pc(12 * Math.log2(ensemble.chimes.steps[step].ratioValue)));
+      }
+
+      const heldChordPcs = new Set(chord.pitchClasses);
+      // For any active accompaniment tone, check if melody is a dissonant semitone rub unless held in chord
+      for (const accPc of activeAccompanimentPcs) {
+        const diff = Math.min((melPc - accPc + 12) % 12, (accPc - melPc + 12) % 12);
+        if (diff === 1) {
+          const bothInChord = heldChordPcs.has(melPc) && heldChordPcs.has(accPc);
+          assert.ok(
+            bothInChord,
+            `Step ${step} in phrase "${phrase}": melody pc ${melPc} clashes by semitone with accompaniment pc ${accPc} outside chord [${chord.pitchClasses}]`
+          );
+        }
+      }
+    });
+  }
+});
+

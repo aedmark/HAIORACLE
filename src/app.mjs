@@ -140,12 +140,12 @@ function sourceUrl(name) {
 }
 
 const RHYTHMS = Object.freeze([
-  [1, 1, 1, 1],
-  [1.5, 0.5, 1, 1],
-  [0.5, 0.5, 1, 0.5, 1.5],
-  [1, 0.5, 0.5, 1.5, 0.5],
-  [2, 0.5, 0.5, 1],
-  [0.75, 0.75, 0.5, 1, 0.5, 0.5],
+  [1, 1, 1, 1],                   // 0: Steady quarter pulse (length 4)
+  [1.5, 0.5, 1, 1],               // 1: Swing / shuffle (length 4)
+  [0.5, 1.5, 0.5, 1.5],           // 2: Syncopated offbeat push (length 4)
+  [1, 0.5, 0.5, 1, 0.5, 0.5],     // 3: Charleston / gallop (length 6)
+  [2, 0.5, 0.5, 1],               // 4: Dotted stately downbeat (length 4)
+  [0.75, 0.75, 0.5, 1, 0.5, 0.5], // 5: Ragtime / Habanera (length 6)
 ]);
 
 const SURPRISES = Object.freeze([
@@ -452,6 +452,13 @@ function setMasterVolume(value) {
   const now = audioContext.currentTime;
   currentTransport.output.gain.cancelScheduledValues(now);
   currentTransport.output.gain.setTargetAtTime(masterGainFor(masterVolume), now, 0.018);
+}
+
+function musicalPocketBpm(pulse) {
+  let bpm = Math.round(Number(pulse));
+  if (bpm < 68) bpm *= 2; // e.g. 42..67 double-times into 84..134 pocket
+  else if (bpm > 144) bpm = Math.round(bpm / 2); // e.g. 145..167 half-times into 73..84 pocket
+  return Math.max(36, Math.min(208, bpm));
 }
 
 function setTempoBpm(value) {
@@ -3568,7 +3575,10 @@ function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDurat
   if (!step || step.gate === 0) return;
 
   const isSustained = step.gate === 2;
-  const duration = Math.max(0.18, stepDuration * (isSustained ? 1.45 : 0.78));
+  const isRegionBoundary = stepIndex % 3 === 2;
+  const duration = isRegionBoundary
+    ? Math.min(stepDuration * 0.90, Math.max(0.08, stepDuration * 0.86))
+    : Math.max(0.12, stepDuration * (isSustained ? 1.18 : 0.78));
   const strumSec = (step.strumMs || 24) / 1000;
   const holdBoost = 1 + interaction.hold * 0.14;
   const waveforms = [
@@ -3581,9 +3591,10 @@ function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDurat
   const harmonyShift = interaction.pitchBend > 0.35 ? 7 : (interaction.pitchBend < -0.35 ? -5 : 0);
   for (const [voiceIndex, interval] of step.chord.entries()) {
     const noteStart = at + voiceIndex * strumSec;
+    const voiceDuration = isRegionBoundary ? Math.max(0.06, (at + duration) - noteStart) : duration;
     const midi = foldIntoRange(score.root + interval + harmonyShift, 36, 84);
     const freq = midiToFrequency(midi);
-    logNote(transport, "harmony", midi, noteStart, duration, isSustained ? 1 : 0.75);
+    logNote(transport, "harmony", midi, noteStart, voiceDuration, isSustained ? 1 : 0.75);
     const osc = context.createOscillator();
     const voiceGain = context.createGain();
 
@@ -3595,11 +3606,11 @@ function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDurat
     const attack = isSustained ? 0.045 : 0.018;
     voiceGain.gain.setValueAtTime(0.0001, noteStart);
     voiceGain.gain.exponentialRampToValueAtTime(peak, noteStart + attack);
-    voiceGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + duration);
+    voiceGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + voiceDuration);
 
     osc.connect(voiceGain).connect(transport.harmonyBus);
     osc.start(noteStart);
-    osc.stop(noteStart + duration + 0.04);
+    osc.stop(noteStart + voiceDuration + 0.04);
   }
 }
 
@@ -3609,12 +3620,16 @@ function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuratio
   if (!step || step.gate === 0) return;
 
   const isAccented = step.gate === 2;
+  const isRegionBoundary = stepIndex % 3 === 2;
   const chimeOctave = interaction.pitchBend > 0.4 ? 12 : (interaction.pitchBend < -0.4 ? -12 : 0);
   const rootMidi = Math.min(84, score.root + 12 + chimeOctave);
   const rootFreq = midiToFrequency(rootMidi);
   const bellFreq = rootFreq * step.ratioValue;
+  const bellDuration = isRegionBoundary
+    ? Math.min(stepDuration * 0.92, 0.42)
+    : Math.max(0.14, stepDuration * (isAccented ? 1.35 : 0.92));
   // Just-intonation ratios round to the nearest equal-tempered MIDI note.
-  logNote(transport, "chime", rootMidi + 12 * Math.log2(step.ratioValue), at, stepDuration * (isAccented ? 1.6 : 1.0), isAccented ? 1 : 0.7);
+  logNote(transport, "chime", rootMidi + 12 * Math.log2(step.ratioValue), at, bellDuration, isAccented ? 1 : 0.7);
   const holdBoost = 1 + interaction.hold * 0.16;
 
   // 1. FRACTRAN Just Intonation overtone chime bell locked to active Tonnetz chord
@@ -3622,7 +3637,6 @@ function scheduleChimeStep(context, transport, score, stepIndex, at, stepDuratio
   const bellGain = context.createGain();
   bellOsc.type = "sine";
   bellOsc.frequency.setValueAtTime(bellFreq, at);
-  const bellDuration = Math.max(0.24, stepDuration * (isAccented ? 1.6 : 1.0));
   const bellPeak = (isAccented ? 0.054 : 0.036) * holdBoost;
   bellGain.gain.setValueAtTime(0.0001, at);
   bellGain.gain.exponentialRampToValueAtTime(bellPeak, at + 0.008);
@@ -5071,7 +5085,7 @@ function showScore(score) {
   elements.name.textContent = score.name;
   if (elements.stageBellJar) elements.stageBellJar.textContent = score.bellJar;
   if (elements.folioReadout) elements.folioReadout.textContent = `${score.folioId} · ${score.curiosaClass}`;
-  setTempoBpm(score.pulse);
+  setTempoBpm(musicalPocketBpm(score.pulse));
   elements.wave.textContent = WAVEFORMS[score.wave];
   elements.formValue.textContent = score.shapeName;
   elements.melody.textContent = MELODY_NAMES[score.melodyMode];
@@ -7576,7 +7590,7 @@ elements.tempo?.addEventListener("input", (event) => {
 
 elements.tempo?.addEventListener("dblclick", () => {
   if (currentScore) {
-    setTempoBpm(currentScore.pulse);
+    setTempoBpm(musicalPocketBpm(currentScore.pulse));
   }
 });
 

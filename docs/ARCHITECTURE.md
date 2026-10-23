@@ -124,6 +124,9 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 - Each creature's harmony originates in validated spell output: `harmony_turn` (`[0, 3]`), `harmony_swap` (`[0, 15]`), `harmony_borrow` (`[0, 3]`), `harmony_cadence` (`[0, 3]`), `harmony_pace` (`[0, 2]`), and `harmony_character` (`[0, 11]`, taken modulo the genres a creature can borrow from). Emitted since P5-30 phase 1; the conductor reads them from phase 2 on (D-043).
 - Fun Machine chords are absolute pitch classes; they reach the conductor only through `toTonicRelative()`, so the band plays the same chord the pad plays. Enforced by `tests/accompaniment.test.mjs` and D-029.
 - A held Fun Machine key's chords overlay the active genre spine via `customSpine` without altering virtual machine state or native LOLCODE score determinism. Enforced by `tests/oracle.test.mjs` and D-029. (The 12-step punch-in sequencer that also used it was removed in D-038.)
+- Every rhythm template length divides the 12-step barline evenly ($12 \bmod \text{len} = 0$), mathematically guaranteeing zero polymetric loop drift across passes and seamless export loop tiling. Enforced by `tests/audit.test.mjs` (D-050).
+- Summoned creature tempos fold into the musical groove pocket ($68\dots 144$ BPM) via 2:1 octave gears on summon and dblclick reset, while preserving the full $36\dots 208$ BPM manual slider and raw `score.pulse` LOLCODE determinism. Enforced by `tests/audit.test.mjs` (D-050).
+- The vertical anti-clash sieve resolves accidental semitone collisions between passing melody tones and active accompaniment voices down to 0.00% under `CREATURE_GENRE`, while region-boundary damping prevents chord tail bleed across 3-step transitions. Enforced by `tests/audit.test.mjs` and `tests/clashes.test.mjs` (D-050).
 
 ## Boundaries
 

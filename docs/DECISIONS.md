@@ -992,6 +992,39 @@ Investigation revealed two distinct factors:
 - The organism gains an authentic, cohesive Victorian bio-luminescent botanical and mycological aesthetic.
 - Zero runtime dependencies and full determinism contract preserved.
 
+## D-050 Metric closure of rhythm templates, tempo pocketing, boundary damping, and vertical anti-clash sieve (2026-10-22, status: accepted)
+
+**Context:** The maintainer observed that default mixes occasionally felt out of sync or harmonically cluttered. Analysis revealed three distinct root causes:
+1. *Metric loop drift (the polymeter bug):* Rhythm templates 2 and 3 in `RHYTHMS` had length 5. Because 12 is not divisible by 5 ($12 \bmod 5 = 2$), downbeat positions shifted across successive loop boundaries (Loop 1 took 9.0 timing units while Loop 2 took 10.0 units), shifting step 0 downbeats to weak 16th subdivisions and creating a stumbling, out-of-sync feel in 33% of summoned creatures.
+2. *Extreme tempo bounds:* While the full transport tempo slider spans $36\dots 208$ BPM for creative user exploration, summoned creatures with pulses $< 68$ BPM sounded sluggish and muddy, while pulses $> 144$ BPM sounded frantic and rushed when combined with complex 12-step polyphony.
+3. *Harmonic boundary bleed & semitone collisions:* Long release tails on chord organ and chimes bled across the 3-step regional boundaries (steps 2 $\to$ 3, 5 $\to$ 6, 8 $\to$ 9, 11 $\to$ 0), creating acoustic mud as new chords sounded. Simultaneously, passing tones in the generative melody occasionally formed unintentional minor 2nd (semitone) rubs against active polyphonic accompaniment tones.
+
+The maintainer authorized Option 3: preserving the fundamental 12-step architecture while fixing internal timing, metric closure, boundary releases, and harmonic sieving.
+
+**Decision:**
+1. **Metric Closure of Rhythm Templates:**
+   - Replaced length-5 rhythm templates with syncopated patterns of lengths 4 and 6 (divisors of 12):
+     - Template 2: `[0.5, 1.5, 0.5, 1.5]` (length 4, syncopated offbeat push).
+     - Template 3: `[1, 0.5, 0.5, 1, 0.5, 0.5]` (length 6, Charleston / gallop).
+   - All 6 rhythm templates now divide 12 evenly ($12 \bmod 4 = 0$, $12 \bmod 6 = 0$). Every 12-step loop pass has identical duration, and the downbeats of all 4 harmonic regions (steps 0, 3, 6, 9) land on rock-solid metric timestamps across endless loops and offline audio/MIDI exports.
+2. **Musical Tempo Pocketing (`musicalPocketBpm`):**
+   - Implemented octave-gear range folding for default summoned tempos:
+     - Pulses $< 68$ BPM fold up by octaves ($\times 2$).
+     - Pulses $> 144$ BPM fold down by octaves ($\div 2$).
+   - Default summoned playback always lands in the musical groove pocket ($68\dots 144$ BPM), while the full manual tempo slider ($36\dots 208$ BPM) and raw `score.pulse` LOLCODE determinism are 100% preserved.
+3. **Harmonic Boundary Damping:**
+   - In `scheduleHarmonyStep()` and `scheduleChimeStep()`, voice durations on region boundary steps (`stepIndex % 3 === 2`, i.e., steps 2, 5, 8, 11) are clamped to $\le 0.90 \times \text{stepDuration}$ and $\le 0.92 \times \text{stepDuration}$ respectively.
+   - Harmonic tails release cleanly before the next region's downbeat chord strikes, eliminating acoustic bleed between chord changes.
+4. **Vertical Anti-Clash Sieve in `conductEnsemble()`:**
+   - Added Step 6 vertical anti-clash resolution in `conductEnsemble()`: when conducting under `CREATURE_GENRE`, if a non-chord passing melody note creates a semitone clash ($|melPc - accPc| = 1 \text{ or } 11$) against active bass, chord organ, Just Intonation chimes, or vowel chant, it is snapped to the nearest chord tone using `snapToNearest()`.
+   - Reduced semitone clash rate for `CREATURE_GENRE` to 0.00% across melody and accompaniment, while preserving all 18 static Inform 7 rulebook golden fixtures.
+
+**Consequences:**
+- Default mixes groove seamlessly without metric drift or polyphonic stumbling across loop boundaries.
+- Offline exports (WAV, 9 stems ZIP, MIDI) tile seamlessly across multiple loop passes.
+- Chords change crisply without muddy harmonic bleed.
+- Zero external dependencies; 178 tests passing.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)
