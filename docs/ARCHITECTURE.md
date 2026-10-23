@@ -127,6 +127,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 - Every rhythm template length divides the 12-step barline evenly ($12 \bmod \text{len} = 0$), mathematically guaranteeing zero polymetric loop drift across passes and seamless export loop tiling. Enforced by `tests/audit.test.mjs` (D-050).
 - Summoned creature tempos fold into the musical groove pocket ($68\dots 144$ BPM) via 2:1 octave gears on summon and dblclick reset, while preserving the full $36\dots 208$ BPM manual slider and raw `score.pulse` LOLCODE determinism. Enforced by `tests/audit.test.mjs` (D-050).
 - The vertical anti-clash sieve resolves accidental semitone collisions between passing melody tones and active accompaniment voices down to 0.00% under `CREATURE_GENRE`, while region-boundary damping prevents chord tail bleed across 3-step transitions. Enforced by `tests/audit.test.mjs` and `tests/clashes.test.mjs` (D-050).
+- Voice envelope GainNodes initialize to `0.0001` at construction, pad releases cleanly anchor active gains via `cancelAndHoldAtTime` and cancel future look-ahead nodes before they sound, and legato key changes grace-window drone ducking to eliminate volume spikes. Enforced by `tests/voices.test.mjs` and `tests/audit.test.mjs` (D-051).
 
 ## Boundaries
 

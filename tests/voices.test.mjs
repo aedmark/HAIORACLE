@@ -69,10 +69,12 @@ test("every shipped preset passes the validator, and the validator names the bad
 
 test("the schedulers build what the patch describes, and no more", () => {
   const context = fakeContext();
-  const { oscillators, peak } = scheduleVoicePad(context, {}, velvet, [48, 55, 60, 64], { start: 1, sounding: 2, level: 1 });
+  const { env, oscillators, peak, start } = scheduleVoicePad(context, {}, velvet, [48, 55, 60, 64], { start: 1, sounding: 2, level: 1 });
   assert.equal(oscillators.length, 1 + 1 + 3 * 3, "chorus LFO, the root's layer, three layers on each upper note");
   assert.equal(context.counts.panner, 2);
   assert.equal(peak, 0.34 / 2);
+  assert.equal(env.gain.value, 0.0001, "initial gain is bounded to 0.0001 so cancellation can never spike to unity 1.0");
+  assert.equal(start, 1, "start time is returned for safe schedule release handling");
 
   const pluck = fakeContext();
   const result = scheduleVoicePluck(pluck, {}, velvet, 67, { start: 0, duration: 1, accent: true });

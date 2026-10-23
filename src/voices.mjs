@@ -581,8 +581,10 @@ function connectThroughTremolo(context, env, destination, tremolo, start) {
     return null;
   }
   const swell = context.createGain();
+  swell.gain.value = 1 - tremolo.depth;
   const lfo = context.createOscillator();
   const depth = context.createGain();
+  depth.gain.value = tremolo.depth;
   swell.gain.setValueAtTime(1 - tremolo.depth, start);
   lfo.frequency.setValueAtTime(tremolo.rate, start);
   depth.gain.setValueAtTime(tremolo.depth, start);
@@ -599,6 +601,7 @@ export function scheduleVoicePad(context, destination, voice, notes, { start, so
   const peak = pad.level * level * (1 + hold * 0.15) / Math.sqrt(notes.length);
 
   const env = context.createGain();
+  env.gain.value = 0.0001;
   env.gain.setValueAtTime(0.0001, start);
   env.gain.linearRampToValueAtTime(peak, start + attack);
   env.gain.setTargetAtTime(peak * pad.sustain, start + attack, pad.sustainTau);
@@ -659,7 +662,7 @@ export function scheduleVoicePad(context, destination, voice, notes, { start, so
     modulator.start(start);
     modulator.stop(stopAt);
   }
-  return { env, oscillators, stopAt, peak };
+  return { env, oscillators, stopAt, peak, start };
 }
 
 /** One arpeggio pluck. Returns its length and peak for the note log. */
@@ -670,6 +673,7 @@ export function scheduleVoicePluck(context, destination, voice, midi, { start, d
   const freq = midiToFrequency(midi);
 
   const env = context.createGain();
+  env.gain.value = 0.0001;
   env.gain.setValueAtTime(0.0001, start);
   env.gain.linearRampToValueAtTime(peak, start + pluck.attack);
   env.gain.exponentialRampToValueAtTime(0.0001, start + decay);
@@ -708,6 +712,7 @@ export function scheduleVoiceLead(context, destination, voice, midi, { start, du
   const peak = lead.level * (1 + hold * 0.15);
 
   const env = context.createGain();
+  env.gain.value = 0.0001;
   env.gain.setValueAtTime(0.0001, start);
   env.gain.linearRampToValueAtTime(peak, start + lead.attack);
   env.gain.setTargetAtTime(peak * lead.sustain, start + lead.attack, lead.sustainTau);

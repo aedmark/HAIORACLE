@@ -1349,6 +1349,36 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** P5-30 phase 1 (the spell's `harmony_*` fields).
 
+### Session 54: 2026-10-20: the creature's harmony fields (P5-30 phase 1)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-30 phase 1: the spell emits each creature's harmony fields (D-043).
+
+**Done:** Phase 0 was committed and pushed with the D-043 spec (41620bf, e7f47f6) after the maintainer's "so much richer and coherent!". Phase 1 is done.
+
+**Changed:**
+1. `src/oracle.lol` emits six fields:
+   - `harmony_turn` (`MOD … 353 AN 4`)
+   - `harmony_swap` (`… 359 AN 16`)
+   - `harmony_borrow` (`… 367 AN 4`)
+   - `harmony_cadence` (`… 373 AN 4`)
+   - `harmony_pace` (`… 379 AN 3`)
+   - `harmony_character` (`… 383 AN 12`, to be used modulo the borrowable genres, so D-041's new genres fit)
+2. `src/score.mjs` validates them as `harmonyTurn` … `harmonyCharacter`. The vitrine's default score gains zeros.
+3. Tests: `tests/oracle.test.mjs` checks the ranges, and that every value is reached over 200 phrases.
+
+**Verified:**
+- 146/146 Node checks.
+- Across 500 phrases, no existing score field changed.
+- On 500 phrases, turn × cadence looked linked (z = 4.1). Over 20,000 seeds every pair of new fields is independent (|z| ≤ 2.5, turn × cadence 0.4), so it was chance and the divisors stay.
+- The browser summons normally.
+
+**Not verified:** Nothing audible yet; nothing reads the fields.
+
+**Next session should start with:** P5-30 phase 2, Inform 7 "permits" sentences and the conductor's variation moves. The golden fixture keeps guarding "as written", and a second fixture freezes the varied spines.
+
+
 
 
 

@@ -4,21 +4,18 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-22, session 66, on `main`._
+_Last updated: 2026-10-22, session 67, on `main`._
 
-- P5-28/D-040: Fun Machine voices, each creature's own by default; D-042 freed accompaniments from creature filter.
-- P5-30/D-043/D-044: clashes cut, variations, VARIATION readout, AS WRITTEN, sessions v6, THE CREATURE'S OWN rulebook, and downbeat harmony moves.
-- P5-29 waves 1 & 2: six new chord qualities, twelve new Inform 7 genres, 19 genres in all.
-- D-045/D-046: armed downbeat sync, 1-loop count-in, tick metronome, interactive 12-step tracker ribbon with note sequencer & STEP REC, and downbeat anticipation latching.
-- D-047: expanded manifestation lexicon (83.8M permutations), specimen folio IDs, 16 curiosa classes, dynamic bell jars, and 72-slip urn treasury.
-- D-048: interactive vitrine tapping agitation, retaliatory kinetic strike ("fight back"), ensemble audio disruption, and defensive sulk recovery cooldown.
-- D-049: replaced ocular eyeball anatomy (sclera, irises, pupils) with 8 generative fungal fruiting bodies, sporangia, cellular organelles, and botanical appendages responding to touch tension and vitrine dynamics.
-- D-050: metric closure of rhythm templates (lengths 4 and 6 dividing 12), musical groove tempo pocketing (68–144 BPM), region-boundary chord/chime damping, and vertical anti-clash sieve (0.00% creature clashes).
-- Next: maintainer testing of note sequencer, vitrine retaliation, cellular fruiting bodies, and locked default mixes, or Wave 3 (feel) / P4-02.
+- P5-28–P5-30: 19 Inform 7 genres, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-043, D-044).
+- D-045/D-046: armed downbeat sync, 1-loop count-in, tick metronome, interactive 12-step tracker ribbon with note sequencer & STEP REC.
+- D-047/D-048: expanded lexicon (83.8M names) & 72-slip urn; vitrine tap agitation, retaliatory strike, audio disruption, and sulk recovery.
+- D-049/D-050: generative fungal appendages replacing eyes; metric closure (lengths 4 & 6), tempo pocketing, boundary damping, anti-clash sieve.
+- D-051: eliminated volume spikes on note hold and legato transitions via GainNode 0.0001 bounding, safe pad release, and transition ducking smoothing.
+- Next: maintainer testing of note sequencer, vitrine retaliation, cellular fruiting bodies, locked mixes, and Fun Machine legato transitions, or Wave 3 (feel) / P4-02.
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-22, session 66, local Linux environment)
+**Verified** (2026-10-22, session 67, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
@@ -64,6 +61,7 @@ _Last updated: 2026-10-22, session 66, on `main`._
 - Runtime assets are local and dependency-free (D-001).
 - Updates load cleanly without a hard reload (D-035): `index.html` builds an import map that stamps every module with `?v=<ASSET_VERSION>` (a hash of `src/`), and sources are fetched with the same stamp. Verified in the built-in browser against plain `python3 -m http.server`: with 28 of 29 files served from heuristic cache, a new export added to `src/ensemble.mjs` and imported by `src/app.mjs`, plus a restamp, loaded on a normal reload with all 29 requests at the new stamp and no console errors.
 - All six rhythm templates divide the 12-step barline evenly ($12 \bmod \text{len} = 0$), mathematically guaranteeing zero metric loop drift across loop boundaries and seamless export loop tiling; summoned creature tempos fold into the $68\dots 144$ BPM groove pocket; region boundary damping prevents chord release tail bleed; and a vertical anti-clash sieve resolves passing tone collisions down to 0.00% under THE CREATURE'S OWN rulebook (D-050).
+- Voice envelope GainNodes initialize to `0.0001` at construction, pad releases cleanly anchor active gains via `cancelAndHoldAtTime` and cancel future look-ahead nodes before they sound, and legato key changes grace-window drone ducking to eliminate volume spikes (D-051).
 
 **Not verified**
 
@@ -94,6 +92,52 @@ _Last updated: 2026-10-22, session 66, on `main`._
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 67: 2026-10-22: volume spike elimination on note hold and legato key transitions (D-051)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Eliminate intermittent audio volume surges/spikes occurring during Fun Machine note holding and legato note changes (D-051).
+
+**Done:** D-051 implemented and verified. All 178 tests pass.
+
+**Changed:**
+1. `src/voices.mjs`:
+   - Initialized `env.gain.value = 0.0001` immediately upon `context.createGain()` in `scheduleVoicePad()`, `scheduleVoiceLead()`, and `scheduleVoicePluck()`.
+   - Initialized tremolo swell and depth gains to `1 - tremolo.depth` and `tremolo.depth` respectively in `connectThroughTremolo()`.
+   - Returned `start` property in `scheduleVoicePad()` return object `{ env, oscillators, stopAt, peak, start }`.
+2. `src/app.mjs`:
+   - Preserved `start` in `schedulePadChord()` return handle `{ env, oscillators, stopAt, start }`.
+   - Rewrote `releaseFunPads(context, fade)`:
+     - For future-scheduled pads in the look-ahead window (`handle.start > now`), cancelled timeline, anchored gain to `0.0001`, and called `osc.stop(now)` immediately so future nodes never burst or sound at 1.0.
+     - For actively sounding pads (`handle.start <= now`), anchored parameter via `cancelAndHoldAtTime(now)` (with `setValueAtTime(currentVal, now)` fallback) before `setTargetAtTime(0.0001, now, Math.max(0.02, fade / 4))` and oscillator stop.
+   - Updated `triggerFunKey`:
+     - Aligned bridge pad chord to active audible step chord (`transport.audibleStep % 12`) instead of future step.
+     - Trimmed bridge duration to `bridge + 0.05` to prevent multi-chord voice doubling and compressor pumping.
+     - Added `lastFunKeyReleaseTime` tracking.
+   - Updated `updateAudioInteraction`:
+     - Added 220 ms grace window to `leadDuck` (`(performance.now() - lastFunKeyReleaseTime) < 220`) preventing +10 dB tonic drone surges during legato key transitions.
+   - Updated `shapeDrones`:
+     - Applied `cancelAndHoldAtTime` (with anchor fallback) when reshaping drone envelopes on 3-step boundaries.
+3. `tests/voices.test.mjs`:
+   - Added assertions verifying `env.gain.value === 0.0001` and `start` timestamp return.
+4. `index.html`:
+   - Restamped `ASSET_VERSION` to `23dae243c96a`.
+5. Documentation:
+   - Added ADR D-051 in `docs/DECISIONS.md`.
+   - Updated invariants in `docs/ARCHITECTURE.md`.
+   - Archived Session 54 to `docs/archive/sessions.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 178/178 tests passing in ~11.3s.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
+- Zero external dependencies and deterministic score invariants preserved.
+
+**Not verified:**
+- Hands-on listening review of legato feel and drone transition ducking.
+
+**Next session should start with:** Maintainer hands-on testing of note sequencer, vitrine agitation/retaliation, cellular fruiting bodies, locked mixes, and Fun Machine legato transitions, or Wave 3 (feel) / P4-02.
 
 ### Session 66: 2026-10-22: metric closure, tempo pocketing, boundary damping, and anti-clash sieve (D-050)
 
@@ -398,34 +442,5 @@ _Last updated: 2026-10-22, session 66, on `main`._
 **Not verified:** The maintainer's listen. The Fun Machine's PROGRESSION style does not vary yet; that comes with phase 4, along with the readout's VARIATION line and the AS WRITTEN switch.
 
 **Next session should start with:** the maintainer's listen, then P5-30 phase 3 (THE CREATURE'S OWN rulebook) or phase 4 (readout, sessions, AS WRITTEN, Fun Machine progressions).
-
-### Session 54: 2026-10-20: the creature's harmony fields (P5-30 phase 1)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-30 phase 1: the spell emits each creature's harmony fields (D-043).
-
-**Done:** Phase 0 was committed and pushed with the D-043 spec (41620bf, e7f47f6) after the maintainer's "so much richer and coherent!". Phase 1 is done.
-
-**Changed:**
-1. `src/oracle.lol` emits six fields:
-   - `harmony_turn` (`MOD … 353 AN 4`)
-   - `harmony_swap` (`… 359 AN 16`)
-   - `harmony_borrow` (`… 367 AN 4`)
-   - `harmony_cadence` (`… 373 AN 4`)
-   - `harmony_pace` (`… 379 AN 3`)
-   - `harmony_character` (`… 383 AN 12`, to be used modulo the borrowable genres, so D-041's new genres fit)
-2. `src/score.mjs` validates them as `harmonyTurn` … `harmonyCharacter`. The vitrine's default score gains zeros.
-3. Tests: `tests/oracle.test.mjs` checks the ranges, and that every value is reached over 200 phrases.
-
-**Verified:**
-- 146/146 Node checks.
-- Across 500 phrases, no existing score field changed.
-- On 500 phrases, turn × cadence looked linked (z = 4.1). Over 20,000 seeds every pair of new fields is independent (|z| ≤ 2.5, turn × cadence 0.4), so it was chance and the divisors stay.
-- The browser summons normally.
-
-**Not verified:** Nothing audible yet; nothing reads the fields.
-
-**Next session should start with:** P5-30 phase 2, Inform 7 "permits" sentences and the conductor's variation moves. The golden fixture keeps guarding "as written", and a second fixture freezes the varied spines.
 
 

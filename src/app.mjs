@@ -388,6 +388,7 @@ let funMachineStyle = DEFAULT_ACCOMPANIMENT_STYLE;
 let funMachineDryGain = null;
 let activeHeldFunKey = null;
 let activeFunPerformance = null;
+let lastFunKeyReleaseTime = 0;
 
 
 const interaction = {
@@ -2882,7 +2883,8 @@ function updateAudioInteraction() {
   const fifthWeight = (0.035 + field.radius * 0.065 * (0.5 - 0.5 * Math.cos(field.angle * 2))) * (1 - ((interaction.sulk || 0) * 0.4));
   const shimmerWeight = (field.radius * 0.058 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5))) * (1 - ((interaction.sulk || 0) * 0.5));
   // The tonic drones step back with the lead while the band follows a held key.
-  const leadDuck = activeHeldFunKey !== null || currentTransport?.songLeading ? LEAD_DUCK_GAIN : 1;
+  const isKeyTransition = (performance.now() - lastFunKeyReleaseTime) < 220;
+  const leadDuck = activeHeldFunKey !== null || isKeyTransition || currentTransport?.songLeading ? LEAD_DUCK_GAIN : 1;
   const targetDroneGains = [subWeight * leadDuck, fifthWeight * leadDuck, shimmerWeight * leadDuck];
 
   for (const [index, drone] of transport.drones.entries()) {
@@ -3860,7 +3862,7 @@ function schedulePadChord(context, destination, chord, at, duration, { level = 1
   const { env, oscillators, stopAt, peak } = scheduleVoicePad(context, destination, voice, notes, { start, sounding, level, hold: interaction.hold });
   if (transport) for (const midi of notes) logNote(transport, "fun", midi, start, sounding, peak, midiVoiceOf(voice));
 
-  const handle = { env, oscillators, stopAt };
+  const handle = { env, oscillators, stopAt, start };
   // Only live pads can be released; offline renders keep their own clock, and
   // recorded loop layers ring out on their own when a live key lets go.
   if (context === audioContext && releasable) {
@@ -3870,18 +3872,44 @@ function schedulePadChord(context, destination, chord, at, duration, { level = 1
   return handle;
 }
 
-// Fades every live pad (including ones scheduled a moment ahead) over `fade`.
+// Fades every live pad (including ones scheduled a moment ahead) cleanly over `fade`.
 function releaseFunPads(context, fade = 0.5) {
   if (!context) return;
   const now = context.currentTime;
   for (const handle of funPadHandles) {
-    handle.env.gain.cancelScheduledValues(now);
-    handle.env.gain.setTargetAtTime(0.0001, now, fade / 4);
-    for (const osc of handle.oscillators) {
+    if (!handle || !handle.env) continue;
+    const gainParam = handle.env.gain;
+    if (handle.start !== undefined && handle.start > now) {
+      // Future scheduled pad that has not sounded yet:
+      // Cancel its timeline, hold gain at 0.0001, and stop all oscillators immediately
+      // so it never bursts or speaks when its start time arrives.
       try {
-        osc.stop(now + fade * 1.5);
-      } catch {
-        // Already stopped.
+        gainParam.cancelScheduledValues(now);
+        gainParam.setValueAtTime(0.0001, now);
+      } catch {}
+      for (const osc of handle.oscillators || []) {
+        try {
+          osc.stop(now);
+        } catch {}
+      }
+    } else {
+      // Actively sounding pad:
+      // Safely anchor current gain at `now` before ramping down to prevent AudioParam jumps,
+      // then decay cleanly to 0.0001 over fade / 4.
+      try {
+        if (typeof gainParam.cancelAndHoldAtTime === "function") {
+          gainParam.cancelAndHoldAtTime(now);
+        } else {
+          const currentVal = gainParam.value;
+          gainParam.cancelScheduledValues(now);
+          gainParam.setValueAtTime(currentVal, now);
+        }
+        gainParam.setTargetAtTime(0.0001, now, Math.max(0.02, fade / 4));
+      } catch {}
+      for (const osc of handle.oscillators || []) {
+        try {
+          osc.stop(now + fade * 1.5);
+        } catch {}
       }
     }
   }
@@ -4423,6 +4451,7 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   if (!isKeyDown) {
     if (activeHeldFunKey !== normSemi) return;
     activeHeldFunKey = null;
+    lastFunKeyReleaseTime = performance.now();
     keyBtn?.classList.remove("is-pressed");
     releaseFunPads(audioContext, 0.9);
     if (currentTransport) currentTransport.liveVoice = { voicing: currentTransport.liveVoice?.voicing ?? null, leadMidi: null };
@@ -4436,6 +4465,7 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   if (activeHeldFunKey === normSemi) return; // key repeat
   const changingKey = activeHeldFunKey !== null;
   activeHeldFunKey = normSemi;
+  lastFunKeyReleaseTime = 0;
   for (const other of elements.funKeyboard?.querySelectorAll(".fun-key.is-pressed") || []) other.classList.remove("is-pressed");
   keyBtn?.classList.add("is-pressed");
 
@@ -4499,10 +4529,11 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     for (let k = 0; k < stepsUntilRegion; k += 1) regionStart += loopStepDuration(currentScore, nextStep + k);
     const bridge = regionStart - context.currentTime;
     if (bridge > 0.12) {
-      const chord = performance.steps[nextStep % 12].chord;
+      const currentAudibleIndex = Math.max(0, transport.audibleStep % 12);
+      const chord = performance.steps[currentAudibleIndex].chord;
       const voice = liveVoiceOf(transport);
       voice.voicing = padVoicing(chord, voice.voicing, performance.lift);
-      schedulePadChord(context, transport.funBus, chord, context.currentTime, bridge + 0.2, { level, voicing: voice.voicing });
+      schedulePadChord(context, transport.funBus, chord, context.currentTime, bridge + 0.05, { level, voicing: voice.voicing });
     }
   } else {
     const chord = performance.chords[0];
@@ -4636,7 +4667,13 @@ function shapeDrones(transport, score, absoluteStep, at) {
   const resting = !arrangementPlays("lead", stepIndex);
   const region = padStepsDuration(score, absoluteStep, 3);
   for (const envelope of transport.droneEnvelopes) {
-    envelope.gain.cancelScheduledValues(at);
+    if (typeof envelope.gain.cancelAndHoldAtTime === "function") {
+      envelope.gain.cancelAndHoldAtTime(at);
+    } else {
+      const cur = envelope.gain.value;
+      envelope.gain.cancelScheduledValues(at);
+      envelope.gain.setValueAtTime(cur, at);
+    }
     if (resting) {
       envelope.gain.setTargetAtTime(0, at, 0.12);
     } else {

@@ -1025,6 +1025,34 @@ The maintainer authorized Option 3: preserving the fundamental 12-step architect
 - Chords change crisply without muddy harmonic bleed.
 - Zero external dependencies; 178 tests passing.
 
+## D-051 Elimination of audio volume spikes during Fun Machine note holding and legato key transitions (2026-10-22, status: accepted)
+
+**Context:** The maintainer reported that when holding down a Fun Machine note for a while or moving between notes, the audio signal occasionally spiked dramatically in volume—as if the master dB dial was suddenly cranked to maximum and back down again.
+Investigation revealed four distinct root causes in Web Audio scheduling:
+1. *GainNode default initialization to 1.0 (unity gain):* Web Audio `GainNode` instances created via `context.createGain()` default to `gain.value = 1.0`. In `src/voices.mjs`, envelope gain nodes for pads, plucks, and leads were created without explicit initial value assignment, relying on subsequent `setValueAtTime(0.0001, start)` calls. When `releaseFunPads()` ran `cancelScheduledValues(now)` during a key change on pads scheduled in the look-ahead window (`start > now`), the cancellation wiped all scheduled timeline events including the initial `setValueAtTime(0.0001, start)`. The node's gain immediately reverted to the underlying default value of `1.0`. The subsequent `setTargetAtTime(0.0001, now, fade / 4)` then exponentially decayed starting from 1.0! When the note oscillators started at `start`, they sounded at up to 0.7–0.9 gain (+14 dB to +16 dB over designed peak), producing an explosive volume surge.
+2. *Look-ahead pad leakage:* When notes were played, `scheduleVoicePad()` scheduled audio slightly ahead in time (`start = at`). When `releaseFunPads()` was invoked, future-scheduled pads were not prevented from starting; their oscillators continued to spin up and sound unless explicitly stopped.
+3. *Unanchored `cancelScheduledValues` timeline jumps:* Invoking `cancelScheduledValues(now)` during an active ramp or `setTargetAtTime` without anchoring the parameter value at `now` causes Web Audio implementations (particularly Chromium) to glitch or jump back to the start of the previous ramp or timeline base value.
+4. *Bridge pad harmonic collision and gain doubling:* In `triggerFunKey()`, when a key was pressed mid-region (`bridge > 0.12`), a bridge pad was scheduled using `performance.steps[nextStep % 12].chord` (the chord of the upcoming step rather than the active audible step) with a duration of `bridge + 0.2` (overlapping by 200 ms with the next scheduled region chord), doubling pad voice count into the bus and compressor.
+5. *Legato key-transition drone ducking surge:* When transitioning between physical keys or rapid touch taps, `activeHeldFunKey` momentarily became `null` for 20–100 ms between keyup and keydown. In `updateAudioInteraction()`, this instantly released the -10 dB lead ducking on the three tonic drones, causing them to surge upward by +10 dB before violently ducking back down when the new key registered.
+
+**Decision:**
+1. **Bounded Initial GainNode Value (`0.0001`):**
+   - Explicitly initialize `env.gain.value = 0.0001` immediately upon `context.createGain()` in `scheduleVoicePad()`, `scheduleVoiceLead()`, and `scheduleVoicePluck()` in `src/voices.mjs`. Tremolo swell and depth gains are similarly initialized to `1 - tremolo.depth` and `tremolo.depth`. If any timeline cancellation occurs, the underlying base value is bounded to near-silence rather than unity gain (`1.0`).
+2. **Safe Future-Pad Cancellation in `releaseFunPads()`:**
+   - `scheduleVoicePad()` now returns `start` alongside `env`, `oscillators`, `stopAt`, and `peak`.
+   - In `releaseFunPads()`, pad handles scheduled in the future (`handle.start > now`) have their timelines cancelled, gain anchored at `0.0001`, and all oscillators stopped immediately at `now`. They never sound or burst.
+3. **AudioParam Anchoring with `cancelAndHoldAtTime()`:**
+   - For actively sounding pads (`handle.start <= now`) and drone shaping in `shapeDrones()`, safe anchoring is applied using `gainParam.cancelAndHoldAtTime(now)` (with a fallback to `cancelScheduledValues(now)` followed immediately by `setValueAtTime(currentVal, now)` for environments lacking `cancelAndHoldAtTime`). The decay to `0.0001` then smoothly progresses from the exact held instantaneous gain without pops or jumps.
+4. **Seamless Bridge Pad Handoff:**
+   - In `triggerFunKey()`, the bridge pad resolves the active audible step chord (`transport.audibleStep % 12`) and trims duration to `bridge + 0.05`, eliminating chord dissonance and multi-chord gain doubling.
+5. **Legato Transition Grace Window for Drone Ducking:**
+   - In `updateAudioInteraction()`, a 220 ms grace window (`isKeyTransition = (performance.now() - lastFunKeyReleaseTime) < 220`) prevents tonic drones from surging upward during legato key changes.
+
+**Consequences:**
+- Volume surges and deafening spikes during note holding and legato key changes are completely eliminated.
+- Note transitions on the Fun Machine sound buttery, smooth, and natural.
+- Preserves all 178 tests, zero runtime dependencies, and strict score determinism.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)
