@@ -196,6 +196,11 @@ test("tapping the vitrine escalates organism agitation, triggers retaliation, an
   assert.match(app, /kind === "retaliation"/);
   assert.match(app, /kind === "dull_thud"/);
 
+  // Audio disruptions: pitch plunge, resonance surge, feedback blowout, sulk muffle
+  assert.match(app, /retaliationPitchDrop:\s*0/);
+  assert.match(app, /retaliationDetune = \(interaction\.retaliationPitchDrop \|\| 0\) \* -420/);
+  assert.match(app, /sulkMuffle = 1 - \(\(interaction\.sulk \|\| 0\) \* 0\.62\)/);
+
   // CSS states and motion safety
   assert.match(styles, /\.vision-stage\.is-agitated/);
   assert.match(styles, /\.vision-stage\.is-retaliating/);

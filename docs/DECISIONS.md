@@ -939,15 +939,18 @@ Investigation revealed two distinct factors:
 2. **Escalating Behavioral Dynamics:**
    - **Taps 1–2 (Gentle disturbance):** The glass rings with resonant chimes (`triggerPercussion("strike")`), ripples radiate, and spores puff outward.
    - **Taps 3–5 (Irritated / Agitated):** The creature's pupils contract into fierce staring slits, gaze locks dead onto the tap coordinate with high attention, perimeter contours bristle with high-frequency agitation jitter, and filter resonance climbs. The bell jar vitrine frame turns amber/crimson (`.is-agitated`) and the vitrine caption warns: `WARNING: ORGANISM AGITATED · CEASE TAPPING!`.
-3. **The Retaliatory Kinetic Strike ("Fight Back"):**
-   - Crossing the agitation threshold ($\ge 0.85$ or 6 rapid taps) triggers an immediate retaliatory strike:
+3. **The Retaliatory Kinetic Strike ("Fight Back") & Ensemble Audio Disruption:**
+   - Crossing the agitation threshold ($\ge 0.85$ or 6 rapid taps) triggers an immediate retaliatory strike and severe acoustic disruption:
      - **Visual Surge:** The creature lunges forward toward the tap coordinates, swelling by +42% against the glass, accompanied by a blinding phosphorescent radial discharge flash, an explosive shockwave ring, a massive spore eruption, and 7–10 branched crystalline glass stress fractures that slowly fade.
-     - **Audio Slam:** A multi-layered synthesized transient combining an 80 Hz $\to$ 28 Hz sub-bass cabinet boom (physical mass striking the glass), a sharp 1650 Hz $\to$ 420 Hz glass snap transient, a bandpass-swept bio-acoustic snarl, and a momentary 350 ms audio duck on the ensemble to give the strike visceral weight.
+     - **Audio Slam & Electric Spark:** A synthesized transient combining an 80 Hz $\to$ 28 Hz sub-bass cabinet boom (physical mass striking the glass), a sharp 1650 Hz $\to$ 420 Hz glass snap transient, a bandpass-swept bio-acoustic snarl, and a 5.6 kHz high-Q electric discharge spark crackle.
+     - **Pitch Plunge & Oscillation Warping:** The physical impact violently knocks the oscillators out of tuning: drones drop by -420 cents and the lead drops by -380 cents via `retaliationPitchDrop`, accompanied by a screaming filter resonance surge ($Q \to 8.5$), slowly swooping back up over 1.5 seconds.
+     - **Cabinet Shudder & Physical Glitch:** The entire ensemble output momentarily ducks and sags with an authentic voltage/tape shudder on master gain, the delay feedback explodes into an intense wash (feedback $\to 0.78$), and the Edison phonograph needle jumps in its groove (wax cylinder crackle spikes to 0.55).
      - **Vitrine Shudder:** The vitrine stage executes a dramatic cabinet tremor animation (`vitrine-shudder`), automatically suppressed under `prefers-reduced-motion: reduce`.
      - **Dynamic Alerts:** Caption flashes `RETALIATION! · THE SPECIMEN STRUCK THE GLASS!`, and the status bar alerts `ORGANISM RETALIATED · STEP BACK FROM GLASS`.
-4. **Defensive Sulk Recovery Cooldown:**
+4. **Defensive Sulk Recovery & Acoustic Muffle:**
    - After retaliating, the organism retreats to the center background in a 3.4-second defensive sulk (`.is-sulking`).
-   - Tapping the vitrine during cooldown produces a dull, hollow wooden/glass thud (`triggerPercussion("dull_thud")`) with no spore discharge, and the status bar reports `SPECIMEN SULKING · REFUSES CONTACT` before the creature calms down and returns to its resting state.
+   - The sound is audibly muffled and subdued: creature filter cutoff drops by up to -62% into dark lowpass depths, lead level is ducked by -45%, and drones exhibit a slow, weary detune drift. Over 3.4 seconds, brightness, volume, and clarity bloom gracefully back to life as the creature calms down.
+   - Tapping the vitrine during cooldown produces a dull, hollow wooden/glass thud (`triggerPercussion("dull_thud")`) with no spore discharge, and the status bar reports `SPECIMEN SULKING · REFUSES CONTACT` before normal looping resumes.
 
 **Consequences:**
 - Direct, playful reward for exploring the vitrine caption's warning.

@@ -413,6 +413,7 @@ const interaction = {
   retaliateUntil: 0,
   cooldownUntil: 0,
   retaliationFlash: 0,
+  retaliationPitchDrop: 0,
   lunge: 0,
   sulk: 0,
   retaliationPoint: { x: 0, y: 0 },
@@ -1742,9 +1743,10 @@ function stepInteraction(timestamp, reducedMotion) {
     }
   }
 
-  // Lunge and flash decay
+  // Lunge, flash, and retaliation pitch drop decay
   interaction.lunge *= Math.exp(-dt * 5.2);
   interaction.retaliationFlash *= Math.exp(-dt * 3.4);
+  interaction.retaliationPitchDrop *= Math.exp(-dt * 2.4);
 
   // Sulk recovery during cooldown
   const isCooldown = timestamp < interaction.cooldownUntil;
@@ -2319,13 +2321,17 @@ function updateAudioInteraction() {
   // The vitrine sweeps the lead's creature filter around the same resting
   // point the exports use (D-042).
   const creature = creatureFilter(score);
-  const agitationExponent = (interaction.agitation || 0) * 0.45;
+  const agitationExponent = (interaction.agitation || 0) * 0.65;
+  const agitationCutoffTremor = Math.sin(now * 28) * ((interaction.agitation || 0) * 0.38);
+  const retaliationCutoffSweep = (interaction.retaliationPitchDrop || 0) * 1.85;
+  const sulkMuffle = 1 - ((interaction.sulk || 0) * 0.62);
+
   const harmonicExponent = (interaction.pitchBend * 0.72 + Math.sin(field.angle) * 0.35) * Math.max(0.3, interaction.hold) + interaction.tap * 0.25;
-  const targetCutoff = Math.max(220, Math.min(9000, creature.cutoff * (2 ** (harmonicExponent + agitationExponent))));
-  const targetQ = Math.min(5.2, creature.q + field.radius * 1.6 + interaction.tap * 0.7 + (interaction.agitation || 0) * 0.9);
-  const targetMix = 0.28 * (1 + interaction.hold * 0.2 + interaction.tap * 0.12);
+  const targetCutoff = Math.max(160, Math.min(10500, creature.cutoff * (2 ** (harmonicExponent + agitationExponent + agitationCutoffTremor + retaliationCutoffSweep)) * sulkMuffle));
+  const targetQ = Math.min(8.5, creature.q + field.radius * 1.6 + interaction.tap * 0.7 + ((interaction.agitation || 0) * 1.8) + ((interaction.retaliationPitchDrop || 0) * 4.2));
+  const targetMix = 0.28 * (1 + interaction.hold * 0.2 + interaction.tap * 0.12) * (1 - ((interaction.sulk || 0) * 0.45));
   const baseFeedback = 0.14 + score.bloom / 650;
-  const targetFeedback = Math.min(0.48, baseFeedback + field.radius * 0.14);
+  const targetFeedback = Math.min(0.68, baseFeedback + field.radius * 0.14 + ((interaction.agitation || 0) * 0.24));
 
   transport.filter.frequency.setTargetAtTime(targetCutoff, now, 0.045);
   transport.filter.Q.setTargetAtTime(targetQ, now, 0.045);
@@ -2337,11 +2343,15 @@ function updateAudioInteraction() {
     transport.panner.pan.setTargetAtTime(targetPan, now, 0.04);
   }
 
-  // Real-time continuous drone choir pitch bend & harmonic beating
+  // Real-time continuous drone choir pitch bend, agitation flutter, retaliation drop, and sulk detune
   const pitchBendCents = interaction.pitchBend * 140 * interaction.hold;
-  const subWeight = 0.085 * (1 + Math.max(0, -interaction.pitchBend) * 0.55 * interaction.hold);
-  const fifthWeight = 0.035 + field.radius * 0.065 * (0.5 - 0.5 * Math.cos(field.angle * 2));
-  const shimmerWeight = field.radius * 0.058 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5));
+  const agitationVibrato = Math.sin(now * 34) * ((interaction.agitation || 0) * 75);
+  const retaliationDetune = (interaction.retaliationPitchDrop || 0) * -420;
+  const sulkDetune = Math.sin(now * 1.6) * ((interaction.sulk || 0) * -35);
+
+  const subWeight = 0.085 * (1 + Math.max(0, -interaction.pitchBend) * 0.55 * interaction.hold) * (1 - ((interaction.sulk || 0) * 0.35));
+  const fifthWeight = (0.035 + field.radius * 0.065 * (0.5 - 0.5 * Math.cos(field.angle * 2))) * (1 - ((interaction.sulk || 0) * 0.4));
+  const shimmerWeight = (field.radius * 0.058 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5))) * (1 - ((interaction.sulk || 0) * 0.5));
   // The tonic drones step back with the lead while the band follows a held key.
   const leadDuck = activeHeldFunKey !== null || currentTransport?.songLeading ? LEAD_DUCK_GAIN : 1;
   const targetDroneGains = [subWeight * leadDuck, fifthWeight * leadDuck, shimmerWeight * leadDuck];
@@ -2349,7 +2359,9 @@ function updateAudioInteraction() {
   for (const [index, drone] of transport.drones.entries()) {
     const baseDetune = [-5, 4, -3][index] || 0;
     const phaseBeating = Math.sin(field.angle + index * 2.094) * (10 + 16 * field.radius);
-    drone.detune.setTargetAtTime(baseDetune + pitchBendCents + phaseBeating, now, 0.045);
+    const agitationDetuneJitter = ((Math.sin(now * 19.3 + index * 2.1) + Math.cos(now * 43.7)) * 38 * ((interaction.agitation || 0) ** 1.4));
+    const totalDetune = baseDetune + pitchBendCents + phaseBeating + agitationVibrato + agitationDetuneJitter + retaliationDetune + sulkDetune;
+    drone.detune.setTargetAtTime(totalDetune, now, 0.04);
     if (transport.droneGains?.[index]) {
       transport.droneGains[index].gain.setTargetAtTime(targetDroneGains[index] ?? 0.03, now, 0.05);
     }
@@ -2358,7 +2370,8 @@ function updateAudioInteraction() {
   // Vitrine bell jar glass acoustic proximity resonance
   if (transport.parlorReverbSend && parlorAcousticsEnabled && parlorReverbEnabled) {
     const glassProximity = Math.max(0, (field.radius - 0.5) / 0.5);
-    const glassBoost = 1 + glassProximity * 0.45;
+    const agitationAcousticBoost = 1 + ((interaction.agitation || 0) * 0.85);
+    const glassBoost = (1 + glassProximity * 0.45) * agitationAcousticBoost;
     transport.parlorReverbSend.gain.setTargetAtTime(PARLOR_REVERB_PER_LEVEL * parlorAcousticsLevel * glassBoost, now, 0.05);
   }
 }
@@ -2463,10 +2476,26 @@ function triggerPercussion(kind, normX = 0, normY = 0, strength = 1) {
     snarlSource.start(now);
     snarlSource.stop(now + 0.42);
 
-    // 4. Parlor reverberation if active
+    // 4. Electric discharge / static spark crackle
+    const sparkSource = audioContext.createBufferSource();
+    sparkSource.buffer = ensureNoiseBuffer(audioContext);
+    const sparkFilter = audioContext.createBiquadFilter();
+    sparkFilter.type = "bandpass";
+    sparkFilter.frequency.setValueAtTime(5600, now);
+    sparkFilter.Q.setValueAtTime(6.5, now);
+    const sparkGain = audioContext.createGain();
+    sparkGain.gain.setValueAtTime(0.0001, now);
+    sparkGain.gain.exponentialRampToValueAtTime(0.22 * strength, now + 0.004);
+    sparkGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+    sparkSource.connect(sparkFilter).connect(sparkGain).connect(currentTransport.mix);
+    sparkSource.start(now);
+    sparkSource.stop(now + 0.2);
+
+    // 5. Parlor reverberation if active
     if (currentTransport.parlorReverbSend && parlorAcousticsEnabled && parlorReverbEnabled) {
       subGain.connect(currentTransport.parlorReverbSend);
       snapGain.connect(currentTransport.parlorReverbSend);
+      sparkGain.connect(currentTransport.parlorReverbSend);
     }
   } else if (kind === "dull_thud") {
     // Muted low wooden/glass thud when tapped during sulk recovery
@@ -2590,7 +2619,8 @@ function scheduleNote(context, transport, score, step, at, duration) {
   const envelope = context.createGain();
   const attack = Math.min(0.055, duration * (0.2 + field.radius * 0.06));
   const duck = (transport === currentTransport && activeHeldFunKey !== null) || transport.songLeading ? LEAD_DUCK_GAIN : 1;
-  const peakGain = 0.3 * (1 + interaction.hold * 0.16) * duck;
+  const sulkDuck = transport === currentTransport ? (1 - ((interaction.sulk || 0) * 0.45)) : 1;
+  const peakGain = 0.3 * (1 + interaction.hold * 0.16) * duck * sulkDuck;
   envelope.gain.setValueAtTime(0.0001, at);
   envelope.gain.exponentialRampToValueAtTime(peakGain, at + Math.max(0.01, attack));
   envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
@@ -2615,7 +2645,10 @@ function scheduleNote(context, transport, score, step, at, duration) {
         ? score.waveform
         : ["triangle", "sawtooth", "sine", "square"][(score.wave + voiceIndex + score.voice) % 4];
       oscillator.frequency.value = midiToFrequency(layer.note + voice.interval);
-      oscillator.detune.value = voice.detune * 0.45 + layer.detuneOffset + (step % 3 - 1) * score.twist * 0.14;
+      const liveDetuneMod = transport === currentTransport
+        ? (Math.sin(at * 32) * ((interaction.agitation || 0) * 45)) - ((interaction.retaliationPitchDrop || 0) * 360) + ((interaction.sulk || 0) * -25)
+        : 0;
+      oscillator.detune.value = voice.detune * 0.45 + layer.detuneOffset + (step % 3 - 1) * score.twist * 0.14 + liveDetuneMod;
       const level = context.createGain();
       level.gain.value = voice.gain * layer.weight;
       oscillator.connect(level).connect(envelope);
@@ -5243,12 +5276,39 @@ function triggerRetaliation(normX, normY) {
   // Audio percussion
   triggerPercussion("retaliation", normX, normY, 1.0);
 
-  // Momentary audio duck for dramatic impact
+  // Disruption across the entire audio ensemble:
   if (currentTransport && audioContext) {
     const actxTime = audioContext.currentTime;
+
+    // 1. Duck creature mix & allow violent pitch surge
     currentTransport.mix.gain.cancelScheduledValues(actxTime);
-    currentTransport.mix.gain.setValueAtTime(0.06, actxTime);
-    currentTransport.mix.gain.exponentialRampToValueAtTime(0.28, actxTime + 0.35);
+    currentTransport.mix.gain.setValueAtTime(0.04, actxTime);
+    currentTransport.mix.gain.exponentialRampToValueAtTime(0.28, actxTime + 0.45);
+
+    // 2. Physical cabinet impact shudder on master output (voltage sag / tape glitch)
+    const baseOutputGain = masterGainFor(masterVolume);
+    if (baseOutputGain > 0.001) {
+      currentTransport.output.gain.cancelScheduledValues(actxTime);
+      currentTransport.output.gain.setValueAtTime(baseOutputGain * 0.35, actxTime);
+      currentTransport.output.gain.linearRampToValueAtTime(baseOutputGain * 1.12, actxTime + 0.035);
+      currentTransport.output.gain.exponentialRampToValueAtTime(baseOutputGain, actxTime + 0.38);
+    }
+
+    // 3. Phonograph needle jump and wax crackle spike
+    if (currentTransport.parlorCrackleGain && parlorAcousticsEnabled && parlorCrackleEnabled) {
+      currentTransport.parlorCrackleGain.gain.cancelScheduledValues(actxTime);
+      currentTransport.parlorCrackleGain.gain.setValueAtTime(0.55, actxTime);
+      currentTransport.parlorCrackleGain.gain.exponentialRampToValueAtTime(0.0001, actxTime + 0.06);
+      currentTransport.parlorCrackleGain.gain.exponentialRampToValueAtTime(0.38, actxTime + 0.12);
+      currentTransport.parlorCrackleGain.gain.exponentialRampToValueAtTime(PARLOR_CRACKLE_PER_LEVEL * parlorAcousticsLevel, actxTime + 0.85);
+    }
+
+    // 4. Feedback surge in tape delay line
+    if (currentTransport.feedback) {
+      currentTransport.feedback.gain.cancelScheduledValues(actxTime);
+      currentTransport.feedback.gain.setValueAtTime(0.78, actxTime);
+      currentTransport.feedback.gain.exponentialRampToValueAtTime(0.22, actxTime + 0.75);
+    }
   }
 
   if (stageContainer) {
