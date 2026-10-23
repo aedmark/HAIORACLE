@@ -4431,7 +4431,14 @@ function updateFunKeyboardChordLabels() {
 // While a key is held the LOLCODE lead steps back so the player's part leads
 // and the band follows it (D-028).
 const LEAD_DUCK_GAIN = 10 ** (-10 / 20);
-const FUN_PAD_LEVEL = Object.freeze({ swell: 1, arpeggio: 0.55, progression: 0.8 });
+const FUN_PAD_LEVEL = Object.freeze({
+  swell: 1,
+  arpeggio: 0.55,
+  progression: 0.8,
+  intro: 0.8,
+  bridge: 0.8,
+  outro: 0.8,
+});
 
 function loopStepDuration(score, step) {
   const rhythm = RHYTHMS[score.rhythm];
@@ -4733,7 +4740,7 @@ function playPerformanceStep(context, transport, voice, performance, { stepIndex
         voice: patch,
       });
     });
-  } else if (performance.style === "progression" && stepInfo.leadPitch !== null) {
+  } else if ((performance.style === "progression" || performance.style === "intro" || performance.style === "bridge" || performance.style === "outro") && stepInfo.leadPitch !== null) {
     const midi = leadMidi(stepInfo.leadPitch);
     // On the harmonic clock a lead note holds for its steps (D-044).
     const held = (stepInfo.leadSteps ?? 1) > 1 && currentScore ? padStepsDuration(currentScore, absoluteStep, stepInfo.leadSteps) : stepDuration;
@@ -6926,6 +6933,23 @@ function clearSong() {
   renderLooper();
 }
 
+function generateSectionLoop(role) {
+  if (!canAppendLoop(song)) {
+    announceLooper("THE SONG IS FULL");
+    return;
+  }
+  const key = activeHeldFunKey ?? (currentScore ? currentScore.root : 0);
+  const voice = funVoiceId;
+  const slot = makeSlot(key, role, voice);
+  const take = Array(LOOP_STEPS).fill(slot);
+  song = appendLoop(song, take, role);
+  selectedLoop = song.loops.length - 1;
+  const genreTitle = genreBook(activeGenre)?.title ?? activeGenre;
+  announceLooper(`GENERATED ${role.toUpperCase()} LOOP (${genreTitle})`);
+  renderLooper();
+  unlockDrawer("change");
+}
+
 function looperReadoutText() {
   const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "S"}`;
   const audible = currentTransport && transportState.state === TRANSPORT_STATES.PLAYING
@@ -7247,6 +7271,14 @@ function renderLooper() {
     rest.disabled = selectedStepIndex === null || recorder.mode !== "idle";
   }
 
+  const canAppend = canAppendLoop(song) && recorder.mode === "idle";
+  const genIntro = document.querySelector("#looper-gen-intro");
+  const genBridge = document.querySelector("#looper-gen-bridge");
+  const genOutro = document.querySelector("#looper-gen-outro");
+  if (genIntro) genIntro.disabled = !canAppend;
+  if (genBridge) genBridge.disabled = !canAppend;
+  if (genOutro) genOutro.disabled = !canAppend;
+
   if (clear) clear.disabled = !song.loops.length && recorder.mode === "idle";
   if (readout) readout.value = looperReadoutText();
 }
@@ -7255,6 +7287,9 @@ document.querySelector("#looper-record")?.addEventListener("click", () => armRec
 document.querySelector("#looper-overdub")?.addEventListener("click", () => armRecorder("overdub"));
 document.querySelector("#looper-step-rec")?.addEventListener("click", toggleStepRec);
 document.querySelector("#looper-rest")?.addEventListener("click", handleRestStep);
+document.querySelector("#looper-gen-intro")?.addEventListener("click", () => generateSectionLoop("intro"));
+document.querySelector("#looper-gen-bridge")?.addEventListener("click", () => generateSectionLoop("bridge"));
+document.querySelector("#looper-gen-outro")?.addEventListener("click", () => generateSectionLoop("outro"));
 document.querySelector("#looper-cue-outro")?.addEventListener("click", () => {
   const hasOutro = song.loops.some((l) => l.role === "outro");
   if (!hasOutro) {

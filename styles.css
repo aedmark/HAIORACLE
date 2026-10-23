@@ -305,6 +305,27 @@ select:focus-visible {
   gap: 0.25rem;
 }
 
+.looper-gen-button {
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.5rem;
+}
+
+#looper-gen-intro:hover:not(:disabled) {
+  border-color: rgba(255, 216, 117, 0.85);
+  color: #fff;
+}
+
+#looper-gen-bridge:hover:not(:disabled) {
+  border-color: rgba(190, 130, 240, 0.85);
+  color: #fff;
+}
+
+#looper-gen-outro:hover:not(:disabled) {
+  border-color: rgba(240, 90, 100, 0.85);
+  color: #fff;
+}
+
 .looper-role-button {
   min-width: 3.2rem;
   padding: 0.2rem 0.4rem;

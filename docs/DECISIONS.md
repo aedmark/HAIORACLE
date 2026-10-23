@@ -1082,11 +1082,20 @@ Investigation identified four root causes in the recording engine:
      - Offline WAV and SMF Type 1 MIDI exports render the complete linear arc (`Intro -> Body -> Outro -> Reverb ring-out`).
    - Session schema and preset storage maintain 100% backwards compatibility with legacy v1–v6 sessions without explicit roles.
 
+5. **Rulebook-Driven Section Progressions & One-Finger Accompaniment Generation:**
+   - Extended one-finger accompaniment styles in `src/accompaniment.mjs`: `ACCOMPANIMENT_STYLES = ["swell", "arpeggio", "progression", "intro", "bridge", "outro"]`.
+   - Added `buildFunSectionProgression(key, section, genre, tonicRoot)` to synthesize authentic 4-chord progressions and 12-step lead motifs from the active Inform 7 rulebook:
+     - **Intro:** Preparatory tonic vamp/pedal (I -> IV -> I -> V/♭II7 turnaround setup) with a melodic call-and-response and breath on step 11 before the downbeat.
+     - **Bridge:** Contrasting harmonic departure to subdominant (IV) or relative minor (vi), secondary dominant (V/V / II7) or modal borrowing (♭VI), predominant, and dominant suspension (V7) pointing home.
+     - **Outro:** Executes the genre's specific permitted cadence: Phrygian descent (`iv -> ♭III -> ♭II -> I`) for Andalusian Flamenco/Palestrina/Tango; Plagal "Amen" (`I -> IV -> IV -> I`) for Gospel/Delta Blues/Doo-Wop; or authentic cadence (`ii -> V -> V7 -> I`), with a sustained home tonic held through steps 9..11.
+   - Added INTRO, BRIDGE, and OUTRO style chips on the keyboard manual for live playing and auditioning.
+   - Added quick-generate buttons in the Loop Machine (`+ INTRO`, `+ BRIDGE`, `+ OUTRO`) to synthesize full 12-step section loops directly from the active rulebook and key with a single click.
+
 **Consequences:**
 - Overdubbing and live loop recording work smoothly and reliably without playback clutter or timing thrashing.
 - Sustained arpeggio ripples and swell pads sustain cleanly across all held steps.
-- Songs can be arranged into complete musical forms with Intro, Main, Bridge, and Outro sections.
-- 180 automated tests passing; zero runtime dependencies.
+- Songs can be arranged into complete musical forms with Intro, Main, Bridge, and Outro sections, both by live keyboard performance and by one-click rulebook synthesis.
+- 181 automated tests passing; zero runtime dependencies.
 
 ## Open questions
 

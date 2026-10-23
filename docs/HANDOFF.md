@@ -11,7 +11,7 @@ _Last updated: 2026-10-22, session 68, on `main`._
 - D-047/D-048: expanded lexicon (83.8M names) & 72-slip urn; vitrine tap agitation, retaliatory strike, audio disruption, and sulk recovery.
 - D-049/D-050: generative fungal appendages replacing eyes; metric closure (lengths 4 & 6), tempo pocketing, boundary damping, anti-clash sieve.
 - D-051: eliminated volume spikes on note hold and legato transitions via GainNode 0.0001 bounding, safe pad release, and transition ducking smoothing.
-- D-052: looper recording synchronization (audible-clock latching, 1-loop count-in, layer isolation) and section roles (Intro, Main, Bridge, Outro) with Outro cueing and linear offline export.
+- D-052: looper recording synchronization (audible-clock latching, 1-loop count-in, layer isolation), section roles (Intro, Main, Bridge, Outro) with Outro cueing and linear offline export, and rulebook-driven accompaniment section progressions (Intro, Bridge, Outro) with one-touch looper generator buttons.
 - Next: maintainer testing of note sequencer, looper recording and section roles, vitrine retaliation, cellular fruiting bodies, locked mixes, and Fun Machine legato transitions, or Wave 3 (feel) / P4-02.
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
@@ -20,7 +20,7 @@ _Last updated: 2026-10-22, session 68, on `main`._
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **180/180 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **181/181 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -95,40 +95,52 @@ _Last updated: 2026-10-22, session 68, on `main`._
 
 ## Session log
 
-### Session 68: 2026-10-22: looper recording synchronization and musical section roles (D-052)
+### Session 68: 2026-10-22: looper recording synchronization, section roles, and rulebook accompaniment sections (D-052)
 
 **Contributor:** Antigravity with maintainer direction
 
-**Goal:** Overhaul looper recording synchronization (eliminating look-ahead collisions, overdubbing dropouts, and arpeggio/swell truncation) and implement Intro, Outro, and Bridge section roles with live cueing and linear export (D-052).
+**Goal:** Overhaul looper recording synchronization (eliminating look-ahead collisions, overdubbing dropouts, and arpeggio/swell truncation), implement Intro, Outro, and Bridge section roles with live cueing and linear export, and extend one-finger accompaniment to generate rulebook-driven section loops and live accompaniment styles (D-052).
 
-**Done:** All parts implemented and verified. All 180 behavioral, structural, and audit checks pass.
+**Done:** All parts implemented and verified. All 181 behavioral, structural, and audit checks pass.
 
 **Changed:**
-1. `src/looper.mjs`:
+1. `src/accompaniment.mjs`:
+   - Added `"intro"`, `"bridge"`, `"outro"` to `ACCOMPANIMENT_STYLES` and `STYLE_LABELS`.
+   - Implemented `buildFunSectionProgression(key, section, genre, tonicRoot)` generating Inform 7 rulebook-governed harmonic progressions:
+     - Intro: tonic vamp/turnaround ($I \to IV \to I \to V$ or $\flat II7$ setup) with lead motif and a step 11 breath before downbeat.
+     - Bridge: contrasting subdominant ($IV$) or relative minor ($vi$), secondary dominant ($V/V$ or $II7$) or modal borrowing ($\flat VI$), predominant, and dominant suspension ($V7$).
+     - Outro: genre-specific cadence (Phrygian descent for Andalusian/Palestrina/Tango, Plagal "Amen" for Gospel/Blues/Doo-Wop, Authentic $ii \to V \to V7 \to I$ for others) with tonic held through steps 9..11.
+   - Integrated section progression routing into `buildPerformance()`, preserving exact octave-climbing ($C' = C + 12$) invariants.
+2. `src/looper.mjs`:
    - Added musical section roles: `LOOP_ROLES = ["intro", "main", "bridge", "outro"]` with `DEFAULT_LOOP_ROLE = "main"`.
    - Added `setLoopRole(song, loopIndex, role)`.
    - Updated `appendLoop(song, take, role)` to associate sections.
    - Updated `songPosition(song, absoluteStep, { cueOutro, isExport })` with progression state machine: Intro plays once on prelude, body (main + bridge) cycles continuously skipping intro, Outro plays on cue (`CUE OUTRO`) and halts transport, and linear render unfolds during export.
    - Updated `recorderReduce(recorder, event)` to preserve previously latched audible steps (`take[step] = event.held ?? take[step] ?? null`).
    - Updated `validateSong(raw)` to validate section roles while preserving full backwards compatibility with legacy v1–v6 sessions without explicit roles.
-2. `src/app.mjs`:
+3. `src/app.mjs`:
    - Implemented real-time audible-clock keystroke latching in the audible timer callback, recording held keys across all active steps without truncation.
    - Isolated new loop recording in `scheduleAhead()` by muting existing song layers and guarding `followSong()`.
    - Wired 1-loop synchronized count-in pass for both new and overdub recording.
    - Added `#looper-role-chips` role selector buttons and `#looper-cue-outro` cueing handler.
    - Integrated `{ cueOutro: isOutroCued }` in live playback and `{ isExport: true }` in offline WAV/MIDI rendering.
-3. `index.html` & `styles.css`:
+   - Wired `generateSectionLoop(role)` to synthesize 12-step section loops (`+ INTRO`, `+ BRIDGE`, `+ OUTRO`) directly into the song from the active rulebook and creature tonic.
+   - Added pad levels and lead scheduling for `intro`, `bridge`, and `outro` in `scheduleAhead()`.
+4. `index.html` & `styles.css`:
    - Added `#looper-cue-outro` and `#looper-role-chips` in the looper control row.
+   - Added `#chip-style-intro`, `#chip-style-bridge`, `#chip-style-outro` to Fun Machine accompaniment style selector.
+   - Added `#looper-gen-intro`, `#looper-gen-bridge`, `#looper-gen-outro` quick-generation buttons in the looper.
    - Added section color badges and active chip styling (gold intro, sage main, violet bridge, ruby outro) with font sizes compliant with the accessibility floor ($\ge 0.6\text{rem}$).
-4. Tests:
+5. Tests:
    - Added sustained arpeggio/swell hold test and section role state machine/validation tests in `tests/looper.test.mjs`.
-5. Browser runtime hotfix:
+   - Added 11 unit tests in `tests/accompaniment.test.mjs` verifying intro, bridge, outro progressions across 19 genres and 13 keys.
+6. Browser runtime hotfix:
    - Imported `LOOP_STEPS` from `./looper.mjs` in `src/app.mjs`.
    - Used `globalThis.performance ? globalThis.performance.now() : Date.now()` in `triggerFunKey` to eliminate lexical scope TDZ collisions when releasing keys.
 
 **Verified:**
-- 180/180 Node tests pass across all test suites.
-- `python3 tools/check_docs.py` reports 0 errors, 0 warnings.
+- 181/181 Node tests pass across all test suites.
+- `python3 tools/check_docs.py` reports 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json` passes with 0 warnings.
 
 ### Session 67: 2026-10-22: volume spike elimination on note hold and legato key transitions (D-051)

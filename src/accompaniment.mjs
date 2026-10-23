@@ -7,13 +7,16 @@
 import { buildFunChord, buildFunProgression, buildTriad, genreBook } from "./conductor.mjs";
 import { varySpine } from "./variation.mjs";
 
-export const ACCOMPANIMENT_STYLES = Object.freeze(["swell", "arpeggio", "progression"]);
+export const ACCOMPANIMENT_STYLES = Object.freeze(["swell", "arpeggio", "progression", "intro", "bridge", "outro"]);
 export const DEFAULT_ACCOMPANIMENT_STYLE = "progression";
 
 export const STYLE_LABELS = Object.freeze({
   swell: "SWELL",
   arpeggio: "ARPEGGIO",
   progression: "PROGRESSION",
+  intro: "INTRO",
+  bridge: "BRIDGE",
+  outro: "OUTRO",
 });
 
 const QUALITY_TEXT = Object.freeze({
@@ -73,6 +76,11 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
     // melodyPitch climbs from the key's pitch class; C' lifts it an octave.
     leadPitches = progression.steps.map((step) => step.melodyPitch + (position - key));
     summary = chords.map(chordText).join(" → ");
+  } else if (style === "intro" || style === "bridge" || style === "outro") {
+    const section = buildFunSectionProgression(key, style, genre, tonicRoot);
+    chords = section.chords;
+    leadPitches = section.steps.map((step) => step.leadPitch !== null ? step.leadPitch + (position - key) : null);
+    summary = section.summary;
   } else {
     const chord = buildFunChord(key, "auto", genre, tonicRoot);
     chords = [chord, chord, chord, chord];
@@ -141,6 +149,157 @@ function nearestChordTone(pitch, chord) {
     }
   }
   return pitch;
+}
+
+/**
+ * Builds section-specific 4-chord progressions and 12-step lead motifs from the
+ * active genre's rulebook:
+ *  - intro: preparatory tonic vamp/pedal and turnaround setup leading to the downbeat.
+ *  - bridge: contrasting subdominant/relative changes with secondary dominants.
+ *  - outro: the genre's permitted cadence (authentic, plagal, or Phrygian) resolving to home tonic.
+ */
+export function buildFunSectionProgression(key, section, genre, tonicRoot = 0) {
+  const r = ((Math.trunc(key) % 12) + 12) % 12;
+  const book = genreBook(genre);
+  const permitted = book?.variation ?? [];
+
+  const tonicChord = buildFunChord(r, "auto", genre, tonicRoot);
+  const isMinor = tonicChord.quality === "minor" || tonicChord.quality === "min9" || tonicChord.quality === "phrygian";
+  const isRaw = tonicChord.quality === "raw";
+
+  let chordRoots;
+  let chordQualities;
+  let melodyOffsets;
+  let sectionSummary;
+
+  if (section === "intro") {
+    if (genre === "mystic_drone" || isRaw) {
+      chordRoots = [r, r, r, r];
+      chordQualities = ["auto", "auto", "auto", "auto"];
+      melodyOffsets = [0, 7, 12, 0, 7, 14, 0, 7, 12, 7, 11, null];
+      sectionSummary = `${chordText(tonicChord)} (Tonic Pedal Intro)`;
+    } else {
+      const ivRoot = (r + 5) % 12;
+      const vRoot = (r + 7) % 12;
+      const turnRoot = permitted.includes("tritone_substitution") ? (r + 1) % 12 : vRoot;
+      const turnQuality = permitted.includes("tritone_substitution") ? "dom7alt" : "dom7";
+
+      chordRoots = [r, ivRoot, r, turnRoot];
+      chordQualities = ["auto", "auto", "auto", turnQuality];
+      const third = isMinor ? 3 : 4;
+      melodyOffsets = [
+        0, third, 7,
+        5, (5 + third) % 12, 12,
+        12, 7, third,
+        7, 11, null,
+      ];
+    }
+  } else if (section === "bridge") {
+    if (genre === "mystic_drone" || isRaw) {
+      chordRoots = [r, (r + 7) % 12, (r + 5) % 12, (r + 7) % 12];
+      chordQualities = ["auto", "auto", "auto", "auto"];
+      melodyOffsets = [12, 14, 12, 7, 9, 7, 5, 7, 5, 7, 9, 11];
+      sectionSummary = "Drone Bridge (V → IV → V)";
+    } else {
+      const hasRelative = permitted.includes("relative_substitution");
+      const r0Root = hasRelative ? (r + (isMinor ? 3 : 9)) % 12 : (r + 5) % 12;
+
+      const hasSecDom = permitted.includes("secondary_dominants");
+      const hasModalBorrow = permitted.includes("modal_borrowing");
+      let r1Root;
+      let r1Quality = "auto";
+      if (hasSecDom) {
+        r1Root = (r + 2) % 12;
+        r1Quality = "dom7";
+      } else if (hasModalBorrow) {
+        r1Root = (r + 8) % 12;
+        r1Quality = "major";
+      } else {
+        r1Root = (r + 2) % 12;
+      }
+
+      const r2Root = (r + 5) % 12;
+      const r3Root = (r + 7) % 12;
+      const r3Quality = "dom7";
+
+      chordRoots = [r0Root, r1Root, r2Root, r3Root];
+      chordQualities = ["auto", r1Quality, "auto", r3Quality];
+
+      const third = isMinor ? 3 : 4;
+      melodyOffsets = [
+        5, (5 + third) % 12, 12,
+        14, 16, 14,
+        12, 11, 9,
+        7, 9, 11,
+      ];
+    }
+  } else {
+    // section === "outro"
+    if (genre === "mystic_drone" || isRaw) {
+      chordRoots = [(r + 7) % 12, (r + 5) % 12, r, r];
+      chordQualities = ["auto", "auto", "auto", "auto"];
+      melodyOffsets = [7, 5, 4, 2, 0, 0, 0, 0, 0, 0, 0, 0];
+      sectionSummary = `${chordText(tonicChord)} (Drone Resolution)`;
+    } else if (permitted.includes("phrygian_cadence")) {
+      chordRoots = [(r + 5) % 12, (r + 3) % 12, (r + 1) % 12, r];
+      chordQualities = ["minor", "major", "major", "auto"];
+      melodyOffsets = [
+        5, 7, 5,
+        3, 5, 3,
+        1, 3, 1,
+        0, 0, 0,
+      ];
+    } else if (permitted.includes("plagal_cadence")) {
+      chordRoots = [r, (r + 5) % 12, (r + 5) % 12, r];
+      chordQualities = ["auto", "major", "major", "auto"];
+      melodyOffsets = [
+        0, 4, 7,
+        5, 9, 12,
+        9, 5, 4,
+        0, 0, 0,
+      ];
+    } else {
+      const iiRoot = (r + 2) % 12;
+      const vRoot = (r + 7) % 12;
+      chordRoots = [iiRoot, vRoot, vRoot, r];
+      chordQualities = ["auto", "major", "dom7", "auto"];
+      melodyOffsets = [
+        2, 5, 9,
+        7, 9, 11,
+        11, 9, 7,
+        0, 0, 0,
+      ];
+    }
+  }
+
+  const chords = chordRoots.map((root, i) => buildFunChord(root, chordQualities[i], genre, tonicRoot));
+  if (!sectionSummary) {
+    const shown = chords.map(chordText).join(" → ");
+    sectionSummary = `${shown} (${STYLE_LABELS[section]})`;
+  }
+
+  const steps = Array.from({ length: 12 }, (_, index) => {
+    const regionIndex = Math.floor(index / 3);
+    const chord = chords[regionIndex];
+    const offset = melodyOffsets[index];
+    let leadPitch = offset === null ? null : (r + offset);
+    if (leadPitch !== null && chord && chord.quality !== "raw") {
+      leadPitch = nearestChordTone(leadPitch, chord);
+    }
+    return Object.freeze({
+      chord,
+      regionIndex,
+      isRegionStart: index % 3 === 0,
+      leadPitch,
+      leadSteps: 1,
+    });
+  });
+
+  return Object.freeze({
+    chords: Object.freeze(chords),
+    steps: Object.freeze(steps),
+    summary: sectionSummary,
+  });
 }
 
 /** Steps a chord struck at `stepIndex` holds before the performance strikes again. */

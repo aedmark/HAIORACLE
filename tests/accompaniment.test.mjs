@@ -52,6 +52,37 @@ test("swell and arpeggio hold one genre-coloured chord; progression walks the ge
   assert.match(progression.summary, / → .* → .* → /);
 });
 
+test("intro, bridge, and outro section progressions generate from the active rulebook", () => {
+  // Intro: tonic vamp with turnaround setup and a breath on step 11
+  const intro = buildPerformance(0, "intro", "smoky_jazz", 0);
+  assert.equal(intro.chords.length, 4);
+  assert.equal(intro.chords[0].rootPc, 0, "Region 0 is tonic");
+  assert.equal(intro.steps[11].leadPitch, null, "step 11 rests before downbeat");
+  assert.match(intro.summary, /INTRO/);
+
+  // Bridge: contrasting subdominant/secondary dominant changes
+  const bridge = buildPerformance(0, "bridge", "smoky_jazz", 0);
+  assert.equal(bridge.chords.length, 4);
+  assert.notEqual(bridge.chords[0].rootPc, 0, "Bridge departs from tonic");
+  assert.match(bridge.summary, /BRIDGE/);
+
+  // Outro: Phrygian cadence in flamenco (iv -> ♭III -> ♭II -> I)
+  const flamencoOutro = buildPerformance(0, "outro", "andalusian_flamenco", 0);
+  assert.equal(flamencoOutro.chords[0].rootPc, 5, "iv");
+  assert.equal(flamencoOutro.chords[1].rootPc, 3, "♭III");
+  assert.equal(flamencoOutro.chords[2].rootPc, 1, "♭II");
+  assert.equal(flamencoOutro.chords[3].rootPc, 0, "resolved I");
+  assert.equal(flamencoOutro.steps[9].chord.rootPc, 0);
+  assert.equal(flamencoOutro.steps[11].chord.rootPc, 0);
+  assert.match(flamencoOutro.summary, /OUTRO/);
+
+  // Outro: Plagal cadence in gospel shout (I -> IV -> IV -> I)
+  const gospelOutro = buildPerformance(0, "outro", "gospel_shout", 0);
+  assert.equal(gospelOutro.chords[0].rootPc, 0, "I");
+  assert.equal(gospelOutro.chords[1].rootPc, 5, "IV");
+  assert.equal(gospelOutro.chords[3].rootPc, 0, "I (Amen)");
+});
+
 test("pad voicings keep the root low, upper voices in range, and no doubled notes", () => {
   for (const genre of GENRES) {
     for (let key = 0; key < 12; key += 1) {

@@ -178,6 +178,9 @@
               <button class="fun-chip" id="chip-style-swell" data-style="swell" type="button" aria-pressed="false" title="One soft pad chord on your key; the band settles onto it">SWELL</button>
               <button class="fun-chip" id="chip-style-arpeggio" data-style="arpeggio" type="button" aria-pressed="false" title="A pad with chord tones rippling in the band's rhythm">ARPEGGIO</button>
               <button class="fun-chip is-active" id="chip-style-progression" data-style="progression" type="button" aria-pressed="true" title="A pad walking the genre's four-chord progression from your key, with a singing lead line">PROGRESSION</button>
+              <button class="fun-chip" id="chip-style-intro" data-style="intro" type="button" aria-pressed="false" title="A tonic vamp prelude in the active rulebook leading to the downbeat">INTRO</button>
+              <button class="fun-chip" id="chip-style-bridge" data-style="bridge" type="button" aria-pressed="false" title="A contrasting B-section progression with subdominant and secondary dominants from the active rulebook">BRIDGE</button>
+              <button class="fun-chip" id="chip-style-outro" data-style="outro" type="button" aria-pressed="false" title="A closing cadence resolving to home tonic in the active rulebook">OUTRO</button>
             </div>
             <span class="fun-style-hint">HOLD A KEY · THE BAND FOLLOWS YOU · GENRE PICKS THE CHORD COLOURS</span>
           </div>
@@ -273,6 +276,9 @@
             <button class="beat-button looper-button" id="looper-overdub" type="button" aria-pressed="false" disabled>OVERDUB</button>
             <button class="beat-button looper-button" id="looper-step-rec" type="button" aria-pressed="false">STEP REC</button>
             <button class="beat-button looper-button" id="looper-rest" type="button" disabled>REST (—)</button>
+            <button class="beat-button looper-button looper-gen-button" id="looper-gen-intro" type="button" title="Generate an Intro loop from the active rulebook">+ INTRO</button>
+            <button class="beat-button looper-button looper-gen-button" id="looper-gen-bridge" type="button" title="Generate a Bridge loop from the active rulebook">+ BRIDGE</button>
+            <button class="beat-button looper-button looper-gen-button" id="looper-gen-outro" type="button" title="Generate an Outro loop from the active rulebook">+ OUTRO</button>
             <button class="beat-button looper-button" id="looper-cue-outro" type="button" aria-pressed="false" disabled>CUE OUTRO</button>
             <button class="beat-button looper-button" id="looper-clear" type="button" disabled>CLEAR SONG</button>
             <output class="looper-readout" id="looper-readout" aria-live="off">NO LOOPS YET · HOLD KEYS AND RECORD WHAT YOU PLAY</output>
@@ -684,7 +690,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "3f2bd39eda5c";
+      const ASSET_VERSION = "c54bbf997c54";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
