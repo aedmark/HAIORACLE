@@ -4,22 +4,23 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-23, session 71, on `main`._
+_Last updated: 2026-10-23, session 72, on `main`._
 
 - P5-28–P5-30: 19 Inform 7 genres, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-043, D-044).
 - D-045–D-048: armed downbeat sync, 1-loop count-in, tick metronome, 12-step tracker with STEP REC, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk.
 - D-049–D-052: fungal appendages; metric closure (D-050); volume surge elimination (D-051); looper recording sync & Casio sections (D-052).
 - D-053–D-055: audio sweep audit (D-053); 4-pass breathing sections for Intro, Bridge, Outro (48 steps, D-054); section loop insertion into the Loop Machine (+ INTRO, + BRIDGE, + OUTRO, D-055).
 - D-056–D-058: Rebranded to "The Whimsy Machine" with Korg R3-inspired tiered console UX (D-056); hardware console alignment and double-padding elimination (D-057); swapped Wings III (The Band) and IV (Keep) so the five esoteric plates sit directly under the mixer and DAW exports form the rear utility deck (D-058).
-- Next: maintainer testing of the Korg R3-inspired tiered hardware console, section loop insertion, or P5-31 (live capture of live play converted to loop sequencing).
+- D-059: Raw instrumentation 48-step base groove loops in the Loop Machine (+ GROOVE, empty take validation, pass 0..3 harmonic tracking).
+- Next: maintainer testing of the Korg R3-inspired tiered hardware console, groove and section loop insertion, or P5-31 (live capture of live play converted to loop sequencing).
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified; P5-31 is planned on the roadmap. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-23, session 70, local Linux environment)
+**Verified** (2026-10-23, session 72, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **184/184 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **185/185 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -93,6 +94,35 @@ _Last updated: 2026-10-23, session 71, on `main`._
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 72: 2026-10-23: raw instrumentation 48-step base groove loops in the Loop Machine (D-059)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Enable using the creature's raw 48-step base groove (4 passes of 12 steps) as loops in the Loop Machine so mixes longer than 5 seconds / 12 steps can be created and exported across WAV, Stems, and MIDI.
+
+**Done:** D-059 is accepted and verified. 185/185 checks pass.
+
+**Changed:**
+1. `src/looper.mjs`:
+   - `sectionPassForLoop(song, loopIndex, repeat)` now resolves pass 0..3 across contiguous `main` groove loops.
+   - `validateSong(raw, path)` permits empty takes (`slots.every(s => s === null)`) when `loop.role === "main"`. Non-main roles (`intro`, `bridge`, `outro`) still require keys.
+2. `index.html` & `styles.css`:
+   - Added `<button class="beat-button looper-button looper-section-button" id="looper-insert-groove" type="button">+ GROOVE</button>` between `+ INTRO` and `+ BRIDGE`.
+   - Added emerald/verdigris border accent `.looper-tile[data-role="main"]`.
+3. `src/app.mjs`:
+   - `insertSectionLoops("main")` inserts 4 loops of `emptyTake()` with `role: "main"` when no key is held on the manual (raw band without organ ducking), or Fun Machine progression takes when a key is held.
+   - `harmonicPassAt(absoluteStep)` queries `sectionPassForLoop` for the active loop, ensuring groove loops walk passes 0..3.
+   - `followSong(transport, loop, stepIndex, liveSlot)` tracks `raw:${currentHarmonicPass}` when `lead` is null, seamlessly re-conducting the band to the current pass of the harmonic cycle at each groove loop boundary.
+   - Readout and tiles display `L1 [GROOVE 1/4]`, `L2 [GROOVE 2/4]`, etc.
+4. Tests & documentation:
+   - Updated `tests/looper.test.mjs` with test coverage for raw groove loops and pass resolution.
+   - Stamped asset version (`node tools/stamp_assets.mjs`).
+
+**Verified:**
+- 185/185 automated tests pass (`node --test tests/*.test.mjs`).
+- Documentation check passes with 0 errors and 0 warnings (`python3 tools/check_docs.py`).
+- Manual check passes with 0 errors and 0 warnings (`python3 tools/manual.py check docs/manual.json`).
 
 ### Session 71: 2026-10-23: Swap Wings III (The Band) and IV (Keep) for hardware console workflow (D-058)
 
@@ -378,46 +408,6 @@ _Last updated: 2026-10-23, session 71, on `main`._
 - Documentation consistency checks pass (0 errors, 0 warnings).
 
 **Next session should start with:** Maintainer listen to the six Wave 2 genres in the browser, or Wave 3 (feel) / P4-02.
-
-### Session 59: 2026-10-21: six new genres, all in Inform 7 (P5-29 wave 1)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Restore the Fun Machine's status line, then P5-29 wave 1 (D-041): six genres with no new chord qualities, plus menu families.
-
-**Done:**
-- The status line was pushed (f53b4d9).
-- D-041 is accepted for wave 1. Wave 1 is done.
-
-**Changed:**
-1. `src/rulebooks.ni` adds Chapters 7–12 (Raw Chaos moves to 13), each with changes, a Fun Machine progression, melody, bass walk, overtones, and permitted moves:
-   - Doo-Wop Parlor Ballad: I-vi-IV-V7.
-   - Sacred Harp: open i5 and ♭VII5, then ♭III and v.
-   - Andalusian Flamenco: i-♭VII-♭VI-V Phrygian ♭9.
-   - Klezmer Freygish: a Phrygian-dominant I, iv, ♭vii, ♭II, with melody tone rules admitting ♭2 and ♭6 when loose.
-   - Sea Shanty & Hornpipe: I-IV-I-V.
-   - Silent-Film Lydian: Imaj9-II-vii-I Lydian.
-
-   Six new Fun Machine progression tables, plus a `family` property for every genre.
-2. `src/inform.mjs` reads `family` (optional). `src/app.mjs` `buildGenreMenu()` groups options into optgroups by family, in source order, with THE CREATURE'S OWN first.
-3. Tests:
-   - genre order, insistence, and families (inform);
-   - the octave member in the melody cross-check reference;
-   - 13 genres (oracle);
-   - clash ceilings and variety floors for the new genres;
-   - the static menu check.
-
-   Golden and variation fixtures re-frozen with additions only.
-
-**Verified:**
-- 160/160 Node checks.
-- Golden fixture: 677 existing entries identical once interned indices are resolved (Raw Chaos's chord moved from index 176 to 193), and 544 added; it is now 1.29 MB. Variation fixture: 144 unchanged, 144 added.
-- New genres clash on 0–6% of steps as written and at most 8% varied, with 15–42 distinct varied progressions over 80 creatures.
-- In the browser, the menu shows five families, and all six new genres played with titles and VARIATION lines. The keyboard and Kapellmeister body never moved.
-
-**Verified by ear:** The maintainer listened across the new genres and approved ("in love").
-
-**Next session should start with:** D-041 wave 2 (six chord qualities, then six genres) or P4-02.
 
 
 

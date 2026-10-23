@@ -283,6 +283,7 @@
             <button class="beat-button looper-button" id="looper-step-rec" type="button" aria-pressed="false">STEP REC</button>
             <button class="beat-button looper-button" id="looper-rest" type="button" disabled>REST (—)</button>
             <button class="beat-button looper-button looper-section-button" id="looper-insert-intro" type="button">+ INTRO</button>
+            <button class="beat-button looper-button looper-section-button" id="looper-insert-groove" type="button">+ GROOVE</button>
             <button class="beat-button looper-button looper-section-button" id="looper-insert-bridge" type="button">+ BRIDGE</button>
             <button class="beat-button looper-button looper-section-button" id="looper-insert-outro" type="button">+ OUTRO</button>
             <button class="beat-button looper-button" id="looper-clear" type="button" disabled>CLEAR SONG</button>
@@ -689,7 +690,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "10f729ec27f8";
+      const ASSET_VERSION = "95474301aaa4";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

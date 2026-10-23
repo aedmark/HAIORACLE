@@ -1515,4 +1515,45 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** D-041 wave 1 or P4-02.
 
+### Session 59: 2026-10-21: six new genres, all in Inform 7 (P5-29 wave 1)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Restore the Fun Machine's status line, then P5-29 wave 1 (D-041): six genres with no new chord qualities, plus menu families.
+
+**Done:**
+- The status line was pushed (f53b4d9).
+- D-041 is accepted for wave 1. Wave 1 is done.
+
+**Changed:**
+1. `src/rulebooks.ni` adds Chapters 7–12 (Raw Chaos moves to 13), each with changes, a Fun Machine progression, melody, bass walk, overtones, and permitted moves:
+   - Doo-Wop Parlor Ballad: I-vi-IV-V7.
+   - Sacred Harp: open i5 and ♭VII5, then ♭III and v.
+   - Andalusian Flamenco: i-♭VII-♭VI-V Phrygian ♭9.
+   - Klezmer Freygish: a Phrygian-dominant I, iv, ♭vii, ♭II, with melody tone rules admitting ♭2 and ♭6 when loose.
+   - Sea Shanty & Hornpipe: I-IV-I-V.
+   - Silent-Film Lydian: Imaj9-II-vii-I Lydian.
+
+   Six new Fun Machine progression tables, plus a `family` property for every genre.
+2. `src/inform.mjs` reads `family` (optional). `src/app.mjs` `buildGenreMenu()` groups options into optgroups by family, in source order, with THE CREATURE'S OWN first.
+3. Tests:
+   - genre order, insistence, and families (inform);
+   - the octave member in the melody cross-check reference;
+   - 13 genres (oracle);
+   - clash ceilings and variety floors for the new genres;
+   - the static menu check.
+
+   Golden and variation fixtures re-frozen with additions only.
+
+**Verified:**
+- 160/160 Node checks.
+- Golden fixture: 677 existing entries identical once interned indices are resolved (Raw Chaos's chord moved from index 176 to 193), and 544 added; it is now 1.29 MB. Variation fixture: 144 unchanged, 144 added.
+- New genres clash on 0–6% of steps as written and at most 8% varied, with 15–42 distinct varied progressions over 80 creatures.
+- In the browser, the menu shows five families, and all six new genres played with titles and VARIATION lines. The keyboard and Kapellmeister body never moved.
+
+**Verified by ear:** The maintainer listened across the new genres and approved ("in love").
+
+**Next session should start with:** D-041 wave 2 (six chord qualities, then six genres) or P4-02.
+
+
 

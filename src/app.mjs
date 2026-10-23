@@ -111,6 +111,7 @@ import {
   clampSelection,
   deleteLoop,
   emptySong,
+  emptyTake,
   idleRecorder,
   insertSection,
   isEmptyTake,
@@ -6929,6 +6930,11 @@ function performanceOf(key, style, pass = null) {
  * restarts the cycle with itself, so its first loop always opens on home.
  */
 function harmonicPassAt(absoluteStep) {
+  const pos = songPosition(song, absoluteStep);
+  if (pos) {
+    const secPass = sectionPassForLoop(song, pos.loopIndex, pos.repeat);
+    if (secPass !== null) return secPass;
+  }
   const passes = songPasses(song);
   const pass = Math.floor(absoluteStep / 12);
   const cycle = Math.max(passes || 0, HARMONIC_PASSES);
@@ -7024,7 +7030,7 @@ function followSong(transport, loop, stepIndex, liveSlot) {
   }
   const lead = leadSlotAt(loop, stepIndex);
   transport.songLeading = Boolean(lead);
-  const followed = lead ? `${lead.key}:${lead.style}` : null;
+  const followed = lead ? `${lead.key}:${lead.style}` : `raw:${currentHarmonicPass}`;
   if (followed === transport.followedSlot) return;
   transport.followedSlot = followed;
   if (lead) applyEnsembleConductor(performanceFor(lead).steps.map((step) => step.chord));
@@ -7156,18 +7162,39 @@ function insertSectionLoops(role) {
     announceLooper("CANNOT INSERT SECTION · MAX BUDGET EXCEEDED (NEEDS 4 LOOPS)");
     return;
   }
-  const rawKey = activeHeldFunKey !== null
-    ? activeHeldFunKey
-    : (currentScore ? (((currentScore.root % 12) + 12) % 12) : 0);
-  const key = Math.max(0, Math.min(12, Math.trunc(rawKey) || 0));
-  const voice = funVoiceId;
-  const slot = makeSlot(key, role, voice);
-  const takes = Array.from({ length: 4 }, () => Object.freeze(Array(LOOP_STEPS).fill(slot)));
+  let takes;
+  let label;
+  if (role === "main") {
+    if (activeHeldFunKey !== null) {
+      const rawKey = activeHeldFunKey;
+      const key = Math.max(0, Math.min(12, Math.trunc(rawKey) || 0));
+      const voice = funVoiceId;
+      const slot = makeSlot(key, funMachineStyle, voice);
+      takes = Array.from({ length: 4 }, () => Object.freeze(Array(LOOP_STEPS).fill(slot)));
+      const genreTitle = genreBook(activeGenre)?.title ?? activeGenre;
+      const noteName = FUN_KEY_MAP[key]?.note ?? key;
+      label = `INSERTED GROOVE (4 LOOPS · 48 STEPS) [${noteName}] (${genreTitle})`;
+    } else {
+      takes = Array.from({ length: 4 }, () => emptyTake());
+      label = "INSERTED GROOVE (4 LOOPS · 48 STEPS) (RAW INSTRUMENTATION)";
+    }
+  } else {
+    const rawKey = activeHeldFunKey !== null
+      ? activeHeldFunKey
+      : (currentScore ? (((currentScore.root % 12) + 12) % 12) : 0);
+    const key = Math.max(0, Math.min(12, Math.trunc(rawKey) || 0));
+    const voice = funVoiceId;
+    const slot = makeSlot(key, role, voice);
+    takes = Array.from({ length: 4 }, () => Object.freeze(Array(LOOP_STEPS).fill(slot)));
+    const genreTitle = genreBook(activeGenre)?.title ?? activeGenre;
+    const noteName = FUN_KEY_MAP[key]?.note ?? key;
+    label = `INSERTED ${role.toUpperCase()} (4 LOOPS · 48 STEPS) [${noteName}] (${genreTitle})`;
+  }
 
   let insertIndex = song.loops.length;
   if (role === "intro") {
     insertIndex = 0;
-  } else if (role === "bridge") {
+  } else if (role === "bridge" || role === "main") {
     insertIndex = selectedLoop !== null ? selectedLoop + 1 : song.loops.length;
   } else if (role === "outro") {
     insertIndex = song.loops.length;
@@ -7175,9 +7202,7 @@ function insertSectionLoops(role) {
 
   song = insertSection(song, role, takes, insertIndex);
   selectedLoop = insertIndex;
-  const genreTitle = genreBook(activeGenre)?.title ?? activeGenre;
-  const noteName = FUN_KEY_MAP[key]?.note ?? key;
-  announceLooper(`INSERTED ${role.toUpperCase()} (4 LOOPS · 48 STEPS) [${noteName}] (${genreTitle})`);
+  announceLooper(label);
   renderLooper();
   unlockDrawer("change");
 }
@@ -7253,7 +7278,18 @@ function looperReadoutText() {
 
   if (!song.loops.length) return "NO LOOPS YET · HOLD KEYS AND RECORD WHAT YOU PLAY";
   const playing = currentTransport?.songPosition;
-  const now = playing ? `NOW LOOP ${playing.loopIndex + 1} · ` : "";
+  let now = "";
+  if (playing) {
+    const loop = song.loops[playing.loopIndex];
+    const role = loop?.role;
+    const secPass = sectionPassForLoop(song, playing.loopIndex, playing.repeat);
+    const isRawGroove = role === "main" && loop?.layers.length === 1 && isEmptyTake(loop.layers[0]);
+    const hasOtherMain = song.loops.some((l, idx) => idx !== playing.loopIndex && (l.role ?? "main") === "main");
+    const showGroove = role === "main" && (isRawGroove || hasOtherMain);
+    const roleName = role === "main" ? "GROOVE" : role?.toUpperCase();
+    const roleTag = (role && (role !== "main" || showGroove)) ? ` [${roleName}${secPass !== null ? ` ${secPass + 1}/4` : ""}]` : "";
+    now = `NOW LOOP ${playing.loopIndex + 1}${roleTag} · `;
+  }
   const target = selectedLoop !== null ? ` · OVERDUB TARGET LOOP ${selectedLoop + 1} (${plural(song.loops[selectedLoop].layers.length, "LAYER")})` : "";
   return `${now}${plural(song.loops.length, "LOOP")} · ${plural(songPasses(song), "PASS")}${target}`.replace("PASSS", "PASSES");
 }
@@ -7399,16 +7435,20 @@ function renderLooperTiles() {
       tile.className = "looper-tile";
       tile.dataset.loop = String(index);
       tile.setAttribute("aria-pressed", String(index === selectedLoop));
-      const role = loop.role && loop.role !== "main" ? loop.role : null;
-      if (role) tile.dataset.role = role;
+      const role = loop.role ? loop.role : null;
       const secPass = sectionPassForLoop(song, index, 0);
-      const roleTag = role ? ` [${role.toUpperCase()}${secPass !== null ? ` ${secPass + 1}/4` : ""}]` : "";
+      const isRawGroove = role === "main" && loop.layers.length === 1 && isEmptyTake(loop.layers[0]);
+      const hasOtherMain = song.loops.some((l, idx) => idx !== index && (l.role ?? "main") === "main");
+      const showGrooveTag = role === "main" && (isRawGroove || hasOtherMain);
+      if (role && (role !== "main" || showGrooveTag)) tile.dataset.role = role;
+      const roleName = role === "main" ? "GROOVE" : role?.toUpperCase();
+      const roleTag = (role && (role !== "main" || showGrooveTag)) ? ` [${roleName}${secPass !== null ? ` ${secPass + 1}/4` : ""}]` : "";
       tile.setAttribute("aria-label", `Loop ${index + 1}${roleTag}: ${loop.layers.length} layer${loop.layers.length === 1 ? "" : "s"}, plays ${loop.repeats} time${loop.repeats === 1 ? "" : "s"}`);
       const number = document.createElement("b");
       number.textContent = `L${index + 1}`;
       const detail = document.createElement("span");
-      if (role) {
-        detail.textContent = `${role.toUpperCase()}${secPass !== null ? ` ${secPass + 1}/4` : ""}${loop.repeats > 1 ? ` · ×${loop.repeats}` : ""}`;
+      if (role && (role !== "main" || showGrooveTag)) {
+        detail.textContent = `${roleName}${secPass !== null ? ` ${secPass + 1}/4` : ""}${loop.repeats > 1 ? ` · ×${loop.repeats}` : ""}`;
       } else {
         detail.textContent = `${loop.layers.length}L · ×${loop.repeats}`;
       }
@@ -7514,6 +7554,7 @@ function renderLooper() {
     if (el) el.disabled = !on;
   };
   enableBtn("#looper-insert-intro", canInsert);
+  enableBtn("#looper-insert-groove", canInsert);
   enableBtn("#looper-insert-bridge", canInsert);
   enableBtn("#looper-insert-outro", canInsert);
   if (readout) readout.value = looperReadoutText();
@@ -7525,6 +7566,7 @@ document.querySelector("#looper-overdub")?.addEventListener("click", () => armRe
 document.querySelector("#looper-step-rec")?.addEventListener("click", toggleStepRec);
 document.querySelector("#looper-rest")?.addEventListener("click", handleRestStep);
 document.querySelector("#looper-insert-intro")?.addEventListener("click", () => insertSectionLoops("intro"));
+document.querySelector("#looper-insert-groove")?.addEventListener("click", () => insertSectionLoops("main"));
 document.querySelector("#looper-insert-bridge")?.addEventListener("click", () => insertSectionLoops("bridge"));
 document.querySelector("#looper-insert-outro")?.addEventListener("click", () => insertSectionLoops("outro"));
 document.querySelector("#casio-intro")?.addEventListener("click", () => triggerCasioSection("intro"));

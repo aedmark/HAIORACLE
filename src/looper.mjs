@@ -92,17 +92,17 @@ export function insertSection(song, role, takes, atIndex = null) {
 }
 
 /**
- * Calculates which pass (0..3) of a 4-pass section (Intro, Bridge, Outro)
+ * Calculates which pass (0..3) of a 4-pass section (Intro, Groove, Bridge, Outro)
  * a loop/repeat belongs to, based on preceding contiguous loops of the same role.
  */
 export function sectionPassForLoop(song, loopIndex, repeat = 0) {
   if (!song || !Array.isArray(song.loops) || loopIndex === null || loopIndex === undefined) return null;
   const loop = song.loops[loopIndex];
-  if (!loop || !loop.role || loop.role === "main") return null;
-  const role = loop.role;
+  if (!loop) return null;
+  const role = loop.role ?? DEFAULT_LOOP_ROLE;
   let sectionPassCount = 0;
   let startIdx = loopIndex;
-  while (startIdx > 0 && song.loops[startIdx - 1]?.role === role) {
+  while (startIdx > 0 && (song.loops[startIdx - 1]?.role ?? DEFAULT_LOOP_ROLE) === role) {
     startIdx -= 1;
   }
   for (let i = startIdx; i < loopIndex; i += 1) {
@@ -375,7 +375,7 @@ export function validateSong(raw, path = "song", { legacy = false } = {}) {
         if (!SLOT_VOICES.includes(voice)) throw new SongError(`${slotPath}.voice`, `must be one of ${SLOT_VOICES.join(", ")}`);
         return Object.freeze({ key: slot.key, style: slot.style, voice });
       });
-      if (slots.every((slot) => slot === null)) throw new SongError(takePath, "must hold at least one key");
+      if (loop.role !== "main" && slots.every((slot) => slot === null)) throw new SongError(takePath, "must hold at least one key");
       return Object.freeze(slots);
     });
     return freezeLoop(loop.repeats, layers, loop.role);

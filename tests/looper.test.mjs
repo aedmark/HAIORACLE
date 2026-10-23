@@ -413,7 +413,7 @@ test("canInsertLoops, insertSection, and sectionPassForLoop support 48-step sect
   song = appendLoop(song, mainTake, "main");
   assert.equal(song.loops.length, 5);
   assert.equal(song.loops[4].role, "main");
-  assert.equal(sectionPassForLoop(song, 4), null, "main loop has no section pass");
+  assert.equal(sectionPassForLoop(song, 4), 0, "main loop has pass 0 (Part 1/4)");
 
   // Insert 4-bar Bridge after the main loop (at index 5)
   const bridgeSlot = makeSlot(5, "bridge");
@@ -440,6 +440,33 @@ test("canInsertLoops, insertSection, and sectionPassForLoop support 48-step sect
   // Validates completely and round-trips
   const roundTripped = validateSong(JSON.parse(JSON.stringify(song)));
   assert.deepEqual(roundTripped, song);
+});
+
+test("raw instrumentation 48-step groove loops validate and walk harmonic passes", () => {
+  let song = emptySong();
+  const rawTakes = Array.from({ length: 4 }, () => emptyTake());
+  song = insertSection(song, "main", rawTakes);
+  assert.equal(song.loops.length, 4);
+  assert.equal(songPasses(song), 4);
+  for (let i = 0; i < 4; i += 1) {
+    assert.equal(song.loops[i].role, "main");
+    assert.equal(sectionPassForLoop(song, i), i, `Groove pass ${i} (Part ${i + 1}/4)`);
+    assert.equal(songPosition(song, i * LOOP_STEPS).loopIndex, i);
+  }
+
+  // Raw takes in main loops are permitted in validation
+  const roundTripped = validateSong(JSON.parse(JSON.stringify(song)));
+  assert.deepEqual(roundTripped, song);
+
+  // Overdubbing a layer onto a raw groove loop works
+  const overdubTake = take(4, [0, 6], "progression");
+  const overdubbed = overdubLayer(song, 1, overdubTake);
+  assert.equal(overdubbed.loops[1].layers.length, 2);
+  assert.deepEqual(validateSong(JSON.parse(JSON.stringify(overdubbed))), overdubbed);
+
+  // Empty takes on non-main roles (e.g. intro) are still rejected
+  const badIntroSong = { loops: [{ role: "intro", repeats: 1, layers: [emptyTake()] }] };
+  assert.throws(() => validateSong(badIntroSong), (err) => err instanceof SongError && err.path === "song.loops[0].layers[0]");
 });
 
 

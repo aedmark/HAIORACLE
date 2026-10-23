@@ -1260,6 +1260,33 @@ Key findings:
 - The ergonomic synthesizer workflow follows Perform → Mix → The Band → Keep, placing utility exports at the bottom of the instrument.
 - 184/184 automated tests pass; zero runtime dependencies; 100% determinism preserved.
 
+## D-059 Raw instrumentation 48-step base groove loops in the Loop Machine (2026-10-23, status: accepted)
+
+**Context:** The esoteric automaton band possesses a natural 4-pass harmonic cycle spanning 48 steps (12 steps per pass: Exposition/Tonic, Antiphony/Subdominant, Tutti Climax, Breakdown/Turnaround) under D-044. However, the Loop Machine previously only offered manual recording (`REC`, capturing a single 12-step pass of live organ takes) or section baker buttons (`+ INTRO`, `+ BRIDGE`, `+ OUTRO`). Users had no way to capture or arrange the raw esoteric band's 48-step progression into the Loop Machine to arrange, repeat, overdub, or export mixes longer than a single 5-second (12-step) loop.
+
+**Decision:**
+1. **Loop Machine Model Support for Raw Groove Loops (`src/looper.mjs`):**
+   - Updated `sectionPassForLoop(song, loopIndex, repeat)` to support role `"main"`, dynamically resolving which pass (0..3) of a contiguous group of groove loops is currently sounding.
+   - Updated `validateSong(raw, path)` to permit empty takes (`slots.every(s => s === null)`) when `loop.role === "main"`. Non-main roles (`intro`, `bridge`, `outro`) continue to require key presses. This permits raw band loops without Fun Machine organ takes to be serialized and deserialized in `.fun` session files cleanly.
+2. **`+ GROOVE` Button and Section Insertion (`index.html`, `src/app.mjs`):**
+   - Added `<button class="beat-button looper-button looper-section-button" id="looper-insert-groove" type="button">+ GROOVE</button>` between `+ INTRO` and `+ BRIDGE`.
+   - Wired `insertSectionLoops("main")`:
+     - If no key is held on the manual, generates four loops of `emptyTake()` with `role: "main"`, representing the four passes of the raw automaton band with full dynamic volume (no Fun Machine lead/drone ducking).
+     - If a key is held, bakes the four passes of the Fun Machine's harmonic progression on that key.
+     - Announces `INSERTED GROOVE (4 LOOPS · 48 STEPS) (RAW INSTRUMENTATION)` or progression details.
+3. **Harmonic Scheduling and Conductor Tracking (`src/app.mjs`):**
+   - `harmonicPassAt(absoluteStep)` queries `sectionPassForLoop` for the active loop position, guaranteeing that groove sections begin on Pass 0 (Exposition) and walk 0..3 through their repeats regardless of where in the song order they appear.
+   - `followSong(transport, loop, stepIndex, liveSlot)` tracks `raw:${currentHarmonicPass}` when `lead` is null, seamlessly re-conducting the band to the current pass of the harmonic cycle at each groove loop boundary.
+   - Preserves offline export rendering across WAV, Stems, and MIDI: an inserted groove renders the full 48-step (or extended with repeats) mix.
+4. **Visual & Readout Styling (`styles.css`, `src/app.mjs`):**
+   - Styled `.looper-tile[data-role="main"]` with an emerald/verdigris border accent (`rgba(57, 168, 130, 0.75)`), distinguishing groove tiles from gold Intros, violet Bridges, and ruby Outros.
+   - Tiles display `L1 [GROOVE 1/4]`, `L2 [GROOVE 2/4]`, etc.
+   - The transport readout reports `NOW LOOP 1 [GROOVE 1/4] · 4 LOOPS · 4 PASSES · ...`.
+
+**Consequences:**
+- Users can arrange, loop, repeat, overdub onto, and export full 48-step raw automaton band mixes with zero external dependencies.
+- 185/185 automated tests pass; phrase determinism and boundary validation fully preserved.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

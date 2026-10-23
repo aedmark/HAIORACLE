@@ -306,6 +306,10 @@ select:focus-visible {
   border-color: rgba(212, 175, 101, 0.7);
 }
 
+.looper-tile[data-role="main"] {
+  border-color: rgba(57, 168, 130, 0.75);
+}
+
 .looper-tile[data-role="bridge"] {
   border-color: rgba(168, 104, 212, 0.7);
 }
