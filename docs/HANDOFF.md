@@ -4,19 +4,19 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-22, session 68, on `main`._
+_Last updated: 2026-10-23, session 69, on `main`._
 
 - P5-28–P5-30: 19 Inform 7 genres, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-043, D-044).
 - D-045/D-046: armed downbeat sync, 1-loop count-in, tick metronome, interactive 12-step tracker ribbon with note sequencer & STEP REC.
 - D-047/D-048: expanded lexicon (83.8M names) & 72-slip urn; vitrine tap agitation, retaliatory strike, audio disruption, and sulk recovery.
 - D-049/D-050: generative fungal appendages replacing eyes; metric closure (lengths 4 & 6), tempo pocketing, boundary damping, anti-clash sieve.
 - D-051: eliminated volume spikes on note hold and legato transitions via GainNode 0.0001 bounding, safe pad release, and transition ducking smoothing.
-- D-052: looper recording synchronization (audible-clock latching, 1-loop count-in, layer isolation), Casio-style 1-pass arranger section buttons (`INTRO` rolling into groove, `BRIDGE` auto-returning to groove, `OUTRO` closing and auto-stopping), and streamlined looper sequencing without trapped loops.
+- D-052: looper recording synchronization (audible-clock latching, 1-loop count-in, layer isolation), Casio-style 1-pass arranger section buttons (`INTRO` rolling into groove, `BRIDGE` auto-returning to groove, `OUTRO` closing and auto-stopping), and look-ahead pass isolation preventing premature section cutoff.
 - Next: maintainer testing of note sequencer, looper recording and section roles, vitrine retaliation, cellular fruiting bodies, locked mixes, and Fun Machine legato transitions, or Wave 3 (feel) / P4-02.
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-22, session 68, local Linux environment)
+**Verified** (2026-10-23, session 69, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
@@ -94,6 +94,27 @@ _Last updated: 2026-10-22, session 68, on `main`._
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 69: 2026-10-23: Casio arranger section lookahead race condition and premature cutoff fix (D-052)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Eliminate premature section cutoff (intro/bridge/outro dying off after 2 notes during active playback), eliminate trapped bridge loops, and align live look-ahead audio scheduling with real-time audible callbacks and UI states.
+
+**Root cause:** Web Audio look-ahead vs. real-time callback collision. The scheduler schedules ~280ms ahead. When playback was active and a Casio section was cued, the look-ahead reached step 0 of the upcoming pass and populated the global `activeCasioSection`, scheduling steps 0 and 1. Meanwhile, the previous pass's step 11 was sounding in the room. When its `setTimeout` callback fired, its step 11 check wiped `activeCasioSection = null`. On the next scheduler tick, `activeCasioSection` was null, so steps 2..11 were scheduled as normal groove—cutting the section off after two notes.
+
+**Done:** All parts implemented and verified. All 182 behavioral, structural, and audit checks pass.
+
+**Changed:**
+1. `src/app.mjs`:
+   - Replaced mutable shared `activeCasioSection` with pass-indexed `scheduledCasio = { role, key, pass, performance }` where `stepPass = Math.floor(currentStep / 12)`.
+   - Look-ahead scheduler checks `isCasioStep = scheduledCasio !== null && stepPass === scheduledCasio.pass;`, mathematically guaranteeing all 12 steps (0..11) are scheduled without premature clearing.
+   - Enclosed `stepCasioRole`, `stepCasioKey`, `stepCasioPerf`, and `stepIsLast = isCasioStep && stepIndex === 11` within each step's loop scope. Audible `setTimeout` callbacks now update `audibleCasioSection` and reset only when that specific Casio pass completes step 11.
+   - Wired live ensemble conduction during Casio sections via `followSong()` and `scheduledCasio.performance`.
+   - Prevented post-outro scheduling bleed using `casioOutroEnding` break in the look-ahead loop; when step 11 of the outro finishes sounding, transport cleanly halts and rewinds.
+   - Synchronized button UI states: `.is-cued` pulsing while pending/scheduled ahead, transitioning to `.is-active` once audible, and clearing upon step 11 completion.
+   - Added Casio progress reporting to `looperReadoutText()`.
+   - Restamped `ASSET_VERSION` to `698d822fb894`.
 
 ### Session 68: 2026-10-22: looper recording synchronization, Casio arranger sections, and rulebook accompaniment (D-052)
 
@@ -421,39 +442,6 @@ _Last updated: 2026-10-22, session 68, on `main`._
 **Still open:** `#fun-machine-telemetry` is missing from `index.html` (see Session 56).
 
 **Next session should start with:** the maintainer's listen and tuning notes on the variation moves, then P5-30 phase 3 (THE CREATURE'S OWN rulebook).
-
-### Session 56: 2026-10-20: harmony keeps step with the band (D-044; P5-30 phase 4 begun)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-30 phase 4. Midway, the maintainer reported that the progressions moved too fast for the band and asked that the accompaniment always stay locked to the tempo.
-
-**Done:** Phase 2 was pushed (06a6d02). D-044 is accepted with the maintainer's choices: one chord per loop, and exports covering the whole cycle. In phase 4, the VARIATION readout and the AS WRITTEN switch are done.
-
-**Changed:**
-1. `index.html`, `styles.css`, `src/app.mjs`:
-   - `#kapellmeister-variation` is one fixed line naming the creature's moves.
-   - `#kapellmeister-as-written` (`aria-pressed`) toggles `genreVaried`, which `applyEnsembleConductor()` passes as `varied`. Not yet saved in sessions.
-2. `src/conductor.mjs`: `HARMONIC_PASSES`, `passSpine()`, and `conductEnsemble({ harmonicPass })`, returning `cycleSpine`.
-3. `src/accompaniment.mjs`: `buildPerformance(…, { pass })` builds a progression one chord per pass, with lead notes at steps 0, 4, and 8 (`leadSteps: 4`). Performances carry `regionSteps` (12, or 3 for single-chord styles).
-4. `src/app.mjs`:
-   - `currentHarmonicPass`, `harmonicPassAt()` (a song restarts the cycle), and `enterHarmonicPass()`, called at each loop downbeat, which re-conducts and rebuilds a held key's performance. `performanceFor()` is cached per pass.
-   - Pads and the key-press bridge use `regionSteps`, lead notes hold their steps, and the offline render walks the four passes (`songPasses(song) || HARMONIC_PASSES`) and hands the band back after.
-   - The readout shows `heardHarmony`, the harmony captured when each step was scheduled, because the scheduler re-conducts about 0.28 s ahead and the readout used to show the next chord on step 12. The compass shows `currentCycleSpine` and lights the pass.
-5. Tests: the harmonic clock (variation test), the per-pass performance (accompaniment test), and static checks for the clock and export wiring.
-
-**Verified:**
-- 153/153 Node checks. The golden and variation fixtures are unchanged.
-- No tempo drift: the band and the accompanist read the same live tempo each step.
-- In the browser (Smoky Jazz, "three pigeons", full tempo), the readout's chord changed at "01 / 12 · 2/4", "· 3/4", and "· 4/4", plus two varied turns at step 09, then returned to ii9 at "01 / 12 · 1/4".
-- A held C walked Cmaj9 → Amin9 → Dmin9 → G7alt, one per pass.
-- The MIDI export covered four loops (4 turnaround markers, 284 notes).
-
-**Found, not fixed:** `#fun-machine-telemetry` is styled and written to by `src/app.mjs`, but the element is gone from `index.html`, so Fun Machine telemetry never shows. This predates this session.
-
-**Verified by ear:** the maintainer: "This is getting better and better."
-
-**Next session should start with:** that listen, then the rest of P5-30 phase 4: sessions v6 with AS WRITTEN (older files open as written), varying Fun Machine progressions, and chord names in MIDI markers.
 
 
 

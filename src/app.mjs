@@ -395,6 +395,12 @@ let funMachineDryGain = null;
 let activeHeldFunKey = null;
 let activeFunPerformance = null;
 let lastFunKeyReleaseTime = 0;
+let pendingCasioSection = null;
+let scheduledCasio = null;
+let audibleCasioSection = null;
+let audibleCasioKey = 0;
+let audibleCasioPerformance = null;
+let casioOutroEnding = false;
 
 
 const interaction = {
@@ -2891,7 +2897,7 @@ function updateAudioInteraction() {
   // The tonic drones step back with the lead while the band follows a held key.
   const nowMs = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
   const isKeyTransition = (nowMs - lastFunKeyReleaseTime) < 220;
-  const leadDuck = activeHeldFunKey !== null || isKeyTransition || currentTransport?.songLeading || activeCasioSection !== null ? LEAD_DUCK_GAIN : 1;
+  const leadDuck = activeHeldFunKey !== null || isKeyTransition || currentTransport?.songLeading || scheduledCasio !== null || audibleCasioSection !== null ? LEAD_DUCK_GAIN : 1;
   const targetDroneGains = [subWeight * leadDuck, fifthWeight * leadDuck, shimmerWeight * leadDuck];
 
   for (const [index, drone] of transport.drones.entries()) {
@@ -3092,6 +3098,12 @@ function triggerSporePuff(strength = 1, atTime = null) {
 // are cut by fading the whole output, not just the drone mix.
 function stopCurrentSound() {
   releaseFunPads(audioContext, 0.25);
+  casioOutroEnding = false;
+  scheduledCasio = null;
+  audibleCasioSection = null;
+  audibleCasioKey = 0;
+  audibleCasioPerformance = null;
+  pendingCasioSection = null;
   if (!currentTransport || !audioContext) return null;
   const transport = currentTransport;
   currentTransport = null;
@@ -4005,10 +4017,10 @@ function highlightBeatStep(stepIndex) {
   }
 
   if (normalized >= 0 && elements.funMachineTelemetry) {
-    if (activeCasioSection !== null && activeCasioPerformance) {
-      const stepInfo = activeCasioPerformance.steps[normalized];
-      const keyLabel = FUN_KEY_MAP[casioSectionKey]?.note ?? casioSectionKey;
-      elements.funMachineTelemetry.textContent = `[${keyLabel}] · CASIO ${activeCasioSection.toUpperCase()} · STEP @${String(normalized + 1).padStart(2, "0")} · ${chordText(stepInfo.chord)} · THE BAND FOLLOWS`;
+    if (audibleCasioSection !== null && audibleCasioPerformance) {
+      const stepInfo = audibleCasioPerformance.steps[normalized];
+      const keyLabel = FUN_KEY_MAP[audibleCasioKey]?.note ?? audibleCasioKey;
+      elements.funMachineTelemetry.textContent = `[${keyLabel}] · CASIO ${audibleCasioSection.toUpperCase()} · STEP @${String(normalized + 1).padStart(2, "0")} · ${chordText(stepInfo.chord)} · THE BAND FOLLOWS`;
     } else if (activeHeldFunKey !== null && activeFunPerformance) {
       const stepInfo = activeFunPerformance.steps[normalized];
       elements.funMachineTelemetry.textContent = `${funKeyLabel(activeHeldFunKey)} · ${STYLE_LABELS[activeFunPerformance.style]} · STEP @${String(normalized + 1).padStart(2, "0")} · ${chordText(stepInfo.chord)} · THE BAND FOLLOWS`;
@@ -4797,6 +4809,7 @@ async function playScore(score, { cursor = 0 } = {}) {
     updateAudioInteraction();
     const rhythm = RHYTHMS[score.rhythm];
     while (transport.nextNoteTime < context.currentTime + 0.28) {
+      if (casioOutroEnding) break;
       const livePulse = activeTempoBpm || score.pulse;
       const unit = 60 / livePulse / 2;
       const currentStep = transport.step;
@@ -4808,6 +4821,7 @@ async function playScore(score, { cursor = 0 } = {}) {
       // follow a live key or else the newest recorded layer, then play the band,
       // the live accompanist, and every recorded layer on this step.
       const stepIndex = currentStep % 12;
+      const stepPass = Math.floor(currentStep / 12);
       const at = transport.nextNoteTime;
       const liveSlot = activeHeldFunKey !== null && activeFunPerformance ? makeSlot(activeHeldFunKey, funMachineStyle, funVoiceId) : null;
       const position = songPosition(song, currentStep);
@@ -4816,10 +4830,22 @@ async function playScore(score, { cursor = 0 } = {}) {
       // The harmony moves on at the loop's downbeat (D-044).
       if (stepIndex === 0) enterHarmonicPass(transport, harmonicPassAt(currentStep));
       if (stepIndex === 0 && pendingCasioSection !== null) {
-        activeCasioSection = pendingCasioSection;
+        scheduledCasio = {
+          role: pendingCasioSection.role,
+          key: pendingCasioSection.key,
+          pass: stepPass,
+          performance: buildPerformance(pendingCasioSection.key, pendingCasioSection.role, activeGenre, currentScore ? currentScore.root : 0),
+        };
         pendingCasioSection = null;
-        activeCasioPerformance = buildPerformance(casioSectionKey, activeCasioSection, activeGenre, currentScore ? currentScore.root : 0);
       }
+      const isCasioStep = scheduledCasio !== null && stepPass === scheduledCasio.pass;
+      if (scheduledCasio !== null && stepPass > scheduledCasio.pass) {
+        scheduledCasio = null;
+      }
+      if (isCasioStep && scheduledCasio.role === "outro" && stepIndex === 11) {
+        casioOutroEnding = true;
+      }
+
       advanceRecorder(stepIndex, position, liveSlot);
       followSong(transport, loop, stepIndex, liveSlot);
 
@@ -4831,11 +4857,11 @@ async function playScore(score, { cursor = 0 } = {}) {
         // IGNOREing register :8; the canonical score never does.
       } else {
         const timing = { stepIndex, absoluteStep: currentStep, at, stepDuration, soundingDuration };
-        if (activeCasioSection !== null && activeCasioPerformance) {
-          const padDuration = activeCasioPerformance.steps[stepIndex].isRegionStart
-            ? padStepsDuration(score, currentStep, strikeLength(activeCasioPerformance, stepIndex))
+        if (isCasioStep) {
+          const padDuration = scheduledCasio.performance.steps[stepIndex].isRegionStart
+            ? padStepsDuration(score, currentStep, strikeLength(scheduledCasio.performance, stepIndex))
             : null;
-          playPerformanceStep(context, transport, liveVoiceOf(transport), activeCasioPerformance, { ...timing, padDuration });
+          playPerformanceStep(context, transport, liveVoiceOf(transport), scheduledCasio.performance, { ...timing, padDuration });
         } else {
           if (liveSlot) {
             const padDuration = activeFunPerformance.steps[stepIndex].isRegionStart ? padStepsDuration(score, currentStep, strikeLength(activeFunPerformance, stepIndex)) : null;
@@ -4849,30 +4875,39 @@ async function playScore(score, { cursor = 0 } = {}) {
       // The scheduler runs ahead and re-conducts at the next downbeat before
       // this step sounds, so the readout shows the harmony it was scheduled with.
       const scheduledHarmony = { pass: currentHarmonicPass, spine: currentConductedSpine, melody: currentConductedMelody, bass: currentBass };
+      const stepCasioRole = isCasioStep ? scheduledCasio.role : null;
+      const stepCasioKey = isCasioStep ? scheduledCasio.key : null;
+      const stepCasioPerf = isCasioStep ? scheduledCasio.performance : null;
+      const stepIsLast = isCasioStep && stepIndex === 11;
+
       window.setTimeout(() => {
         if (currentTransport !== transport) return;
         transport.audibleStep = currentStep;
         heardHarmony = scheduledHarmony;
+        audibleCasioSection = stepCasioRole;
+        audibleCasioKey = stepCasioKey;
+        audibleCasioPerformance = stepCasioPerf;
         if (currentStep % 12 === 11) noteLoopHeard();
         if (currentStep % 12 === 0) {
           transport.audiblePosition = songPosition(song, currentStep);
+          updateCasioUI();
         }
-        if (currentStep % 12 === 11 && activeCasioSection !== null) {
-          const finishedSection = activeCasioSection;
-          activeCasioSection = null;
-          activeCasioPerformance = null;
-          if (finishedSection === "outro") {
+        if (stepIsLast && stepCasioRole !== null) {
+          audibleCasioSection = null;
+          audibleCasioPerformance = null;
+          if (stepCasioRole === "outro") {
             window.setTimeout(() => {
+              casioOutroEnding = false;
               runTransportCommand("stop");
               updateCasioUI();
               announceLooper("OUTRO COMPLETE · OMEN RESTS");
-            }, delayMs + 60);
+            }, Math.round(stepDuration * 1000));
           } else {
             window.setTimeout(() => {
               updateCasioUI();
               if (activeHeldFunKey === null) applyEnsembleConductor();
-              announceLooper(`CASIO ${finishedSection.toUpperCase()} COMPLETE · RETURNED TO GROOVE`);
-            }, delayMs);
+              announceLooper(`CASIO ${stepCasioRole.toUpperCase()} COMPLETE · RETURNED TO GROOVE`);
+            }, Math.round(stepDuration * 1000));
           }
         }
         if (recorder.mode === "recording" && activeHeldFunKey !== null && activeFunPerformance) {
@@ -4951,9 +4986,12 @@ async function runTransportCommand(command) {
   // which restarts) abandon it. Playing on from a pause or an arm does not.
   if (command === "restart" || next.state !== TRANSPORT_STATES.PLAYING) {
     cancelRecording();
-    activeCasioSection = null;
+    casioOutroEnding = false;
+    scheduledCasio = null;
+    audibleCasioSection = null;
+    audibleCasioKey = 0;
+    audibleCasioPerformance = null;
     pendingCasioSection = null;
-    activeCasioPerformance = null;
     updateCasioUI();
   }
   if (next.state === TRANSPORT_STATES.PLAYING) {
@@ -6793,10 +6831,6 @@ let recorder = idleRecorder();
 let selectedLoop = null;
 let selectedStepIndex = null;
 let isStepRecActive = false;
-let activeCasioSection = null;
-let pendingCasioSection = null;
-let casioSectionKey = 0;
-let activeCasioPerformance = null;
 const performanceCache = new Map();
 
 function performanceFor(slot) {
@@ -6882,12 +6916,13 @@ function landTake({ kind, loopIndex, take }) {
 // The band follows a live key (conducted when the key goes down), else the
 // newest recorded layer holding a key at this step, else its own score.
 function followSong(transport, loop, stepIndex, liveSlot) {
-  if (activeCasioSection !== null && activeCasioPerformance) {
+  const stepPass = typeof transport.step === "number" ? Math.floor(transport.step / 12) : 0;
+  if (scheduledCasio !== null && stepPass === scheduledCasio.pass && transport === currentTransport) {
     transport.songLeading = true;
-    const followed = `casio:${activeCasioSection}`;
+    const followed = `casio:${scheduledCasio.role}`;
     if (followed === transport.followedSlot) return;
     transport.followedSlot = followed;
-    applyEnsembleConductor(activeCasioPerformance.steps.map((step) => step.chord));
+    applyEnsembleConductor(scheduledCasio.performance.steps.map((step) => step.chord));
     return;
   }
   if (liveSlot) {
@@ -6967,9 +7002,12 @@ function clearSong() {
   selectedLoop = null;
   selectedStepIndex = null;
   isStepRecActive = false;
-  activeCasioSection = null;
+  casioOutroEnding = false;
   pendingCasioSection = null;
-  activeCasioPerformance = null;
+  scheduledCasio = null;
+  audibleCasioSection = null;
+  audibleCasioKey = 0;
+  audibleCasioPerformance = null;
   updateCasioUI();
   recorder = idleRecorder();
   if (currentTransport) currentTransport.followedSlot = null;
@@ -6981,11 +7019,13 @@ function clearSong() {
 
 function updateCasioUI() {
   const roles = ["intro", "bridge", "outro"];
+  const activeRole = audibleCasioSection;
+  const cuedRole = pendingCasioSection?.role ?? (audibleCasioSection === null ? scheduledCasio?.role : null) ?? null;
   for (const role of roles) {
     const btn = document.querySelector(`#casio-${role}`);
     if (!btn) continue;
-    const isActive = activeCasioSection === role;
-    const isCued = pendingCasioSection === role;
+    const isActive = activeRole === role;
+    const isCued = cuedRole === role;
     btn.setAttribute("aria-pressed", String(isActive || isCued));
     btn.classList.toggle("is-active", isActive);
     btn.classList.toggle("is-cued", isCued);
@@ -6998,44 +7038,32 @@ function triggerCasioSection(role) {
     : (currentScore ? (((currentScore.root % 12) + 12) % 12) : 0);
   const key = Math.max(0, Math.min(12, Math.trunc(rawKey) || 0));
 
-  if (activeCasioSection === role || pendingCasioSection === role) {
+  const currentActive = audibleCasioSection ?? scheduledCasio?.role ?? null;
+  const currentCued = pendingCasioSection?.role ?? null;
+
+  if (currentActive === role || currentCued === role) {
     pendingCasioSection = null;
-    if (activeCasioSection === role) {
-      activeCasioSection = null;
-      activeCasioPerformance = null;
-      if (activeHeldFunKey === null) applyEnsembleConductor();
-    }
+    scheduledCasio = null;
+    audibleCasioSection = null;
+    audibleCasioPerformance = null;
+    casioOutroEnding = false;
+    if (activeHeldFunKey === null) applyEnsembleConductor();
     updateCasioUI();
     announceLooper(`CASIO ${role.toUpperCase()} CANCELLED`);
     return;
   }
 
   if (!currentTransport || transportState.state !== TRANSPORT_STATES.PLAYING) {
-    activeCasioSection = role;
-    pendingCasioSection = null;
-    casioSectionKey = key;
-    activeCasioPerformance = buildPerformance(key, role, activeGenre, currentScore ? currentScore.root : 0);
+    pendingCasioSection = { role, key };
     updateCasioUI();
     runTransportCommand("play");
     announceLooper(`CASIO ${role.toUpperCase()} STARTED [${FUN_KEY_MAP[key]?.note ?? key}]`);
     return;
   }
 
-  const currentStep = currentTransport.audibleStep ?? 0;
-  if (currentStep % 12 === 0) {
-    activeCasioSection = role;
-    pendingCasioSection = null;
-    casioSectionKey = key;
-    activeCasioPerformance = buildPerformance(key, role, activeGenre, currentScore ? currentScore.root : 0);
-    applyEnsembleConductor(activeCasioPerformance.steps.map((s) => s.chord));
-    updateCasioUI();
-    announceLooper(`CASIO ${role.toUpperCase()} STARTED [${FUN_KEY_MAP[key]?.note ?? key}]`);
-  } else {
-    pendingCasioSection = role;
-    casioSectionKey = key;
-    updateCasioUI();
-    announceLooper(`CASIO ${role.toUpperCase()} CUED FOR NEXT DOWNBEAT [${FUN_KEY_MAP[key]?.note ?? key}]`);
-  }
+  pendingCasioSection = { role, key };
+  updateCasioUI();
+  announceLooper(`CASIO ${role.toUpperCase()} CUED FOR NEXT DOWNBEAT [${FUN_KEY_MAP[key]?.note ?? key}]`);
 }
 
 function looperReadoutText() {
@@ -7090,6 +7118,17 @@ function looperReadoutText() {
     const curSlot = recordedSlots ? recordedSlots[selectedStepIndex] : null;
     const curNote = curSlot ? ` [${FUN_KEY_MAP[curSlot.key]?.note ?? curSlot.key}]` : " [—]";
     return `STEP ${selectedStepIndex + 1} OF 12${curNote} · PLAY KEY TO SET OR CLICK TO CLEAR`;
+  }
+
+  if (audibleCasioSection !== null) {
+    const keyLabel = FUN_KEY_MAP[audibleCasioKey]?.note ?? audibleCasioKey;
+    const finalTag = audibleNum === 12 ? " (FINAL STEP)" : "";
+    return `CASIO ${audibleCasioSection.toUpperCase()} [${keyLabel}] · STEP ${audibleNum} OF 12${finalTag}`;
+  }
+  if (pendingCasioSection !== null) {
+    const keyLabel = FUN_KEY_MAP[pendingCasioSection.key]?.note ?? pendingCasioSection.key;
+    const stepsUntil = audible !== null ? (12 - audible) % 12 || 12 : 1;
+    return `CASIO ${pendingCasioSection.role.toUpperCase()} CUED [${keyLabel}] · STARTS IN ${stepsUntil} STEP${stepsUntil === 1 ? "" : "S"}`;
   }
 
   if (!song.loops.length) return "NO LOOPS YET · HOLD KEYS AND RECORD WHAT YOU PLAY";

@@ -1406,15 +1406,37 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - 151/151 Node checks. The golden fixture ("as written") passes unchanged.
 - Distinct progressions over 80 creatures: Victorian 73, Jazz 69, Blues 51, Ragtime 34, Palestrina 30, Drone 21. Before, each genre had 1, and Victorian 16.
 - Varied clash rates: Victorian 5%, Palestrina 5%, Jazz 8%, Drone 0%, Ragtime 0%, Blues 32% (blue notes).
-- Live in Smoky Jazz, the readout's vector over one loop:
-  - "three pigeons": ii9 → ♭II7alt → Imaj9 → V7/vi9 → V7 (deceptive) → vi9 (deceptive)
-  - "the moth reads braille": vi9 → ii9 → V7/♭II7 → ♭II7alt → Imaj9 → V7/vi9
-  - "velvet ossuary hymn": Imaj9 → vi9 → V7/ii9 → ii9 → V7 (tritone)
+### Session 56: 2026-10-20: harmony keeps step with the band (D-044; P5-30 phase 4 begun)
 
-**Not verified:** The maintainer's listen. The Fun Machine's PROGRESSION style does not vary yet; that comes with phase 4, along with the readout's VARIATION line and the AS WRITTEN switch.
+**Contributor:** Claude Code with maintainer direction
 
+**Goal:** P5-30 phase 4. Midway, the maintainer reported that the progressions moved too fast for the band and asked that the accompaniment always stay locked to the tempo.
 
+**Done:** Phase 2 was pushed (06a6d02). D-044 is accepted with the maintainer's choices: one chord per loop, and exports covering the whole cycle. In phase 4, the VARIATION readout and the AS WRITTEN switch are done.
 
+**Changed:**
+1. `index.html`, `styles.css`, `src/app.mjs`:
+   - `#kapellmeister-variation` is one fixed line naming the creature's moves.
+   - `#kapellmeister-as-written` (`aria-pressed`) toggles `genreVaried`, which `applyEnsembleConductor()` passes as `varied`. Not yet saved in sessions.
+2. `src/conductor.mjs`: `HARMONIC_PASSES`, `passSpine()`, and `conductEnsemble({ harmonicPass })`, returning `cycleSpine`.
+3. `src/accompaniment.mjs`: `buildPerformance(…, { pass })` builds a progression one chord per pass, with lead notes at steps 0, 4, and 8 (`leadSteps: 4`). Performances carry `regionSteps` (12, or 3 for single-chord styles).
+4. `src/app.mjs`:
+   - `currentHarmonicPass`, `harmonicPassAt()` (a song restarts the cycle), and `enterHarmonicPass()`, called at each loop downbeat, which re-conducts and rebuilds a held key's performance. `performanceFor()` is cached per pass.
+   - Pads and the key-press bridge use `regionSteps`, lead notes hold their steps, and the offline render walks the four passes (`songPasses(song) || HARMONIC_PASSES`) and hands the band back after.
+   - The readout shows `heardHarmony`, the harmony captured when each step was scheduled, because the scheduler re-conducts about 0.28 s ahead and the readout used to show the next chord on step 12. The compass shows `currentCycleSpine` and lights the pass.
+5. Tests: the harmonic clock (variation test), the per-pass performance (accompaniment test), and static checks for the clock and export wiring.
 
+**Verified:**
+- 153/153 Node checks. The golden and variation fixtures are unchanged.
+- No tempo drift: the band and the accompanist read the same live tempo each step.
+- In the browser (Smoky Jazz, "three pigeons", full tempo), the readout's chord changed at "01 / 12 · 2/4", "· 3/4", and "· 4/4", plus two varied turns at step 09, then returned to ii9 at "01 / 12 · 1/4".
+- A held C walked Cmaj9 → Amin9 → Dmin9 → G7alt, one per pass.
+- The MIDI export covered four loops (4 turnaround markers, 284 notes).
+
+**Found, not fixed:** `#fun-machine-telemetry` is styled and written to by `src/app.mjs`, but the element is gone from `index.html`, so Fun Machine telemetry never shows. This predates this session.
+
+**Verified by ear:** the maintainer: "This is getting better and better."
+
+**Next session should start with:** that listen, then the rest of P5-30 phase 4: sessions v6 with AS WRITTEN (older files open as written), varying Fun Machine progressions, and chord names in MIDI markers.
 
 
