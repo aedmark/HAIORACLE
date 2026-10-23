@@ -766,50 +766,63 @@ function drawKineticCore(ctx, score, base, elapsed, colors) {
   ctx.restore();
 }
 
-function traceEyeShape(ctx, shape, size) {
+function traceAppendageSilhouette(ctx, shape, size) {
   ctx.beginPath();
   switch (shape) {
-    case 0:
-      ctx.ellipse(0, 0, size * 1.55, size, 0, 0, Math.PI * 2);
-      break;
-    case 1:
-      ctx.arc(0, 0, size * 1.12, 0, Math.PI * 2);
-      break;
-    case 2:
-      ctx.moveTo(-size * 1.5, 0);
-      ctx.lineTo(0, -size);
-      ctx.lineTo(size * 1.5, 0);
-      ctx.lineTo(0, size);
+    case 0: // Sporangium Globule
+      ctx.moveTo(0, -size * 1.35);
+      ctx.bezierCurveTo(size * 1.25, -size * 1.05, size * 1.2, size * 0.85, 0, size * 1.15);
+      ctx.bezierCurveTo(-size * 1.2, size * 0.85, -size * 1.25, -size * 1.05, 0, -size * 1.35);
       ctx.closePath();
       break;
-    case 3:
-      ctx.moveTo(-size * 1.6, 0);
-      ctx.bezierCurveTo(-size * 0.72, -size * 1.15, size * 0.72, -size * 1.15, size * 1.6, 0);
-      ctx.bezierCurveTo(size * 0.72, size * 0.68, -size * 0.72, size * 0.68, -size * 1.6, 0);
+    case 1: // Ciliated Flagellum / Tentacle
+      ctx.moveTo(-size * 0.45, size * 1.4);
+      ctx.quadraticCurveTo(-size * 0.8, 0, -size * 0.25, -size * 1.5);
+      ctx.arc(0, -size * 1.5, size * 0.35, Math.PI, 0);
+      ctx.quadraticCurveTo(size * 0.8, 0, size * 0.45, size * 1.4);
       ctx.closePath();
       break;
-    case 4:
-      ctx.moveTo(0, -size * 1.18);
-      ctx.lineTo(size * 1.38, size * 0.88);
-      ctx.lineTo(-size * 1.38, size * 0.88);
+    case 2: // Bioluminescent Vacuole / Cellular Nucleus
+      ctx.arc(0, 0, size * 1.15, 0, Math.PI * 2);
+      break;
+    case 3: // Ascus Spore-Sac
+      ctx.moveTo(0, -size * 1.65);
+      ctx.bezierCurveTo(size * 0.65, -size * 1.1, size * 0.65, size * 1.1, 0, size * 1.55);
+      ctx.bezierCurveTo(-size * 0.65, size * 1.1, -size * 0.65, -size * 1.1, 0, -size * 1.65);
       ctx.closePath();
       break;
-    case 5:
-      ctx.roundRect(-size * 1.42, -size * 0.86, size * 2.84, size * 1.72, size * 0.48);
-      break;
-    case 6:
-      ctx.moveTo(-size * 1.55, size * 0.16);
-      ctx.quadraticCurveTo(0, -size * 1.42, size * 1.55, size * 0.16);
-      ctx.quadraticCurveTo(0, size * 0.72, -size * 1.55, size * 0.16);
+    case 4: // Stipitate Hydathode / Guttation Droplet
+      ctx.moveTo(0, -size * 1.6);
+      ctx.bezierCurveTo(size * 0.95, -size * 1.6, size * 0.95, -size * 0.2, 0, -size * 0.2);
+      ctx.bezierCurveTo(-size * 0.95, -size * 0.2, -size * 0.95, -size * 1.6, 0, -size * 1.6);
       ctx.closePath();
       break;
-    case 7:
-      for (let point = 0; point < 6; point += 1) {
-        const angle = -Math.PI / 2 + point / 6 * Math.PI * 2;
-        const x = Math.cos(angle) * size * (point % 2 ? 1.18 : 1.42);
-        const y = Math.sin(angle) * size;
-        if (point === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+    case 5: // Anastomosing Cirri
+      ctx.moveTo(-size * 0.3, size * 1.2);
+      ctx.lineTo(-size * 1.2, -size * 0.6);
+      ctx.lineTo(0, -size * 0.2);
+      ctx.lineTo(size * 1.2, -size * 0.6);
+      ctx.lineTo(size * 0.3, size * 1.2);
+      ctx.closePath();
+      break;
+    case 6: // Pholiota Phosphor-Gland Lantern
+      for (let p = 0; p < 8; p += 1) {
+        const a = -Math.PI / 2 + (p / 8) * Math.PI * 2;
+        const r = p % 2 ? size * 0.85 : size * 1.35;
+        const px = Math.cos(a) * r;
+        const py = Math.sin(a) * r;
+        if (p === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      break;
+    case 7: // Cellular Platelet / Sorus Rosette
+      for (let p = 0; p < 6; p += 1) {
+        const a = -Math.PI / 2 + (p / 6) * Math.PI * 2;
+        const px = Math.cos(a) * size * 1.25;
+        const py = Math.sin(a) * size * 1.25;
+        if (p === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
       }
       ctx.closePath();
       break;
@@ -818,29 +831,29 @@ function traceEyeShape(ctx, shape, size) {
   }
 }
 
-function tracePupil(ctx, shape, x, y, size) {
+function traceGermAperture(ctx, shape, x, y, size) {
   ctx.beginPath();
   switch (shape) {
-    case 0:
-      ctx.arc(x, y, size * 0.38, 0, Math.PI * 2);
+    case 0: // Dense Spheroid Nucleolus
+      ctx.arc(x, y, size * 0.42, 0, Math.PI * 2);
       break;
-    case 1:
-      ctx.ellipse(x, y, size * 0.17, size * 0.58, 0, 0, Math.PI * 2);
+    case 1: // Longitudinal Dehiscence Slit
+      ctx.ellipse(x, y, size * 0.16, size * 0.62, 0, 0, Math.PI * 2);
       break;
-    case 2:
+    case 2: // Transverse Stomatal Cleft
       ctx.ellipse(x, y, size * 0.62, size * 0.16, 0, 0, Math.PI * 2);
       break;
-    case 3:
-      ctx.moveTo(x, y - size * 0.56);
-      ctx.lineTo(x + size * 0.42, y);
-      ctx.lineTo(x, y + size * 0.56);
-      ctx.lineTo(x - size * 0.42, y);
+    case 3: // Faceted Rhomboid Crystal Inclusion
+      ctx.moveTo(x, y - size * 0.58);
+      ctx.lineTo(x + size * 0.44, y);
+      ctx.lineTo(x, y + size * 0.58);
+      ctx.lineTo(x - size * 0.44, y);
       ctx.closePath();
       break;
-    case 4:
+    case 4: // Radiolarian Aster Star
       for (let point = 0; point < 10; point += 1) {
-        const angle = -Math.PI / 2 + point / 10 * Math.PI * 2;
-        const radius = point % 2 ? size * 0.2 : size * 0.58;
+        const angle = -Math.PI / 2 + (point / 10) * Math.PI * 2;
+        const radius = point % 2 ? size * 0.22 : size * 0.62;
         const px = x + Math.cos(angle) * radius;
         const py = y + Math.sin(angle) * radius;
         if (point === 0) ctx.moveTo(px, py);
@@ -848,171 +861,680 @@ function tracePupil(ctx, shape, x, y, size) {
       }
       ctx.closePath();
       break;
-    case 5:
-      ctx.rect(x - size * 0.14, y - size * 0.6, size * 0.28, size * 1.2);
-      ctx.rect(x - size * 0.6, y - size * 0.14, size * 1.2, size * 0.28);
+    case 5: // Cruciform Spore Tetrad
+      ctx.rect(x - size * 0.16, y - size * 0.62, size * 0.32, size * 1.24);
+      ctx.rect(x - size * 0.62, y - size * 0.16, size * 1.24, size * 0.32);
       break;
-    case 6:
-      ctx.arc(x, y, size * 0.48, 0, Math.PI * 2);
-      ctx.arc(x, y, size * 0.25, 0, Math.PI * 2, true);
+    case 6: // Annular Lumen / Torus Vesicle
+      ctx.arc(x, y, size * 0.52, 0, Math.PI * 2);
+      ctx.arc(x, y, size * 0.24, 0, Math.PI * 2, true);
       break;
-    case 7:
-      ctx.moveTo(x, y - size * 0.58);
-      ctx.lineTo(x + size * 0.55, y + size * 0.48);
-      ctx.lineTo(x - size * 0.55, y + size * 0.48);
+    case 7: // Trilete Y-Scar
+      for (let arm = 0; arm < 3; arm += 1) {
+        const a = -Math.PI / 2 + (arm / 3) * Math.PI * 2;
+        const armW = size * 0.14;
+        const p1x = x + Math.cos(a + Math.PI / 2) * armW;
+        const p1y = y + Math.sin(a + Math.PI / 2) * armW;
+        const p2x = x + Math.cos(a) * size * 0.65;
+        const p2y = y + Math.sin(a) * size * 0.65;
+        const p3x = x + Math.cos(a - Math.PI / 2) * armW;
+        const p3y = y + Math.sin(a - Math.PI / 2) * armW;
+        if (arm === 0) ctx.moveTo(p1x, p1y);
+        else ctx.lineTo(p1x, p1y);
+        ctx.lineTo(p2x, p2y);
+        ctx.lineTo(p3x, p3y);
+      }
       ctx.closePath();
       break;
     default:
-      ctx.arc(x, y, size * 0.38, 0, Math.PI * 2);
+      ctx.arc(x, y, size * 0.42, 0, Math.PI * 2);
   }
 }
 
-function eyePlacement(score, index, count, base, elapsed) {
+function appendagePlacement(score, index, count, base, elapsed) {
   const ratio = count <= 1 ? 0.5 : index / (count - 1);
+  const sulk = interaction.sulk || 0;
+  const sulkRetract = 1 - sulk * 0.32;
+  const now = performance.now();
+  const isRetaliating = now < (interaction.retaliateUntil || 0);
+  const surge = isRetaliating ? 1.18 : 1.0;
+
   switch (score.eyeLayout) {
-    case 0: {
-      const angle = index / count * Math.PI * 2 + elapsed * 0.055 * (score.motion % 2 ? 1 : -1);
-      const orbit = base * (0.15 + Math.min(count, 8) * 0.014);
-      return { x: Math.cos(angle) * orbit, y: Math.sin(angle) * orbit, angle, scale: 1 };
+    case 0: { // Orbital Rosette / Crown
+      const angle = (index / count) * Math.PI * 2 + elapsed * 0.055 * (score.motion % 2 ? 1 : -1);
+      const orbit = base * (0.16 + Math.min(count, 8) * 0.015) * sulkRetract * surge;
+      return { x: Math.cos(angle) * orbit, y: Math.sin(angle) * orbit, angle: angle + Math.PI / 2, scale: 1 };
     }
-    case 1: {
+    case 1: { // Bilateral Branching
       const columns = Math.min(6, count);
       const row = Math.floor(index / columns);
       const column = index % columns;
       const rowCount = Math.ceil(count / columns);
+      const side = column < columns / 2 ? -1 : 1;
       return {
-        x: (column - (Math.min(columns, count - row * columns) - 1) / 2) * base * 0.13,
-        y: (row - (rowCount - 1) / 2) * base * 0.13,
-        angle: 0,
-        scale: 0.9,
+        x: (column - (Math.min(columns, count - row * columns) - 1) / 2) * base * 0.14 * sulkRetract * surge,
+        y: (row - (rowCount - 1) / 2) * base * 0.14 * sulkRetract,
+        angle: side * 0.35,
+        scale: 0.92,
       };
     }
-    case 2: {
+    case 2: { // Golden Spiral
       const angle = index * 2.399 + elapsed * 0.025;
-      const orbit = base * (0.04 + ratio * 0.28);
-      return { x: Math.cos(angle) * orbit, y: Math.sin(angle) * orbit, angle: angle + Math.PI / 2, scale: 0.72 + ratio * 0.34 };
+      const orbit = base * (0.05 + ratio * 0.32) * sulkRetract * surge;
+      return { x: Math.cos(angle) * orbit, y: Math.sin(angle) * orbit, angle: angle + Math.PI / 2, scale: 0.75 + ratio * 0.35 };
     }
-    case 3: {
+    case 3: { // Dorsal Crescent
       const angle = Math.PI + ratio * Math.PI;
-      return { x: Math.cos(angle) * base * 0.31, y: Math.sin(angle) * base * 0.31, angle: angle + Math.PI / 2, scale: 0.82 + Math.sin(ratio * Math.PI) * 0.28 };
+      const orbit = base * 0.33 * sulkRetract * surge;
+      return { x: Math.cos(angle) * orbit, y: Math.sin(angle) * orbit, angle: angle + Math.PI / 2, scale: 0.85 + Math.sin(ratio * Math.PI) * 0.3 };
     }
-    case 4: {
+    case 4: { // Cellular Colony Cluster
       const columns = Math.ceil(Math.sqrt(count));
       const rows = Math.ceil(count / columns);
       const column = index % columns;
       const row = Math.floor(index / columns);
+      const cx = (column - (columns - 1) / 2) * base * 0.135 * sulkRetract * surge;
+      const cy = (row - (rows - 1) / 2) * base * 0.135 * sulkRetract * surge;
+      const angle = Math.atan2(cy, cx) + Math.PI / 2;
       return {
-        x: (column - (columns - 1) / 2) * base * 0.13,
-        y: (row - (rows - 1) / 2) * base * 0.13,
-        angle: (column - row) * 0.12,
-        scale: 0.78 + ((index * 3) % 4) * 0.08,
+        x: cx,
+        y: cy,
+        angle,
+        scale: 0.8 + ((index * 3) % 4) * 0.08,
       };
     }
-    case 5:
-      return { x: Math.sin(index * 1.7) * base * 0.08, y: (ratio - 0.5) * base * 0.58, angle: index % 2 ? 0.12 : -0.12, scale: 0.72 + (index % 3) * 0.13 };
+    case 5: { // Axial Hyphal Spine
+      const side = index % 2 ? 1 : -1;
+      return {
+        x: Math.sin(index * 1.7) * base * 0.09 * sulkRetract + side * base * 0.04,
+        y: (ratio - 0.5) * base * 0.62 * sulkRetract,
+        angle: side * 0.42,
+        scale: 0.75 + (index % 3) * 0.14,
+      };
+    }
     default:
       return { x: 0, y: 0, angle: 0, scale: 1 };
   }
 }
 
-function drawIris(ctx, score, eye, size, elapsed) {
-  const hue = wrapHue(score.irisHue + eye * score.irisShift);
+function drawAppendageOrganelle(ctx, score, index, radius, elapsed, colors) {
+  const hue = wrapHue(score.irisHue + index * score.irisShift);
   const secondHue = wrapHue(hue + score.hueShift);
-  const baseGazeAngle = score.gaze / 8 * Math.PI * 2 + Math.sin(elapsed * 0.32 + eye) * 0.16;
-  const attention = Math.min(1, interaction.hold * 0.92 + interaction.tap * 0.75 + (interaction.agitation || 0) * 0.85);
-  const pointerAngle = Math.atan2(interaction.smoothY, interaction.smoothX);
-  const pointerReach = Math.min(1.5, 0.45 + Math.hypot(interaction.smoothX, interaction.smoothY));
-  const x = (Math.cos(baseGazeAngle) * (1 - attention) + Math.cos(pointerAngle) * pointerReach * attention) * size * 0.32;
-  const y = (Math.sin(baseGazeAngle) * (1 - attention) + Math.sin(pointerAngle) * pointerReach * attention) * size * 0.22;
-  const radius = size * (0.48 + (eye % 3) * 0.055);
-  const gradient = ctx.createRadialGradient(x - radius * 0.18, y - radius * 0.2, radius * 0.08, x, y, radius);
-  gradient.addColorStop(0, `hsl(${secondHue} 100% 88%)`);
-  gradient.addColorStop(0.3, `hsl(${hue} 94% 58%)`);
-  gradient.addColorStop(1, `hsl(${wrapHue(hue - 35)} 82% 22%)`);
-  ctx.fillStyle = gradient;
+  const now = performance.now();
+  const isRetaliating = now < (interaction.retaliateUntil || 0);
+  const agitation = interaction.agitation || 0;
+  const sulk = interaction.sulk || 0;
+  const tap = interaction.tap || 0;
+  const hold = interaction.hold || 0;
+
+  // Bio-fluid cytoplasm gradient
+  const grad = ctx.createRadialGradient(-radius * 0.15, -radius * 0.18, radius * 0.08, 0, 0, radius);
+  if (isRetaliating) {
+    grad.addColorStop(0, "hsl(45 100% 95%)");
+    grad.addColorStop(0.35, "hsl(35 100% 68%)");
+    grad.addColorStop(1, "hsl(15 90% 35%)");
+  } else {
+    grad.addColorStop(0, `hsl(${secondHue} 95% ${78 + agitation * 14}%)`);
+    grad.addColorStop(0.35, `hsl(${hue} 88% ${50 + agitation * 10}%)`);
+    grad.addColorStop(1, `hsl(${wrapHue(hue - 32)} 78% ${22 - sulk * 10}%)`);
+  }
+  ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
   ctx.fill();
 
+  // Internal cytoplasmic texture / organelle structure (irisStyle 0..7)
   ctx.save();
-  ctx.translate(x, y);
-  ctx.lineWidth = Math.max(0.7, size * 0.07);
-  ctx.strokeStyle = `hsla(${secondHue} 100% 84% / 0.72)`;
-  ctx.fillStyle = `hsla(${secondHue} 100% 72% / 0.52)`;
+  ctx.lineWidth = Math.max(0.65, radius * 0.08);
+  ctx.strokeStyle = `hsla(${secondHue} 100% 84% / ${0.7 + agitation * 0.25})`;
+  ctx.fillStyle = `hsla(${secondHue} 100% 74% / 0.55)`;
 
-  if (score.irisStyle === 1 || score.irisStyle === 5) {
-    const rings = score.irisStyle === 1 ? 3 : 5;
-    for (let ring = 1; ring <= rings; ring += 1) {
+  switch (score.irisStyle) {
+    case 0: { // Cytosol Sol-Gel Cyclosis
+      const pulseR = radius * (0.35 + Math.sin(elapsed * 2.8 + index) * 0.08);
       ctx.beginPath();
-      ctx.arc(0, 0, radius * ring / (rings + 1), 0, Math.PI * 2);
+      ctx.arc(0, 0, pulseR, 0, Math.PI * 2);
       ctx.stroke();
+      break;
     }
-  } else if (score.irisStyle === 2 || score.irisStyle === 6) {
-    const spokes = score.irisStyle === 2 ? 8 : 16;
-    for (let spoke = 0; spoke < spokes; spoke += 1) {
-      const angle = spoke / spokes * Math.PI * 2 + elapsed * 0.04 + interaction.morphPhase * 0.5;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(angle) * radius * 0.22, Math.sin(angle) * radius * 0.22);
-      ctx.lineTo(Math.cos(angle) * radius * 0.9, Math.sin(angle) * radius * 0.9);
-      ctx.stroke();
+    case 1: // Concentric Lipid Bilayers (3 rippling rings)
+    case 5: { // Endoplasmic Reticulum (5 fine rings)
+      const rings = score.irisStyle === 1 ? 3 : 5;
+      for (let r = 1; r <= rings; r += 1) {
+        const ringR = radius * (r / (rings + 1));
+        const wave = Math.sin(elapsed * 2.2 + r * 1.5) * radius * 0.04;
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.max(1, ringR + wave), 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      break;
     }
-  } else if (score.irisStyle === 3) {
-    for (let dot = 0; dot < 7; dot += 1) {
-      const angle = dot / 7 * Math.PI * 2 + eye + interaction.morphPhase * 0.3;
+    case 2: // Cytoskeletal Microtubules (8 spokes)
+    case 6: { // Siliceous Aster Spicules (16 spokes)
+      const spokes = score.irisStyle === 2 ? 8 : 16;
+      for (let s = 0; s < spokes; s += 1) {
+        const a = (s / spokes) * Math.PI * 2 + elapsed * 0.05 + interaction.morphPhase * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * radius * 0.2, Math.sin(a) * radius * 0.2);
+        ctx.lineTo(Math.cos(a) * radius * 0.92, Math.sin(a) * radius * 0.92);
+        ctx.stroke();
+      }
+      break;
+    }
+    case 3: { // Circulating Mitochondrial / Spore Granules
+      for (let dot = 0; dot < 7; dot += 1) {
+        const a = (dot / 7) * Math.PI * 2 + elapsed * 0.35 + index * 0.8;
+        const gr = radius * 0.11;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * radius * 0.62, Math.sin(a) * radius * 0.62, gr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case 4: { // Thylakoid Lamellar Crescent
       ctx.beginPath();
-      ctx.arc(Math.cos(angle) * radius * 0.64, Math.sin(angle) * radius * 0.64, radius * 0.09, 0, Math.PI * 2);
+      ctx.arc(0, 0, radius * 0.82, -Math.PI / 2, Math.PI / 2);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
       ctx.fill();
+      for (let l = 1; l <= 3; l += 1) {
+        ctx.beginPath();
+        ctx.arc(0, 0, radius * (l / 4) * 0.82, -Math.PI / 2, Math.PI / 2);
+        ctx.stroke();
+      }
+      break;
     }
-  } else if (score.irisStyle === 4) {
-    ctx.fillStyle = `hsla(${secondHue} 100% 66% / 0.62)`;
-    ctx.beginPath();
-    ctx.arc(0, 0, radius * 0.88, -Math.PI / 2, Math.PI / 2);
-    ctx.lineTo(0, 0);
-    ctx.closePath();
-    ctx.fill();
-  } else if (score.irisStyle === 7) {
-    ctx.strokeStyle = `hsl(${secondHue} 100% 74%)`;
-    ctx.lineWidth = Math.max(1, size * 0.12);
-    ctx.beginPath();
-    ctx.arc(0, 0, radius * 0.76, 0, Math.PI * 2);
-    ctx.stroke();
+    case 7: { // Chitinous Corona Sheath
+      ctx.lineWidth = Math.max(1, radius * 0.14);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 0.74, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    }
+    default:
+      break;
   }
   ctx.restore();
 
-  const isRetaliating = performance.now() < interaction.retaliateUntil;
-  const pupilScale = isRetaliating
-    ? 1.55
-    : Math.max(0.42, Math.min(1.42, 1 + interaction.tap * 0.36 - interaction.hold * 0.22 + interaction.dragSpeed * 0.25 - (interaction.agitation || 0) * 0.38 - (interaction.sulk || 0) * 0.22));
-  ctx.fillStyle = `hsl(${wrapHue(hue + 180)} 36% 5%)`;
-  tracePupil(ctx, score.pupilShape, x, y, radius * pupilScale);
+  // Central Germ Aperture / Nucleolus (pupilShape 0..7)
+  const apertureScale = isRetaliating
+    ? 1.45
+    : Math.max(0.45, Math.min(1.35, 1 + tap * 0.3 - hold * 0.18 + agitation * 0.28 - sulk * 0.3));
+
+  if (isRetaliating) {
+    ctx.fillStyle = "hsl(45 100% 96%)";
+    ctx.strokeStyle = "hsl(35 100% 80%)";
+  } else {
+    ctx.fillStyle = `hsl(${wrapHue(hue + 180)} 44% ${12 - sulk * 6}%)`;
+    ctx.strokeStyle = `hsla(${secondHue} 100% 88% / 0.85)`;
+  }
+  ctx.lineWidth = Math.max(0.8, radius * 0.08);
+
+  traceGermAperture(ctx, score.pupilShape, 0, 0, radius * apertureScale);
   ctx.fill("evenodd");
+  ctx.stroke();
 }
 
-function drawEye(ctx, score, eye, base, elapsed, colors) {
-  const placement = eyePlacement(score, eye, score.eyes, base, elapsed + interaction.morphPhase * 0.6);
+function drawCellularAppendage(ctx, score, index, base, elapsed, colors) {
+  const placement = appendagePlacement(score, index, score.eyes, base, elapsed + interaction.morphPhase * 0.6);
   const crowding = 1 - Math.max(0, score.eyes - 7) * 0.025;
-  const size = Math.max(4, base * (0.022 + score.eyeSize / 2450) * placement.scale * crowding);
-  const isRetaliating = performance.now() < interaction.retaliateUntil;
+  const size = Math.max(5, base * (0.026 + score.eyeSize / 2200) * placement.scale * crowding);
+
+  const now = performance.now();
+  const isRetaliating = now < (interaction.retaliateUntil || 0);
+  const agitation = interaction.agitation || 0;
+  const sulk = interaction.sulk || 0;
+  const tap = interaction.tap || 0;
+  const hold = interaction.hold || 0;
+
+  const hue = wrapHue(score.irisHue + index * score.irisShift);
+  const secondHue = wrapHue(hue + score.hueShift);
+  const membraneHue = wrapHue(colors[1] + index * 14);
+
+  // Dynamic tropism toward pointer or defensive curl during sulk
+  const toPointerX = (interaction.smoothX || 0) * base - placement.x;
+  const toPointerY = (interaction.smoothY || 0) * base - placement.y;
+  const reachAngle = Math.atan2(toPointerY, toPointerX);
+  const attention = Math.min(1, hold * 0.8 + tap * 0.5 + agitation * 0.65) * (1 - sulk * 0.85);
+  const quiver = tap > 0.01 ? Math.sin(elapsed * 50 + index * 3.8) * tap * size * 0.22 : 0;
+  const twitch = agitation > 0.1 ? Math.sin(elapsed * 32 + index * 2.2) * agitation * 0.18 : 0;
+  const dynamicAngle = placement.angle + (reachAngle - placement.angle) * attention * 0.38 + twitch;
+
   ctx.save();
-  ctx.translate(placement.x, placement.y);
-  ctx.rotate(placement.angle);
-  ctx.shadowBlur = size * (0.35 + (interaction.agitation || 0) * 0.35 + (interaction.retaliationFlash || 0) * 0.75);
+  ctx.translate(placement.x + quiver, placement.y + quiver);
+  ctx.rotate(dynamicAngle);
+
+  // Glow halo
+  ctx.shadowBlur = size * (0.35 + agitation * 0.45 + (isRetaliating ? 1.1 : 0) + (interaction.retaliationFlash || 0) * 0.8);
   ctx.shadowColor = isRetaliating
-    ? "hsl(45 100% 85%)"
-    : `hsla(${score.irisHue} 100% 72% / ${0.55 + (interaction.agitation || 0) * 0.35})`;
-  traceEyeShape(ctx, score.eyeShape, size);
-  ctx.fillStyle = `hsl(${wrapHue(colors[2] + 20)} 34% 92%)`;
-  ctx.fill();
-  ctx.save();
-  traceEyeShape(ctx, score.eyeShape, size);
-  ctx.clip();
-  drawIris(ctx, score, eye, size, elapsed);
+    ? "hsl(45 100% 88%)"
+    : `hsla(${hue} 100% 72% / ${0.5 + agitation * 0.4})`;
+
+  const stalkStroke = `hsla(${membraneHue} 65% ${42 + agitation * 18}% / 0.75)`;
+  const membraneFill = `hsla(${membraneHue} 55% ${28 - sulk * 10}% / 0.65)`;
+  const chitinHighlight = `hsla(${secondHue} 95% 82% / 0.8)`;
+  const darkOutline = `hsl(${colors[0]} 72% 10%)`;
+
+  switch (score.eyeShape) {
+    case 0: { // Archetype 0: Sporangium Globule
+      ctx.lineWidth = Math.max(1, size * 0.12);
+      ctx.strokeStyle = stalkStroke;
+      ctx.beginPath();
+      ctx.moveTo(0, size * 1.5);
+      ctx.quadraticCurveTo(-size * 0.35, size * 0.75, 0, size * 0.3);
+      ctx.stroke();
+
+      ctx.lineWidth = Math.max(0.6, size * 0.07);
+      ctx.strokeStyle = chitinHighlight;
+      for (let r = 1; r <= 3; r += 1) {
+        const ry = size * (0.5 + r * 0.28);
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.15, ry);
+        ctx.lineTo(size * 0.15, ry);
+        ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.translate(0, -size * 0.2);
+      ctx.beginPath();
+      ctx.moveTo(0, -size * 1.2);
+      ctx.bezierCurveTo(size * 1.15, -size * 0.95, size * 1.1, size * 0.85, 0, size * 1.05);
+      ctx.bezierCurveTo(-size * 1.1, size * 0.85, -size * 1.15, -size * 0.95, 0, -size * 1.2);
+      ctx.closePath();
+      ctx.fillStyle = membraneFill;
+      ctx.fill();
+
+      ctx.lineWidth = Math.max(0.7, size * 0.08);
+      ctx.strokeStyle = chitinHighlight;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, size * 0.95, size * 0.32, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      drawAppendageOrganelle(ctx, score, index, size * 0.6, elapsed, colors);
+
+      ctx.fillStyle = chitinHighlight;
+      for (let s = 0; s < 6; s += 1) {
+        const sa = (s / 6) * Math.PI * 2 + elapsed * 0.2;
+        const sr = size * (0.68 + Math.sin(sa * 3) * 0.1);
+        ctx.beginPath();
+        ctx.arc(Math.cos(sa) * sr, Math.sin(sa) * sr * 0.8, size * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.lineWidth = Math.max(0.8, size * 0.09);
+      ctx.strokeStyle = darkOutline;
+      ctx.beginPath();
+      ctx.moveTo(0, -size * 1.2);
+      ctx.bezierCurveTo(size * 1.15, -size * 0.95, size * 1.1, size * 0.85, 0, size * 1.05);
+      ctx.bezierCurveTo(-size * 1.1, size * 0.85, -size * 1.15, -size * 0.95, 0, -size * 1.2);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+      break;
+    }
+
+    case 1: { // Archetype 1: Ciliated Flagellum / Hyphal Tentacle
+      const segments = 6;
+      const spine = [];
+      const waveSpeed = 2.4 + agitation * 3.6;
+      for (let s = 0; s <= segments; s += 1) {
+        const t = s / segments;
+        const sy = size * 1.4 - t * size * 2.8;
+        const curl = sulk * Math.sin(t * Math.PI) * size * 0.65;
+        const sx = Math.sin(elapsed * waveSpeed + s * 0.8) * size * (0.15 + t * 0.3) * (1 - sulk * 0.6) + curl;
+        spine.push({ x: sx, y: sy });
+      }
+
+      ctx.lineWidth = Math.max(0.55, size * 0.05);
+      ctx.strokeStyle = chitinHighlight;
+      for (let s = 1; s < segments; s += 1) {
+        const p = spine[s];
+        const prev = spine[s - 1];
+        const next = spine[s + 1];
+        const dx = next.x - prev.x;
+        const dy = next.y - prev.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const nx = -dy / len;
+        const ny = dx / len;
+        const ciliaLen = size * (0.28 + (s % 2) * 0.12);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x + nx * ciliaLen, p.y + ny * ciliaLen);
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - nx * ciliaLen, p.y - ny * ciliaLen);
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      for (let s = 0; s <= segments; s += 1) {
+        const p = spine[s];
+        const w = size * (0.22 - (s / segments) * 0.12);
+        const pX = p.x + w;
+        if (s === 0) ctx.moveTo(pX, p.y);
+        else ctx.lineTo(pX, p.y);
+      }
+      for (let s = segments; s >= 0; s -= 1) {
+        const p = spine[s];
+        const w = size * (0.22 - (s / segments) * 0.12);
+        ctx.lineTo(p.x - w, p.y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = membraneFill;
+      ctx.fill();
+      ctx.lineWidth = Math.max(0.7, size * 0.08);
+      ctx.strokeStyle = darkOutline;
+      ctx.stroke();
+
+      const tip = spine[segments];
+      ctx.save();
+      ctx.translate(tip.x, tip.y);
+      drawAppendageOrganelle(ctx, score, index, size * 0.48, elapsed, colors);
+      ctx.restore();
+      break;
+    }
+
+    case 2: { // Archetype 2: Bioluminescent Vacuole / Cellular Nucleus
+      ctx.save();
+      ctx.beginPath();
+      const numPts = 24;
+      for (let p = 0; p < numPts; p += 1) {
+        const a = (p / numPts) * Math.PI * 2;
+        const wave = Math.sin(a * 4 + elapsed * 2.5 + index) * size * 0.06;
+        const r = size * 1.1 + wave;
+        const px = Math.cos(a) * r;
+        const py = Math.sin(a) * r;
+        if (p === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = membraneFill;
+      ctx.fill();
+      ctx.lineWidth = Math.max(0.75, size * 0.08);
+      ctx.strokeStyle = stalkStroke;
+      ctx.stroke();
+
+      ctx.lineWidth = Math.max(0.5, size * 0.05);
+      ctx.strokeStyle = chitinHighlight;
+      for (let b = 0; b < 12; b += 1) {
+        const a = (b / 12) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * size * 0.85, Math.sin(a) * size * 0.85);
+        ctx.lineTo(Math.cos(a) * size * 1.05, Math.sin(a) * size * 1.05);
+        ctx.stroke();
+      }
+
+      drawAppendageOrganelle(ctx, score, index, size * 0.78, elapsed, colors);
+
+      ctx.lineWidth = Math.max(0.6, size * 0.06);
+      ctx.strokeStyle = `hsla(${secondHue} 90% 75% / 0.65)`;
+      for (let c = 0; c < 6; c += 1) {
+        const a = (c / 6) * Math.PI * 2 + elapsed * 0.15;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * size * 0.35, Math.sin(a) * size * 0.35);
+        ctx.quadraticCurveTo(
+          Math.cos(a + 0.4) * size * 0.6,
+          Math.sin(a + 0.4) * size * 0.6,
+          Math.cos(a) * size * 0.85,
+          Math.sin(a) * size * 0.85
+        );
+        ctx.stroke();
+      }
+      ctx.restore();
+      break;
+    }
+
+    case 3: { // Archetype 3: Ascus Spore-Sac
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(0, -size * 1.55);
+      ctx.bezierCurveTo(size * 0.72, -size * 1.1, size * 0.72, size * 1.1, 0, size * 1.5);
+      ctx.bezierCurveTo(-size * 0.72, size * 1.1, -size * 0.72, -size * 1.1, 0, -size * 1.55);
+      ctx.closePath();
+      ctx.fillStyle = membraneFill;
+      ctx.fill();
+
+      ctx.lineWidth = Math.max(0.6, size * 0.06);
+      ctx.strokeStyle = stalkStroke;
+      const septaCount = 7;
+      for (let s = 1; s < septaCount; s += 1) {
+        const sy = -size * 1.35 + (s / septaCount) * size * 2.7;
+        const sw = size * 0.62 * Math.sin((s / septaCount) * Math.PI);
+        ctx.beginPath();
+        ctx.moveTo(-sw, sy);
+        ctx.lineTo(sw, sy);
+        ctx.stroke();
+      }
+
+      const sporeCount = 6;
+      for (let s = 0; s < sporeCount; s += 1) {
+        const sy = -size * 1.05 + (s / (sporeCount - 1)) * size * 2.1;
+        const sr = size * 0.15;
+        const sporeHue = wrapHue(secondHue + s * 16);
+        ctx.fillStyle = `hsl(${sporeHue} 95% 72%)`;
+        ctx.beginPath();
+        ctx.arc(0, sy, sr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = Math.max(0.5, size * 0.04);
+        ctx.strokeStyle = darkOutline;
+        ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.translate(0, -size * 1.3);
+      drawAppendageOrganelle(ctx, score, index, size * 0.32, elapsed, colors);
+      ctx.restore();
+
+      ctx.lineWidth = Math.max(0.8, size * 0.09);
+      ctx.strokeStyle = darkOutline;
+      ctx.beginPath();
+      ctx.moveTo(0, -size * 1.55);
+      ctx.bezierCurveTo(size * 0.72, -size * 1.1, size * 0.72, size * 1.1, 0, size * 1.5);
+      ctx.bezierCurveTo(-size * 0.72, size * 1.1, -size * 0.72, -size * 1.1, 0, -size * 1.55);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+      break;
+    }
+
+    case 4: { // Archetype 4: Stipitate Hydathode
+      ctx.lineWidth = Math.max(1, size * 0.12);
+      ctx.strokeStyle = stalkStroke;
+      ctx.beginPath();
+      ctx.moveTo(0, size * 1.5);
+      ctx.lineTo(0, 0);
+      ctx.stroke();
+
+      ctx.lineWidth = Math.max(0.5, size * 0.04);
+      ctx.strokeStyle = chitinHighlight;
+      ctx.beginPath();
+      ctx.moveTo(-size * 0.06, size * 1.4);
+      ctx.lineTo(-size * 0.06, 0.1);
+      ctx.moveTo(size * 0.06, size * 1.4);
+      ctx.lineTo(size * 0.06, 0.1);
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(0, -size * 0.75);
+      ctx.beginPath();
+      ctx.moveTo(0, -size * 0.85);
+      ctx.bezierCurveTo(size * 0.9, -size * 0.85, size * 0.85, size * 0.55, 0, size * 0.75);
+      ctx.bezierCurveTo(-size * 0.85, size * 0.55, -size * 0.9, -size * 0.85, 0, -size * 0.85);
+      ctx.closePath();
+      ctx.fillStyle = membraneFill;
+      ctx.fill();
+
+      drawAppendageOrganelle(ctx, score, index, size * 0.45, elapsed, colors);
+
+      ctx.lineWidth = Math.max(0.7, size * 0.07);
+      ctx.strokeStyle = chitinHighlight;
+      ctx.beginPath();
+      ctx.arc(-size * 0.3, -size * 0.35, size * 0.28, Math.PI * 0.9, Math.PI * 1.5);
+      ctx.stroke();
+
+      ctx.lineWidth = Math.max(0.8, size * 0.09);
+      ctx.strokeStyle = darkOutline;
+      ctx.beginPath();
+      ctx.moveTo(0, -size * 0.85);
+      ctx.bezierCurveTo(size * 0.9, -size * 0.85, size * 0.85, size * 0.55, 0, size * 0.75);
+      ctx.bezierCurveTo(-size * 0.85, size * 0.55, -size * 0.9, -size * 0.85, 0, -size * 0.85);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+      break;
+    }
+
+    case 5: { // Archetype 5: Anastomosing Cirri
+      ctx.lineWidth = Math.max(1.1, size * 0.14);
+      ctx.strokeStyle = stalkStroke;
+      ctx.beginPath();
+      ctx.moveTo(0, size * 1.4);
+      ctx.lineTo(0, size * 0.1);
+      ctx.stroke();
+
+      ctx.lineWidth = Math.max(0.6, size * 0.06);
+      ctx.strokeStyle = chitinHighlight;
+      for (let n = 1; n <= 3; n += 1) {
+        const ny = size * (0.3 + n * 0.32);
+        ctx.beginPath();
+        ctx.arc(0, ny, size * 0.12, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const reach = 1 - sulk * 0.75;
+      for (const side of [-1, 1]) {
+        ctx.beginPath();
+        const startX = 0;
+        const startY = size * 0.1;
+        ctx.moveTo(startX, startY);
+        for (let t = 0; t <= 12; t += 1) {
+          const ratio = t / 12;
+          const a = side * (0.4 + ratio * Math.PI * 1.4);
+          const r = size * (0.2 + ratio * 0.85) * reach;
+          const tx = side * Math.sin(a) * r;
+          const ty = startY - Math.cos(a) * r;
+          ctx.lineTo(tx, ty);
+        }
+        ctx.lineWidth = Math.max(0.8, size * 0.09);
+        ctx.strokeStyle = stalkStroke;
+        ctx.stroke();
+
+        const finalA = side * (0.4 + Math.PI * 1.4);
+        const finalR = size * 1.05 * reach;
+        const tipX = side * Math.sin(finalA) * finalR;
+        const tipY = startY - Math.cos(finalA) * finalR;
+        ctx.fillStyle = chitinHighlight;
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, size * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.save();
+      ctx.translate(0, 0);
+      drawAppendageOrganelle(ctx, score, index, size * 0.46, elapsed, colors);
+      ctx.restore();
+      break;
+    }
+
+    case 6: { // Archetype 6: Pholiota Phosphor-Gland Lantern
+      const bractCount = 6;
+      const flare = isRetaliating ? 1.35 : 1 + agitation * 0.25;
+
+      ctx.save();
+      const beamCount = 12;
+      for (let b = 0; b < beamCount; b += 1) {
+        const a = (b / beamCount) * Math.PI * 2 + elapsed * 0.1;
+        const beamLen = size * (1.2 + Math.sin(a * 3 + elapsed * 3) * 0.3) * flare;
+        ctx.strokeStyle = `hsla(${secondHue} 100% 85% / ${0.28 + agitation * 0.3})`;
+        ctx.lineWidth = Math.max(0.8, size * 0.07);
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * size * 0.4, Math.sin(a) * size * 0.4);
+        ctx.lineTo(Math.cos(a) * beamLen, Math.sin(a) * beamLen);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      drawAppendageOrganelle(ctx, score, index, size * 0.72, elapsed, colors);
+
+      ctx.lineWidth = Math.max(0.8, size * 0.1);
+      ctx.strokeStyle = darkOutline;
+      ctx.fillStyle = membraneFill;
+      for (let b = 0; b < bractCount; b += 1) {
+        const a = (b / bractCount) * Math.PI * 2;
+        const bx = Math.cos(a) * size * 0.85 * flare;
+        const by = Math.sin(a) * size * 0.85 * flare;
+        ctx.beginPath();
+        ctx.arc(bx, by, size * 0.22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      break;
+    }
+
+    case 7: { // Archetype 7: Cellular Platelet / Sorus Rosette
+      const lobes = 6;
+      ctx.beginPath();
+      for (let p = 0; p < lobes; p += 1) {
+        const a = -Math.PI / 2 + (p / lobes) * Math.PI * 2;
+        const px = Math.cos(a) * size * 1.25;
+        const py = Math.sin(a) * size * 1.25;
+        if (p === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = membraneFill;
+      ctx.fill();
+
+      ctx.lineWidth = Math.max(0.6, size * 0.06);
+      ctx.strokeStyle = chitinHighlight;
+      ctx.fillStyle = `hsla(${secondHue} 100% 88% / 0.6)`;
+      for (let p = 0; p < lobes * 2; p += 1) {
+        const a = (p / (lobes * 2)) * Math.PI * 2;
+        const pr = size * 0.95;
+        ctx.beginPath();
+        ctx.arc(Math.cos(a) * pr, Math.sin(a) * pr, size * 0.09, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      drawAppendageOrganelle(ctx, score, index, size * 0.65, elapsed, colors);
+
+      ctx.lineWidth = Math.max(0.8, size * 0.09);
+      ctx.strokeStyle = darkOutline;
+      ctx.beginPath();
+      for (let p = 0; p < lobes; p += 1) {
+        const a = -Math.PI / 2 + (p / lobes) * Math.PI * 2;
+        const px = Math.cos(a) * size * 1.25;
+        const py = Math.sin(a) * size * 1.25;
+        if (p === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      break;
+    }
+
+    default: {
+      drawAppendageOrganelle(ctx, score, index, size * 0.65, elapsed, colors);
+      break;
+    }
+  }
+
   ctx.restore();
-  traceEyeShape(ctx, score.eyeShape, size);
-  ctx.lineWidth = Math.max(0.8, size * 0.11);
-  ctx.strokeStyle = `hsl(${colors[0]} 70% 8%)`;
-  ctx.stroke();
-  ctx.restore();
+}
+
+// Backwards-compatibility aliases
+const eyePlacement = appendagePlacement;
+function drawEye(ctx, score, eye, base, elapsed, colors) {
+  drawCellularAppendage(ctx, score, eye, base, elapsed, colors);
+}
+function traceEyeShape(ctx, shape, size) {
+  traceAppendageSilhouette(ctx, shape, size);
+}
+function tracePupil(ctx, shape, x, y, size) {
+  traceGermAperture(ctx, shape, x, y, size);
+}
+function drawIris(ctx, score, eye, size, elapsed) {
+  drawAppendageOrganelle(ctx, score, eye, size * 0.6, elapsed, null);
 }
 
 function buildMycelialNetwork(score) {
@@ -2207,7 +2729,7 @@ class OracleVision {
 
     ctx.globalCompositeOperation = "source-over";
     for (let eye = 0; eye < score.eyes; eye += 1) {
-      drawEye(ctx, score, eye, base, elapsed, colors);
+      drawCellularAppendage(ctx, score, eye, base, elapsed, colors);
     }
 
     this.updateAndDrawSpores(ctx, score, base, elapsed, colors, timestamp);

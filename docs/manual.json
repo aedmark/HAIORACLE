@@ -181,7 +181,7 @@
             {"label": "Boundary containment tests", "target": "tests/static.test.mjs"},
             {"label": "Architecture Records D-007, D-008", "target": "docs/DECISIONS.md"}
           ],
-          "related": ["kinetic-cores", "anatomical-eyes", "interactive-vitrine"]
+          "related": ["kinetic-cores", "cellular-appendages", "interactive-vitrine"]
         },
         {
           "id": "kinetic-cores",
@@ -204,28 +204,30 @@
             {"label": "Kinetic mode test suite", "target": "tests/oracle.test.mjs"},
             {"label": "Architecture Record D-007", "target": "docs/DECISIONS.md"}
           ],
-          "related": ["silhouette-flux", "anatomical-eyes", "interactive-vitrine"]
+          "related": ["silhouette-flux", "cellular-appendages", "interactive-vitrine"]
         },
         {
-          "id": "anatomical-eyes",
-          "title": "Generative Eye Anatomy, Sclera Silhouettes, & Gaze Tracking",
-          "summary": "Composes multi-part ocular anatomy with interactive gaze tracking and distinct iris geometries.",
-          "tags": ["graphics", "anatomy", "interactivity"],
-          "what": "Generates 1 to 9 distinct eyes possessing unique sclera silhouettes (almond, circle, oval, teardrop, hex, crescent, cat-eye, slit), iris styles (solid, radial, dual-ring, starburst, vortex, eclipse, fractal, nebula), pupil shapes (round, vertical slit, horizontal slit, goat bar, keyhole, diamond, cross, crescent), and autonomous gaze shifts.",
+          "id": "cellular-appendages",
+          "title": "Generative Fungal Appendages, Cellular Organelles, & Botanical Tropism",
+          "summary": "Composes cellular organelles, sporangial fruiting bodies, and botanical appendages responding to touch tension and vitrine dynamics without ocular animal sclera.",
+          "tags": ["graphics", "anatomy", "mycology", "cellular", "interactivity"],
+          "what": "Replaces ocular animal eyeballs with generative fungal fruiting bodies, sporangia, cellular organelles, and botanical appendages inspired by Victorian biological lithography and Ernst Haeckel. Produces 8 distinct appendage archetypes (Sporangium Globule, Ciliated Flagellum, Bioluminescent Vacuole, Ascus Spore-Sac, Stipitate Hydathode, Anastomosing Cirri, Pholiota Phosphor-Gland, Cellular Platelet Rosette), 8 internal organelle textures (cyclosis sol-gel, lipid bilayers, cytoskeletal microtubules, mitochondrial granules, thylakoid crescents, endoplasmic reticulum, aster spicules, chitin corona), 8 germ aperture cores (nucleolus, dehiscence slit, stomatal cleft, crystal inclusion, radiolarian aster, spore tetrad, annular lumen, trilete suture), and 6 colonization layouts (orbital rosette, bilateral branching, golden spiral, dorsal crescent, cellular colony cluster, axial hyphal spine).",
           "how": {
-            "lead": "`drawEye()` in `src/app.mjs` positions eyes according to seed-driven spatial layouts:",
+            "lead": "`drawCellularAppendage()` in `src/app.mjs` positions and animates biological appendages derived deterministically from the score:",
             "points": [
-              "Places eyes using single-cyclops, bilateral, vertical column, triangular trinity, orbital ring, or scattered cluster arrangements.",
-              "Tracks mouse/pointer position when hovering near the vitrine, smoothly interpolating pupil gaze towards the pointer with bounded deflection.",
-              "Dilates pupil aperture during vitrine tap and hold gestures.",
-              "Applies deterministic iris hue shifts and specular highlights."
+              "Distributes appendages using orbital rosettes, bilateral flanks, golden phyllotaxis spirals, dorsal crescents, cellular colony clusters, or axial hyphal spines.",
+              "Applies thigmotropic/phototropic orientation toward pointer touch coords during vitrine interaction, flexing stalks and tendrils smoothly.",
+              "Quivers appendages and trembles guttation nectar droplets during vitrine glass tapping.",
+              "Bristles cilia, intensifies organelle warning luminescence, and whips flagella at high frequency as vitrine agitation escalates.",
+              "Surges appendages forward with incandescent discharge flare during retaliatory strikes, and curls them inward into a defensive huddle during sulk recovery."
             ]
           },
-          "why": "Repeated, identical stamped eyes made creatures look like mechanical clip art. Giving eyes varied biological silhouettes, layered optical depths, and responsive gaze tracking gives each manifestation a watchful, unsettling personality (ADR D-006).",
+          "why": "Ocular animal eyeballs (white scleras, irises, black pupils) felt discordant and jarringly cartoonish on an esoteric fungal/cellular organism. Replacing them with authentic generative fruiting bodies, spore pods, glandular hydathodes, and cellular organelles deepens the cabinet's Victorian bio-luminescent botanical and mycological aesthetic while maintaining 100% causal determinism with the underlying LOLCODE score (ADR D-049).",
           "evidence": [
-            {"label": "Eye rendering function", "target": "src/app.mjs"},
-            {"label": "Eye variation batch test", "target": "tests/oracle.test.mjs"},
-            {"label": "Architecture Record D-006", "target": "docs/DECISIONS.md"}
+            {"label": "Cellular appendage renderers", "target": "src/app.mjs"},
+            {"label": "Deterministic score batch test", "target": "tests/oracle.test.mjs"},
+            {"label": "Static vitrine tests", "target": "tests/static.test.mjs"},
+            {"label": "Architecture Record D-049", "target": "docs/DECISIONS.md"}
           ],
           "related": ["silhouette-flux", "interactive-vitrine", "score-boundary"]
         },
@@ -239,7 +241,7 @@
             "lead": "Pointer events (`pointerdown`, `pointermove`, `pointerup`) feed an active session state `interaction`:",
             "points": [
               "Tapping triggers synthesized multi-partial glass strike plucks and expands shockwave ripples on the vitrine.",
-              "Rapid repeated tapping escalates organism agitation: pupils narrow into glaring slits, perimeter contours bristle with jitter, and filter resonance sharpens.",
+              "Rapid repeated tapping escalates organism agitation: appendages bristle and whip frantically, organelle cores flare with warning luminescence, perimeter contours jitter, and filter resonance sharpens.",
               "Crossing the irritation threshold triggers a retaliatory strike: the creature lunges forward against the glass, unleashing an explosive sub-bass cabinet boom, high-tension glass snap, bio-acoustic snarl, phosphorescent stress fractures, radial discharge flash, and vitrine shudder before retreating into defensive sulk recovery.",
               "Holding swells filter cutoff/resonance, dry/wet mix, echo feedback, and morphs the silhouette toward a secondary shape family.",
               "Dragging maps $(x, y)$ coordinates into polar $(r, \\theta)$ via `harmonicField()`, crossfading the creature's motif through a consonant $(\\cos\\alpha, \\sin\\alpha)$ harmonic phase shift and three-partial drone choir (`-12`, `-5`, `+7`).",
@@ -253,7 +255,7 @@
             {"label": "Architecture Record D-012", "target": "docs/DECISIONS.md"},
             {"label": "Architecture Record D-048", "target": "docs/DECISIONS.md"}
           ],
-          "related": ["silhouette-flux", "lookahead-scheduler", "anatomical-eyes"]
+          "related": ["silhouette-flux", "lookahead-scheduler", "cellular-appendages"]
         },
         {
           "id": "mycelial-fruiting-growth",

@@ -958,6 +958,40 @@ Investigation revealed two distinct factors:
 - Full accessibility and reduced-motion safety preserved.
 - Deterministic score boundary remains untouched.
 
+## D-049 Generative fungal appendages and cellular organelles replacing ocular anatomy (2026-10-22, status: accepted)
+
+**Context:** The central apparition in the bell jar vitrine previously possessed ocular eyes (scleras, irises, and pupils). The maintainer found that animal eyeballs looked weird and cartoonish on an otherwise esoteric cellular/fungal specimen, requesting their complete removal in favor of generative fruiting bodies, sporangia, cellular organelles, and botanical appendages leaning deeply into fungal and cellular motifs.
+
+**Decision:**
+1. **Elimination of Ocular Anatomy:**
+   - Removed all white eyeball scleras, animal irises, and pupils from the apparition rendering engine.
+2. **Generative Appendage Archetypes (`score.eyeShape` 0..7):**
+   - Replaced eye shapes with 8 botanical/cellular appendage archetypes rendered with Ernst Haeckel-style lithographic fine detail:
+     - 0 (*Sporangium Globule*): translucent spore capsule with curved pedicel stalk, annular chitin rings, equatorial dehiscence suture, and circulating micro-spores.
+     - 1 (*Ciliated Flagellum / Hyphal Tentacle*): sinuous segmented tactile tentacle with lateral fimbriae/cilia fringe and apical sensory organelle bulb.
+     - 2 (*Bioluminescent Vacuole / Cellular Nucleus*): nested double-lipid bilayer membranes with undulating osmotic wave, intermembrane protein bridges, and radiating chromatin threads.
+     - 3 (*Ascus Spore-Sac*): botanical ascomycete pod with scalariform transverse septa and a visible linear chain of 6 glowing spherical ascospores.
+     - 4 (*Stipitate Hydathode*): slender capillary glandular stalk bearing a suspended, glistening guttation nectar tear that trembles with vitrine taps.
+     - 5 (*Anastomosing Cirri*): branching mycorrhizal feeler tendrils with annular chitin nodes and curling circinate tips.
+     - 6 (*Pholiota Phosphor-Gland*): ribbed lantern organ with arching protective bracts emitting radial bio-luminescent light shafts.
+     - 7 (*Cellular Platelet / Sorus Rosette*): Ernst Haeckel radiolarian/diatom hexagonal platelet shield with concentric fenestrated sieve pores and central indusium.
+3. **Internal Organelle Cytoplasmic Structures (`score.irisStyle` 0..7):**
+   - Replaced eyeball irises with cellular textures: cytosol sol-gel cyclosis (0), concentric lipid bilayers (1), cytoskeletal microtubules (2), circulating mitochondrial granules (3), thylakoid lamellar crescent (4), endoplasmic reticulum (5), siliceous aster spicules (6), and chitinous corona sheath (7).
+4. **Germ Aperture & Nucleolus Kernels (`score.pupilShape` 0..7):**
+   - Replaced dark pupils with biological apertures: dense spheroid nucleolus (0), longitudinal dehiscence slit (1), transverse stomatal cleft (2), faceted rhomboid crystal (3), radiolarian aster star (4), cruciform spore tetrad (5), annular lumen torus (6), and trilete Y-scar germination suture (7).
+5. **Dynamic Vitrine & Interaction Integration:**
+   - *Thigmotropism / Phototropism:* Stalks and tendrils flex and orient toward pointer touch coordinates (`harmonicField`).
+   - *Vitrine Tap Vibration:* Appendages quiver rapidly and guttation droplets shiver, scattering micro-spores.
+   - *Agitation Escalation:* Appendages whip furiously at high frequency; organelle cores heat up with warning luminescence.
+   - *Retaliatory Strike:* Appendages surge forward with incandescent discharge flare (`hsl(45 100% 95%)`).
+   - *Sulk Recovery:* Appendages curl inward into a tight defensive huddle against the core, stalks retracting and dimming.
+6. **Determinism & Compatibility:**
+   - 100% causal compatibility with existing LOLCODE score schema (`score.eyes`, `score.eyeShape`, `score.irisStyle`, `score.pupilShape`, `score.eyeLayout`, `score.eyeSize`). Zero phrase summon hashes broken. Backwards-compatibility aliases (`drawEye`, `eyePlacement`, `traceEyeShape`, `tracePupil`) preserved.
+
+**Consequences:**
+- The organism gains an authentic, cohesive Victorian bio-luminescent botanical and mycological aesthetic.
+- Zero runtime dependencies and full determinism contract preserved.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

@@ -236,6 +236,26 @@ test("procedural mycelium and generative fruiting bodies grow within the vitrine
   assert.match(app, /triggerSporePuff/);
 });
 
+test("organism appendages render generative fungal fruiting bodies and cellular organelles without ocular sclera", async () => {
+  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  assert.match(app, /function drawCellularAppendage/);
+  assert.match(app, /function drawAppendageOrganelle/);
+  assert.match(app, /function traceAppendageSilhouette/);
+  assert.match(app, /function traceGermAperture/);
+  assert.match(app, /function appendagePlacement/);
+  assert.match(app, /const eyePlacement = appendagePlacement;/);
+  assert.match(app, /function drawEye/);
+  assert.match(app, /case 0:.*Sporangium Globule/);
+  assert.match(app, /case 1:.*Ciliated Flagellum/);
+  assert.match(app, /case 2:.*Bioluminescent Vacuole/);
+  assert.match(app, /case 3:.*Ascus Spore-Sac/);
+  assert.match(app, /case 4:.*Stipitate Hydathode/);
+  assert.match(app, /case 5:.*Anastomosing Cirri/);
+  assert.match(app, /case 6:.*Pholiota Phosphor-Gland/);
+  assert.match(app, /case 7:.*Cellular Platelet \/ Sorus Rosette/);
+  assert.match(app, /drawCellularAppendage\(ctx, score, eye, base, elapsed, colors\)/);
+});
+
 test("all five esoteric accompaniment plates and the parlor bandstand render 12-step matrices and schedule voices", async () => {
   const [html, styles, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),

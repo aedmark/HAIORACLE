@@ -4,23 +4,24 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-22, session 64, on `main`._
+_Last updated: 2026-10-22, session 65, on `main`._
 
 - P5-28/D-040: Fun Machine voices, each creature's own by default; D-042 freed accompaniments from creature filter.
 - P5-30/D-043/D-044: clashes cut, variations, VARIATION readout, AS WRITTEN, sessions v6, THE CREATURE'S OWN rulebook, and downbeat harmony moves.
 - P5-29 waves 1 & 2: six new chord qualities, twelve new Inform 7 genres, 19 genres in all.
 - D-045/D-046: armed downbeat sync, 1-loop count-in, tick metronome, interactive 12-step tracker ribbon with note sequencer & STEP REC, and downbeat anticipation latching.
 - D-047: expanded manifestation lexicon (83.8M permutations), specimen folio IDs, 16 curiosa classes, dynamic bell jars, and 72-slip urn treasury.
-- D-048: interactive vitrine tapping agitation, retaliatory kinetic strike ("fight back"), and defensive sulk recovery cooldown.
-- Next: maintainer testing of note sequencer and vitrine retaliation, or Wave 3 (feel) / P4-02.
+- D-048: interactive vitrine tapping agitation, retaliatory kinetic strike ("fight back"), ensemble audio disruption, and defensive sulk recovery cooldown.
+- D-049: replaced ocular eyeball anatomy (sclera, irises, pupils) with 8 generative fungal fruiting bodies, sporangia, cellular organelles, and botanical appendages responding to touch tension and vitrine dynamics.
+- Next: maintainer testing of note sequencer, vitrine retaliation, and cellular fruiting bodies, or Wave 3 (feel) / P4-02.
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-22, session 64, local Linux environment)
+**Verified** (2026-10-22, session 65, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **176/176 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **177/177 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -33,10 +34,10 @@ _Last updated: 2026-10-22, session 64, on `main`._
 - Canvas and Web Audio share the same immutable score (P2-02, D-004).
 - Audio loops continuously until mute, restart, replacement, or page close (D-005).
 - The expanded grammar covers twelve-note phrases, eight scales, six rhythms and voices, ten shapes, broader size and color ranges, and six name templates (P5-01, D-005).
-- Eye silhouette, iris treatment and color, pupil shape, layout, size, and gaze vary deterministically (P5-02, D-006).
+- Cellular appendages and fruiting bodies (sporangia, flagella, vacuoles, ascus spore-sacs, hydathodes, cirri, phosphor-glands, platelet rosettes), internal organelle textures, germ apertures, layouts, and sizes vary deterministically without ocular animal sclera (P5-02, D-006, D-049).
 - Body boundaries continuously deform through eight clamped flux grammars while eight seed-selected kinetic systems move independently inside them (P5-03, D-007).
 - Canvas geometry does not resize on audio beats; sound and image remain paired through their shared immutable score (D-008).
-- The large exterior glow is isolated to the body fill; kinetic lines, rings, and eyes no longer inherit its expensive per-primitive blur.
+- The large exterior glow is isolated to the body fill; kinetic lines, rings, and cellular appendages no longer inherit its expensive per-primitive blur.
 - Master volume adjusts the active loop smoothly from silence through a compressor-protected boost, and the live tempo slider (`#tempo-bpm`, `36..208` BPM) paces all six esoteric instruments in real time while defaulting to `score.pulse` on summon (P5-04, D-009).
 - Every phrase selects and rotates one of twelve named twelve-note motifs, including five arpeggio and three chromatic families, then repeats it exactly (P5-05, D-010).
 - The responsive page shell uses an engraved book-serif and telegraph-monospace stack, foxed parchment and tarnished brass parlor framing, inline SVG sigil and spandrel linework, and a centered bell-jar apparition vitrine without remote or proprietary assets (P5-06, D-011).

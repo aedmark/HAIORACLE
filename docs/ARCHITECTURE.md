@@ -69,7 +69,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 | --- | --- | --- | --- |
 | `INPUT_SEED` | `hashPhrase()` | `src/oracle.lol` | unsigned 32-bit integer |
 | LOLCODE output | `runLolcode()` | `parseScore()` | one known `key=integer` per line; all required keys exactly once |
-| Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with twelve note choices plus musical, beat-cadence, bass-groove, harmony-organ, chime-carillon, chant-choir, body, eye-anatomy, palette, bounded-flux, kinetic-core, and naming grammar indices |
+| Score object | `composeScore()` | `src/app.mjs` | frozen, range-checked object with twelve note choices plus musical, beat-cadence, bass-groove, harmony-organ, chime-carillon, chant-choir, body, cellular-appendage, palette, bounded-flux, kinetic-core, and naming grammar indices |
 | Malbolge beat | `composeBeat()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-step ternary sequence (`kick`, `snare`, `hat` in `0..2`, `trits`) produced by executing `src/beat.mal` on a 59,049-word ternary tape |
 | Brainfuck bass | `composeBass()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-cell bass sequence (`cell`, `gate`, `interval`, `register`, `slide`, `accent`, `label`) produced by executing `src/bass.bf` on a 256-cell byte tape |
 | Befunge harmony | `composeHarmony()` | `src/conductor.mjs`, `src/app.mjs` | frozen 12-step polyphonic organ sequence (`raw`, `gate`, `mirror`, `chord`, `degreeIndex`, `strumMs`, `label`) produced by executing `src/harmony.bfg` on an 80×25 2D torus |
@@ -116,7 +116,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 - Master volume changes only the post-compressor output gain and never changes the deterministic creature score. Enforced structurally in `tests/static.test.mjs` (D-009).
 - Vitrine tap, hold, and drag gestures modulate transient visual morphing, pitch, intensity, and synthesized percussion and decay smoothly back to the immutable score on release. Enforced structurally in `tests/static.test.mjs` (D-012).
 - Every melody family resolves to exactly twelve deterministic semitone offsets and the transport repeats them modulo twelve. Enforced by exact arpeggio and chromatic tests (D-010).
-- Eye silhouette, layout, size, gaze, iris, and pupil all originate in the validated spell output. Enforced by required score fields and the batch diversity test (D-006).
+- Cellular appendages, fruiting body archetype, internal organelle texture, germ aperture, layout, and size all originate in the validated spell output. Enforced by required score fields and the batch diversity test (D-006, D-049).
 - Every silhouette stays within a radius envelope of `0.38..1.08`, and every kinetic core is clipped to the current deforming body path. Enforced structurally in `tests/static.test.mjs` (D-007).
 - Kinetic family, speed, depth, tilt, and boundary-flux family originate in validated spell output. Enforced by required ranges and the 256-phrase coverage test (D-007).
 - Mycelial branching density, fruiting body archetype, and ballistospore emission originate in validated spell output (`fungal_form`, `fungal_hyphae`, `fungal_spores`, `fungal_bloom`). Enforced by required ranges and the phrase batch test (D-017).
