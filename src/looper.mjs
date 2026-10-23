@@ -62,6 +62,10 @@ export function canAppendLoop(song) {
   return song.loops.length < MAX_LOOPS && songPasses(song) < MAX_SONG_PASSES;
 }
 
+export function canInsertLoops(song, count = 1) {
+  return (song.loops.length + count) <= MAX_LOOPS && (songPasses(song) + count) <= MAX_SONG_PASSES;
+}
+
 export function canOverdub(song, loopIndex) {
   const loop = song.loops[loopIndex];
   return Boolean(loop) && loop.layers.length < MAX_LAYERS;
@@ -74,6 +78,38 @@ export function canOverdub(song, loopIndex) {
 export function appendLoop(song, take, role) {
   if (isEmptyTake(take) || !canAppendLoop(song)) return song;
   return freezeSong([...song.loops, freezeLoop(1, [Object.freeze([...take])], role)]);
+}
+
+/** Inserts a multi-loop section (e.g. 4-bar Intro, Bridge, or Outro) at the target index. */
+export function insertSection(song, role, takes, atIndex = null) {
+  if (!Array.isArray(takes) || takes.length === 0 || !canInsertLoops(song, takes.length)) return song;
+  if (role !== undefined && !LOOP_ROLES.includes(role)) return song;
+  const newLoops = takes.map((take) => freezeLoop(1, [Object.freeze([...take])], role));
+  const targetIndex = atIndex === null ? song.loops.length : Math.max(0, Math.min(song.loops.length, atIndex));
+  const loops = [...song.loops];
+  loops.splice(targetIndex, 0, ...newLoops);
+  return freezeSong(loops);
+}
+
+/**
+ * Calculates which pass (0..3) of a 4-pass section (Intro, Bridge, Outro)
+ * a loop/repeat belongs to, based on preceding contiguous loops of the same role.
+ */
+export function sectionPassForLoop(song, loopIndex, repeat = 0) {
+  if (!song || !Array.isArray(song.loops) || loopIndex === null || loopIndex === undefined) return null;
+  const loop = song.loops[loopIndex];
+  if (!loop || !loop.role || loop.role === "main") return null;
+  const role = loop.role;
+  let sectionPassCount = 0;
+  let startIdx = loopIndex;
+  while (startIdx > 0 && song.loops[startIdx - 1]?.role === role) {
+    startIdx -= 1;
+  }
+  for (let i = startIdx; i < loopIndex; i += 1) {
+    sectionPassCount += song.loops[i].repeats;
+  }
+  sectionPassCount += repeat;
+  return sectionPassCount % 4;
 }
 
 export function overdubLayer(song, loopIndex, take) {

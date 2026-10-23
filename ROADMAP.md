@@ -112,6 +112,7 @@ Goal: expand only where additional complexity creates more play.
   - Over 200 creatures: 103 distinct progressions, every chord tone in the creature's scale, clashes at most 6%. Sessions accept `"creature"`.
   - At the maintainer's choice (2026-10-21), a fresh creature now opens in THE CREATURE'S OWN.
   Acceptance: distinct progressions across phrases in every fettered genre, the clash ceilings hold, as-written output is unchanged, and the maintainer's listen.
+- [ ] P5-31 Live capture of live play converted to loop sequencing. Origin: maintainer request, 2026-10-23. Enable real-time live capture of manual play and multi-pass Casio section performances directly converted into sequenced, chained loops in the Loop Machine.
 
 ## Phase 6: Release
 

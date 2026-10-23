@@ -81,6 +81,25 @@ test("intro, bridge, and outro section progressions generate from the active rul
   assert.equal(gospelOutro.chords[0].rootPc, 0, "I");
   assert.equal(gospelOutro.chords[1].rootPc, 5, "IV");
   assert.equal(gospelOutro.chords[3].rootPc, 0, "I (Amen)");
+
+  // 4-pass breathing section expansion (48 steps: 12 steps per chord)
+  const introPass0 = buildPerformance(0, "intro", "smoky_jazz", 0, { pass: 0 });
+  assert.equal(introPass0.regionSteps, 12, "chords breathe for a full 12-step bar each");
+  assert.equal(introPass0.steps[0].chord, introPass0.chords[0]);
+  assert.equal(introPass0.steps[0].isRegionStart, true);
+  assert.equal(introPass0.steps[1].isRegionStart, false);
+  assert.equal(introPass0.steps[6].isRegionStart, false);
+
+  const introPass3 = buildPerformance(0, "intro", "smoky_jazz", 0, { pass: 3 });
+  assert.equal(introPass3.steps[0].chord, introPass3.chords[3]);
+  assert.equal(introPass3.steps[10].leadPitch, null, "step 10 rests before downbeat");
+  assert.equal(introPass3.steps[11].leadPitch, null, "step 11 rests before downbeat");
+
+  const outroPass3 = buildPerformance(0, "outro", "andalusian_flamenco", 0, { pass: 3 });
+  assert.equal(outroPass3.steps[0].chord.rootPc, 0, "step 0 resolves to home tonic");
+  assert.equal(outroPass3.steps[0].leadSteps, 12, "resolved home tonic holds for all 12 steps");
+  assert.equal(outroPass3.steps[1].leadPitch, null, "steps 1..11 sustained from step 0");
+  assert.equal(outroPass3.steps[11].leadPitch, null);
 });
 
 test("pad voicings keep the root low, upper voices in range, and no doubled notes", () => {

@@ -13,18 +13,21 @@ import {
   SongError,
   appendLoop,
   canAppendLoop,
+  canInsertLoops,
   canOverdub,
   clampSelection,
   deleteLoop,
   emptySong,
   emptyTake,
   idleRecorder,
+  insertSection,
   isEmptyTake,
   leadSlotAt,
   makeSlot,
   moveLoop,
   overdubLayer,
   recorderReduce,
+  sectionPassForLoop,
   setLoopRole,
   setLoopSlot,
   setRepeats,
@@ -386,6 +389,59 @@ test("section loop slots (intro, bridge, outro) enforce manual key bounds 0..12"
   const validated = validateSong(JSON.parse(JSON.stringify(song)));
   assert.deepEqual(validated, song);
 });
+
+test("canInsertLoops, insertSection, and sectionPassForLoop support 48-step sections", () => {
+  let song = emptySong();
+  assert.equal(canInsertLoops(song, 4), true);
+  assert.equal(canInsertLoops(song, 17), false);
+
+  const introSlot = makeSlot(0, "intro");
+  const introTakes = Array.from({ length: 4 }, () => Array(LOOP_STEPS).fill(introSlot));
+
+  // Insert 4-bar Intro at the start
+  song = insertSection(song, "intro", introTakes, 0);
+  assert.equal(song.loops.length, 4);
+  assert.equal(song.loops[0].role, "intro");
+  assert.equal(song.loops[3].role, "intro");
+  assert.equal(sectionPassForLoop(song, 0), 0, "Intro pass 0 (Part 1/4)");
+  assert.equal(sectionPassForLoop(song, 1), 1, "Intro pass 1 (Part 2/4)");
+  assert.equal(sectionPassForLoop(song, 2), 2, "Intro pass 2 (Part 3/4)");
+  assert.equal(sectionPassForLoop(song, 3), 3, "Intro pass 3 (Part 4/4)");
+
+  // Append a main loop
+  const mainTake = take(2, [0]);
+  song = appendLoop(song, mainTake, "main");
+  assert.equal(song.loops.length, 5);
+  assert.equal(song.loops[4].role, "main");
+  assert.equal(sectionPassForLoop(song, 4), null, "main loop has no section pass");
+
+  // Insert 4-bar Bridge after the main loop (at index 5)
+  const bridgeSlot = makeSlot(5, "bridge");
+  const bridgeTakes = Array.from({ length: 4 }, () => Array(LOOP_STEPS).fill(bridgeSlot));
+  song = insertSection(song, "bridge", bridgeTakes, 5);
+  assert.equal(song.loops.length, 9);
+  assert.equal(song.loops[5].role, "bridge");
+  assert.equal(song.loops[8].role, "bridge");
+  assert.equal(sectionPassForLoop(song, 5), 0, "Bridge pass 0 (Part 1/4)");
+  assert.equal(sectionPassForLoop(song, 6), 1, "Bridge pass 1 (Part 2/4)");
+  assert.equal(sectionPassForLoop(song, 7), 2, "Bridge pass 2 (Part 3/4)");
+  assert.equal(sectionPassForLoop(song, 8), 3, "Bridge pass 3 (Part 4/4)");
+
+  // Append 4-bar Outro at the end
+  const outroSlot = makeSlot(0, "outro");
+  const outroTakes = Array.from({ length: 4 }, () => Array(LOOP_STEPS).fill(outroSlot));
+  song = insertSection(song, "outro", outroTakes);
+  assert.equal(song.loops.length, 13);
+  assert.equal(song.loops[9].role, "outro");
+  assert.equal(song.loops[12].role, "outro");
+  assert.equal(sectionPassForLoop(song, 9), 0, "Outro pass 0 (Part 1/4)");
+  assert.equal(sectionPassForLoop(song, 12), 3, "Outro pass 3 (Part 4/4)");
+
+  // Validates completely and round-trips
+  const roundTripped = validateSong(JSON.parse(JSON.stringify(song)));
+  assert.deepEqual(roundTripped, song);
+});
+
 
 
 

@@ -708,3 +708,39 @@ test("Audit Dimension 9: Metric closure, tempo pocketing, and harmonic clash eli
   }
 });
 
+test("Audit Dimension 10: Race conditions, audio param ramps, and acoustic conflict audit", async () => {
+  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+
+  // 1. Looper real-time take preservation (no dropped steps during look-ahead boundary)
+  assert.match(app, /currentTransport\.activeTakeLanding = \{/, "records pending take landing state when lookahead finishes step 11");
+  assert.match(app, /if \(currentTransport\?\.activeTakeLanding\) \{/, "allows user live strikes during audible step 11 to update landed take");
+  assert.match(app, /if \(transport\.activeTakeLanding && currentStep % 12 === 11\)/, "cleans up activeTakeLanding when audible step 11 completes");
+
+  // 2. Timeout tracking and transport isolation
+  assert.match(app, /timeouts:\s*new Set\(\)/, "transport tracks its active timeouts");
+  assert.match(app, /for \(const tid of transport\.timeouts\) window\.clearTimeout\(tid\);/, "stopCurrentSound cleans all pending timeouts");
+  assert.match(app, /casioOutroEnding = false;\s*runTransportCommand\("stop"\);/, "outro checks currentTransport !== transport before stopping");
+
+  // 3. AudioParam automation ramp protection (60 FPS setTargetAtTime does not stomp on retaliation ramps)
+  assert.match(app, /const isRetaliating = nowMs < \(interaction\.retaliateUntil \|\| 0\);/, "detects active retaliation automation");
+  assert.match(app, /if \(!isRetaliating\) \{\s*transport\.mix\.gain\.setTargetAtTime/, "guards mix and feedback gains against collision with retaliation ramps");
+
+  // 4. Harmonic clock cycling on 1-loop songs
+  assert.match(app, /const cycle = Math\.max\(passes \|\| 0, HARMONIC_PASSES\);/, "harmonic pass cycles across 4 passes even on 1-loop songs");
+
+  // 5. Voice stack consonance (unconducted parallel 5ths eliminated)
+  assert.doesNotMatch(app, /interval:\s*7/, "voice stacks do not contain raw unconducted parallel fifths");
+
+  // 6. Clockwork body knock pitch transient (no static out-of-tune sine beep)
+  assert.match(app, /bodyOsc\.frequency\.exponentialRampToValueAtTime\(55,/, "clockwork wood body knock has exponential downward pitch transient");
+  assert.doesNotMatch(app, /bodyOsc\.frequency\.setValueAtTime\(isHighTick \? 520 : 340, at\);/, "clockwork wood body knock is not a static 520/340 Hz sine tone");
+
+  // 7. Mycelium bio-acoustic filter shaping (Form 4 and 7 bandpass resonance)
+  assert.ok(FUNGAL_SOUNDS[4].spikes.band !== null, "Cup Peziza has bandpass acoustic filtering");
+  assert.ok(FUNGAL_SOUNDS[7].spikes.band !== null, "Hyphal Hydra has bandpass acoustic filtering");
+
+  // 8. Drone retuning on non-quarter chord changes (Progression mode steps 4 & 8)
+  assert.match(app, /const isChordChange = chord !== prevChord;/, "drones detect dynamic chord transitions");
+  assert.match(app, /if \(!isChordChange && !isQuarter\) return;/, "drones retune on chord change even if not on quarter beat");
+});
+

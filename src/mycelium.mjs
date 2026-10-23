@@ -45,7 +45,7 @@ export const FUNGAL_SOUNDS = Object.freeze([
   // CUP PEZIZA: a hollow cup: upward bloops like a bottle filling, a ringing
   // drop, and hollow, resonant puffs.
   Object.freeze({
-    spikes: voice("x.....x..x..", { wave: "sine", freq: 300, to: 3, band: null, decay: 0.12, spacing: 0.1, count: [1, 2], peak: 0.06 }),
+    spikes: voice("x.....x..x..", { wave: "sine", freq: 300, to: 1.6, band: [650, 3.5], decay: 0.12, spacing: 0.1, count: [1, 2], peak: 0.05 }),
     drops: voice("...x........", { wave: "triangle", freq: 1200, to: 0.5, decay: 0.12, peak: 0.04 }),
     puffs: voice(".x...x...x..", { band: [450, 6], decay: 0.07, peak: 0.06 }),
   }),
@@ -66,7 +66,7 @@ export const FUNGAL_SOUNDS = Object.freeze([
   // HYPHAL HYDRA: many heads calling: upward chirps in climbing trains, a
   // falling drop, and scattered puffs.
   Object.freeze({
-    spikes: voice("x..x.x..x.x.", { wave: "sine", freq: 1500, to: 2.3, step: 260, band: null, decay: 0.05, spacing: 0.045, count: [2, 5], peak: 0.03 }),
+    spikes: voice("x..x.x..x.x.", { wave: "sine", freq: 1500, to: 1.4, step: 260, band: [2200, 3.5], decay: 0.05, spacing: 0.045, count: [2, 5], peak: 0.03 }),
     drops: voice(".x.....x....", { wave: "sine", freq: 2000, to: 0.4, decay: 0.09, peak: 0.035 }),
     puffs: voice("....x....x..", { band: [1800, 3], decay: 0.05, peak: 0.03 }),
   }),

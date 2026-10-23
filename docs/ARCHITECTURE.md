@@ -8,7 +8,7 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 
 | Area | Where | Entry point | Talks to |
 | --- | --- | --- | --- |
-| Page shell | `index.html`, `styles.css`: vitrine and calling slip, read-only reading strip, then the Perform, Mix, Keep, and Band wings (D-027) | document load | browser host |
+| Page shell | `index.html`, `styles.css`: vitrine and calling slip, read-only reading strip, then the Perform, Mix, Band, and Keep wings (D-027) | document load | browser host |
 | Browser host | `src/app.mjs` | form submission | score compiler, Canvas, Web Audio, share/PNG export |
 | Phrase and score boundary | `src/score.mjs` | `composeScore()` | interpreter |
 | Share and PNG boundary | `src/share.mjs` | `encodeOmenHash()`, `decodeOmenHash()`, `specimenFilenameFor()` | browser URL fragment and PNG download |
@@ -106,7 +106,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 - Unsupported LOLCODE syntax fails with a line number. Enforced by the interpreter and its negative test.
 - Rendering and sound share one immutable score. Enforced by the `showScore()` and `playScore()` call path.
 - Only one audio transport loops at a time. Enforced by `stopCurrentSound()` before every start.
-- The reading strip holds no controls, and the workstation wings appear in the order Perform → Mix → Keep → Band, so document order, heading outline, and keyboard focus agree. Enforced by `tests/static.test.mjs` and D-027.
+- The reading strip holds no controls, and the workstation wings appear in the order Perform → Mix → Band → Keep, so document order, heading outline, and keyboard focus agree. Enforced by `tests/static.test.mjs` and D-027.
 - Live playback and WAV export build the same node topology. Enforced by `tests/transport.test.mjs` and D-023.
 - Every ensemble bus passes through its own mixer strip (voicing trim → fader → pan), and the console opens at unity faders, centered, with default balance set only by `CHANNEL_VOICING_DB`. Enforced by `tests/transport.test.mjs`, `tests/mixer.test.mjs`, and D-024.
 - A plate's ENGAGE/SILENCE switch and its mixer mute are the same state. Enforced by `tests/static.test.mjs` and D-024.

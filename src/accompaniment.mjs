@@ -107,6 +107,65 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
       summary: moves.length ? shown.join(" → ") : summary, variation: Object.freeze([...moves]),
     });
   }
+
+  // Section loops (intro, bridge, outro) breathe across 4 passes (48 steps):
+  // 1 pass (12 steps) per chord with spacious 4-step lead phrasing, pickup notes,
+  // breathing rests, and natural cadential resolution into adjoining loops.
+  if (pass !== null && (style === "intro" || style === "bridge" || style === "outro")) {
+    const sectionPass = ((Math.trunc(pass) % 4) + 4) % 4;
+    const chord = chords[sectionPass];
+    const regionIndex = sectionPass;
+    const baseNoteIdx = sectionPass * 3;
+
+    const steps = Array.from({ length: 12 }, (_, index) => {
+      const isRegionStart = index === 0;
+      let leadPitch = null;
+      let leadSteps = 4;
+
+      if (style === "outro" && sectionPass === 3) {
+        // Final outro pass: resolve to home tonic on step 0 and ring out across the bar
+        if (index === 0) {
+          leadPitch = leadPitches[9] ?? (position - key);
+          leadSteps = 12;
+        }
+      } else if ((style === "intro" || style === "bridge") && sectionPass === 3) {
+        // Final turnaround pass: steps 0 and 4 play turnaround motifs; step 8 plays the
+        // pickup leading-tone into the downbeat; steps 10 & 11 rest as a breath before
+        // the adjoining loop drops on the downbeat.
+        if (index === 0) {
+          leadPitch = leadPitches[baseNoteIdx];
+        } else if (index === 4) {
+          leadPitch = leadPitches[baseNoteIdx + 1];
+        } else if (index === 8) {
+          leadPitch = leadPitches[baseNoteIdx + 2];
+          leadSteps = 2; // holds steps 8..9, leaving steps 10 & 11 to rest
+        }
+      } else {
+        // Standard pass: 3 notes spaced evenly on steps 0, 4, 8 (4 steps each)
+        if (index === 0) leadPitch = leadPitches[baseNoteIdx];
+        else if (index === 4) leadPitch = leadPitches[baseNoteIdx + 1];
+        else if (index === 8) leadPitch = leadPitches[baseNoteIdx + 2];
+      }
+
+      return Object.freeze({
+        chord,
+        regionIndex,
+        isRegionStart,
+        leadPitch,
+        leadSteps,
+      });
+    });
+
+    return Object.freeze({
+      style,
+      key,
+      lift,
+      chords: Object.freeze([...chords]),
+      steps: Object.freeze(steps),
+      summary: `${summary} (Part ${sectionPass + 1}/4)`,
+      regionSteps: 12,
+    });
+  }
   const steps = Array.from({ length: 12 }, (_, index) => {
     const regionIndex = Math.floor(index / 3);
     return Object.freeze({

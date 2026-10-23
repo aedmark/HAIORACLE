@@ -106,17 +106,20 @@ import {
   MAX_SONG_PASSES,
   appendLoop,
   canAppendLoop,
+  canInsertLoops,
   canOverdub,
   clampSelection,
   deleteLoop,
   emptySong,
   idleRecorder,
+  insertSection,
   isEmptyTake,
   leadSlotAt,
   makeSlot,
   moveLoop,
   overdubLayer,
   recorderReduce,
+  sectionPassForLoop,
   setLoopRole,
   setLoopSlot,
   setRepeats,
@@ -2875,10 +2878,15 @@ function updateAudioInteraction() {
   const baseFeedback = 0.14 + score.bloom / 650;
   const targetFeedback = Math.min(0.68, baseFeedback + field.radius * 0.14 + ((interaction.agitation || 0) * 0.24));
 
+  const nowMs = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+  const isRetaliating = nowMs < (interaction.retaliateUntil || 0);
+
   transport.filter.frequency.setTargetAtTime(targetCutoff, now, 0.045);
   transport.filter.Q.setTargetAtTime(targetQ, now, 0.045);
-  transport.mix.gain.setTargetAtTime(targetMix, now, 0.045);
-  transport.feedback.gain.setTargetAtTime(targetFeedback, now, 0.05);
+  if (!isRetaliating) {
+    transport.mix.gain.setTargetAtTime(targetMix, now, 0.045);
+    transport.feedback.gain.setTargetAtTime(targetFeedback, now, 0.05);
+  }
 
   if (transport.panner) {
     const targetPan = Math.max(-0.85, Math.min(0.85, interaction.smoothX * 0.88));
@@ -2895,7 +2903,6 @@ function updateAudioInteraction() {
   const fifthWeight = (0.035 + field.radius * 0.065 * (0.5 - 0.5 * Math.cos(field.angle * 2))) * (1 - ((interaction.sulk || 0) * 0.4));
   const shimmerWeight = (field.radius * 0.058 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5))) * (1 - ((interaction.sulk || 0) * 0.5));
   // The tonic drones step back with the lead while the band follows a held key.
-  const nowMs = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
   const isKeyTransition = (nowMs - lastFunKeyReleaseTime) < 220;
   const leadDuck = activeHeldFunKey !== null || isKeyTransition || currentTransport?.songLeading || scheduledCasio !== null || audibleCasioSection !== null ? LEAD_DUCK_GAIN : 1;
   const targetDroneGains = [subWeight * leadDuck, fifthWeight * leadDuck, shimmerWeight * leadDuck];
@@ -3108,6 +3115,10 @@ function stopCurrentSound() {
   const transport = currentTransport;
   currentTransport = null;
   window.clearInterval(transport.timer);
+  if (transport.timeouts) {
+    for (const tid of transport.timeouts) window.clearTimeout(tid);
+    transport.timeouts.clear();
+  }
   const now = audioContext.currentTime;
   transport.mix.gain.cancelScheduledValues(now);
   transport.mix.gain.setTargetAtTime(0.0001, now, 0.035);
@@ -3128,10 +3139,10 @@ function voiceStack(score, step) {
   const stacks = [
     [{ interval: 0, detune: 0, gain: 1 }],
     [{ interval: 0, detune: -5, gain: 0.72 }, { interval: 0, detune: 7, gain: 0.48 }],
-    [{ interval: 0, detune: 0, gain: 0.78 }, { interval: 7, detune: -3, gain: 0.34 }],
+    [{ interval: 0, detune: 0, gain: 0.78 }, { interval: -12, detune: -3, gain: 0.32 }],
     [{ interval: 0, detune: 0, gain: 0.76 }, { interval: -12, detune: 4, gain: 0.3 }],
     [{ interval: 0, detune: -9, gain: 0.6 }, { interval: 12, detune: 9, gain: 0.28 }],
-    [{ interval: 0, detune: 0, gain: 0.64 }, { interval: 7, detune: 2, gain: 0.26 }, { interval: 12, detune: -2, gain: 0.2 }],
+    [{ interval: 0, detune: 0, gain: 0.64 }, { interval: -12, detune: -3, gain: 0.24 }, { interval: 12, detune: 3, gain: 0.22 }],
   ];
   const selected = stacks[score.voice];
   return step % 6 === 5 && score.voice < 4
@@ -3420,15 +3431,17 @@ function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55
     const bodyOsc = context.createOscillator();
     const bodyGain = context.createGain();
     bodyOsc.type = "sine";
-    bodyOsc.frequency.setValueAtTime(isHighTick ? 520 : 340, at);
+    const bodyStartFreq = isHighTick ? 240 : 180;
+    bodyOsc.frequency.setValueAtTime(bodyStartFreq, at);
+    bodyOsc.frequency.exponentialRampToValueAtTime(55, at + 0.024);
 
     const bodyAmp = (isHighTick ? 0.30 : 0.32) * effLevel;
     bodyGain.gain.setValueAtTime(bodyAmp, at);
-    bodyGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.07);
+    bodyGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.028);
 
     bodyOsc.connect(bodyGain).connect(destination);
     bodyOsc.start(at);
-    bodyOsc.stop(at + 0.075);
+    bodyOsc.stop(at + 0.032);
   } else {
     // Intervening mechanical brass gear ratchet tick
     const ratchetOsc = context.createOscillator();
@@ -4505,7 +4518,13 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   activeFunPerformance = performance;
   unlockDrawer("held-key");
 
-  if (recorder.mode === "recording" && currentTransport) {
+  if (currentTransport?.activeTakeLanding) {
+    const audible = ((currentTransport.audibleStep % 12) + 12) % 12;
+    const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId);
+    const { loopIndex, layerIndex } = currentTransport.activeTakeLanding;
+    song = setLoopSlot(song, loopIndex, layerIndex, audible, liveSlot);
+    renderLooper();
+  } else if (recorder.mode === "recording" && currentTransport) {
     const audible = ((currentTransport.audibleStep % 12) + 12) % 12;
     // Downbeat anticipation grace: if audible step is 11 and take[0] is still empty, latch onto step 0
     const curStep = (audible === 11 && recorder.take && recorder.take[0] === null) ? 0 : audible;
@@ -4690,9 +4709,15 @@ function playSongLayers(context, transport, score, absoluteStep, loop, timing) {
 // and settle; they fade out while the arrangement rests the lead. They used
 // to hold one note at one level for the whole loop (the "stuck note").
 function shapeDrones(transport, score, absoluteStep, at) {
-  if (!transport.droneEnvelopes || absoluteStep % 3 !== 0) return;
+  if (!transport.droneEnvelopes) return;
   const stepIndex = absoluteStep % 12;
+  const prevStepIndex = (stepIndex + 11) % 12;
   const chord = currentConductedSpine?.[stepIndex];
+  const prevChord = currentConductedSpine?.[prevStepIndex];
+  const isChordChange = chord !== prevChord;
+  const isQuarter = absoluteStep % 3 === 0;
+  if (!isChordChange && !isQuarter) return;
+
   const chordRoot = chord && chord.quality !== "raw" ? chord.root : 0;
   const frequencies = droneFrequencies(score, chordRoot);
   transport.drones.forEach((drone, index) => drone.frequency.setTargetAtTime(frequencies[index], at, 0.06));
@@ -4796,6 +4821,8 @@ async function playScore(score, { cursor = 0 } = {}) {
     ...graph,
     melody: currentConductedMelody || melodyFor(score),
     timer: 0,
+    timeouts: new Set(),
+    activeTakeLanding: null,
     nextNoteTime: now,
     step: cursor,
     // Last step that actually sounded; pause resumes after it, not after the
@@ -4829,20 +4856,37 @@ async function playScore(score, { cursor = 0 } = {}) {
       transport.songPosition = position;
       // The harmony moves on at the loop's downbeat (D-044).
       if (stepIndex === 0) enterHarmonicPass(transport, harmonicPassAt(currentStep));
+      const CASIO_SECTION_PASSES = 4;
       if (stepIndex === 0 && pendingCasioSection !== null) {
         scheduledCasio = {
           role: pendingCasioSection.role,
           key: pendingCasioSection.key,
-          pass: stepPass,
-          performance: buildPerformance(pendingCasioSection.key, pendingCasioSection.role, activeGenre, currentScore ? currentScore.root : 0),
+          startPass: stepPass,
+          passes: CASIO_SECTION_PASSES,
+          performance: null,
         };
         pendingCasioSection = null;
       }
-      const isCasioStep = scheduledCasio !== null && stepPass === scheduledCasio.pass;
-      if (scheduledCasio !== null && stepPass > scheduledCasio.pass) {
+      const casioSectionPass = scheduledCasio !== null ? stepPass - scheduledCasio.startPass : -1;
+      const isCasioStep = scheduledCasio !== null && casioSectionPass >= 0 && casioSectionPass < scheduledCasio.passes;
+      if (scheduledCasio !== null && casioSectionPass >= scheduledCasio.passes) {
         scheduledCasio = null;
       }
-      if (isCasioStep && scheduledCasio.role === "outro" && stepIndex === 11) {
+      if (stepIndex === 0 && isCasioStep) {
+        scheduledCasio.performance = buildPerformance(
+          scheduledCasio.key,
+          scheduledCasio.role,
+          activeGenre,
+          currentScore ? currentScore.root : 0,
+          { pass: casioSectionPass }
+        );
+      }
+      const isLastCasioStep = isCasioStep && casioSectionPass === (scheduledCasio.passes - 1) && stepIndex === 11;
+      const isLastSongOutroStep = !isCasioStep && position && position.role === "outro"
+        && position.loopIndex === (song.loops.length - 1)
+        && (position.repeat === (loop?.repeats ?? 1) - 1)
+        && stepIndex === 11;
+      if ((isLastCasioStep && scheduledCasio.role === "outro") || isLastSongOutroStep) {
         casioOutroEnding = true;
       }
 
@@ -4878,9 +4922,11 @@ async function playScore(score, { cursor = 0 } = {}) {
       const stepCasioRole = isCasioStep ? scheduledCasio.role : null;
       const stepCasioKey = isCasioStep ? scheduledCasio.key : null;
       const stepCasioPerf = isCasioStep ? scheduledCasio.performance : null;
-      const stepIsLast = isCasioStep && stepIndex === 11;
+      const stepIsLast = isLastCasioStep;
+      const stepIsLastSongOutro = isLastSongOutroStep;
 
-      window.setTimeout(() => {
+      const stepTimerId = window.setTimeout(() => {
+        transport.timeouts?.delete(stepTimerId);
         if (currentTransport !== transport) return;
         transport.audibleStep = currentStep;
         heardHarmony = scheduledHarmony;
@@ -4892,32 +4938,46 @@ async function playScore(score, { cursor = 0 } = {}) {
           transport.audiblePosition = songPosition(song, currentStep);
           updateCasioUI();
         }
-        if (stepIsLast && stepCasioRole !== null) {
+        if ((stepIsLast && stepCasioRole !== null) || stepIsLastSongOutro) {
           audibleCasioSection = null;
           audibleCasioPerformance = null;
-          if (stepCasioRole === "outro") {
-            window.setTimeout(() => {
+          if (stepCasioRole === "outro" || stepIsLastSongOutro) {
+            const outroTimerId = window.setTimeout(() => {
+              transport.timeouts?.delete(outroTimerId);
+              if (currentTransport !== transport) return;
               casioOutroEnding = false;
               runTransportCommand("stop");
               updateCasioUI();
               announceLooper("OUTRO COMPLETE · OMEN RESTS");
             }, Math.round(stepDuration * 1000));
+            transport.timeouts?.add(outroTimerId);
           } else {
-            window.setTimeout(() => {
+            const sectionTimerId = window.setTimeout(() => {
+              transport.timeouts?.delete(sectionTimerId);
+              if (currentTransport !== transport) return;
               updateCasioUI();
               if (activeHeldFunKey === null) applyEnsembleConductor();
               announceLooper(`CASIO ${stepCasioRole.toUpperCase()} COMPLETE · RETURNED TO GROOVE`);
             }, Math.round(stepDuration * 1000));
+            transport.timeouts?.add(sectionTimerId);
           }
         }
-        if (recorder.mode === "recording" && activeHeldFunKey !== null && activeFunPerformance) {
+        if (transport.activeTakeLanding && activeHeldFunKey !== null && activeFunPerformance) {
+          const heldSlot = makeSlot(activeHeldFunKey, funMachineStyle, funVoiceId);
+          const { loopIndex, layerIndex } = transport.activeTakeLanding;
+          song = setLoopSlot(song, loopIndex, layerIndex, currentStep % 12, heldSlot);
+        } else if (recorder.mode === "recording" && activeHeldFunKey !== null && activeFunPerformance) {
           const heldSlot = makeSlot(activeHeldFunKey, funMachineStyle, funVoiceId);
           recorder = recorderReduce(recorder, { type: "slot", step: currentStep % 12, slot: heldSlot }).recorder;
+        }
+        if (transport.activeTakeLanding && currentStep % 12 === 11) {
+          transport.activeTakeLanding = null;
         }
         renderLooper();
         highlightBeatStep(currentStep);
         updateTransportPosition(currentStep);
       }, delayMs);
+      transport.timeouts?.add(stepTimerId);
       transport.nextNoteTime += stepDuration;
       transport.step += 1;
     }
@@ -5337,7 +5397,7 @@ function renderSpecimenBroadsheetCanvas(score) {
   const seedHex = (score.seed >>> 0).toString(16).toUpperCase().padStart(8, "0");
   pctx.fillStyle = "#1b1512";
   pctx.font = '700 34px "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif';
-  pctx.fillText("EDMARK'S ESOTERIC FUN MACHINE — SPECIMEN BROADSHEET", width * 0.5, 146);
+  pctx.fillText("THE WHIMSY MACHINE — SPECIMEN BROADSHEET", width * 0.5, 146);
 
   pctx.fillStyle = "#57483e";
   pctx.font = '600 14px "Courier New", Courier, monospace';
@@ -5498,7 +5558,7 @@ function renderSpecimenBroadsheetCanvas(score) {
   pctx.fillStyle = "#4b382d";
   pctx.font = '700 13px "Courier New", Courier, monospace';
   pctx.fillText(
-    `SHARE SEAL: ${encodeOmenHash(score.phrase)} · EDMARK'S ESOTERIC FUN MACHINE · ZERO-DEPENDENCY`,
+    `SHARE SEAL: ${encodeOmenHash(score.phrase)} · THE WHIMSY MACHINE · ZERO-DEPENDENCY`,
     width * 0.5,
     height - 74,
   );
@@ -5687,6 +5747,7 @@ async function renderEnsembleLoop(score, {
     const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
     const position = songPosition(song, step);
     const loop = position ? song.loops[position.loopIndex] : null;
+    offlineTransport.songPosition = position;
     // Each loop boundary moves the band to its pass of the harmonic cycle.
     if (step % 12 === 0 && harmonicPassAt(step) !== currentHarmonicPass) {
       currentHarmonicPass = harmonicPassAt(step);
@@ -5780,7 +5841,7 @@ async function exportSpecimenStems() {
     entries.push({
       name: "README.txt",
       data: [
-        "EDMARK'S ESOTERIC FUN MACHINE · STEM BUNDLE",
+        "THE WHIMSY MACHINE · STEM BUNDLE",
         "",
         `Specimen: ${score.name}`,
         `Folio: ${score.folioId ?? "FOLIO I"} · ${score.curiosaClass ?? ""} · ${score.bellJar ?? "BELL JAR Nº 01"}`,
@@ -6833,10 +6894,14 @@ let selectedStepIndex = null;
 let isStepRecActive = false;
 const performanceCache = new Map();
 
-function performanceFor(slot) {
+function performanceFor(slot, pass = null) {
   const tonic = currentScore ? currentScore.root : 0;
-  const key = `${slot.key}:${slot.style}:${activeGenre}:${tonic}:${currentHarmonicPass}:${genreVaried}:${currentScore?.seed}`;
-  if (!performanceCache.has(key)) performanceCache.set(key, performanceOf(slot.key, slot.style));
+  const isSection = slot.style === "intro" || slot.style === "bridge" || slot.style === "outro";
+  const pos = currentTransport?.songPosition ?? null;
+  const sectionPass = isSection && pass === null ? sectionPassForLoop(song, pos?.loopIndex, pos?.repeat) : null;
+  const effectivePass = pass !== null ? pass : (sectionPass !== null ? sectionPass : currentHarmonicPass);
+  const key = `${slot.key}:${slot.style}:${activeGenre}:${tonic}:${effectivePass}:${genreVaried}:${currentScore?.seed}`;
+  if (!performanceCache.has(key)) performanceCache.set(key, performanceOf(slot.key, slot.style, effectivePass));
   return performanceCache.get(key);
 }
 
@@ -6844,7 +6909,14 @@ function performanceFor(slot) {
  * A key's performance on this pass of the harmonic cycle (D-044), varied by
  * this creature unless AS WRITTEN is pressed (D-043).
  */
-function performanceOf(key, style) {
+function performanceOf(key, style, pass = null) {
+  if (pass !== null) {
+    return buildPerformance(key, style, activeGenre, currentScore ? currentScore.root : 0, {
+      pass,
+      score: currentScore,
+      varied: genreVaried,
+    });
+  }
   return buildPerformance(key, style, activeGenre, currentScore ? currentScore.root : 0, {
     pass: currentHarmonicPass,
     score: currentScore,
@@ -6859,7 +6931,8 @@ function performanceOf(key, style) {
 function harmonicPassAt(absoluteStep) {
   const passes = songPasses(song);
   const pass = Math.floor(absoluteStep / 12);
-  return ((passes ? pass % passes : pass) % HARMONIC_PASSES + HARMONIC_PASSES) % HARMONIC_PASSES;
+  const cycle = Math.max(passes || 0, HARMONIC_PASSES);
+  return ((pass % cycle) % HARMONIC_PASSES + HARMONIC_PASSES) % HARMONIC_PASSES;
 }
 
 /**
@@ -6893,33 +6966,44 @@ function advanceRecorder(stepIndex, position, liveSlot) {
   if (wasArmed && recorder.mode === "recording") {
     announceLooper(recorder.kind === "new" ? "RECORDING A NEW LOOP" : `OVERDUBBING LOOP ${recorder.loopIndex + 1}`);
   }
-  if (result.finished) landTake(result.finished);
+  if (result.finished) {
+    const landedIndex = landTake(result.finished);
+    if (landedIndex !== null && currentTransport) {
+      currentTransport.activeTakeLanding = {
+        loopIndex: landedIndex,
+        layerIndex: (song.loops[landedIndex]?.layers.length ?? 1) - 1,
+      };
+    }
+  }
   renderLooper();
 }
 
 function landTake({ kind, loopIndex, take }) {
   if (isEmptyTake(take)) {
     announceLooper("NO KEY WAS HELD · THE TAKE WAS DISCARDED");
-    return;
+    return null;
   }
   const next = kind === "new" ? appendLoop(song, take) : overdubLayer(song, loopIndex, take);
   if (next === song) {
     announceLooper(kind === "new" ? "THE SONG IS FULL" : "THAT LOOP ALREADY HAS FOUR LAYERS");
-    return;
+    return null;
   }
   song = next;
   selectedLoop = kind === "new" ? song.loops.length - 1 : loopIndex;
   announceLooper(kind === "new" ? `LOOP ${song.loops.length} ADDED TO THE SONG` : `LAYER ADDED TO LOOP ${loopIndex + 1}`);
   unlockDrawer("change");
+  return selectedLoop;
 }
 
 // The band follows a live key (conducted when the key goes down), else the
 // newest recorded layer holding a key at this step, else its own score.
 function followSong(transport, loop, stepIndex, liveSlot) {
   const stepPass = typeof transport.step === "number" ? Math.floor(transport.step / 12) : 0;
-  if (scheduledCasio !== null && stepPass === scheduledCasio.pass && transport === currentTransport) {
+  const casioSectionPass = scheduledCasio !== null ? stepPass - scheduledCasio.startPass : -1;
+  const isCasioActive = scheduledCasio !== null && casioSectionPass >= 0 && casioSectionPass < scheduledCasio.passes;
+  if (isCasioActive && transport === currentTransport && scheduledCasio.performance) {
     transport.songLeading = true;
-    const followed = `casio:${scheduledCasio.role}`;
+    const followed = `casio:${scheduledCasio.role}:${casioSectionPass}`;
     if (followed === transport.followedSlot) return;
     transport.followedSlot = followed;
     applyEnsembleConductor(scheduledCasio.performance.steps.map((step) => step.chord));
@@ -7057,13 +7141,45 @@ function triggerCasioSection(role) {
     pendingCasioSection = { role, key };
     updateCasioUI();
     runTransportCommand("play");
-    announceLooper(`CASIO ${role.toUpperCase()} STARTED [${FUN_KEY_MAP[key]?.note ?? key}]`);
+    announceLooper(`CASIO ${role.toUpperCase()} STARTED [${FUN_KEY_MAP[key]?.note ?? key}] · 48 STEPS`);
     return;
   }
 
   pendingCasioSection = { role, key };
   updateCasioUI();
-  announceLooper(`CASIO ${role.toUpperCase()} CUED FOR NEXT DOWNBEAT [${FUN_KEY_MAP[key]?.note ?? key}]`);
+  announceLooper(`CASIO ${role.toUpperCase()} CUED FOR NEXT DOWNBEAT [${FUN_KEY_MAP[key]?.note ?? key}] · 48 STEPS`);
+}
+
+function insertSectionLoops(role) {
+  if (recorder.mode !== "idle") return;
+  if (!canInsertLoops(song, 4)) {
+    announceLooper("CANNOT INSERT SECTION · MAX BUDGET EXCEEDED (NEEDS 4 LOOPS)");
+    return;
+  }
+  const rawKey = activeHeldFunKey !== null
+    ? activeHeldFunKey
+    : (currentScore ? (((currentScore.root % 12) + 12) % 12) : 0);
+  const key = Math.max(0, Math.min(12, Math.trunc(rawKey) || 0));
+  const voice = funVoiceId;
+  const slot = makeSlot(key, role, voice);
+  const takes = Array.from({ length: 4 }, () => Object.freeze(Array(LOOP_STEPS).fill(slot)));
+
+  let insertIndex = song.loops.length;
+  if (role === "intro") {
+    insertIndex = 0;
+  } else if (role === "bridge") {
+    insertIndex = selectedLoop !== null ? selectedLoop + 1 : song.loops.length;
+  } else if (role === "outro") {
+    insertIndex = song.loops.length;
+  }
+
+  song = insertSection(song, role, takes, insertIndex);
+  selectedLoop = insertIndex;
+  const genreTitle = genreBook(activeGenre)?.title ?? activeGenre;
+  const noteName = FUN_KEY_MAP[key]?.note ?? key;
+  announceLooper(`INSERTED ${role.toUpperCase()} (4 LOOPS · 48 STEPS) [${noteName}] (${genreTitle})`);
+  renderLooper();
+  unlockDrawer("change");
 }
 
 function looperReadoutText() {
@@ -7122,8 +7238,12 @@ function looperReadoutText() {
 
   if (audibleCasioSection !== null) {
     const keyLabel = FUN_KEY_MAP[audibleCasioKey]?.note ?? audibleCasioKey;
-    const finalTag = audibleNum === 12 ? " (FINAL STEP)" : "";
-    return `CASIO ${audibleCasioSection.toUpperCase()} [${keyLabel}] · STEP ${audibleNum} OF 12${finalTag}`;
+    const audiblePass = currentTransport?.audibleStep !== undefined ? Math.floor(currentTransport.audibleStep / 12) : 0;
+    const sectionStartPass = scheduledCasio?.startPass ?? (audiblePass > 0 ? audiblePass - (audiblePass % 4) : 0);
+    const passOffset = Math.max(0, Math.min(3, audiblePass - sectionStartPass));
+    const stepNum = audible !== null ? passOffset * 12 + audible + 1 : 1;
+    const finalTag = stepNum === 48 ? " (FINAL STEP)" : "";
+    return `CASIO ${audibleCasioSection.toUpperCase()} [${keyLabel}] · STEP ${stepNum} OF 48${finalTag}`;
   }
   if (pendingCasioSection !== null) {
     const keyLabel = FUN_KEY_MAP[pendingCasioSection.key]?.note ?? pendingCasioSection.key;
@@ -7279,11 +7399,19 @@ function renderLooperTiles() {
       tile.className = "looper-tile";
       tile.dataset.loop = String(index);
       tile.setAttribute("aria-pressed", String(index === selectedLoop));
-      tile.setAttribute("aria-label", `Loop ${index + 1}: ${loop.layers.length} layer${loop.layers.length === 1 ? "" : "s"}, plays ${loop.repeats} time${loop.repeats === 1 ? "" : "s"}`);
+      const role = loop.role && loop.role !== "main" ? loop.role : null;
+      if (role) tile.dataset.role = role;
+      const secPass = sectionPassForLoop(song, index, 0);
+      const roleTag = role ? ` [${role.toUpperCase()}${secPass !== null ? ` ${secPass + 1}/4` : ""}]` : "";
+      tile.setAttribute("aria-label", `Loop ${index + 1}${roleTag}: ${loop.layers.length} layer${loop.layers.length === 1 ? "" : "s"}, plays ${loop.repeats} time${loop.repeats === 1 ? "" : "s"}`);
       const number = document.createElement("b");
       number.textContent = `L${index + 1}`;
       const detail = document.createElement("span");
-      detail.textContent = `${loop.layers.length}L · ×${loop.repeats}`;
+      if (role) {
+        detail.textContent = `${role.toUpperCase()}${secPass !== null ? ` ${secPass + 1}/4` : ""}${loop.repeats > 1 ? ` · ×${loop.repeats}` : ""}`;
+      } else {
+        detail.textContent = `${loop.layers.length}L · ×${loop.repeats}`;
+      }
       tile.append(number, detail);
       tile.addEventListener("click", () => {
         selectedLoop = index;
@@ -7380,6 +7508,14 @@ function renderLooper() {
   }
 
   if (clear) clear.disabled = !song.loops.length && recorder.mode === "idle";
+  const canInsert = recorder.mode === "idle" && canInsertLoops(song, 4);
+  const enableBtn = (id, on) => {
+    const el = document.querySelector(id);
+    if (el) el.disabled = !on;
+  };
+  enableBtn("#looper-insert-intro", canInsert);
+  enableBtn("#looper-insert-bridge", canInsert);
+  enableBtn("#looper-insert-outro", canInsert);
   if (readout) readout.value = looperReadoutText();
   updateCasioUI();
 }
@@ -7388,6 +7524,9 @@ document.querySelector("#looper-record")?.addEventListener("click", () => armRec
 document.querySelector("#looper-overdub")?.addEventListener("click", () => armRecorder("overdub"));
 document.querySelector("#looper-step-rec")?.addEventListener("click", toggleStepRec);
 document.querySelector("#looper-rest")?.addEventListener("click", handleRestStep);
+document.querySelector("#looper-insert-intro")?.addEventListener("click", () => insertSectionLoops("intro"));
+document.querySelector("#looper-insert-bridge")?.addEventListener("click", () => insertSectionLoops("bridge"));
+document.querySelector("#looper-insert-outro")?.addEventListener("click", () => insertSectionLoops("outro"));
 document.querySelector("#casio-intro")?.addEventListener("click", () => triggerCasioSection("intro"));
 document.querySelector("#casio-bridge")?.addEventListener("click", () => triggerCasioSection("bridge"));
 document.querySelector("#casio-outro")?.addEventListener("click", () => triggerCasioSection("outro"));

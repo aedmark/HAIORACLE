@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#120e0c">
   <!-- An empty icon: browsers then request no favicon at all, so nothing 404s. -->
   <link rel="icon" href="data:,">
-  <meta name="description" content="Edmark's Esoteric Fun Machine: Utter a phrase to summon a deterministic audiovisual omen composition and play along live on the auto-chord organ.">
-  <title>Edmark's Esoteric Fun Machine — Cabinet of Synthetic Omens</title>
+  <meta name="description" content="The Whimsy Machine: Utter a phrase to summon a deterministic audiovisual omen composition and play along live on the auto-chord organ.">
+  <title>The Whimsy Machine — Cabinet of Synthetic Omens</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -19,9 +19,9 @@
   <main class="oracle-cabinet">
     <header class="masthead">
       <span class="folio">FOLIO XLII · Nº 509 · MYCELIAL CURIOSITIES</span>
-      <a class="wordmark" href="#" aria-label="Edmark's Esoteric Fun Machine home">
+      <a class="wordmark" href="#" aria-label="The Whimsy Machine home">
         <span class="prompt-mark" aria-hidden="true">☽</span>
-        <span class="wordmark-text">EDMARK'S ESOTERIC FUN MACHINE</span>
+        <span class="wordmark-text">THE WHIMSY MACHINE</span>
         <span class="prompt-mark" aria-hidden="true">☉</span>
       </a>
       <button class="icon-button" id="sound-toggle" type="button" aria-pressed="false" aria-label="Mute sound">
@@ -156,7 +156,6 @@
           </div>
           <input id="tempo-bpm" type="range" min="36" max="208" value="108" step="1" title="Adjust ensemble tempo (double-click to restore native pulse)">
         </div>
-        <p class="transport-hint"><kbd>SPACE</kbd> PLAY / PAUSE · <kbd>ESC</kbd> STOP &amp; REWIND</p>
       </div>
 
       <section class="beat-engine fun-machine-engine" id="fun-machine-engine" aria-labelledby="fun-machine-heading">
@@ -179,7 +178,7 @@
               <button class="fun-chip" id="chip-style-arpeggio" data-style="arpeggio" type="button" aria-pressed="false" title="A pad with chord tones rippling in the band's rhythm">ARPEGGIO</button>
               <button class="fun-chip is-active" id="chip-style-progression" data-style="progression" type="button" aria-pressed="true" title="A pad walking the genre's four-chord progression from your key, with a singing lead line">PROGRESSION</button>
             </div>
-            <span class="fun-style-hint">HOLD A KEY · THE BAND FOLLOWS YOU · GENRE PICKS THE CHORD COLOURS</span>
+            <span class="fun-style-hint">HOLD A KEY · THE BAND FOLLOWS YOU</span>
           </div>
 
           <div class="fun-quality-bar fun-casio-bar" role="group" aria-label="Casio arranger section buttons">
@@ -207,7 +206,7 @@
           </div>
 
           <div class="fun-keyboard-wrap">
-            <div class="fun-keyboard" id="fun-keyboard" role="group" aria-label="Edmark's Esoteric Fun Machine Real-Time Play-Along Keyboard Manual">
+            <div class="fun-keyboard" id="fun-keyboard" role="group" aria-label="The Whimsy Machine Real-Time Play-Along Keyboard Manual">
               <button class="fun-key fun-key-white" data-semitone="0" data-key="KeyA" type="button" aria-label="Key C (shortcut A)">
                 <span class="fun-key-note">C</span>
                 <span class="fun-key-shortcut">[A]</span>
@@ -283,6 +282,9 @@
             <button class="beat-button looper-button" id="looper-overdub" type="button" aria-pressed="false" disabled>OVERDUB</button>
             <button class="beat-button looper-button" id="looper-step-rec" type="button" aria-pressed="false">STEP REC</button>
             <button class="beat-button looper-button" id="looper-rest" type="button" disabled>REST (—)</button>
+            <button class="beat-button looper-button looper-section-button" id="looper-insert-intro" type="button">+ INTRO</button>
+            <button class="beat-button looper-button looper-section-button" id="looper-insert-bridge" type="button">+ BRIDGE</button>
+            <button class="beat-button looper-button looper-section-button" id="looper-insert-outro" type="button">+ OUTRO</button>
             <button class="beat-button looper-button" id="looper-clear" type="button" disabled>CLEAR SONG</button>
             <output class="looper-readout" id="looper-readout" aria-live="off">NO LOOPS YET · HOLD KEYS AND RECORD WHAT YOU PLAY</output>
             <div class="looper-steps" id="looper-steps" role="group" aria-label="12-step loop progress tracker and note sequencer"></div>
@@ -457,93 +459,11 @@
       </section>
     </section>
 
-    <section class="workstation-wing wing-keep" id="wing-keep" aria-labelledby="wing-keep-heading">
-      <header class="wing-header">
-        <span class="wing-rule" aria-hidden="true"></span>
-        <div class="wing-title">
-          <p class="wing-numeral">WING III</p>
-          <h2 id="wing-keep-heading">KEEP</h2>
-          <p class="wing-dek">SESSION LEDGER · EXPORTS · SHARING</p>
-        </div>
-        <span class="wing-rule" aria-hidden="true"></span>
-      </header>
-      <section class="beat-engine session-engine" id="session-engine" aria-labelledby="session-heading">
-        <div class="beat-header">
-          <div class="beat-identity">
-            <p class="reading-label">SESSION LEDGER · PRESETS &amp; .FUN FILES</p>
-            <div class="beat-title-row">
-              <h3 id="session-heading">SAVE, RECALL &amp; SEND THE WHOLE APPARATUS</h3>
-              <span class="beat-telemetry" id="session-telemetry" role="status">PRESETS STAY IN THIS BROWSER · NOTHING IS SENT ANYWHERE</span>
-            </div>
-          </div>
-        </div>
-        <div class="session-body">
-          <div class="session-field">
-            <label for="session-preset-name">PRESET NAME</label>
-            <div class="session-row">
-              <input id="session-preset-name" type="text" maxlength="40" autocomplete="off" placeholder="the creature's own name">
-              <button class="beat-button" id="session-save-preset" type="button" disabled>SAVE PRESET <span aria-hidden="true">✚</span></button>
-            </div>
-          </div>
-          <div class="session-field">
-            <label for="session-preset-list">SAVED IN THIS BROWSER</label>
-            <div class="session-row">
-              <select id="session-preset-list" class="kapellmeister-select"></select>
-              <button class="beat-button" id="session-load-preset" type="button" disabled>LOAD</button>
-              <button class="beat-button" id="session-delete-preset" type="button" disabled>DELETE</button>
-            </div>
-          </div>
-          <div class="session-field session-files">
-            <span class="session-files-label">PORTABLE SESSION FILE</span>
-            <div class="session-row">
-              <button class="beat-button" id="session-save-file" type="button" disabled>SAVE .FUN FILE <span aria-hidden="true">⤓</span></button>
-              <button class="beat-button" id="session-open-file" type="button">OPEN .FUN FILE <span aria-hidden="true">⤒</span></button>
-              <input id="session-file-input" type="file" accept=".fun,application/json" hidden>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="beat-engine export-engine" id="export-engine" aria-labelledby="export-heading">
-        <div class="beat-header">
-          <div class="beat-identity">
-            <p class="reading-label">ENGRAVER'S DESK · EXPORTS &amp; SHARING</p>
-            <div class="beat-title-row">
-              <h3 id="export-heading">SEND THE SPECIMEN OUT INTO THE WORLD</h3>
-              <span class="beat-telemetry">EVERY FILE IS MADE IN THIS BROWSER</span>
-            </div>
-          </div>
-        </div>
-        <div class="session-body export-body">
-          <div class="session-field" role="group" aria-labelledby="export-audio-label">
-            <span class="session-files-label" id="export-audio-label">AUDIO FOR ANY DAW</span>
-            <div class="session-row">
-              <button class="beat-button" id="export-wav" type="button" disabled>RECORD WAV LOOP <span aria-hidden="true">☊</span></button>
-              <button class="beat-button" id="export-stems" type="button" disabled>EXPORT 9 STEMS (ZIP) <span aria-hidden="true">⧉</span></button>
-            </div>
-          </div>
-          <div class="session-field" role="group" aria-labelledby="export-score-label">
-            <span class="session-files-label" id="export-score-label">NOTATED SCORE</span>
-            <div class="session-row">
-              <button class="beat-button" id="export-midi" type="button" disabled>WRITE MIDI SCORE <span aria-hidden="true">♪</span></button>
-            </div>
-          </div>
-          <div class="session-field" role="group" aria-labelledby="export-share-label">
-            <span class="session-files-label" id="export-share-label">PLATE &amp; OMEN LINK</span>
-            <div class="session-row">
-              <button class="beat-button" id="export-png" type="button" disabled>ENGRAVE PNG PLATE <span aria-hidden="true">▣</span></button>
-              <button class="beat-button" id="share-link" type="button" disabled>COPY OMEN LINK <span aria-hidden="true">⛓</span></button>
-            </div>
-          </div>
-        </div>
-      </section>
-    </section>
-
     <section class="workstation-wing wing-band" id="wing-band" aria-labelledby="wing-band-heading">
       <header class="wing-header">
         <span class="wing-rule" aria-hidden="true"></span>
         <div class="wing-title">
-          <p class="wing-numeral">WING IV</p>
+          <p class="wing-numeral">WING III</p>
           <h2 id="wing-band-heading">THE BAND</h2>
           <p class="wing-dek">FIVE ESOTERIC MACHINES · EDIT, MUTATE, OR SILENCE EACH PLATE</p>
         </div>
@@ -655,6 +575,88 @@
       </section>
     </section>
 
+    <section class="workstation-wing wing-keep" id="wing-keep" aria-labelledby="wing-keep-heading">
+      <header class="wing-header">
+        <span class="wing-rule" aria-hidden="true"></span>
+        <div class="wing-title">
+          <p class="wing-numeral">WING IV</p>
+          <h2 id="wing-keep-heading">KEEP</h2>
+          <p class="wing-dek">SESSION LEDGER · EXPORTS · SHARING</p>
+        </div>
+        <span class="wing-rule" aria-hidden="true"></span>
+      </header>
+      <section class="beat-engine session-engine" id="session-engine" aria-labelledby="session-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">SESSION LEDGER · PRESETS &amp; .FUN FILES</p>
+            <div class="beat-title-row">
+              <h3 id="session-heading">SAVE, RECALL &amp; SEND THE WHOLE APPARATUS</h3>
+              <span class="beat-telemetry" id="session-telemetry" role="status">PRESETS STAY IN THIS BROWSER · NOTHING IS SENT ANYWHERE</span>
+            </div>
+          </div>
+        </div>
+        <div class="session-body">
+          <div class="session-field">
+            <label for="session-preset-name">PRESET NAME</label>
+            <div class="session-row">
+              <input id="session-preset-name" type="text" maxlength="40" autocomplete="off" placeholder="the creature's own name">
+              <button class="beat-button" id="session-save-preset" type="button" disabled>SAVE PRESET <span aria-hidden="true">✚</span></button>
+            </div>
+          </div>
+          <div class="session-field">
+            <label for="session-preset-list">SAVED IN THIS BROWSER</label>
+            <div class="session-row">
+              <select id="session-preset-list" class="kapellmeister-select"></select>
+              <button class="beat-button" id="session-load-preset" type="button" disabled>LOAD</button>
+              <button class="beat-button" id="session-delete-preset" type="button" disabled>DELETE</button>
+            </div>
+          </div>
+          <div class="session-field session-files">
+            <span class="session-files-label">PORTABLE SESSION FILE</span>
+            <div class="session-row">
+              <button class="beat-button" id="session-save-file" type="button" disabled>SAVE .FUN FILE <span aria-hidden="true">⤓</span></button>
+              <button class="beat-button" id="session-open-file" type="button">OPEN .FUN FILE <span aria-hidden="true">⤒</span></button>
+              <input id="session-file-input" type="file" accept=".fun,application/json" hidden>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="beat-engine export-engine" id="export-engine" aria-labelledby="export-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">ENGRAVER'S DESK · EXPORTS &amp; SHARING</p>
+            <div class="beat-title-row">
+              <h3 id="export-heading">SEND THE SPECIMEN OUT INTO THE WORLD</h3>
+              <span class="beat-telemetry">EVERY FILE IS MADE IN THIS BROWSER</span>
+            </div>
+          </div>
+        </div>
+        <div class="session-body export-body">
+          <div class="session-field" role="group" aria-labelledby="export-audio-label">
+            <span class="session-files-label" id="export-audio-label">AUDIO FOR ANY DAW</span>
+            <div class="session-row">
+              <button class="beat-button" id="export-wav" type="button" disabled>RECORD WAV LOOP <span aria-hidden="true">☊</span></button>
+              <button class="beat-button" id="export-stems" type="button" disabled>EXPORT 9 STEMS (ZIP) <span aria-hidden="true">⧉</span></button>
+            </div>
+          </div>
+          <div class="session-field" role="group" aria-labelledby="export-score-label">
+            <span class="session-files-label" id="export-score-label">NOTATED SCORE</span>
+            <div class="session-row">
+              <button class="beat-button" id="export-midi" type="button" disabled>WRITE MIDI SCORE <span aria-hidden="true">♪</span></button>
+            </div>
+          </div>
+          <div class="session-field" role="group" aria-labelledby="export-share-label">
+            <span class="session-files-label" id="export-share-label">PLATE &amp; OMEN LINK</span>
+            <div class="session-row">
+              <button class="beat-button" id="export-png" type="button" disabled>ENGRAVE PNG PLATE <span aria-hidden="true">▣</span></button>
+              <button class="beat-button" id="share-link" type="button" disabled>COPY OMEN LINK <span aria-hidden="true">⛓</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
     <footer>
       <span>E.E.M.F. · OOPISMCGOOPIS LTD · (C) ANNO MMXXVI</span>
       <span id="status" role="status">AWAITING INPUT</span>
@@ -680,14 +682,14 @@
     </footer>
   </main>
 
-  <noscript>Edmark's Esoteric Fun Machine needs JavaScript to interpret its LOLCODE spell and render the omen.</noscript>
+  <noscript>The Whimsy Machine needs JavaScript to interpret its LOLCODE spell and render the omen.</noscript>
   <script>
     // Cache boundary (D-035): an import map gives every module a URL stamped with
     // ASSET_VERSION, a hash of src/, so a browser never pairs a fresh module with
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "698d822fb894";
+      const ASSET_VERSION = "10f729ec27f8";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

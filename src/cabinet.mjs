@@ -12,8 +12,8 @@ export const CABINET_MODES = Object.freeze(["discovery", "cabinet"]);
 export const DRAWERS = Object.freeze([
   Object.freeze({ id: "kapellmeister", target: "kapellmeister-engine", label: "KAPELLMEISTER", invite: "hold a Fun Machine key to wake the rulebooks", unlock: "held-key" }),
   Object.freeze({ id: "mix", target: "wing-mix", label: "MIX", invite: "opens after your first full loop", unlock: "loop" }),
-  Object.freeze({ id: "keep", target: "wing-keep", label: "KEEP", invite: "save and export what you make", unlock: "change" }),
   Object.freeze({ id: "band", target: "wing-band", label: "THE BAND", invite: "the five players behind the curtain", unlock: "band" }),
+  Object.freeze({ id: "keep", target: "wing-keep", label: "KEEP", invite: "save and export what you make", unlock: "change" }),
 ]);
 
 const DRAWER_IDS = DRAWERS.map((drawer) => drawer.id);

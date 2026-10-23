@@ -20,7 +20,7 @@ const reduce = (state, event) => cabinetReduce(state, event).state;
 test("discovery starts with every drawer sealed, in page order, each with its own trigger", () => {
   const state = defaultCabinetState();
   assert.equal(state.mode, "discovery");
-  assert.deepEqual(DRAWERS.map((drawer) => drawer.id), ["kapellmeister", "mix", "keep", "band"]);
+  assert.deepEqual(DRAWERS.map((drawer) => drawer.id), ["kapellmeister", "mix", "band", "keep"]);
   for (const drawer of DRAWERS) {
     assert.equal(isDrawerOpen(state, drawer.id), false, drawer.id);
     assert.match(html, new RegExp(`id="${drawer.target}"`), `${drawer.target} exists in the page`);

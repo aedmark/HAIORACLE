@@ -318,7 +318,8 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   assert.ok(app.indexOf("buildGenreMenu();", install) > install, "the menu is built after the rulebooks install");
   // Changing text never reflows the Perform wing (fixed line boxes, minmax columns).
   assert.match(styles, /\.kapellmeister-motto \{[^}]*height: 4\.2em;[^}]*-webkit-line-clamp: 3;/);
-  assert.match(styles, /#fun-machine-heading,\n#kapellmeister-heading \{[^}]*height: 2\.5em;/);
+  assert.match(styles, /#kapellmeister-heading \{[^}]*height: 2\.5em;/);
+  assert.match(styles, /#fun-machine-heading \{[^}]*height: 1\.25em;/);
   assert.match(styles, /#fun-machine-telemetry \{[^}]*flex: 1 0 100%;[^}]*height: 3\.2em;[^}]*contain: inline-size;/);
   assert.match(styles, /\.step-trits,\n\.beat-step \.cell-byte \{[^}]*height: 1\.3em;[^}]*white-space: nowrap;/);
   assert.match(app, /function setTempoBpm\(value\) \{[\s\S]*?currentTransport\.delay\.delayTime\.setTargetAtTime\(delayTimeFor\(currentScore, activeTempoBpm\)/, "a live tempo change retimes the echo");
@@ -579,7 +580,7 @@ test("the session ledger saves presets on-device and .fun files through the vali
   const mixerAt = html.indexOf('id="mixer-engine"');
   const sessionAt = html.indexOf('id="session-engine"');
   const beatAt = html.indexOf('id="beat-engine"');
-  assert.ok(mixerAt < sessionAt && sessionAt < beatAt);
+  assert.ok(mixerAt < beatAt && beatAt < sessionAt);
   for (const id of ["session-preset-name", "session-save-preset", "session-preset-list", "session-load-preset", "session-delete-preset", "session-save-file", "session-open-file", "session-file-input"]) {
     assert.match(html, new RegExp(`id="${id}"`), id);
   }
@@ -608,7 +609,7 @@ test("the session ledger saves presets on-device and .fun files through the vali
   assert.match(html, /<p class="visually-hidden" id="cabinet-announcer" role="status"><\/p>/);
 });
 
-test("the page groups the workstation into perform, mix, keep, and band wings (D-027)", async () => {
+test("the page groups the workstation into perform, mix, band, and keep wings (D-027)", async () => {
   const [html, styles] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),
@@ -618,15 +619,15 @@ test("the page groups the workstation into perform, mix, keep, and band wings (D
     assert.ok(index > 0, `missing #${id}`);
     return index;
   };
-  const wingOf = (id) => ["wing-band", "wing-keep", "wing-mix", "wing-perform"].find((wing) => at(wing) < at(id));
+  const wingOf = (id) => ["wing-keep", "wing-band", "wing-mix", "wing-perform"].find((wing) => at(wing) < at(id));
   const order = ["reading", "cabinet-switch", "wing-perform", "transport-deck", "fun-machine-engine", "kapellmeister-engine",
     "wing-mix", "bandstand-engine", "mixer-engine", "parlor-acoustics-engine",
-    "wing-keep", "session-engine", "export-engine",
-    "wing-band", "beat-engine", "bass-engine", "harmony-engine", "chime-engine", "chant-engine"];
+    "wing-band", "beat-engine", "bass-engine", "harmony-engine", "chime-engine", "chant-engine",
+    "wing-keep", "session-engine", "export-engine"];
   for (let i = 1; i < order.length; i += 1) {
     assert.ok(at(order[i - 1]) < at(order[i]), `${order[i - 1]} must precede ${order[i]}`);
   }
-  for (const wing of ["perform", "mix", "keep", "band"]) {
+  for (const wing of ["perform", "mix", "band", "keep"]) {
     assert.match(html, new RegExp(`<section class="workstation-wing wing-${wing}" id="wing-${wing}" aria-labelledby="wing-${wing}-heading">`));
     assert.match(html, new RegExp(`<h2 id="wing-${wing}-heading">`));
   }
@@ -648,6 +649,9 @@ test("the page groups the workstation into perform, mix, keep, and band wings (D
   assert.match(styles, /#phrase \{\n {4}min-height: 3\.8rem;/);
   // Consoles never widen past the cabinet, which clips overflow instead of scrolling.
   assert.match(styles, /\.beat-engine \{\n {2}display: grid;\n {2}grid-template-columns: minmax\(0, 1fr\);/);
+  // Drawer bodies must always disappear when hidden, even under responsive layout overrides.
+  assert.match(styles, /\.drawer-body\[hidden\] \{\n {2}display: none !important;\n\}/);
+  assert.doesNotMatch(styles, /#drawer-body-keep \{/);
 });
 
 test("every element the app looks up by id exists in the page", async () => {

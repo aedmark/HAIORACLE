@@ -1,8 +1,8 @@
 {
   "$schema": "https://example.invalid/3x-documentation-scheme/manual.schema.json",
   "project": {
-    "name": "Edmark's Esoteric Fun Machine",
-    "short_name": "Edmark's Fun Machine",
+    "name": "The Whimsy Machine",
+    "short_name": "The Whimsy Machine",
     "version": "0.1.0",
     "repository": "https://github.com/aedmark/HAIORACLE"
   },
@@ -738,7 +738,7 @@
         },
         {
           "id": "esoteric-fun-machine",
-          "title": "Edmark's Esoteric Fun Machine One-Finger Accompanist",
+          "title": "The Whimsy Machine One-Finger Accompanist",
           "summary": "Hold one key and a synth pad plays a swell, arpeggio, or progression while Casio arranger buttons trigger 1-pass intro, bridge, or outro sections in the band's rhythm while the band follows your chord.",
           "tags": ["accompanist", "keyboard", "pad", "arpeggio", "fun-machine"],
           "what": "A 13-key manual (`C..C'`) and computer keys (`[A..K]`) drive a one-finger accompanist inspired by Baldwin home organs and vintage Casio keyboards. Hold a key and choose a style chip: SWELL holds one pad chord on the key, ARPEGGIO ripples its tones two per step, and PROGRESSION walks the genre's four-chord progression with a singing lead line. Dedicated Casio section buttons trigger live 1-pass movements from the active rulebook: INTRO plays an opening prelude and rolls directly into the groove, BRIDGE plays a 1-pass contrasting departure and automatically returns to the groove, and OUTRO plays the closing cadence and automatically stops the omen. The band is re-conducted onto the chord while the LOLCODE lead steps back. The streamlined Loop Machine (`#looper`, D-039, P5-26, D-045, D-046, D-052) records held keys into chained loops with up to four stacked layers, with audible-clock latching that preserves sustained arpeggios and swells without truncation, armed downbeat sync with anticipation latching, an interactive 12-step tracker ribbon, auto-advancing STEP REC note sequencing, and mechanical metronome ticks.",

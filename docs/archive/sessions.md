@@ -1439,4 +1439,80 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** that listen, then the rest of P5-30 phase 4: sessions v6 with AS WRITTEN (older files open as written), varying Fun Machine progressions, and chord names in MIDI markers.
 
+### Session 57: 2026-10-21: variation, saved and played (P5-30 phase 4 complete)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Finish P5-30 phase 4: sessions v6 with AS WRITTEN, Fun Machine progressions that vary, and chord names in MIDI markers.
+
+**Done:** D-044 and the phase 4 readout and switch were pushed (96815d9) after the maintainer's "This is getting better and better." Phase 4 is complete.
+
+**Changed:**
+1. `src/session.mjs`: `SESSION_VERSION` 6 with top-level `varied` (boolean). Versions 1–5 open with `varied: false`. `funMachine.voice` is read from v5 on.
+2. `src/app.mjs`: sessions save and restore `genreVaried`.
+3. `src/accompaniment.mjs`:
+   - `buildPerformance(…, { pass, score, varied })` varies a progression through `varyProgression()`: key-relative chords run through `varySpine()` without rotation or pace, and unchanged chords keep their objects.
+   - Pads strike wherever the chord changes, and moved chords get the lead pitch's nearest chord tone. `strikeLength()` is new.
+4. `src/app.mjs`:
+   - `performanceOf()` builds every performance: the live key, recorded slots, and pass changes. The cache key includes AS WRITTEN and the seed.
+   - Pads, bridges, and layer replay hold until the performance strikes again.
+   - The AS WRITTEN toggle rebuilds a held key's performance.
+   - The offline render records `stepChords`, and `chordMarkers()` adds a "CHORD · …" marker at each change.
+5. Tests: the v6 session paths, the varied Fun Machine (at least 8 distinct cycles over 40 creatures, the held key first, strikes exactly at changes, moved chords' leads on chord tones), and static checks for markers and sessions.
+
+**Verified:**
+- 155/155 Node checks.
+- In the browser on "three pigeons" in Parlor Ragtime:
+  - VARIATION read RELATIVE SUB · TRITONE SUB · DECEPTIVE CADENCE.
+  - MIDI markers ran A♭ → A♭7 → B♭m (relative) → D° → Fm (relative) → F7 → E7 (tritone) → E♭7 (deceptive) → Fm (deceptive).
+  - AS WRITTEN switched the readout and saved a v6 file with `varied: false`.
+  - A held C walked C → C7 → F → G7 as written, and C → C7 → Fm → D7 → G7 → Am varied.
+  - STOP rewinds the cycle to pass 1/4; PAUSE and PLAY keep it.
+- No console errors from the app.
+
+**Not verified:** The maintainer's listen on the varied Fun Machine.
+
+**Still open:** `#fun-machine-telemetry` is missing from `index.html` (see Session 56).
+
+**Next session should start with:** the maintainer's listen and tuning notes on the variation moves, then P5-30 phase 3 (THE CREATURE'S OWN rulebook).
+
+### Session 58: 2026-10-21: every creature writes its own rulebook (P5-30 complete)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-30 phase 3, THE CREATURE'S OWN rulebook (D-043).
+
+**Done:** Phase 4 was pushed (b92dca5). Phase 3 is done, which completes P5-30.
+
+**Changed:**
+1. `src/rulebooks.ni` Part 5 holds three tables:
+   - Harmonic Functions: tonic, predominant, and dominant, with candidate roots.
+   - Harmonic Paths: eight four-region paths, each starting at home.
+   - Chord Shapes: major, minor, dominant shell, two suspended, open fifth, diminished, quartal.
+
+   `src/inform.mjs` `readCreatureGrammar()` validates them as an optional `creature` section.
+2. New `src/creature-rulebook.mjs`:
+   - `buildCreatureBook(score, rulebooks)`: the path comes from `harmony_turn` and `harmony_cadence`, and a root's alternative from `harmony_swap`. Chords with a third (no ♭5) are tried on every candidate before weaker shapes, and a major dominant takes the scale's ♭7.
+   - The character comes from `harmony_character`, with organ and melody kept to triad members.
+   - Fun Machine colours follow the scale.
+3. `src/conductor.mjs`: `CREATURE_GENRE`, `installCreatureBook()`, and `compiledRulebooks()`; `genreBook("creature")` returns the installed book. `src/music.mjs` exports `SCALES` and `SCALE_NAMES`.
+4. `src/app.mjs`: THE CREATURE'S OWN is first in the menu, and every summon writes and installs the creature's book. `src/session.mjs` accepts the genre `"creature"`.
+5. Tests: new `tests/creature-rulebook.test.mjs`, and a session acceptance check.
+
+**Verified:**
+- 159/159 Node checks.
+- Over 200 creatures: 103 distinct progressions, every chord tone in the scale, no diminished chords, and clashes 0–9% by character before the triad fit, at most 6% overall after.
+- In the browser:
+  - "three pigeons" (Phrygian, Palestrina character) read i → iv → i (relative) → ♭II (Phrygian), with motto "Written from its phrygian scale, tonic → predominant → tonic → dominant…".
+  - "glass eel at midnight" read a Dorian book in the Ragtime character.
+  - A saved file kept `"creature"` and reopened on it.
+
+**Not verified:** The maintainer's listen.
+
+**Fixed later in the session:** `#fun-machine-telemetry` is restored under the Fun Machine title. It had dropped out of `index.html` in 3aac60e along with the maintainer's own page edits. A new static test checks that every `#id` the app queries (120 of them) exists in the page. Progression summaries now deduplicate by chord name. Verified in the browser: the line narrates the key, style, step, and chord, names the voice on a chip change, and keeps a fixed height, so the keyboard below never moved.
+
+**Follow-up (same session):** at the maintainer's choice, a fresh creature opens in THE CREATURE'S OWN (`activeGenre = CREATURE_GENRE` at rulebook install). Before any summon, the Kapellmeister shows "Summon a creature and it writes its own rulebook from its scale." Verified in the browser on a fresh page, then on "a moth in the music box".
+
+**Next session should start with:** D-041 wave 1 or P4-02.
+
 

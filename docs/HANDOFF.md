@@ -4,23 +4,22 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-23, session 69, on `main`._
+_Last updated: 2026-10-23, session 71, on `main`._
 
 - P5-28–P5-30: 19 Inform 7 genres, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-043, D-044).
-- D-045/D-046: armed downbeat sync, 1-loop count-in, tick metronome, interactive 12-step tracker ribbon with note sequencer & STEP REC.
-- D-047/D-048: expanded lexicon (83.8M names) & 72-slip urn; vitrine tap agitation, retaliatory strike, audio disruption, and sulk recovery.
-- D-049/D-050: generative fungal appendages replacing eyes; metric closure (lengths 4 & 6), tempo pocketing, boundary damping, anti-clash sieve.
-- D-051: eliminated volume spikes on note hold and legato transitions via GainNode 0.0001 bounding, safe pad release, and transition ducking smoothing.
-- D-052: looper recording synchronization (audible-clock latching, 1-loop count-in, layer isolation), Casio-style 1-pass arranger section buttons (`INTRO` rolling into groove, `BRIDGE` auto-returning to groove, `OUTRO` closing and auto-stopping), and look-ahead pass isolation preventing premature section cutoff.
-- Next: maintainer testing of note sequencer, looper recording and section roles, vitrine retaliation, cellular fruiting bodies, locked mixes, and Fun Machine legato transitions, or Wave 3 (feel) / P4-02.
+- D-045–D-048: armed downbeat sync, 1-loop count-in, tick metronome, 12-step tracker with STEP REC, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk.
+- D-049–D-052: fungal appendages; metric closure (D-050); volume surge elimination (D-051); looper recording sync & Casio sections (D-052).
+- D-053–D-055: audio sweep audit (D-053); 4-pass breathing sections for Intro, Bridge, Outro (48 steps, D-054); section loop insertion into the Loop Machine (+ INTRO, + BRIDGE, + OUTRO, D-055).
+- D-056–D-058: Rebranded to "The Whimsy Machine" with Korg R3-inspired tiered console UX (D-056); hardware console alignment and double-padding elimination (D-057); swapped Wings III (The Band) and IV (Keep) so the five esoteric plates sit directly under the mixer and DAW exports form the rear utility deck (D-058).
+- Next: maintainer testing of the Korg R3-inspired tiered hardware console, section loop insertion, or P5-31 (live capture of live play converted to loop sequencing).
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified; P5-31 is planned on the roadmap. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-23, session 69, local Linux environment)
+**Verified** (2026-10-23, session 70, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **182/182 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **184/184 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -58,7 +57,7 @@ _Last updated: 2026-10-23, session 69, on `main`._
 - The Session Ledger (`#session-engine`) saves the whole apparatus as named presets in this browser's `localStorage` or as portable `.fun` files, and restores it exactly; files and stored presets pass a strict validator first (P5-20, D-026).
 - `EXPORT 9 STEMS (ZIP)` downloads eight aligned channel stems, a parlor-room stem, and a README; `WRITE MIDI SCORE` downloads a Type 1 MIDI file with a tempo track and seven named parts captured from the live schedulers (P5-21, D-025).
 - The parlor mixing console (`#mixer-engine`) gives all eight voices a fader, pan, mute, solo, and live post-fader VU meter. Plate ENGAGE/SILENCE switches are the console's mutes, and WAV exports follow the mix. Default voicing trims lift the lead +6 dB and the choir +12 dB with faders still at unity, faders reach a further +12 dB, the choir bypasses the creature filter, and bandpass creatures blend a dry lead tap, so neither voice is buried by narrow bandpass creatures any more (P5-19, D-024).
-- Below the vitrine and the reading strip (name and score card only), the page is a four-wing workstation (D-027): **Perform** (transport rail with restart, volume, and tempo; Fun Machine; Kapellmeister), **Mix** (Bandstand, console, parlor room), **Keep** (Session Ledger; export desk with WAV, stems, MIDI, PNG, and omen link), and **The Band** (Plates II–VI). Tab order follows the same sequence, and nothing overflows at 320, 375, 768, or 1100 px.
+- Below the vitrine and the reading strip (name and score card only), the page is a four-wing workstation (D-027, D-058): **Perform** (transport rail with restart, volume, and tempo; Fun Machine; Kapellmeister), **Mix** (Bandstand, console, parlor room), **The Band** (Plates I–V), and **Keep** (Session Ledger; export desk with WAV, stems, MIDI, PNG, and omen link). Tab order follows the same sequence, and nothing overflows at 320, 375, 768, or 1100 px.
 - Runtime assets are local and dependency-free (D-001).
 - Updates load cleanly without a hard reload (D-035): `index.html` builds an import map that stamps every module with `?v=<ASSET_VERSION>` (a hash of `src/`), and sources are fetched with the same stamp. Verified in the built-in browser against plain `python3 -m http.server`: with 28 of 29 files served from heuristic cache, a new export added to `src/ensemble.mjs` and imported by `src/app.mjs`, plus a restamp, loaded on a normal reload with all 29 requests at the new stamp and no console errors.
 - All six rhythm templates divide the 12-step barline evenly ($12 \bmod \text{len} = 0$), mathematically guaranteeing zero metric loop drift across loop boundaries and seamless export loop tiling; summoned creature tempos fold into the $68\dots 144$ BPM groove pocket; region boundary damping prevents chord release tail bleed; and a vertical anti-clash sieve resolves passing tone collisions down to 0.00% under THE CREATURE'S OWN rulebook (D-050).
@@ -94,6 +93,59 @@ _Last updated: 2026-10-23, session 69, on `main`._
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 71: 2026-10-23: Swap Wings III (The Band) and IV (Keep) for hardware console workflow (D-058)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Swap Wings III and IV so that The Band (the five esoteric VM machines, Plates I–V) immediately follows Wing II (Mix), while Wing IV (Keep: Session Ledger and Engraver's DAW export desk) forms the bottom rear utility panel of the instrument console.
+
+**Done:** All parts implemented and verified. All 184 checks pass.
+
+**Changed:**
+1. `index.html`:
+   - Swapped `#wing-band` and `#wing-keep`.
+   - Updated `#wing-band` numeral to `WING III` and `#wing-keep` numeral to `WING IV`.
+   - Restored `#fun-machine-telemetry` span.
+2. `src/cabinet.mjs`:
+   - Updated `DRAWERS` sequence to `kapellmeister` → `mix` → `band` → `keep` in page order.
+3. Assets:
+   - Restamped `ASSET_VERSION` to `10f729ec27f8` (`tools/stamp_assets.mjs`).
+4. `styles.css`:
+   - Updated `.drawer-body[hidden]` to `display: none !important;` and scoped the desktop layout rule to `#drawer-body-keep:not([hidden])`, fixing a CSS specificity override where ID `#drawer-body-keep` kept the Keep drawer permanently open on viewports $\ge 1180$px.
+5. Tests:
+   - `tests/cabinet.test.mjs`: updated `DRAWERS.map` page order assertion.
+   - `tests/static.test.mjs`: updated wing order assertions in D-027 test, session engine placement assertion, and added `.drawer-body[hidden]` regression assertions.
+6. Documentation:
+   - Recorded ADR D-058 in `docs/DECISIONS.md`.
+   - Updated page shell map and invariants in `docs/ARCHITECTURE.md`.
+   - Updated `docs/HANDOFF.md`.
+
+### Session 70: 2026-10-23: Hardware console alignment, whitespace harmony, and double-padding elimination (D-057)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Resolve inconsistent whitespace, wrapping, and padding across Wing 1 following the Korg R3-inspired layout pivot: eliminate the excessive top pad over master volume/tempo sliders, tighten the dead space between the One-Finger Accompanist title and its controls, and eliminate the double-padding misalignment that pushed rulebook headers far to the left of the readout and compass.
+
+**Done:** All parts implemented and verified. All 184 behavioral, structural, and audit checks pass.
+
+**Changed:**
+1. `styles.css`:
+   - `.transport-deck`: changed from `align-items: center` to `align-items: flex-start`, aligning the transport buttons, step counter, volume and tempo sliders, and keyboard hint along the exact same top padding guide.
+   - `.transport-position`: updated padding to `0.72rem 0.75rem`, matching transport button height (~36px).
+   - `.transport-hint`: added `align-self: flex-start; padding-top: 0.65rem;` to align its baseline with the transport keys.
+   - `#fun-machine-heading`: separated from `#kapellmeister-heading` and reduced from `height: 2.5em` to `height: 1.25em`.
+   - `.fun-machine-engine`: tightened gap to `0.5rem`.
+   - `.fun-machine-body`: set `padding: 0.25rem 0 0.5rem` (0 inline padding), shrinking dead space between heading and style bar from ~47px down to a crisp ~11px.
+   - `.looper`: set `margin-top: 0`, using the uniform `0.75rem` body gap between the keyboard and sequencer.
+   - `.kapellmeister-body`: set `padding: 0.35rem 0 0.5rem` (0 inline padding), eliminating the double-indentation bug where body readouts and compass were shifted 42px inwards relative to the title and motto.
+   - `.acoustics-body`: set `padding: 0.35rem 0 0.5rem` (0 inline padding), aligning acoustics controls with the engine header.
+   - `.kapellmeister-engine .beat-header`: changed from `align-items: end` to `align-items: flex-start`, aligning the Rulebook select dropdown with the top title row.
+   - Sliders: unified dimensions and brass accent across `#master-volume`, `#tempo-bpm`, `#kapellmeister-strictness`, and `#parlor-acoustics-level`.
+2. `tests/static.test.mjs`:
+   - Line 321: updated fixed line box assertions for `#kapellmeister-heading` (`2.5em`) and `#fun-machine-heading` (`1.25em`).
+3. `docs/DECISIONS.md`:
+   - Logged D-057.
 
 ### Session 69: 2026-10-23: Casio arranger section lookahead race condition and premature cutoff fix (D-052)
 
@@ -366,82 +418,6 @@ _Last updated: 2026-10-23, session 69, on `main`._
 **Verified by ear:** The maintainer listened across the new genres and approved ("in love").
 
 **Next session should start with:** D-041 wave 2 (six chord qualities, then six genres) or P4-02.
-
-### Session 58: 2026-10-21: every creature writes its own rulebook (P5-30 complete)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-30 phase 3, THE CREATURE'S OWN rulebook (D-043).
-
-**Done:** Phase 4 was pushed (b92dca5). Phase 3 is done, which completes P5-30.
-
-**Changed:**
-1. `src/rulebooks.ni` Part 5 holds three tables:
-   - Harmonic Functions: tonic, predominant, and dominant, with candidate roots.
-   - Harmonic Paths: eight four-region paths, each starting at home.
-   - Chord Shapes: major, minor, dominant shell, two suspended, open fifth, diminished, quartal.
-
-   `src/inform.mjs` `readCreatureGrammar()` validates them as an optional `creature` section.
-2. New `src/creature-rulebook.mjs`:
-   - `buildCreatureBook(score, rulebooks)`: the path comes from `harmony_turn` and `harmony_cadence`, and a root's alternative from `harmony_swap`. Chords with a third (no ♭5) are tried on every candidate before weaker shapes, and a major dominant takes the scale's ♭7.
-   - The character comes from `harmony_character`, with organ and melody kept to triad members.
-   - Fun Machine colours follow the scale.
-3. `src/conductor.mjs`: `CREATURE_GENRE`, `installCreatureBook()`, and `compiledRulebooks()`; `genreBook("creature")` returns the installed book. `src/music.mjs` exports `SCALES` and `SCALE_NAMES`.
-4. `src/app.mjs`: THE CREATURE'S OWN is first in the menu, and every summon writes and installs the creature's book. `src/session.mjs` accepts the genre `"creature"`.
-5. Tests: new `tests/creature-rulebook.test.mjs`, and a session acceptance check.
-
-**Verified:**
-- 159/159 Node checks.
-- Over 200 creatures: 103 distinct progressions, every chord tone in the scale, no diminished chords, and clashes 0–9% by character before the triad fit, at most 6% overall after.
-- In the browser:
-  - "three pigeons" (Phrygian, Palestrina character) read i → iv → i (relative) → ♭II (Phrygian), with motto "Written from its phrygian scale, tonic → predominant → tonic → dominant…".
-  - "glass eel at midnight" read a Dorian book in the Ragtime character.
-  - A saved file kept `"creature"` and reopened on it.
-
-**Not verified:** The maintainer's listen.
-
-**Fixed later in the session:** `#fun-machine-telemetry` is restored under the Fun Machine title. It had dropped out of `index.html` in 3aac60e along with the maintainer's own page edits. A new static test checks that every `#id` the app queries (120 of them) exists in the page. Progression summaries now deduplicate by chord name. Verified in the browser: the line narrates the key, style, step, and chord, names the voice on a chip change, and keeps a fixed height, so the keyboard below never moved.
-
-**Follow-up (same session):** at the maintainer's choice, a fresh creature opens in THE CREATURE'S OWN (`activeGenre = CREATURE_GENRE` at rulebook install). Before any summon, the Kapellmeister shows "Summon a creature and it writes its own rulebook from its scale." Verified in the browser on a fresh page, then on "a moth in the music box".
-
-**Next session should start with:** D-041 wave 1 or P4-02.
-
-### Session 57: 2026-10-21: variation, saved and played (P5-30 phase 4 complete)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Finish P5-30 phase 4: sessions v6 with AS WRITTEN, Fun Machine progressions that vary, and chord names in MIDI markers.
-
-**Done:** D-044 and the phase 4 readout and switch were pushed (96815d9) after the maintainer's "This is getting better and better." Phase 4 is complete.
-
-**Changed:**
-1. `src/session.mjs`: `SESSION_VERSION` 6 with top-level `varied` (boolean). Versions 1–5 open with `varied: false`. `funMachine.voice` is read from v5 on.
-2. `src/app.mjs`: sessions save and restore `genreVaried`.
-3. `src/accompaniment.mjs`:
-   - `buildPerformance(…, { pass, score, varied })` varies a progression through `varyProgression()`: key-relative chords run through `varySpine()` without rotation or pace, and unchanged chords keep their objects.
-   - Pads strike wherever the chord changes, and moved chords get the lead pitch's nearest chord tone. `strikeLength()` is new.
-4. `src/app.mjs`:
-   - `performanceOf()` builds every performance: the live key, recorded slots, and pass changes. The cache key includes AS WRITTEN and the seed.
-   - Pads, bridges, and layer replay hold until the performance strikes again.
-   - The AS WRITTEN toggle rebuilds a held key's performance.
-   - The offline render records `stepChords`, and `chordMarkers()` adds a "CHORD · …" marker at each change.
-5. Tests: the v6 session paths, the varied Fun Machine (at least 8 distinct cycles over 40 creatures, the held key first, strikes exactly at changes, moved chords' leads on chord tones), and static checks for markers and sessions.
-
-**Verified:**
-- 155/155 Node checks.
-- In the browser on "three pigeons" in Parlor Ragtime:
-  - VARIATION read RELATIVE SUB · TRITONE SUB · DECEPTIVE CADENCE.
-  - MIDI markers ran A♭ → A♭7 → B♭m (relative) → D° → Fm (relative) → F7 → E7 (tritone) → E♭7 (deceptive) → Fm (deceptive).
-  - AS WRITTEN switched the readout and saved a v6 file with `varied: false`.
-  - A held C walked C → C7 → F → G7 as written, and C → C7 → Fm → D7 → G7 → Am varied.
-  - STOP rewinds the cycle to pass 1/4; PAUSE and PLAY keep it.
-- No console errors from the app.
-
-**Not verified:** The maintainer's listen on the varied Fun Machine.
-
-**Still open:** `#fun-machine-telemetry` is missing from `index.html` (see Session 56).
-
-**Next session should start with:** the maintainer's listen and tuning notes on the variation moves, then P5-30 phase 3 (THE CREATURE'S OWN rulebook).
 
 
 

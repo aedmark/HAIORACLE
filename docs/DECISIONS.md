@@ -1093,6 +1093,173 @@ Investigation identified four root causes in the recording engine:
 - Real-time Casio arranger buttons make Intro, Bridge, and Outro immediate, musical, and playful with zero configuration or trapped loops.
 - 182 automated tests passing; zero runtime dependencies.
 
+## D-053 Audio sweep audit: race condition elimination, automation ramp preservation, and acoustic clash resolution (2026-10-23, status: accepted)
+
+**Context:** A clean-sweep audit of the audio and scheduler architecture was performed to detect and resolve race conditions between look-ahead scheduling and real-time audio/UI callbacks, AudioParam automation collisions, and conflicting harmonic patterns that created unintended sounds or made bugs hard to distinguish from intentional design.
+
+Key findings:
+1. *Looper take finalization race:* When step 11 was reached in `scheduleAhead()` (~280 ms ahead of real time), `advanceRecorder()` finalized the take immediately, transitioning the recorder to `idle`. Real-time key strikes or holds during audible step 10/11 were completely dropped.
+2. *Unguarded orphaned Casio section timeouts:* Nested `setTimeout()` callbacks for Outro and Section completion lacked `currentTransport !== transport` guards, allowing rapid stops, pauses, or summons to be interrupted or halted by orphaned timers from previous playback sessions.
+3. *60 FPS AudioParam queue stomping:* Animation frame `updateAudioInteraction()` continuously called `setTargetAtTime` on `mix.gain` and `feedback.gain`, stomping on active `exponentialRampToValueAtTime` automations scheduled during vitrine retaliation strikes.
+4. *Unconducted parallel fifths in voiceStack:* `voiceStack` presets 2 and 5 hardcoded `{ interval: 7 }`, generating unconducted parallel fifths above melody notes that created harsh minor-second clashes against chord tones in the organ and bass.
+5. *Harmonic clock cross-rhythm drone lag:* `shapeDrones()` checked `absoluteStep % 3 === 0`, causing it to lag for two full steps when chords changed on steps 4 and 8 in `PROGRESSION` style.
+6. *Harmonic clock pass frozen on 1-loop songs:* `harmonicPassAt()` evaluated `pass % songPasses(song)`, which for a 1-loop song is permanently 0, locking the 4-pass harmonic cycle.
+7. *Pitched clockwork body knock:* `scheduleClockworkTick()` played a static 70 ms pure sine wave at 520 Hz or 340 Hz directly into the master bus on quarter beats, sounding like an out-of-tune sustained tone in unrelated keys.
+8. *Unfiltered mycelium glides:* Fungal form 4 (Cup Peziza) and form 7 (Hyphal Hydra) had unfiltered sweeps (`band: null`) up to 3x, sounding like synthetic laser chirps.
+
+**Decision:**
+1. **Looper Take Real-Time Latching via `activeTakeLanding`:**
+   - In `advanceRecorder()`, `landTake()` returns the landed loop index, and `transport.activeTakeLanding` keeps the take window open for audible steps 10 and 11.
+   - Keystrokes struck or held in real time on audible step 10 or 11 update the landed loop directly via `setLoopSlot()`, clearing `activeTakeLanding` only when audible step 11 finishes.
+2. **Timeout Tracking & Guarding:**
+   - Transports track all pending playback timeouts on `transport.timeouts = new Set()`.
+   - `stopCurrentSound()` clears all tracked timeouts immediately.
+   - Nested Casio section callbacks check `if (currentTransport !== transport) return;`.
+3. **Retaliation Automation Ramp Isolation:**
+   - `updateAudioInteraction()` skips `mix.gain` and `feedback.gain` target automations while `nowMs < interaction.retaliateUntil`, allowing violent retaliation ramps to complete smoothly.
+4. **Voice Stack Consonance:**
+   - Replaced raw `{ interval: 7 }` in `voiceStack` with consonant sub-octave and octave doublings (`interval: -12, 12`), preserving overtone depth without unconducted parallel semitone clashes.
+5. **Dynamic Chord Transition Detection in `shapeDrones`:**
+   - `shapeDrones()` detects `isChordChange` dynamically, instantly retuning drone frequencies and shaping envelopes whenever chords change, including steps 4 and 8.
+6. **Harmonic Pass Cycling for All Songs:**
+   - In `harmonicPassAt()`, cycling uses `Math.max(passes || 0, HARMONIC_PASSES)`, cycling through all 4 harmonic passes even for 1-loop songs.
+7. **Damped Pitch Transient for Clockwork Body Knock:**
+   - Replaced static 70 ms sine beep with a rapid downward exponential pitch transient from 240/180 Hz to 55 Hz decaying in 28 ms, providing an authentic acoustic wooden knock without pitch clash.
+8. **Resonant Bandpass for Mycelium Bio-Acoustics:**
+   - Equipped forms 4 and 7 with resonant bandpass filters (`[650, 3.5]` and `[2200, 3.5]`), turning raw sweeps into organic bio-acoustic resonance.
+
+**Consequences:**
+- Zero dropped keystrokes when playing along with the looper through loop boundaries.
+- No cross-transport timeout interference or unexpected stops when interacting with transport controls.
+- Retaliation strikes ring out cleanly without automation jitter.
+- Harmonic progression moves smoothly without drone lag or parallel fifth dissonance.
+- 183 automated behavioral checks passing; zero runtime dependencies; 100% determinism preserved.
+
+## D-054 Section progressions breathe across 4 passes (48 steps: 12 steps per chord) with natural loop transitions (2026-10-23, status: accepted)
+
+**Context:** Live Arranger sections (`Intro`, `Bridge`, `Outro`) felt rushed and cut short in 12 steps: 4 chords crammed into a single 12-step bar gave each chord only 3 steps (0.75 s at 120 BPM), cutting off pad bloom envelopes and forcing melody notes on every step without natural musical breathing room or cadence rest. In standard 12-step hypermeter, 48 steps (4 passes of 12 steps: 4 complete bars) represents the canonical cycle of the harmonic clock (`HARMONIC_PASSES = 4`), allowing each chord in the 4-chord progression to breathe for an entire 12-step bar, resolve naturally, and transition smoothly into adjoining loops without abrupt harmonic or rhythmic clipping.
+
+**Decision:**
+1. **4-Pass (48-Step) Harmonic Structure:**
+   - Expanded live arranger sections to span 4 full passes (48 steps: 4 bars of 12 steps) instead of 1 pass (12 steps).
+   - In `buildPerformance()`, when `pass !== null && (style === "intro" || style === "bridge" || style === "outro")`:
+     - Each of the 4 region chords occupies an entire 12-step bar (`sectionPass = pass % 4`, `regionSteps: 12`).
+     - Pads bloom and swell over the entire 12-step bar, while arpeggios ripple smoothly without hurried chord chops.
+2. **Spacious Lead Phrasing & Natural Adjoining Loop Transitions:**
+   - Standard passes (Passes 0, 1, 2) space melody notes 4 steps apart on steps 0, 4, and 8, sustaining for 4 steps (`leadSteps: 4`).
+   - **Intro -> Groove Transition:** In Pass 3 (Turnaround chord, e.g. V7 or ♭II7), steps 0 and 4 play turnaround motifs, step 8 plays the leading-tone pickup (`leadSteps: 2`), and steps 10 and 11 rest completely as a musical breath before the adjoining groove drops with maximum downbeat impact on step 48 (step 0 of the next loop).
+   - **Bridge -> Groove Transition:** Pass 3 holds dominant tension on step 8 (`leadSteps: 2`), breathing on steps 10 and 11 before naturally resolving back to the groove downbeat.
+   - **Outro -> Stop Resolution:** On Pass 3 (step 36, step 0 of the final pass), the melody and harmony resolve decisively to the Home Tonic (I), holding the chord and singing the tonic root for all 12 steps (`leadSteps: 12`) to ring out and decay naturally before transport stops.
+3. **Live Arranger & Conductor Synchronization:**
+   - In `scheduleAhead()`, `CASIO_SECTION_PASSES = 4` tracks `scheduledCasio` across `startPass` and `passes: 4`.
+   - `followSong()` re-conducts the band across all 4 passes (`"casio:${role}:${sectionPass}"`), keeping the accompaniment aligned with the section progression.
+   - Looper readout telemetry displays `STEP 1 OF 48` through `STEP 48 OF 48` during section playback.
+   - Preserves the 12-step summary view when `pass === null` for backward-compatible inspections and existing unit tests.
+
+**Consequences:**
+- Intro, Bridge, and Outro sections feel expansive, musical, and completely resolved rather than hurried blips.
+- Adjoining loops transition seamlessly with authentic leading-tone pickups, breath rests, and tonic homecomings.
+- 183 automated behavioral tests pass; zero runtime dependencies; 100% determinism preserved.
+
+## D-055 Section progression insertion into the Loop Sequencer (2026-10-23, status: accepted)
+
+**Context:** Following the expansion of Intro, Bridge, and Outro sections into 48-step breathing progressions (D-054), the maintainer requested the ability to insert and record these sections directly into the Loop Machine sequencer.
+
+**Decision:**
+1. **Section Loop Insertion Engine:**
+   - Added `canInsertLoops(song, count)`, `insertSection(song, role, takes, atIndex)`, and `sectionPassForLoop(song, loopIndex, repeat)` in `src/looper.mjs`.
+   - Wired dedicated buttons in the Loop Machine header (`#looper-insert-intro`, `#looper-insert-bridge`, `#looper-insert-outro`) to insert full 4-bar (48-step) section progressions:
+     - `+ INTRO`: Inserts 4 consecutive 12-step loops at the beginning (index 0) of the song.
+     - `+ BRIDGE`: Inserts 4 consecutive 12-step loops immediately after the currently selected loop (or at the end if none selected).
+     - `+ OUTRO`: Appends 4 consecutive 12-step loops to the end of the song.
+2. **Contiguous Section Pass Resolution:**
+   - `sectionPassForLoop` determines each loop's part (Part 1/4 through Part 4/4) dynamically based on contiguous preceding loops of the same role, preserving session schema compatibility.
+   - `performanceFor(slot)` automatically resolves the active section pass during playback and conducting.
+3. **Sequencer UI & Color Badges:**
+   - Loop tiles in `renderLooperTiles()` display their role and part tag (e.g. `INTRO 1/4`, `BRIDGE 2/4`, `OUTRO 4/4`), styled with section-specific brass, violet, and ruby borders.
+   - Reaching the final step of a terminal Outro loop automatically stops the transport and rests the omen.
+4. **Roadmap Milestone Added:**
+   - Logged `P5-31` on `ROADMAP.md` for full live capture of real-time play converted into loop sequences.
+
+**Consequences:**
+- Users can compose complete, structured arrangements (Intro → Groove → Bridge → Groove → Outro) directly in the Loop Machine.
+- Offline WAV, stem, and MIDI exports carry all 48 steps of inserted sections seamlessly.
+- 184 automated behavioral tests pass; zero runtime dependencies; 100% determinism preserved.
+
+## D-056 Rebrand to "The Whimsy Machine" and Korg R3-inspired unified hardware console layout (2026-10-23, status: accepted)
+
+**Context:** The maintainer recognized that the "open trifold suitcase" concept resulted in an awkward, scrunched 3-column layout that pinched wide controls (like the 8-channel mixer and Tonnetz compass) and broke the natural horizontal flow of a musical instrument. The maintainer directed a pivot to draw inspiration from their beloved **Korg R3 synthesizer**—embracing a sleek, unified, tactile performance synthesizer console with horizontal tiers, zero wasted vertical fluff, an illuminated centerpiece display, macro parameter decks, an illuminated step sequencer ribbon, and a full-width playable keybed. Additionally, the product was rebranded from "Edmark's Esoteric Fun Machine" to "The Whimsy Machine".
+
+**Decision:**
+1. **Product Rebrand to "The Whimsy Machine":**
+   - Updated page title, description, masthead wordmark, keyboard accessibility label, manual documentation, and noscript text across `index.html`, `docs/manual.json`, and `manual.html`.
+2. **Korg R3 Hardware Tiered Console Architecture:**
+   - Abandoned the pinched 3-column suitcase grid in favor of a unified horizontal synthesizer console (`width: min(94rem, 100%)`) where every module spans horizontally with natural ergonomic breathing room.
+   - **Tier 1 (Performance & Inscription Bezel):** The Whimsy Machine wordmark, bell toggle, and calling slip (`#phrase`, `SUMMON`) framed like the R3's patch inscriber.
+   - **Tier 2 (Main Illuminated Display Screen):** The Apparition Vitrine (`.vision-cabinet`, `#vision`) acts as the synthesizer's central backlit display, showing the creature's living anatomy and real-time kinetic reactions with generous height (`clamp(19rem, 34vw, 28rem)`), flanked by its manifestation parameter scorecard (`#reading`).
+   - **Tier 3 (Master Transport & Performance Rail):** `#transport-deck` provides tactile Play, Pause, Stop keys, glowing step/position indicator, Master Volume, and Tempo BPM sliders.
+   - **Tier 4 (Harmonic & Acoustic Parameter Deck):** Kapellmeister console (`#kapellmeister-engine`) with 19 Inform 7 genre rulebooks, strictness slider, and Tonnetz compass, alongside Parlor Acoustics (`#parlor-acoustics-engine`).
+   - **Tier 5 (8-Channel Voice Matrix Console):** `#mixer-engine` spans full width like an 8-timbre mixer deck, with illuminated VU peak meters, smooth vertical faders, pan pots, and mute/solo keys for all eight voices.
+   - **Tier 6 (The Arpeggiator & Step Sequencer Ribbon):** The Loop Machine (`#looper`) with its 12-step/48-step glowing LED sequencer tracker ribbon, REC, Overdub, Step Rec, Rest, and Casio Intro/Bridge/Outro section cues, sitting directly above the keys.
+   - **Tier 7 (Play-Along Keybed):** The 2-octave keyboard manual (`#fun-keyboard`) spanning full width at the front edge of the instrument.
+   - **Tier 8 (Rear Utility Deck):** Session Presets ledger and DAW exports (`#wing-keep`) styled as a sleek bottom utility panel.
+3. **Preserved Invariants & Test Guarantees:**
+   - 100% compliant with DOM ID sequence invariants enforced by `tests/static.test.mjs` line 621 (`reading` < `cabinet-switch` < `wing-perform` < `transport-deck` < `fun-machine-engine` < `kapellmeister-engine` < `wing-mix` < `wing-keep` < `wing-band`).
+   - Zero runtime dependencies; all accessibility font size floors ($\ge 0.6\text{rem}$) and color contrast rules preserved.
+
+**Consequences:**
+- Eliminates all vertical and horizontal "scrunched" feel; controls have room to breathe and look like a cohesive high-end boutique instrument.
+- 184/184 automated tests pass; zero runtime dependencies; 100% determinism preserved.
+
+## D-057 Hardware console alignment, whitespace harmony, and double-padding elimination (2026-10-23, status: accepted)
+
+**Context:** Following the Korg R3-inspired hardware console layout overhaul (D-056), visual inspection revealed inconsistent whitespace, padding, and vertical guidelines across Wing 1:
+1. Volume and tempo sliders in the master transport deck sat lower than the transport buttons with an excessive top gap.
+2. The One-Finger Accompanist title had nearly 50px of dead space between the heading text and the accompaniment style buttons.
+3. The Kapellmeister rulebook title, telemetry, and motto sat shifted far to the left relative to the readout cells, sliders, and Tonnetz compass below them.
+
+**Decision:**
+1. **Master Transport Alignment (`#transport-deck`):**
+   - Switched `.transport-deck` from `align-items: center` to `align-items: flex-start`. Previously, the second-row section readout (`.transport-section`) gave `.transport-keys` a ~65px height; flex centering shifted the shorter 34px volume and tempo control block down by ~16px, causing an artificial "pad above" the sliders. With top alignment, transport buttons, step counter, slider labels, and the keyboard hint align cleanly at the top padding guideline.
+   - Equalized `.transport-position` padding to `0.72rem 0.75rem` matching the transport button height (~36px).
+   - Unified range input dimensions across `#master-volume`, `#tempo-bpm`, `#kapellmeister-strictness`, and `#parlor-acoustics-level`.
+2. **One-Finger Accompanist Whitespace Tightening (`#fun-machine-engine`):**
+   - Disentangled `#fun-machine-heading` from `#kapellmeister-heading`: reduced `#fun-machine-heading` from a 2-line fixed height (`2.5em`) to its natural 1-line height (`1.25em`), removing a full blank line of reserved space.
+   - Tightened `.fun-machine-engine` grid gap to `0.5rem` and `.fun-machine-body` padding to `0.25rem 0 0.5rem`, shrinking dead space between the title and the style bar from ~47px down to a crisp ~11px.
+   - Set `.looper` `margin-top: 0`, allowing the uniform `0.75rem` body gap to govern spacing between the keyboard and sequencer.
+3. **Double-Padding Elimination on Child Engine Bodies:**
+   - Discovered that `.beat-engine` already applies container padding `padding: 1.15rem clamp(1.1rem, 3vw, 2.8rem) 1.35rem;`. Child containers (`.kapellmeister-body`, `.fun-machine-body`, `.acoustics-body`) each had their own redundant `padding: ... clamp(1.1rem, 3vw, 2.8rem) ...`, causing their contents to be double-indented by an extra 42px.
+   - Removed inline padding on all child bodies (`padding-inline: 0`), bringing all readouts, compasses, sliders, chips, keyboards, and sequencers into exact alignment with their engine headers.
+4. **Rulebook Header Ergonomics:**
+   - Changed `.kapellmeister-engine .beat-header` from `align-items: end` to `align-items: flex-start`, seating the Rulebook select dropdown at the top right opposite the title row rather than sinking down to line 8.
+
+**Consequences:**
+- Headers, body containers, readout cells, and parameter controls share a unified vertical guide on the left and right across all wings.
+- Unnecessary gaps and dead space are eliminated, giving the entire instrument a cohesive, tightly engineered hardware synthesizer console feel.
+- 184/184 automated tests pass; zero runtime dependencies; 100% determinism preserved.
+
+## D-058 Swap Wings III (The Band) and IV (Keep) for hardware console workflow (2026-10-23, status: accepted)
+
+**Context:** Following the Korg R3 synthesizer console architecture (D-056), Wing I (Perform) and Wing II (Mix) handle active playing and tonal balance. Placing Keep (Session Presets and DAW exports) as Wing III separated the mixer from the individual instrument engines (The Band, Plates I–V), while putting the DAW export desk above the synthesizer engines rather than at the bottom utility panel.
+
+**Decision:**
+1. **Swap Page Order of Wings III and IV in `index.html`:**
+   - Wing III is now **THE BAND** (`#wing-band`), containing the five esoteric machines (Plates I–V: Malbolge beat, Brainfuck bass, Befunge harmony organ, Piet/FRACTRAN chimes, Shakespeare choir) right below Wing II (Mix).
+   - Wing IV is now **KEEP** (`#wing-keep`), containing the Session Ledger (`#session-engine`) and Engraver's Desk exports (`#export-engine`), positioned as the final rear utility deck immediately preceding the footer.
+2. **Synchronize Discovery Drawers (`src/cabinet.mjs`):**
+   - Updated `DRAWERS` order to `kapellmeister` → `mix` → `band` → `keep`, matching the physical page order.
+   - Preserves progressive disclosure: first loop unlocks Mix; playing with the mix/plates or reaching four loops unlocks The Band; modifying state unlocks Keep.
+3. **Restamp and Test Synchronization:**
+   - Restamped asset version (`node tools/stamp_assets.mjs`) for the `src/cabinet.mjs` update.
+   - Updated `tests/static.test.mjs` and `tests/cabinet.test.mjs` DOM ordering checks.
+4. **Keep Drawer Visibility and Specificity Fix (`styles.css`):**
+   - Discovered that the desktop layout rule `@media (min-width: 1180px) { #drawer-body-keep { display: grid; ... } }` had ID specificity (`(1, 0, 0)`), which clobbered `.drawer-body[hidden] { display: none; }` (`(0, 2, 0)`). Consequently, `#drawer-body-keep` never hid in desktop view, causing the Keep drawer to stay permanently open regardless of sealed discovery state or button toggles.
+   - Enforced `.drawer-body[hidden] { display: none !important; }` and restricted the desktop layout rule to `#drawer-body-keep:not([hidden])`. Added regression checks in `tests/static.test.mjs`.
+
+**Consequences:**
+- The ergonomic synthesizer workflow follows Perform → Mix → The Band → Keep, placing utility exports at the bottom of the instrument.
+- 184/184 automated tests pass; zero runtime dependencies; 100% determinism preserved.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

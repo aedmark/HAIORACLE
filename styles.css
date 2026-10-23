@@ -93,7 +93,7 @@ select:focus-visible {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.55rem 0.75rem;
-  margin-top: 0.9rem;
+  margin-top: 0;
   padding: 0.7rem 0.85rem;
   border: 1px solid rgba(184, 146, 73, 0.4);
   background: rgba(10, 8, 7, 0.55);
@@ -134,6 +134,26 @@ select:focus-visible {
   color: #fff8e6 !important;
   background: rgba(130, 85, 15, 0.85) !important;
   box-shadow: 0 0 10px rgba(255, 216, 117, 0.55);
+}
+
+.looper-section-button {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+}
+
+#looper-insert-intro:hover:not(:disabled) {
+  border-color: rgba(255, 216, 117, 0.9);
+  color: #fff;
+}
+
+#looper-insert-bridge:hover:not(:disabled) {
+  border-color: rgba(190, 130, 240, 0.9);
+  color: #fff;
+}
+
+#looper-insert-outro:hover:not(:disabled) {
+  border-color: rgba(240, 90, 100, 0.9);
+  color: #fff;
 }
 
 @keyframes looper-pulse-amber {
@@ -499,7 +519,7 @@ select:focus-visible {
 }
 
 .drawer-body[hidden] {
-  display: none;
+  display: none !important;
 }
 
 /* A sealed wing keeps a slim nameplate instead of its full parchment band. */
@@ -761,20 +781,20 @@ footer {
 .oracle-shell {
   position: relative;
   flex: 1;
-  padding: clamp(2.2rem, 4.5vw, 3.8rem) clamp(1.2rem, 5vw, 4.5rem) clamp(2.4rem, 4.5vw, 3.8rem);
+  padding: clamp(1.2rem, 2.2vw, 1.85rem) clamp(1rem, 2.8vw, 2.5rem);
 }
 
 .introduction {
   position: relative;
   z-index: 1;
   max-width: 58rem;
-  margin: 0 auto clamp(1.8rem, 3.5vw, 2.8rem);
+  margin: 0 auto clamp(0.75rem, 1.5vw, 1.25rem);
   text-align: center;
 }
 
 .esoteric-crest {
-  width: min(16rem, 70%);
-  margin: 0 auto 0.65rem;
+  width: min(8.5rem, 55%);
+  margin: 0 auto 0.45rem;
   color: var(--oxblood);
 }
 
@@ -785,20 +805,20 @@ footer {
 }
 
 .eyebrow {
-  margin: 0 0 0.95rem;
+  margin: 0 0 0.45rem;
   color: var(--oxblood);
-  font-size: clamp(0.6rem, 1vw, 0.72rem);
-  letter-spacing: 0.22em;
+  font-size: clamp(0.62rem, 0.9vw, 0.7rem);
+  letter-spacing: 0.2em;
 }
 
 h1 {
   margin: 0;
   color: var(--ink);
   font-family: var(--serif-display);
-  font-size: clamp(2.6rem, 6.8vw, 6.1rem);
+  font-size: clamp(1.65rem, 3.2vw, 2.45rem);
   font-weight: 700;
   letter-spacing: 0.03em;
-  line-height: 0.92;
+  line-height: 1.05;
   text-transform: uppercase;
   text-shadow:
     1px 1px 0 var(--parchment-light),
@@ -808,8 +828,8 @@ h1 {
 
 h1 em {
   display: inline-block;
-  margin-top: 0.32em;
-  padding: 0.18em 0.9em 0.22em;
+  margin-top: 0.22em;
+  padding: 0.14em 0.85em 0.16em;
   border-top: 1px solid var(--oxblood);
   border-bottom: 1px solid var(--oxblood);
   color: var(--oxblood);
@@ -851,7 +871,7 @@ h1 em {
 .vision-stage {
   position: relative;
   width: 100%;
-  height: clamp(22rem, 45vw, 34rem);
+  height: clamp(19rem, 34vw, 28rem);
   overflow: hidden;
   border: 2px solid var(--brass);
   border-radius: 41% 41% 0.7rem 0.7rem / 10% 10% 0.7rem 0.7rem;
@@ -1023,8 +1043,8 @@ h1 em {
 .summon-form {
   position: relative;
   width: min(56rem, 100%);
-  margin: clamp(2.2rem, 4.2vw, 3.4rem) auto 0;
-  padding: clamp(1.25rem, 2.5vw, 1.85rem);
+  margin: clamp(1rem, 2vw, 1.5rem) auto 0;
+  padding: clamp(0.9rem, 1.8vw, 1.35rem);
   border: 1px solid rgba(27, 21, 18, 0.45);
   outline: 1px solid rgba(107, 31, 40, 0.28);
   outline-offset: -5px;
@@ -1036,9 +1056,9 @@ h1 em {
 
 .summon-form > label {
   display: block;
-  margin: 0 0 1rem;
+  margin: 0 0 0.65rem;
   color: var(--oxblood-dark);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   letter-spacing: 0.18em;
 }
 
@@ -1062,7 +1082,7 @@ h1 em {
 
 #phrase {
   min-width: 0;
-  padding: 0.95rem 1.25rem;
+  padding: 0.85rem 1.25rem;
   border: 0;
   color: var(--ink);
   background:
@@ -1072,7 +1092,7 @@ h1 em {
       rgba(107, 31, 40, 0.1) 2.15rem 2.2rem
     );
   font-family: var(--serif-display);
-  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  font-size: clamp(1.05rem, 1.9vw, 1.4rem);
   font-style: italic;
   font-weight: 600;
   text-align: center;
@@ -1094,8 +1114,8 @@ h1 em {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  min-width: 14.5rem;
-  padding: 0.85rem 1.4rem;
+  min-width: 12.5rem;
+  padding: 0.75rem 1.25rem;
   border: 0;
   border-left: 2px solid var(--ebony);
   color: var(--parchment-light);
@@ -1126,10 +1146,10 @@ h1 em {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  margin-top: 1.05rem;
+  margin-top: 0.75rem;
   color: var(--ink-muted);
   font-family: var(--mono-ledger);
-  font-size: 0.6rem;
+  font-size: 0.62rem;
   letter-spacing: 0.12em;
 }
 
@@ -1154,9 +1174,9 @@ h1 em {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: clamp(1.25rem, 2.8vw, 3rem);
-  min-height: 7.5rem;
-  padding: 1.4rem clamp(1.1rem, 3vw, 2.8rem);
+  gap: clamp(1.2rem, 2.5vw, 2.5rem);
+  min-height: auto;
+  padding: 1.1rem clamp(1.1rem, 3vw, 2.8rem);
   border-top: 3px double var(--brass);
   border-bottom: 2px solid var(--brass);
   color: var(--bone);
@@ -1243,7 +1263,9 @@ h1 em {
 }
 
 #master-volume,
-#tempo-bpm {
+#tempo-bpm,
+#kapellmeister-strictness,
+#parlor-acoustics-level {
   width: 100%;
   height: 1rem;
   margin: 0;
@@ -1256,7 +1278,7 @@ h1 em {
 .transport-deck {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.9rem 1.6rem;
   padding: 1.1rem clamp(1.1rem, 3vw, 2.8rem);
   border-bottom: 2px solid var(--brass);
@@ -1327,7 +1349,7 @@ h1 em {
 
 .transport-position {
   min-width: 9ch;
-  padding: 0.5rem 0.75rem;
+  padding: 0.72rem 0.75rem;
   border: 1px solid var(--brass-dim);
   color: var(--brass-bright);
   background: rgba(10, 8, 7, 0.48);
@@ -1359,6 +1381,8 @@ h1 em {
 
 .transport-hint {
   margin: 0 0 0 auto;
+  align-self: flex-start;
+  padding-top: 0.65rem;
   color: rgba(228, 215, 190, 0.6);
   font-size: 0.6rem;
   letter-spacing: 0.14em;
@@ -1458,7 +1482,7 @@ h1 em {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.85rem;
+  gap: 0.65rem;
 }
 
 .beat-engine h3 {
@@ -2009,7 +2033,7 @@ h1 em {
 .kapellmeister-engine .beat-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
+  align-items: flex-start;
 }
 
 .kapellmeister-engine .beat-identity {
@@ -2022,7 +2046,6 @@ h1 em {
   gap: 0.45rem;
 }
 
-#fun-machine-heading,
 #kapellmeister-heading {
   display: -webkit-box;
   height: 2.5em;
@@ -2031,6 +2054,12 @@ h1 em {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+}
+
+#fun-machine-heading {
+  height: 1.25em;
+  overflow: hidden;
+  line-height: 1.25;
 }
 
 /* Fixed line box: ♭ and ♯ fall back to a font with a taller one. */
@@ -2127,7 +2156,7 @@ h1 em {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.85rem;
-  padding: 0.85rem clamp(1.1rem, 3vw, 2.8rem) 0.5rem;
+  padding: 0.35rem 0 0.5rem;
 }
 
 .kapellmeister-readout {
@@ -2303,7 +2332,7 @@ h1 em {
 .acoustics-body {
   display: grid;
   gap: 0.5rem;
-  padding: 0.65rem clamp(1.1rem, 3vw, 2.8rem) 0.5rem;
+  padding: 0.35rem 0 0.5rem;
 }
 
 .acoustics-indicators {
@@ -2349,6 +2378,7 @@ h1 em {
    ========================================================================== */
 
 .fun-machine-engine {
+  gap: 0.5rem;
   padding-bottom: 1.25rem;
   background:
     radial-gradient(ellipse at 50% 50%, rgba(212, 175, 101, 0.12), transparent 70%),
@@ -2373,8 +2403,8 @@ h1 em {
 .fun-machine-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.95rem;
-  padding: 0.85rem clamp(1.1rem, 3vw, 2.8rem) 0.5rem;
+  gap: 0.75rem;
+  padding: 0.25rem 0 0.5rem;
 }
 
 .fun-quality-bar {
@@ -2816,6 +2846,36 @@ noscript {
   .transport-section {
     grid-column: 1 / -1;
     text-align: center;
+  }
+}
+
+/* Korg R3-inspired unified hardware performance console (D-056).
+   Every tier spans horizontally across the instrument chassis with unhurried
+   breathing room, tactile hardware framing, and immediate playability. */
+@media (min-width: 1180px) {
+  .oracle-cabinet {
+    width: min(94rem, 100%);
+    box-shadow:
+      0 0 0 6px var(--ebony),
+      0 0 0 9px rgba(184, 146, 73, 0.45),
+      0 30px 80px rgba(0, 0, 0, 0.92);
+  }
+
+  /* In keep drawer, put session-engine and export-engine side by side */
+  #drawer-body-keep:not([hidden]) {
+    display: grid;
+    grid-template-columns: minmax(360px, 1fr) minmax(420px, 1.25fr);
+    gap: clamp(1.2rem, 3vw, 2.5rem);
+    padding: 1.2rem clamp(1.1rem, 3vw, 2.8rem);
+  }
+
+  #session-engine {
+    border-right: 2px solid var(--brass-dim);
+    border-bottom: 0;
+  }
+
+  #export-engine {
+    border-bottom: 0;
   }
 }
 
