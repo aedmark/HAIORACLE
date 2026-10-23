@@ -70,7 +70,7 @@
           <span class="stage-marker stage-marker-left">LIVE SPECIMEN</span>
           <span class="stage-marker stage-marker-right" id="stage-bell-jar">BELL JAR Nº 01</span>
           <canvas id="vision" aria-label="The oracle's animated audiovisual creature"></canvas>
-          <p class="stage-caption">ECTOPLASMIC APPARITION · DO NOT TAP THE VITRINE</p>
+          <p class="stage-caption" id="stage-caption">ECTOPLASMIC APPARITION · DO NOT TAP THE VITRINE</p>
         </div>
       </div>
 
@@ -677,7 +677,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "129097897d8d";
+      const ASSET_VERSION = "e147aaf3b46d";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

@@ -928,6 +928,33 @@ Investigation revealed two distinct factors:
 - Determinism contract strictly preserved: every parameter remains causal and originates in the LOLCODE score output.
 - All 175 tests passing, zero warnings in docs and manual.
 
+## D-048 Interactive vitrine tapping agitation, retaliatory kinetic strike, and organism recovery cooldown (2026-10-22, status: accepted)
+
+**Context:** The bell jar vitrine in `index.html` has long displayed the Victorian admonition: `ECTOPLASMIC APPARITION · DO NOT TAP THE VITRINE`. A friend of the maintainer suggested that tapping the glass of the organism should do something, and if tapped too much, should annoy the organism and cause it to fight back.
+
+**Decision:**
+1. **Vitrine Agitation Accumulator:**
+   - Added `interaction.agitation` ($0.0\dots 1.0$) and `interaction.tapStreak` tracking.
+   - Rapid tapping within 1.8 seconds increments the streak and increases agitation. Without tapping, agitation smoothly decays back to zero over approximately 1.4 seconds.
+2. **Escalating Behavioral Dynamics:**
+   - **Taps 1–2 (Gentle disturbance):** The glass rings with resonant chimes (`triggerPercussion("strike")`), ripples radiate, and spores puff outward.
+   - **Taps 3–5 (Irritated / Agitated):** The creature's pupils contract into fierce staring slits, gaze locks dead onto the tap coordinate with high attention, perimeter contours bristle with high-frequency agitation jitter, and filter resonance climbs. The bell jar vitrine frame turns amber/crimson (`.is-agitated`) and the vitrine caption warns: `WARNING: ORGANISM AGITATED · CEASE TAPPING!`.
+3. **The Retaliatory Kinetic Strike ("Fight Back"):**
+   - Crossing the agitation threshold ($\ge 0.85$ or 6 rapid taps) triggers an immediate retaliatory strike:
+     - **Visual Surge:** The creature lunges forward toward the tap coordinates, swelling by +42% against the glass, accompanied by a blinding phosphorescent radial discharge flash, an explosive shockwave ring, a massive spore eruption, and 7–10 branched crystalline glass stress fractures that slowly fade.
+     - **Audio Slam:** A multi-layered synthesized transient combining an 80 Hz $\to$ 28 Hz sub-bass cabinet boom (physical mass striking the glass), a sharp 1650 Hz $\to$ 420 Hz glass snap transient, a bandpass-swept bio-acoustic snarl, and a momentary 350 ms audio duck on the ensemble to give the strike visceral weight.
+     - **Vitrine Shudder:** The vitrine stage executes a dramatic cabinet tremor animation (`vitrine-shudder`), automatically suppressed under `prefers-reduced-motion: reduce`.
+     - **Dynamic Alerts:** Caption flashes `RETALIATION! · THE SPECIMEN STRUCK THE GLASS!`, and the status bar alerts `ORGANISM RETALIATED · STEP BACK FROM GLASS`.
+4. **Defensive Sulk Recovery Cooldown:**
+   - After retaliating, the organism retreats to the center background in a 3.4-second defensive sulk (`.is-sulking`).
+   - Tapping the vitrine during cooldown produces a dull, hollow wooden/glass thud (`triggerPercussion("dull_thud")`) with no spore discharge, and the status bar reports `SPECIMEN SULKING · REFUSES CONTACT` before the creature calms down and returns to its resting state.
+
+**Consequences:**
+- Direct, playful reward for exploring the vitrine caption's warning.
+- Pure Web Audio synthesis and zero runtime dependencies preserved.
+- Full accessibility and reduced-motion safety preserved.
+- Deterministic score boundary remains untouched.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

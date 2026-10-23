@@ -769,6 +769,47 @@ h1 em {
     0 0 24px rgba(217, 184, 108, 0.28);
 }
 
+.vision-stage.is-agitated {
+  border-color: #d46b38;
+  box-shadow:
+    inset 0 0 50px rgba(180, 60, 30, 0.52),
+    inset 0 0 0 1px rgba(245, 160, 80, 0.55),
+    0 0 28px rgba(212, 107, 56, 0.42);
+}
+
+.vision-stage.is-retaliating {
+  border-color: #e63926;
+  box-shadow:
+    inset 0 0 75px rgba(230, 57, 38, 0.75),
+    inset 0 0 0 2px rgba(255, 230, 180, 0.85),
+    0 0 45px rgba(230, 57, 38, 0.65);
+}
+
+.vision-stage.is-sulking {
+  border-color: rgba(140, 120, 100, 0.4);
+  box-shadow:
+    inset 0 0 65px rgba(0, 0, 0, 0.95),
+    inset 0 0 0 1px rgba(140, 120, 100, 0.2);
+}
+
+@keyframes vitrine-shudder {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  12% { transform: translate(-5px, 3px) rotate(-0.6deg); }
+  24% { transform: translate(6px, -4px) rotate(0.7deg); }
+  36% { transform: translate(-4px, -3px) rotate(-0.5deg); }
+  48% { transform: translate(5px, 2px) rotate(0.4deg); }
+  60% { transform: translate(-3px, 2px) rotate(-0.3deg); }
+  75% { transform: translate(2px, -1px) rotate(0.2deg); }
+  90% { transform: translate(-1px, 1px) rotate(-0.1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vision-stage.is-retaliating {
+    animation: vitrine-shudder 600ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
+}
+
 .vision-stage::before {
   position: absolute;
   inset: 0.75rem;
@@ -856,6 +897,26 @@ h1 em {
   font-size: 0.6rem;
   letter-spacing: 0.16em;
   text-align: center;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.vision-stage.is-agitated .stage-caption {
+  border-color: rgba(212, 107, 56, 0.75);
+  background: rgba(35, 14, 10, 0.9);
+  color: #fed7aa;
+}
+
+.vision-stage.is-retaliating .stage-caption {
+  border-color: rgba(230, 57, 38, 0.95);
+  background: rgba(45, 10, 8, 0.96);
+  color: #ffedd5;
+  box-shadow: 0 0 16px rgba(230, 57, 38, 0.6);
+}
+
+.vision-stage.is-sulking .stage-caption {
+  border-color: rgba(120, 110, 100, 0.4);
+  background: rgba(14, 12, 12, 0.88);
+  color: rgba(180, 170, 160, 0.65);
 }
 
 .summon-form {

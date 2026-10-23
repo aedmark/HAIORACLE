@@ -226,6 +226,7 @@ const SURPRISES = Object.freeze([
 const elements = {
   canvas: document.querySelector("#vision"),
   stageBellJar: document.querySelector("#stage-bell-jar"),
+  stageCaption: document.querySelector("#stage-caption"),
   form: document.querySelector("#oracle-controls"),
   phrase: document.querySelector("#phrase"),
   surprise: document.querySelector("#surprise"),
@@ -406,6 +407,16 @@ const interaction = {
   lastFrameAt: 0,
   lastTickAt: 0,
   ripples: [],
+  agitation: 0,
+  tapStreak: 0,
+  lastTapAt: 0,
+  retaliateUntil: 0,
+  cooldownUntil: 0,
+  retaliationFlash: 0,
+  lunge: 0,
+  sulk: 0,
+  retaliationPoint: { x: 0, y: 0 },
+  retaliationFractures: [],
 };
 
 function mulberry32(seed) {
@@ -520,19 +531,21 @@ function fluxOffset(score, angle, elapsed) {
   const time = elapsed * speed + interaction.morphPhase * 1.35 + score.kineticTilt / 8 * Math.PI * 2;
   const depth = (0.022 + score.kineticDepth / 100 * 0.095) * (1 + interaction.hold * 0.75 + interaction.dragSpeed * 0.6);
   const tapWave = Math.sin(angle * (score.symmetry + 5) - elapsed * 10.5) * interaction.tap * 0.068;
+  const agitationWave = (interaction.agitation || 0) * Math.sin(angle * 13 + elapsed * 32) * 0.032;
+  const perturbation = tapWave + agitationWave;
   switch (score.fluxMode) {
-    case 0: return Math.sin(angle * score.twist - time) * depth + tapWave;
-    case 1: return Math.sin(angle * score.symmetry + time) * Math.cos(angle * score.twist - time * 0.63) * depth + tapWave;
-    case 2: return Math.sin(angle * 2 + time) * Math.sin(angle * (score.symmetry + 1) - time * 0.8) * depth + tapWave;
-    case 3: return Math.tanh(Math.sin(angle * score.symmetry - time) * 3) * depth * 0.82 + tapWave;
+    case 0: return Math.sin(angle * score.twist - time) * depth + perturbation;
+    case 1: return Math.sin(angle * score.symmetry + time) * Math.cos(angle * score.twist - time * 0.63) * depth + perturbation;
+    case 2: return Math.sin(angle * 2 + time) * Math.sin(angle * (score.symmetry + 1) - time * 0.8) * depth + perturbation;
+    case 3: return Math.tanh(Math.sin(angle * score.symmetry - time) * 3) * depth * 0.82 + perturbation;
     case 4: {
       const morph = (Math.sin(time * 0.55) + 1) / 2;
-      return (Math.cos(angle * score.symmetry) * (1 - morph) + Math.cos(angle * (score.symmetry + 1)) * morph) * depth + tapWave;
+      return (Math.cos(angle * score.symmetry) * (1 - morph) + Math.cos(angle * (score.symmetry + 1)) * morph) * depth + perturbation;
     }
-    case 5: return (Math.sin(angle * 3 - time) * 0.55 + Math.sin(angle * 7 + time * 0.73) * 0.3 + Math.cos(angle * 11 - time * 0.41) * 0.15) * depth + tapWave;
-    case 6: return Math.sin(angle + Math.sin(time) * 1.4) * Math.cos(angle * score.twist - time) * depth + tapWave;
-    case 7: return Math.sin(angle * score.symmetry - time) ** 3 * depth + tapWave;
-    default: return tapWave;
+    case 5: return (Math.sin(angle * 3 - time) * 0.55 + Math.sin(angle * 7 + time * 0.73) * 0.3 + Math.cos(angle * 11 - time * 0.41) * 0.15) * depth + perturbation;
+    case 6: return Math.sin(angle + Math.sin(time) * 1.4) * Math.cos(angle * score.twist - time) * depth + perturbation;
+    case 7: return Math.sin(angle * score.symmetry - time) ** 3 * depth + perturbation;
+    default: return perturbation;
   }
 }
 
@@ -905,7 +918,7 @@ function drawIris(ctx, score, eye, size, elapsed) {
   const hue = wrapHue(score.irisHue + eye * score.irisShift);
   const secondHue = wrapHue(hue + score.hueShift);
   const baseGazeAngle = score.gaze / 8 * Math.PI * 2 + Math.sin(elapsed * 0.32 + eye) * 0.16;
-  const attention = Math.min(1, interaction.hold * 0.92 + interaction.tap * 0.75);
+  const attention = Math.min(1, interaction.hold * 0.92 + interaction.tap * 0.75 + (interaction.agitation || 0) * 0.85);
   const pointerAngle = Math.atan2(interaction.smoothY, interaction.smoothX);
   const pointerReach = Math.min(1.5, 0.45 + Math.hypot(interaction.smoothX, interaction.smoothY));
   const x = (Math.cos(baseGazeAngle) * (1 - attention) + Math.cos(pointerAngle) * pointerReach * attention) * size * 0.32;
@@ -965,7 +978,10 @@ function drawIris(ctx, score, eye, size, elapsed) {
   }
   ctx.restore();
 
-  const pupilScale = Math.max(0.65, Math.min(1.42, 1 + interaction.tap * 0.36 - interaction.hold * 0.22 + interaction.dragSpeed * 0.25));
+  const isRetaliating = performance.now() < interaction.retaliateUntil;
+  const pupilScale = isRetaliating
+    ? 1.55
+    : Math.max(0.42, Math.min(1.42, 1 + interaction.tap * 0.36 - interaction.hold * 0.22 + interaction.dragSpeed * 0.25 - (interaction.agitation || 0) * 0.38 - (interaction.sulk || 0) * 0.22));
   ctx.fillStyle = `hsl(${wrapHue(hue + 180)} 36% 5%)`;
   tracePupil(ctx, score.pupilShape, x, y, radius * pupilScale);
   ctx.fill("evenodd");
@@ -975,11 +991,14 @@ function drawEye(ctx, score, eye, base, elapsed, colors) {
   const placement = eyePlacement(score, eye, score.eyes, base, elapsed + interaction.morphPhase * 0.6);
   const crowding = 1 - Math.max(0, score.eyes - 7) * 0.025;
   const size = Math.max(4, base * (0.022 + score.eyeSize / 2450) * placement.scale * crowding);
+  const isRetaliating = performance.now() < interaction.retaliateUntil;
   ctx.save();
   ctx.translate(placement.x, placement.y);
   ctx.rotate(placement.angle);
-  ctx.shadowBlur = size * 0.35;
-  ctx.shadowColor = `hsla(${score.irisHue} 100% 72% / 0.55)`;
+  ctx.shadowBlur = size * (0.35 + (interaction.agitation || 0) * 0.35 + (interaction.retaliationFlash || 0) * 0.75);
+  ctx.shadowColor = isRetaliating
+    ? "hsl(45 100% 85%)"
+    : `hsla(${score.irisHue} 100% 72% / ${0.55 + (interaction.agitation || 0) * 0.35})`;
   traceEyeShape(ctx, score.eyeShape, size);
   ctx.fillStyle = `hsl(${wrapHue(colors[2] + 20)} 34% 92%)`;
   ctx.fill();
@@ -1706,13 +1725,66 @@ function stepInteraction(timestamp, reducedMotion) {
   interaction.smoothX += (targetX - interaction.smoothX) * followRate;
   interaction.smoothY += (targetY - interaction.smoothY) * followRate;
   if (!reducedMotion) {
-    interaction.morphPhase += dt * (interaction.hold * 2.2 + interaction.dragSpeed * 4.8 + interaction.tap * 1.9);
+    interaction.morphPhase += dt * (interaction.hold * 2.2 + interaction.dragSpeed * 4.8 + interaction.tap * 1.9 + (interaction.agitation || 0) * 2.5);
   }
   const targetPitch = interaction.active
     ? -interaction.smoothY
     : interaction.tap * 0.25;
   interaction.pitchBend += (targetPitch - interaction.pitchBend) * Math.min(1, dt * 6.5);
-  interaction.ripples = interaction.ripples.filter((ripple) => (timestamp - ripple.bornAt) < 920);
+  interaction.ripples = interaction.ripples.filter((ripple) => (timestamp - ripple.bornAt) < (ripple.duration || 920));
+
+  // Agitation decay when tapping pauses
+  if (timestamp > interaction.lastTapAt + 1400 && timestamp > interaction.retaliateUntil) {
+    interaction.agitation *= Math.exp(-dt * 0.72);
+    if (interaction.agitation < 0.02) {
+      interaction.agitation = 0;
+      interaction.tapStreak = 0;
+    }
+  }
+
+  // Lunge and flash decay
+  interaction.lunge *= Math.exp(-dt * 5.2);
+  interaction.retaliationFlash *= Math.exp(-dt * 3.4);
+
+  // Sulk recovery during cooldown
+  const isCooldown = timestamp < interaction.cooldownUntil;
+  const targetSulk = isCooldown ? 1 : 0;
+  interaction.sulk += (targetSulk - interaction.sulk) * Math.min(1, dt * (isCooldown ? 4.5 : 1.2));
+
+  // Sync vitrine stage CSS classes
+  const isRetaliating = timestamp < interaction.retaliateUntil;
+  if (stageContainer) {
+    if (isRetaliating) {
+      stageContainer.classList.add("is-retaliating");
+      stageContainer.classList.remove("is-agitated");
+    } else if (interaction.agitation >= 0.38) {
+      stageContainer.classList.add("is-agitated");
+      stageContainer.classList.remove("is-retaliating");
+    } else {
+      stageContainer.classList.remove("is-retaliating", "is-agitated");
+    }
+    if (interaction.sulk > 0.05) {
+      stageContainer.classList.add("is-sulking");
+    } else {
+      stageContainer.classList.remove("is-sulking");
+    }
+  }
+
+  // Dynamic stage caption
+  if (elements.stageCaption) {
+    if (isRetaliating) {
+      elements.stageCaption.textContent = "RETALIATION! · THE SPECIMEN STRUCK THE GLASS!";
+    } else if (interaction.sulk > 0.15) {
+      elements.stageCaption.textContent = "SPECIMEN SULKING · RECOVERING IN DARKNESS";
+    } else if (interaction.agitation >= 0.55) {
+      elements.stageCaption.textContent = "WARNING: ORGANISM AGITATED · CEASE TAPPING!";
+    } else if (interaction.agitation >= 0.25) {
+      elements.stageCaption.textContent = "ECTOPLASMIC APPARITION · IRRITATION RISING";
+    } else {
+      elements.stageCaption.textContent = "ECTOPLASMIC APPARITION · DO NOT TAP THE VITRINE";
+    }
+  }
+
   updateAudioInteraction();
 }
 
@@ -1857,7 +1929,7 @@ function drawGlassCondensation(ctx, width, height, colors, score, elapsed, drops
   ctx.globalCompositeOperation = "screen";
 
   const bloomFactor = score.bloom / 100;
-  const tapJitter = interaction.tap * 1.5;
+  const tapJitter = interaction.tap * 1.5 + (interaction.agitation || 0) * 2.2;
 
   for (const drop of drops) {
     const jitterX = Math.sin(elapsed * 24 + drop.phase) * tapJitter;
@@ -2059,9 +2131,15 @@ class OracleVision {
     const maxTugY = height * 0.24;
     const tugX = this.reducedMotion ? 0 : interaction.smoothX * maxTugX * (0.65 + interaction.hold * 0.35);
     const tugY = this.reducedMotion ? 0 : interaction.smoothY * maxTugY * (0.65 + interaction.hold * 0.35);
-    const centerX = width * 0.5 + Math.cos(elapsed * 0.21) * orbitDistance + tugX;
-    const centerY = height * 0.5 + Math.sin(elapsed * 0.27) * orbitDistance + tugY;
-    const sizeFactor = 0.15 + score.size / 100 * (width < 760 ? 0.14 : 0.22);
+    const lungeShiftX = this.reducedMotion ? 0 : (interaction.retaliationPoint.x * width * 0.22 * interaction.lunge);
+    const lungeShiftY = this.reducedMotion ? 0 : (interaction.retaliationPoint.y * height * 0.22 * interaction.lunge);
+    const agitationShudder = this.reducedMotion ? 0 : (interaction.agitation * Math.sin(elapsed * 48) * 3);
+    const sulkRetreatY = interaction.sulk * height * 0.06;
+    const centerX = width * 0.5 + Math.cos(elapsed * 0.21) * orbitDistance + tugX + lungeShiftX + agitationShudder;
+    const centerY = height * 0.5 + Math.sin(elapsed * 0.27) * orbitDistance + tugY + lungeShiftY + sulkRetreatY;
+    const lungeScale = this.reducedMotion ? (interaction.lunge * 0.18) : (interaction.lunge * 0.42);
+    const sulkScale = interaction.sulk * 0.2;
+    const sizeFactor = (0.15 + score.size / 100 * (width < 760 ? 0.14 : 0.22)) * (1 + lungeScale - sulkScale);
     const base = Math.min(width, height) * sizeFactor;
     const points = Math.max(120, score.symmetry * 28);
     const dragDist = Math.hypot(interaction.smoothX, interaction.smoothY);
@@ -2139,15 +2217,64 @@ class OracleVision {
       ctx.save();
       ctx.globalCompositeOperation = "screen";
       for (const ripple of interaction.ripples) {
-        const age = Math.max(0, (timestamp - ripple.bornAt) / 920);
+        const rippleDuration = ripple.duration || 920;
+        const age = Math.max(0, (timestamp - ripple.bornAt) / rippleDuration);
         const rx = (ripple.x * 0.5 + 0.5) * width;
         const ry = (ripple.y * 0.5 + 0.5) * height;
         const rippleRadius = base * (0.1 + age * (0.95 + ripple.strength * 0.45));
-        ctx.strokeStyle = `hsla(${colors[2]} 100% 86% / ${(1 - age) ** 1.6 * 0.52})`;
-        ctx.lineWidth = 1.6 * (1 - age * 0.6);
-        ctx.beginPath();
-        ctx.arc(rx, ry, rippleRadius, 0, Math.PI * 2);
-        ctx.stroke();
+        if (ripple.isRetaliation) {
+          ctx.strokeStyle = `hsla(42 100% 88% / ${(1 - age) ** 1.2 * 0.85})`;
+          ctx.lineWidth = 3.2 * (1 - age * 0.5);
+          ctx.beginPath();
+          ctx.arc(rx, ry, rippleRadius * 1.3, 0, Math.PI * 2);
+          ctx.stroke();
+          if (age > 0.12) {
+            const age2 = (age - 0.12) / 0.88;
+            ctx.strokeStyle = `hsla(${colors[2]} 100% 75% / ${(1 - age2) ** 1.5 * 0.65})`;
+            ctx.lineWidth = 2.0 * (1 - age2);
+            ctx.beginPath();
+            ctx.arc(rx, ry, rippleRadius * 0.85, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        } else {
+          ctx.strokeStyle = `hsla(${colors[2]} 100% 86% / ${(1 - age) ** 1.6 * 0.52})`;
+          ctx.lineWidth = 1.6 * (1 - age * 0.6);
+          ctx.beginPath();
+          ctx.arc(rx, ry, rippleRadius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
+    if (interaction.retaliationFlash > 0.01) {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      const rx = (interaction.retaliationPoint.x * 0.5 + 0.5) * width;
+      const ry = (interaction.retaliationPoint.y * 0.5 + 0.5) * height;
+
+      const flashGrad = ctx.createRadialGradient(rx, ry, 0, rx, ry, Math.max(width, height) * 0.75);
+      flashGrad.addColorStop(0, `hsla(45 100% 95% / ${interaction.retaliationFlash * 0.65})`);
+      flashGrad.addColorStop(0.35, `hsla(${colors[2]} 90% 70% / ${interaction.retaliationFlash * 0.35})`);
+      flashGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = flashGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      if (interaction.retaliationFractures && interaction.retaliationFractures.length > 0) {
+        ctx.strokeStyle = `hsla(45 100% 92% / ${interaction.retaliationFlash * 0.85})`;
+        ctx.shadowColor = `hsla(35 100% 70% / ${interaction.retaliationFlash * 0.9})`;
+        ctx.shadowBlur = 8 * interaction.retaliationFlash;
+        ctx.lineWidth = 1.8 * interaction.retaliationFlash;
+        for (const segments of interaction.retaliationFractures) {
+          ctx.beginPath();
+          ctx.moveTo(rx, ry);
+          for (const seg of segments) {
+            const sx = rx + Math.cos(seg.a) * seg.r;
+            const sy = ry + Math.sin(seg.a) * seg.r;
+            ctx.lineTo(sx, sy);
+          }
+          ctx.stroke();
+        }
       }
       ctx.restore();
     }
@@ -2192,9 +2319,10 @@ function updateAudioInteraction() {
   // The vitrine sweeps the lead's creature filter around the same resting
   // point the exports use (D-042).
   const creature = creatureFilter(score);
+  const agitationExponent = (interaction.agitation || 0) * 0.45;
   const harmonicExponent = (interaction.pitchBend * 0.72 + Math.sin(field.angle) * 0.35) * Math.max(0.3, interaction.hold) + interaction.tap * 0.25;
-  const targetCutoff = Math.max(220, Math.min(9000, creature.cutoff * (2 ** harmonicExponent)));
-  const targetQ = Math.min(4.5, creature.q + field.radius * 1.6 + interaction.tap * 0.7);
+  const targetCutoff = Math.max(220, Math.min(9000, creature.cutoff * (2 ** (harmonicExponent + agitationExponent))));
+  const targetQ = Math.min(5.2, creature.q + field.radius * 1.6 + interaction.tap * 0.7 + (interaction.agitation || 0) * 0.9);
   const targetMix = 0.28 * (1 + interaction.hold * 0.2 + interaction.tap * 0.12);
   const baseFeedback = 0.14 + score.bloom / 650;
   const targetFeedback = Math.min(0.48, baseFeedback + field.radius * 0.14);
@@ -2262,6 +2390,21 @@ function triggerPercussion(kind, normX = 0, normY = 0, strength = 1) {
       partialOsc.start(now);
       partialOsc.stop(now + duration + 0.04);
     }
+    // High resonant sizzle if organism is irritated
+    if (interaction.agitation > 0.3) {
+      const dissOsc = audioContext.createOscillator();
+      const dissGain = audioContext.createGain();
+      dissOsc.type = "sawtooth";
+      dissOsc.frequency.setValueAtTime(baseFreq * 3.73, now);
+      const dissDur = 0.18;
+      const dissPeak = 0.045 * strength * interaction.agitation;
+      dissGain.gain.setValueAtTime(0.0001, now);
+      dissGain.gain.exponentialRampToValueAtTime(dissPeak, now + 0.01);
+      dissGain.gain.exponentialRampToValueAtTime(0.0001, now + dissDur);
+      dissOsc.connect(dissGain).connect(currentTransport.mix);
+      dissOsc.start(now);
+      dissOsc.stop(now + dissDur + 0.02);
+    }
   } else if (kind === "ratchet") {
     for (const [partialIndex, ratio] of [1, 2].entries()) {
       const harmonicOsc = audioContext.createOscillator();
@@ -2277,6 +2420,67 @@ function triggerPercussion(kind, normX = 0, normY = 0, strength = 1) {
       harmonicOsc.start(now);
       harmonicOsc.stop(now + duration + 0.03);
     }
+  } else if (kind === "retaliation") {
+    // 1. Sub-bass kinetic cabinet boom (mass slamming against bell jar)
+    const subOsc = audioContext.createOscillator();
+    const subGain = audioContext.createGain();
+    subOsc.type = "sine";
+    subOsc.frequency.setValueAtTime(105, now);
+    subOsc.frequency.exponentialRampToValueAtTime(28, now + 0.36);
+    subGain.gain.setValueAtTime(0.0001, now);
+    subGain.gain.exponentialRampToValueAtTime(0.45 * strength, now + 0.012);
+    subGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+    subOsc.connect(subGain).connect(currentTransport.mix);
+    subOsc.start(now);
+    subOsc.stop(now + 0.46);
+
+    // 2. High-tension glass snap transient
+    const snapOsc = audioContext.createOscillator();
+    const snapGain = audioContext.createGain();
+    snapOsc.type = "triangle";
+    snapOsc.frequency.setValueAtTime(1650, now);
+    snapOsc.frequency.exponentialRampToValueAtTime(420, now + 0.11);
+    snapGain.gain.setValueAtTime(0.0001, now);
+    snapGain.gain.exponentialRampToValueAtTime(0.28 * strength, now + 0.005);
+    snapGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+    snapOsc.connect(snapGain).connect(currentTransport.mix);
+    snapOsc.start(now);
+    snapOsc.stop(now + 0.15);
+
+    // 3. Bio-acoustic snarl & air hiss
+    const snarlSource = audioContext.createBufferSource();
+    snarlSource.buffer = ensureNoiseBuffer(audioContext);
+    const snarlFilter = audioContext.createBiquadFilter();
+    snarlFilter.type = "bandpass";
+    snarlFilter.frequency.setValueAtTime(3400, now);
+    snarlFilter.frequency.exponentialRampToValueAtTime(360, now + 0.38);
+    snarlFilter.Q.setValueAtTime(4.2, now);
+    const snarlGain = audioContext.createGain();
+    snarlGain.gain.setValueAtTime(0.0001, now);
+    snarlGain.gain.exponentialRampToValueAtTime(0.26 * strength, now + 0.008);
+    snarlGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+    snarlSource.connect(snarlFilter).connect(snarlGain).connect(currentTransport.mix);
+    snarlSource.start(now);
+    snarlSource.stop(now + 0.42);
+
+    // 4. Parlor reverberation if active
+    if (currentTransport.parlorReverbSend && parlorAcousticsEnabled && parlorReverbEnabled) {
+      subGain.connect(currentTransport.parlorReverbSend);
+      snapGain.connect(currentTransport.parlorReverbSend);
+    }
+  } else if (kind === "dull_thud") {
+    // Muted low wooden/glass thud when tapped during sulk recovery
+    const thudOsc = audioContext.createOscillator();
+    const thudGain = audioContext.createGain();
+    thudOsc.type = "sine";
+    thudOsc.frequency.setValueAtTime(85, now);
+    thudOsc.frequency.exponentialRampToValueAtTime(38, now + 0.08);
+    thudGain.gain.setValueAtTime(0.0001, now);
+    thudGain.gain.exponentialRampToValueAtTime(0.09 * strength, now + 0.007);
+    thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    thudOsc.connect(thudGain).connect(currentTransport.mix);
+    thudOsc.start(now);
+    thudOsc.stop(now + 0.11);
   }
 }
 
@@ -4995,9 +5199,116 @@ function vitrineCoordinates(event) {
 
 const stageContainer = elements.canvas.closest(".vision-stage");
 
+function triggerRetaliation(normX, normY) {
+  const now = performance.now();
+  interaction.retaliateUntil = now + 750;
+  interaction.cooldownUntil = now + 3400;
+  interaction.agitation = 0;
+  interaction.tapStreak = 0;
+  interaction.lunge = 1.0;
+  interaction.retaliationFlash = 1.0;
+  interaction.retaliationPoint = { x: normX, y: normY };
+
+  // Generate crystalline glass stress fractures radiating from strike point
+  interaction.retaliationFractures = [];
+  const branchCount = 7 + Math.floor(Math.random() * 4);
+  for (let b = 0; b < branchCount; b += 1) {
+    const baseAngle = (b / branchCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.45;
+    const segments = [];
+    let curR = 0;
+    let curA = baseAngle;
+    const segCount = 4 + Math.floor(Math.random() * 3);
+    for (let s = 0; s < segCount; s += 1) {
+      curR += 16 + Math.random() * 24;
+      curA += (Math.random() - 0.5) * 0.35;
+      segments.push({ r: curR, a: curA });
+    }
+    interaction.retaliationFractures.push(segments);
+  }
+
+  // Explosive shockwave ripple
+  interaction.ripples.push({
+    x: normX,
+    y: normY,
+    bornAt: now,
+    duration: 1400,
+    strength: 3.8,
+    isRetaliation: true,
+  });
+
+  // Massive spore eruption
+  vision.burstSpores(4.0);
+  triggerSporePuff(3.0);
+
+  // Audio percussion
+  triggerPercussion("retaliation", normX, normY, 1.0);
+
+  // Momentary audio duck for dramatic impact
+  if (currentTransport && audioContext) {
+    const actxTime = audioContext.currentTime;
+    currentTransport.mix.gain.cancelScheduledValues(actxTime);
+    currentTransport.mix.gain.setValueAtTime(0.06, actxTime);
+    currentTransport.mix.gain.exponentialRampToValueAtTime(0.28, actxTime + 0.35);
+  }
+
+  if (stageContainer) {
+    stageContainer.classList.add("is-retaliating");
+    stageContainer.classList.remove("is-agitated");
+  }
+
+  if (elements.stageCaption) {
+    elements.stageCaption.textContent = "RETALIATION! · THE SPECIMEN STRUCK THE GLASS!";
+  }
+  if (!muted) {
+    elements.status.textContent = "ORGANISM RETALIATED · STEP BACK FROM GLASS";
+  }
+}
+
 elements.canvas.addEventListener("pointerdown", async (event) => {
   if (event.button !== undefined && event.button !== 0) return;
   const coords = vitrineCoordinates(event);
+  const now = performance.now();
+
+  // If organism is in sulk recovery, it refuses contact with a dull, hollow thud
+  if (now < interaction.cooldownUntil) {
+    interaction.active = true;
+    interaction.pointerId = event.pointerId;
+    interaction.x = coords.x;
+    interaction.y = coords.y;
+    interaction.smoothX = coords.x;
+    interaction.smoothY = coords.y;
+    interaction.tap = 0.3;
+    interaction.hold = Math.max(interaction.hold, 0.2);
+    interaction.dragDistance = 0;
+    interaction.pitchBend = -coords.y * 0.3;
+    interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: now, strength: 0.35 });
+    triggerPercussion("dull_thud", coords.x, coords.y, 0.5);
+    if (!muted) {
+      elements.status.textContent = "SPECIMEN SULKING · REFUSES CONTACT";
+    }
+    try {
+      elements.canvas.setPointerCapture(event.pointerId);
+    } catch {}
+    return;
+  }
+
+  // Track tap streak and annoyance escalation
+  const timeSinceLast = (now - interaction.lastTapAt) / 1000;
+  interaction.lastTapAt = now;
+  if (timeSinceLast < 1.8) {
+    interaction.tapStreak += 1;
+    interaction.agitation = Math.min(1.0, interaction.agitation + 0.18 + interaction.tapStreak * 0.04);
+  } else {
+    interaction.tapStreak = 1;
+    interaction.agitation = Math.min(1.0, Math.max(0.18, interaction.agitation + 0.15));
+  }
+
+  // Cross retaliation threshold
+  if (interaction.agitation >= 0.85 || interaction.tapStreak >= 6) {
+    triggerRetaliation(coords.x, coords.y);
+    return;
+  }
+
   interaction.active = true;
   interaction.pointerId = event.pointerId;
   interaction.x = coords.x;
@@ -5009,9 +5320,11 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
   interaction.dragTravel = Math.floor((((Math.atan2(coords.y, coords.x) + Math.PI) / (Math.PI * 2)) * 12)) % 12;
   interaction.dragDistance = 0;
   interaction.pitchBend = -coords.y;
-  interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: performance.now(), strength: 1 });
-  vision.burstSpores(1.2);
-  triggerSporePuff(1.2);
+  const rippleStrength = 1 + interaction.agitation * 0.8;
+  interaction.ripples.push({ x: coords.x, y: coords.y, bornAt: now, strength: rippleStrength });
+  const sporeMultiplier = 1.2 + interaction.agitation * 1.5;
+  vision.burstSpores(sporeMultiplier);
+  triggerSporePuff(sporeMultiplier);
   stageContainer?.classList.add("is-interacting");
   try {
     elements.canvas.setPointerCapture(event.pointerId);
@@ -5029,9 +5342,13 @@ elements.canvas.addEventListener("pointerdown", async (event) => {
   }
 
   updateAudioInteraction();
-  triggerPercussion("strike", coords.x, coords.y, 1);
+  triggerPercussion("strike", coords.x, coords.y, 1 + interaction.agitation * 0.5);
   if (!muted) {
-    elements.status.textContent = "VITRINE DISTURBED";
+    if (interaction.agitation >= 0.5) {
+      elements.status.textContent = `ORGANISM IRRITATED · TAP COUNT ${interaction.tapStreak}`;
+    } else {
+      elements.status.textContent = "VITRINE DISTURBED";
+    }
   }
 });
 
@@ -5073,7 +5390,16 @@ function endVitrineInteraction(event) {
   interaction.pointerId = null;
   stageContainer?.classList.remove("is-interacting");
   if (currentTransport && !muted) {
-    elements.status.textContent = "OMEN LOOPING";
+    const now = performance.now();
+    if (now < interaction.retaliateUntil) {
+      elements.status.textContent = "ORGANISM RETALIATED · STEP BACK FROM GLASS";
+    } else if (now < interaction.cooldownUntil) {
+      elements.status.textContent = "SPECIMEN SULKING · REFUSES CONTACT";
+    } else if (interaction.agitation >= 0.5) {
+      elements.status.textContent = `ORGANISM IRRITATED · TAP COUNT ${interaction.tapStreak}`;
+    } else {
+      elements.status.textContent = "OMEN LOOPING";
+    }
   }
 }
 

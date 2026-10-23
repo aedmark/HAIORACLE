@@ -239,6 +239,8 @@
             "lead": "Pointer events (`pointerdown`, `pointermove`, `pointerup`) feed an active session state `interaction`:",
             "points": [
               "Tapping triggers synthesized multi-partial glass strike plucks and expands shockwave ripples on the vitrine.",
+              "Rapid repeated tapping escalates organism agitation: pupils narrow into glaring slits, perimeter contours bristle with jitter, and filter resonance sharpens.",
+              "Crossing the irritation threshold triggers a retaliatory strike: the creature lunges forward against the glass, unleashing an explosive sub-bass cabinet boom, high-tension glass snap, bio-acoustic snarl, phosphorescent stress fractures, radial discharge flash, and vitrine shudder before retreating into defensive sulk recovery.",
               "Holding swells filter cutoff/resonance, dry/wet mix, echo feedback, and morphs the silhouette toward a secondary shape family.",
               "Dragging maps $(x, y)$ coordinates into polar $(r, \\theta)$ via `harmonicField()`, crossfading the creature's motif through a consonant $(\\cos\\alpha, \\sin\\alpha)$ harmonic phase shift and three-partial drone choir (`-12`, `-5`, `+7`).",
               "Releasing the pointer smoothly decays all offsets back to resting values via exponential smoothing."
@@ -248,7 +250,8 @@
           "evidence": [
             {"label": "Pointer interaction logic", "target": "src/app.mjs"},
             {"label": "Vitrine interaction tests", "target": "tests/static.test.mjs"},
-            {"label": "Architecture Record D-012", "target": "docs/DECISIONS.md"}
+            {"label": "Architecture Record D-012", "target": "docs/DECISIONS.md"},
+            {"label": "Architecture Record D-048", "target": "docs/DECISIONS.md"}
           ],
           "related": ["silhouette-flux", "lookahead-scheduler", "anatomical-eyes"]
         },

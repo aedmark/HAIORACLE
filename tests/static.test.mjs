@@ -166,6 +166,44 @@ test("tapping, holding, and dragging the vitrine modulate shape morphing, moveme
   assert.match(app, /pitchBendCents = interaction\.pitchBend/);
 });
 
+test("tapping the vitrine escalates organism agitation, triggers retaliation, and enters sulk recovery", async () => {
+  const [html, styles, app] = await Promise.all([
+    readFile(new URL("index.html", root), "utf8"),
+    readFile(new URL("styles.css", root), "utf8"),
+    readFile(new URL("src/app.mjs", root), "utf8"),
+  ]);
+
+  // Vitrine caption element wiring
+  assert.match(html, /id="stage-caption"/);
+  assert.match(app, /stageCaption:\s*document\.querySelector\(["']#stage-caption["']\)/);
+
+  // Annoyance tracking and escalation
+  assert.match(app, /agitation:\s*0/);
+  assert.match(app, /tapStreak:\s*0/);
+  assert.match(app, /interaction\.tapStreak \+= 1/);
+  assert.match(app, /interaction\.agitation = Math\.min\(1/);
+
+  // Retaliation threshold and trigger
+  assert.match(app, /interaction\.agitation >= 0\.85 \|\| interaction\.tapStreak >= 6/);
+  assert.match(app, /function triggerRetaliation\(/);
+  assert.match(app, /interaction\.retaliateUntil = now \+ 750/);
+  assert.match(app, /interaction\.cooldownUntil = now \+ 3400/);
+  assert.match(app, /interaction\.lunge = 1\.0/);
+  assert.match(app, /interaction\.retaliationFlash = 1\.0/);
+  assert.match(app, /interaction\.retaliationFractures/);
+
+  // Audio percussions for retaliation and cooldown thud
+  assert.match(app, /kind === "retaliation"/);
+  assert.match(app, /kind === "dull_thud"/);
+
+  // CSS states and motion safety
+  assert.match(styles, /\.vision-stage\.is-agitated/);
+  assert.match(styles, /\.vision-stage\.is-retaliating/);
+  assert.match(styles, /\.vision-stage\.is-sulking/);
+  assert.match(styles, /@keyframes vitrine-shudder/);
+  assert.match(styles, /@media\s*\(prefers-reduced-motion:\s*no-preference\)\s*\{\s*\.vision-stage\.is-retaliating\s*\{\s*animation:\s*vitrine-shudder/);
+});
+
 test("procedural mycelium and generative fruiting bodies grow within the vitrine", async () => {
   const [html, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
