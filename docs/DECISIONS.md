@@ -1287,6 +1287,38 @@ Key findings:
 - Users can arrange, loop, repeat, overdub onto, and export full 48-step raw automaton band mixes with zero external dependencies.
 - 185/185 automated tests pass; phrase determinism and boundary validation fully preserved.
 
+## D-060 Kapellmeister genre catalog Wave 3: Rhythmic feel and 22-genre expansion (2026-10-23, status: accepted)
+
+**Context:** D-041 outlined a 3-wave expansion for the Kapellmeister genre rulebooks in `src/rulebooks.ni`. Waves 1 and 2 established 19 genres across 5 menu families. Wave 3 was reserved for rhythmic *feel*: genres like waltzes, swing, and traditional ceremonial rhythms require characteristic step timing variations beyond plain 16th-note subdivision. Furthermore, phrase determinism (D-003) requires that unconfigured genres and `THE CREATURE'S OWN` retain their phrase's native `score.rhythm` without drift.
+
+**Decision:**
+1. **Inform 7 `feel` Property (`src/rulebooks.ni`, `src/inform.mjs`):**
+   - Declared `A genre has some text called the feel.` in Chapter 2 of `src/rulebooks.ni`.
+   - Updated `compileRulebooks()` in `src/inform.mjs` to extract `feel` (defaulting to `""` when omitted).
+   - Tagged existing rhythmically specific genres with their canonical feels:
+     - `parlor_ragtime`: `"habanera"`
+     - `doowop_ballad`: `"swing"`
+     - `tango_habanera`: `"habanera"`
+2. **Three New Kapellmeister Genres (Chapters 19–21, total 22 genres):**
+   - Chapter 19: **Vaudeville Viennese Waltz** (`vaudeville_waltz`, Family: `PARLOR`, Feel: `"waltz"`). Authentic 3/4 oom-pah-pah bass walk `{0, 7, 4, 0, 7, 3, 0, 7, 3, 0, 7, 4}`, I · vi · ii · V7 changes, member snapping, and `{rotation, relative substitution, authentic cadence}` moves.
+   - Chapter 20: **Swing-Era Savoy Ballroom** (`swing_ballroom`, Family: `NIGHT CLUB`, Feel: `"swing"`). Big-band swing I6 · vi7 · ii7 · V7 changes, walking quarter-note bass `{0, 4, 7, 0, 3, 7, 0, 3, 7, 0, 4, 7}`, guide-tone organ voicing `{third, fifth, seventh}`, and `{rotation, relative substitution, tritone substitution, secondary dominants}` moves.
+   - Chapter 21: **Javanese Gamelan Pelog** (`gamelan_pelog`, Family: `ESOTERIC`, Feel: `"straight"`). Kraton court gong and metallophone cycles: pure fifth-and-second open sonorities `{0, 7, 2}`, colotomic gong stride `{0, 7, 0, 0, 7, 0, 0, 7, 0, 0, 7, 0}`, pentatonic scale snapping `{0, 2, 5, 7, 9}`, and `{rotation, phrygian cadence, harmonic pace}` moves.
+   - Raw Esoteric Chaos moves to Chapter 22 at the conclusion of Part 2.
+3. **Rhythm Templates & Metric Closure (`src/app.mjs`, `src/conductor.mjs`, `src/ensemble.mjs`):**
+   - Added 3/4 Viennese Waltz template `[1.4, 0.8, 0.8]` at index 6 in `RHYTHMS`. Because $12 \bmod 3 = 0$, it divides the 12-step bar into 4 measures of 3 steps with zero loop drift, satisfying Audit Dimension 9 (D-050).
+   - Extended `DELAY_MULTIPLIERS` in `src/ensemble.mjs` to 7 elements with index 6 at `0.75`.
+   - Exported `RHYTHMIC_FEELS` (`straight: 0, swing: 1, syncopated: 2, gallop: 3, stately: 4, habanera: 5, waltz: 6`) and `effectiveRhythmIndex(score, genreCode)` from `src/conductor.mjs`.
+   - Wired `effectiveRhythmIndex` into `loopStepDuration`, `scheduleAhead`, `renderEnsembleLoop`, and the genre dropdown change listener, ensuring live tempo and echo updates track genre feel while preserving native `score.rhythm` when `THE CREATURE'S OWN` is selected.
+4. **Fixtures and Verification:**
+   - Re-froze `tests/fixtures/rulebooks-golden.json` and `tests/fixtures/variations-golden.json`.
+   - Updated clash ceilings and varied clash ceilings in `tests/clashes.test.mjs` (0% clash rates achieved across all 3 new genres).
+   - Updated variation floors in `tests/variation.test.mjs`.
+   - Stamped asset hash `41c33f2f715c`.
+
+**Consequences:**
+- The Kapellmeister catalog expands to 22 genres across 5 families with idiomatic rhythm feels.
+- 186/186 automated tests pass; 100% phrase determinism and metric closure preserved.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

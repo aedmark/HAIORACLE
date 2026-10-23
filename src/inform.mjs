@@ -648,6 +648,8 @@ export function compileRulebooks(source) {
     const variation = story.kinds.get("variation move") ? Object.freeze(propertyOf(genre, "permitted moves").map(code)) : Object.freeze([]);
     // Optional (D-041): the menu groups genres by family; none leaves it ungrouped.
     const family = genreKind.properties.has("family") ? propertyOf(genre, "family") : "";
+    // Optional (D-041 Wave 3): a genre may declare its rhythmic feel; none leaves it to the creature's native rhythm.
+    const feel = genreKind.properties.has("feel") ? propertyOf(genre, "feel") : "";
 
     const book = {
       code: genreCode,
@@ -661,6 +663,7 @@ export function compileRulebooks(source) {
       overtones,
       variation,
       family,
+      feel: feel || "",
     };
 
     if (unfettered) {

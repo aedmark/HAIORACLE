@@ -46,11 +46,15 @@ const CEILINGS = Object.freeze({
   gospel_shout: 4,
   tango_habanera: 4,
   neo_soul: 4,
+  // D-041 wave 3.
+  vaudeville_waltz: 4,
+  swing_ballroom: 4,
+  gamelan_pelog: 4,
 });
 
 // Varied creatures (D-043 phase 2) may reach chords the genre never wrote;
 // jazz then adds idiomatic rubs (a 6th against a minor 7th).
-const VARIED_CEILINGS = Object.freeze({ ...CEILINGS, smoky_jazz: 10, silent_film_lydian: 10, bossa_nova_salon: 6, neo_soul: 6 });
+const VARIED_CEILINGS = Object.freeze({ ...CEILINGS, smoky_jazz: 10, silent_film_lydian: 10, bossa_nova_salon: 6, neo_soul: 6, swing_ballroom: 6 });
 
 function clashRate(genre, phrases, varied = false) {
   let steps = 0;

@@ -158,6 +158,8 @@ test("genre codes, flags, and menu order are as the rulebooks state", () => {
     "doowop_ballad", "sacred_harp", "andalusian_flamenco", "klezmer_freygish", "sea_shanty", "silent_film_lydian",
     // D-041 wave 2.
     "bossa_nova_salon", "baroque_chorale", "gothic_horror", "gospel_shout", "tango_habanera", "neo_soul",
+    // D-041 wave 3.
+    "vaudeville_waltz", "swing_ballroom", "gamelan_pelog",
     "raw_chaos",
   ]);
   assert.deepEqual(books.genres.filter((g) => g.unfettered).map((g) => g.code), ["raw_chaos"]);
@@ -165,9 +167,22 @@ test("genre codes, flags, and menu order are as the rulebooks state", () => {
     "blues_twelve_bar", "smoky_jazz", "modal_drone", "parlor_ragtime",
     "sacred_harp", "andalusian_flamenco", "klezmer_freygish", "sea_shanty",
     "gothic_horror", "gospel_shout", "tango_habanera",
+    "swing_ballroom",
   ]);
   // Every genre names a menu family (D-041).
   assert.deepEqual([...new Set(books.genres.map((g) => g.family))], ["PARLOR", "NIGHT CLUB", "SACRED & EARLY", "ESOTERIC", "FOLK & DANCE"]);
+});
+
+test("genres declare rhythmic feel where appropriate (D-041 Wave 3)", () => {
+  const byCode = Object.fromEntries(books.genres.map((g) => [g.code, g.feel]));
+  assert.equal(byCode.parlor_ragtime, "habanera");
+  assert.equal(byCode.doowop_ballad, "swing");
+  assert.equal(byCode.tango_habanera, "habanera");
+  assert.equal(byCode.vaudeville_waltz, "waltz");
+  assert.equal(byCode.swing_ballroom, "swing");
+  assert.equal(byCode.gamelan_pelog, "straight");
+  assert.equal(byCode.victorian_tonnetz, "");
+  assert.equal(byCode.raw_chaos, "");
 });
 
 test("colouring and progression rules match the Fun Machine's chord colours and progressions", () => {

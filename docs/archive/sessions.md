@@ -1555,5 +1555,43 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** D-041 wave 2 (six chord qualities, then six genres) or P4-02.
 
+### Session 60: 2026-10-21: six new chord qualities and six new genres (P5-29 wave 2)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** Implement P5-29 wave 2 (D-041): six new chord qualities (`min7`, `maj7`, `half_diminished`, `augmented`, `sus4`, `major_6`), then six new Inform 7 genres (Bossa Nova Salon, Baroque Chorale, Gothic Horror Organ, Gospel Shout & Revival, Tango Habanera, Neo-Soul Lo-Fi).
+
+**Done:**
+- D-041 is accepted for waves 1 and 2. Wave 2 is implemented and all 160 checks pass.
+
+**Changed:**
+1. Chord qualities:
+   - `src/conductor.mjs`: added `min7`, `maj7`, `half_diminished`, `augmented`, `sus4`, and `major_6` to `CHORD_QUALITIES`, `MAJOR_THIRD_QUALITIES`, `buildTriad()`, `chordLabelFor()`, `buildFunChord()`, and Befunge plate `qualityShort`.
+   - `src/variation.mjs`: added pitch classes to `TONES`, updated `MINORISH`, `numeral()`, and relative substitutions.
+   - `src/session.mjs`: added new qualities to `CHORD_QUALITY_IDS` for session validation.
+   - `src/inform.mjs`: normalize Inform 7 kinds `half-diminished` -> `half_diminished` and `major 6` -> `major_6`.
+2. `src/rulebooks.ni` adds Chapters 13–18 (Raw Chaos moves to Chapter 19), bringing the catalog to 19 genres across 5 menu families:
+   - Bossa Nova Salon (NIGHT CLUB): maj7 and min7, ii-V-I changes, syncopated bass, organ voicing {third, fifth, seventh}.
+   - Baroque Chorale (SACRED & EARLY): circle of fifths, half-diminished pre-dominant, contrary-motion bass.
+   - Gothic Horror Organ (ESOTERIC): chromatic mediant P/L walk, augmented chords, pedal bass.
+   - Gospel Shout & Revival (SACRED & EARLY): I6, IV, sus4 "amen" cadences, walking bass.
+   - Tango Habanera (FOLK & DANCE): half-diminished ii, V7, habanera bass walk.
+   - Neo-Soul Lo-Fi (NIGHT CLUB): min9, maj7, min7, soft chord-member lead melodies.
+   Six new Fun Machine progression tables added to Part 3 (`Table of Ipanema Stroll`, `Table of Chorale Cadence`, `Table of Crypt Mediants`, `Table of Revival Amen`, `Table of Salon Tango`, `Table of Cassette Velvet`).
+3. Clash ceilings & variation tests:
+   - `tests/clashes.test.mjs` sets ceilings for the 6 new genres (measured at 0.0%–0.8% clash rates).
+   - `tests/variation.test.mjs` sets distinct varied progression floors (bossa 50, baroque 18, gothic 8, gospel 10, tango 10, neo-soul 50).
+   - Golden and variation fixtures re-frozen with additions only.
+   - Asset version stamped to `ae35645dac6b`.
+   - `manual.html` rebuilt from `docs/manual.json`.
+
+**Verified:**
+- 160/160 Node checks.
+- Golden fixtures contain additions only; existing 13 genres unchanged.
+- Documentation consistency checks pass (0 errors, 0 warnings).
+
+**Next session should start with:** Maintainer listen to the six Wave 2 genres in the browser, or Wave 3 (feel) / P4-02.
+
+
 
 

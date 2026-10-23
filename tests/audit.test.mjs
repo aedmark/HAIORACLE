@@ -195,7 +195,7 @@ test("Audit Dimension 2: All 7 esoteric interpreters execute deterministically a
   }
 });
 
-test("Audit Dimension 3: Inform 7 rulebooks, 19 genres, chord qualities, and variations", async () => {
+test("Audit Dimension 3: Inform 7 rulebooks, 22 genres, chord qualities, and variations", async () => {
   const [oracleSource, beatSource, bassSource, harmonySource, pietSource, fracSource, chantSource, rulebooksSource] = await Promise.all([
     readFile(new URL("src/oracle.lol", root), "utf8"),
     readFile(new URL("src/beat.mal", root), "utf8"),
@@ -209,8 +209,8 @@ test("Audit Dimension 3: Inform 7 rulebooks, 19 genres, chord qualities, and var
   const rulebooks = compileRulebooks(rulebooksSource);
   installRulebooks(rulebooks);
 
-  // Assert all 19 catalog genres are present
-  assert.equal(rulebooks.genres.length, 19, "Rulebooks compile exactly 19 catalog genres");
+  // Assert all 22 catalog genres are present
+  assert.equal(rulebooks.genres.length, 22, "Rulebooks compile exactly 22 catalog genres");
 
   // Assert every chord quality is accounted for
   for (const quality of Object.values(CHORD_QUALITIES)) {

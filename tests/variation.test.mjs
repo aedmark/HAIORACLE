@@ -28,6 +28,7 @@ test("creatures no longer share one progression: every fettered genre varies wid
     victorian_tonnetz: 50, blues_twelve_bar: 30, smoky_jazz: 50, renaissance_counterpoint: 20, modal_drone: 15, parlor_ragtime: 20,
     doowop_ballad: 15, sacred_harp: 10, andalusian_flamenco: 15, klezmer_freygish: 12, sea_shanty: 15, silent_film_lydian: 30,
     bossa_nova_salon: 50, baroque_chorale: 18, gothic_horror: 8, gospel_shout: 10, tango_habanera: 10, neo_soul: 50,
+    vaudeville_waltz: 15, swing_ballroom: 20, gamelan_pelog: 10,
   };
   for (const genre of fettered) {
     const distinct = new Set(scores.map((score) => vary(genre, score).spine.map((c) => `${c.root}${c.quality}`).join(" ")));

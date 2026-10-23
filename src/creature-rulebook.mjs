@@ -99,6 +99,7 @@ export function buildCreatureBook(score, rulebooks) {
     motto: `Written from its ${SCALE_NAMES[score.scale].toLowerCase()} scale, ${path.map((f) => grammar.functions[f].name).join(" → ")}, in the character of ${character.name}.`,
     character: character.code,
     colouring,
+    feel: "",
     spine: Object.freeze({ method: "table", steps: Object.freeze(regions.flatMap((row) => [row, row, row]).map((row) => Object.freeze({ ...row, tones: Object.freeze([...row.tones]) }))) }),
   });
 }

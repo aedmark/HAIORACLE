@@ -455,8 +455,8 @@ test("the Kapellmeister music-theory console executes genre rulebooks across Ton
   const chimes = composeChimes(pietSource, fractranSource, score, 0);
   const chant = composeChant(chantSource, score, 0);
 
-  // 1. Every genre rulebook (six original, Parlor Ragtime, D-041 wave 1's six, and wave 2's six) loads from src/rulebooks.ni with display names
-  assert.equal(GENRES.length, 19);
+  // 1. Every genre rulebook (six original, Parlor Ragtime, D-041 waves 1, 2, and 3) loads from src/rulebooks.ni with display names
+  assert.equal(GENRES.length, 22);
   for (const genre of rulebooks.genres) {
     assert.ok(genre.title, `Expected display name for genre ${genre.code}`);
   }

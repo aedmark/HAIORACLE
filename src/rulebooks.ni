@@ -39,6 +39,7 @@ A genre has a list of chord members called the organ voicing.
 A genre has a table name called the overtones.
 A genre has a list of variation moves called the permitted moves.
 A genre has some text called the family.
+A genre has some text called the feel.
 
 A chord quality has a table name called the progression.
 
@@ -199,6 +200,7 @@ Chapter 6 - Parlor Ragtime
 
 Parlor Ragtime is an insistent voiced genre. The code of Parlor Ragtime is "parlor_ragtime". The title of Parlor Ragtime is "PARLOR RAGTIME & CAKEWALK STRAINS". The motto of Parlor Ragtime is "Joplin-style strains: an oom-pah stride bass, sixth-chord melodies, and secondary dominants marching home through VI7, II7, and V7."
 The family of Parlor Ragtime is "PARLOR".
+The feel of Parlor Ragtime is "habanera".
 
 The changes of Parlor Ragtime are the Table of Ragtime Changes.
 The melody method of Parlor Ragtime is member snapping. The melody members of Parlor Ragtime are {root, third, fifth}. The melody extensions of Parlor Ragtime are {9}.
@@ -246,6 +248,7 @@ Chapter 7 - Doo-Wop Parlor Ballad
 
 Doo-Wop Ballad is a patient triadic genre. The code of Doo-Wop Ballad is "doowop_ballad". The title of Doo-Wop Ballad is "DOO-WOP PARLOR BALLAD". The motto of Doo-Wop Ballad is "The ice-cream changes, I-vi-IV-V, with a rocking triplet bass and a sweet-sixth street-corner melody."
 The family of Doo-Wop Ballad is "PARLOR".
+The feel of Doo-Wop Ballad is "swing".
 
 The changes of Doo-Wop Ballad are the Table of Doo-Wop Changes.
 The melody method of Doo-Wop Ballad is member snapping. The melody members of Doo-Wop Ballad are {root, third, fifth}. The melody extensions of Doo-Wop Ballad are {9}.
@@ -515,6 +518,7 @@ Chapter 17 - Tango Habanera
 
 Tango Habanera is an insistent triadic genre. The code of Tango Habanera is "tango_habanera". The title of Tango Habanera is "TANGO HABANERA". The motto of Tango Habanera is "Buenos Aires salon tango: minor lament, half-diminished ii, and sharp Phrygian dominants over a habanera bass."
 The family of Tango Habanera is "FOLK & DANCE".
+The feel of Tango Habanera is "habanera".
 
 The changes of Tango Habanera are the Table of Tango Changes.
 The melody method of Tango Habanera is member snapping. The melody members of Tango Habanera are {root, third, fifth}. The melody extensions of Tango Habanera are {}.
@@ -565,7 +569,92 @@ region	degree	quality	label	tones
 3	0	maj7	"Imaj7"	{0, 4, 7, 11}
 4	9	min7	"vi7"	{0, 3, 7, 10}
 
-Chapter 19 - Raw Esoteric Chaos
+Chapter 19 - Vaudeville Viennese Waltz
+
+[Three-four parlor waltz: light authentic cadences, rotary whirls, and singing member-snapped melodies over an oom-pah-pah bass.]
+
+Vaudeville Viennese Waltz is a patient triadic genre. The code of Vaudeville Viennese Waltz is "vaudeville_waltz". The title of Vaudeville Viennese Waltz is "VAUDEVILLE VIENNESE WALTZ". The motto of Vaudeville Viennese Waltz is "Three-four parlor waltz: light authentic cadences, rotary whirls, and singing member-snapped melodies over an oom-pah-pah bass."
+The family of Vaudeville Viennese Waltz is "PARLOR".
+The feel of Vaudeville Viennese Waltz is "waltz".
+
+The changes of Vaudeville Viennese Waltz are the Table of Vaudeville Changes.
+The melody method of Vaudeville Viennese Waltz is member snapping. The melody members of Vaudeville Viennese Waltz are {root, third, fifth}. The melody extensions of Vaudeville Viennese Waltz are {}.
+The bass method of Vaudeville Viennese Waltz is walking. The bass walk of Vaudeville Viennese Waltz is {0, 7, 4, 0, 7, 3, 0, 7, 3, 0, 7, 4}.
+The organ voicing of Vaudeville Viennese Waltz is {root, third, fifth}.
+The overtones of Vaudeville Viennese Waltz are the Table of Consonant Overtones.
+The permitted moves of Vaudeville Viennese Waltz are {rotation, relative substitution, authentic cadence}.
+
+Colouring rule for Vaudeville Viennese Waltz when the interval above the tonic is listed in {2, 4, 9}: rule succeeds with result minor.
+Colouring rule for Vaudeville Viennese Waltz when the interval above the tonic is 7: rule succeeds with result dom7.
+Colouring rule for Vaudeville Viennese Waltz: rule succeeds with result major.
+Progression rule for Vaudeville Viennese Waltz: rule succeeds with result the Table of Viennese Whirl.
+
+Table of Vaudeville Changes
+region	degree	quality	label	tones
+1	0	major	"I"	{0, 4, 7}
+2	9	minor	"vi"	{0, 3, 7}
+3	2	minor	"ii"	{0, 3, 7}
+4	7	dom7	"V7"	{0, 4, 7, 10}
+
+Chapter 20 - Swing-Era Savoy Ballroom
+
+[Harlem big-band stomp: I6-vi7-ii7-V7 changes, walking quarter-note bass, and swing-eight offbeat push.]
+
+Swing-Era Savoy Ballroom is an insistent voiced genre. The code of Swing-Era Savoy Ballroom is "swing_ballroom". The title of Swing-Era Savoy Ballroom is "SWING-ERA SAVOY BALLROOM". The motto of Swing-Era Savoy Ballroom is "Harlem big-band stomp: I6-vi7-ii7-V7 changes, walking quarter-note bass, and swing-eight offbeat push."
+The family of Swing-Era Savoy Ballroom is "NIGHT CLUB".
+The feel of Swing-Era Savoy Ballroom is "swing".
+
+The changes of Swing-Era Savoy Ballroom are the Table of Savoy Changes.
+The melody method of Swing-Era Savoy Ballroom is member snapping. The melody members of Swing-Era Savoy Ballroom are {root, third, fifth, seventh}. The melody extensions of Swing-Era Savoy Ballroom are {}.
+The bass method of Swing-Era Savoy Ballroom is walking. The bass walk of Swing-Era Savoy Ballroom is {0, 4, 7, 0, 3, 7, 0, 3, 7, 0, 4, 7}.
+The organ voicing of Swing-Era Savoy Ballroom is {third, fifth, seventh}.
+The overtones of Swing-Era Savoy Ballroom are the Table of Jazz Overtones.
+The permitted moves of Swing-Era Savoy Ballroom are {rotation, relative substitution, tritone substitution, secondary dominants}.
+
+Colouring rule for Swing-Era Savoy Ballroom when the interval above the tonic is 0: rule succeeds with result major 6.
+Colouring rule for Swing-Era Savoy Ballroom when the interval above the tonic is listed in {2, 9}: rule succeeds with result min7.
+Colouring rule for Swing-Era Savoy Ballroom when the interval above the tonic is 7: rule succeeds with result dom7.
+Colouring rule for Swing-Era Savoy Ballroom: rule succeeds with result dom7.
+Progression rule for Swing-Era Savoy Ballroom: rule succeeds with result the Table of Savoy Stomp.
+
+Table of Savoy Changes
+region	degree	quality	label	tones
+1	0	major 6	"I6"	{0, 4, 7, 9}
+2	9	min7	"vi7"	{0, 3, 7, 10}
+3	2	min7	"ii7"	{0, 3, 7, 10}
+4	7	dom7	"V7"	{0, 4, 7, 10}
+
+Chapter 21 - Javanese Gamelan Pelog
+
+[Kraton court gong and metallophone cycles: pure fifth-and-second open sonorities over steady ceremonial strides.]
+
+Javanese Gamelan Pelog is a patient voiced genre. The code of Javanese Gamelan Pelog is "gamelan_pelog". The title of Javanese Gamelan Pelog is "JAVANESE GAMELAN PELOG". The motto of Javanese Gamelan Pelog is "Kraton court gong and metallophone cycles: pure fifth-and-second open sonorities over steady ceremonial strides."
+The family of Javanese Gamelan Pelog is "ESOTERIC".
+The feel of Javanese Gamelan Pelog is "straight".
+
+The changes of Javanese Gamelan Pelog are the Table of Gamelan Changes.
+The melody method of Javanese Gamelan Pelog is scale snapping.
+The bass method of Javanese Gamelan Pelog is walking. The bass walk of Javanese Gamelan Pelog is {0, 7, 0, 0, 7, 0, 0, 7, 0, 0, 7, 0}.
+The organ voicing of Javanese Gamelan Pelog is {root, fifth, octave}.
+The overtones of Javanese Gamelan Pelog are the Table of Drone Overtones.
+The permitted moves of Javanese Gamelan Pelog are {rotation, phrygian cadence, harmonic pace}.
+
+Colouring rule for Javanese Gamelan Pelog when the interval above the tonic is 1: rule succeeds with result phrygian.
+Colouring rule for Javanese Gamelan Pelog when the interval above the tonic is 6: rule succeeds with result lydian.
+Colouring rule for Javanese Gamelan Pelog: rule succeeds with result modal open.
+Progression rule for Javanese Gamelan Pelog: rule succeeds with result the Table of Court Slendro.
+
+Melody tone rule for Javanese Gamelan Pelog when the strictness is at most 6: rule succeeds with result {0, 5, 7}.
+Melody tone rule for Javanese Gamelan Pelog: rule succeeds with result {0, 2, 5, 7, 9}.
+
+Table of Gamelan Changes
+region	degree	quality	label	tones
+1	0	modal open	"i5"	{0, 7, 2}
+2	5	modal open	"iv5"	{0, 7, 2}
+3	7	modal open	"v5"	{0, 7, 2}
+4	0	modal open	"i5"	{0, 7, 2}
+
+Chapter 22 - Raw Esoteric Chaos
 
 [Unfettered: the conductor leaves every VM's raw output alone, so only what the Fun Machine needs is written down.]
 
@@ -731,6 +820,27 @@ degree	quality	melody	shown
 7	dom7alt	{7, 11, 15}	"[root]7alt"
 0	maj7	{0, 4, 11}	"[root]maj7"
 9	min7	{9, 12, 16}	"[root]m7"
+
+Table of Viennese Whirl
+degree	quality	melody	shown
+0	major	{0, 4, 7}	"[root] Maj"
+9	minor	{9, 12, 16}	"[root]m"
+2	minor	{2, 5, 9}	"[root]m"
+7	dom7	{7, 11, 14}	"[root]7"
+
+Table of Savoy Stomp
+degree	quality	melody	shown
+0	major 6	{0, 4, 9}	"[root]6"
+9	min7	{9, 12, 16}	"[root]m7"
+2	min7	{2, 5, 9}	"[root]m7"
+7	dom7	{7, 11, 14}	"[root]7"
+
+Table of Court Slendro
+degree	quality	melody	shown
+0	modal open	{0, 7, 12}	"[root]5"
+5	modal open	{5, 12, 17}	"[root]5"
+7	modal open	{7, 14, 19}	"[root]5"
+0	modal open	{0, 7, 12}	"[root]5"
 
 Part 4 - The chimes' overtones
 

@@ -4,23 +4,20 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-23, session 72, on `main`._
+_Last updated: 2026-10-23, session 73, on `main`._
 
-- P5-28–P5-30: 19 Inform 7 genres, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-043, D-044).
-- D-045–D-048: armed downbeat sync, 1-loop count-in, tick metronome, 12-step tracker with STEP REC, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk.
-- D-049–D-052: fungal appendages; metric closure (D-050); volume surge elimination (D-051); looper recording sync & Casio sections (D-052).
-- D-053–D-055: audio sweep audit (D-053); 4-pass breathing sections for Intro, Bridge, Outro (48 steps, D-054); section loop insertion into the Loop Machine (+ INTRO, + BRIDGE, + OUTRO, D-055).
-- D-056–D-058: Rebranded to "The Whimsy Machine" with Korg R3-inspired tiered console UX (D-056); hardware console alignment and double-padding elimination (D-057); swapped Wings III (The Band) and IV (Keep) so the five esoteric plates sit directly under the mixer and DAW exports form the rear utility deck (D-058).
-- D-059: Raw instrumentation 48-step base groove loops in the Loop Machine (+ GROOVE, empty take validation, pass 0..3 harmonic tracking).
-- Next: maintainer testing of the Korg R3-inspired tiered hardware console, groove and section loop insertion, or P5-31 (live capture of live play converted to loop sequencing).
+- P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
+- D-045–D-055: armed downbeat sync, 1-loop count-in, tracker ribbons, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk, fungal appendages, metric closure (D-050), volume surge elimination (D-051), looper sync & Casio sections (D-052), audio sweep audit (D-053), 4-pass breathing sections (D-054), section loops (+ INTRO/BRIDGE/OUTRO, D-055).
+- D-056–D-060: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (+ GROOVE, D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060).
+- Next: maintainer testing of the 22 Kapellmeister genres and rhythmic feels, or P5-31 (live capture of live play converted to loop sequencing).
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified; P5-31 is planned on the roadmap. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
+**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-30 (including P5-29 Waves 1, 2, & 3) are implemented and verified; P5-31 is planned on the roadmap. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-23, session 72, local Linux environment)
+**Verified** (2026-10-23, session 73, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **185/185 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **186/186 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -372,42 +369,42 @@ _Last updated: 2026-10-23, session 72, on `main`._
 
 **Next session should start with:** Maintainer hands-on testing of loop machine arming, count-in, and sync, or proceeding with P5-29 Wave 3 (feel) / P4-02.
 
-### Session 60: 2026-10-21: six new chord qualities and six new genres (P5-29 wave 2)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** Implement P5-29 wave 2 (D-041): six new chord qualities (`min7`, `maj7`, `half_diminished`, `augmented`, `sus4`, `major_6`), then six new Inform 7 genres (Bossa Nova Salon, Baroque Chorale, Gothic Horror Organ, Gospel Shout & Revival, Tango Habanera, Neo-Soul Lo-Fi).
+### Session 73 (2026-10-23): Wave 3 of P5-29 (Rhythmic feel & 22-genre expansion, D-060)
 
 **Done:**
-- D-041 is accepted for waves 1 and 2. Wave 2 is implemented and all 160 checks pass.
+- Wave 3 of P5-29 is implemented, documented under D-060, and verified with all 186 automated checks passing.
 
 **Changed:**
-1. Chord qualities:
-   - `src/conductor.mjs`: added `min7`, `maj7`, `half_diminished`, `augmented`, `sus4`, and `major_6` to `CHORD_QUALITIES`, `MAJOR_THIRD_QUALITIES`, `buildTriad()`, `chordLabelFor()`, `buildFunChord()`, and Befunge plate `qualityShort`.
-   - `src/variation.mjs`: added pitch classes to `TONES`, updated `MINORISH`, `numeral()`, and relative substitutions.
-   - `src/session.mjs`: added new qualities to `CHORD_QUALITY_IDS` for session validation.
-   - `src/inform.mjs`: normalize Inform 7 kinds `half-diminished` -> `half_diminished` and `major 6` -> `major_6`.
-2. `src/rulebooks.ni` adds Chapters 13–18 (Raw Chaos moves to Chapter 19), bringing the catalog to 19 genres across 5 menu families:
-   - Bossa Nova Salon (NIGHT CLUB): maj7 and min7, ii-V-I changes, syncopated bass, organ voicing {third, fifth, seventh}.
-   - Baroque Chorale (SACRED & EARLY): circle of fifths, half-diminished pre-dominant, contrary-motion bass.
-   - Gothic Horror Organ (ESOTERIC): chromatic mediant P/L walk, augmented chords, pedal bass.
-   - Gospel Shout & Revival (SACRED & EARLY): I6, IV, sus4 "amen" cadences, walking bass.
-   - Tango Habanera (FOLK & DANCE): half-diminished ii, V7, habanera bass walk.
-   - Neo-Soul Lo-Fi (NIGHT CLUB): min9, maj7, min7, soft chord-member lead melodies.
-   Six new Fun Machine progression tables added to Part 3 (`Table of Ipanema Stroll`, `Table of Chorale Cadence`, `Table of Crypt Mediants`, `Table of Revival Amen`, `Table of Salon Tango`, `Table of Cassette Velvet`).
-3. Clash ceilings & variation tests:
-   - `tests/clashes.test.mjs` sets ceilings for the 6 new genres (measured at 0.0%–0.8% clash rates).
-   - `tests/variation.test.mjs` sets distinct varied progression floors (bossa 50, baroque 18, gothic 8, gospel 10, tango 10, neo-soul 50).
-   - Golden and variation fixtures re-frozen with additions only.
-   - Asset version stamped to `ae35645dac6b`.
-   - `manual.html` rebuilt from `docs/manual.json`.
+1. Inform 7 Feel Property (`src/rulebooks.ni`, `src/inform.mjs`, `src/conductor.mjs`, `src/creature-rulebook.mjs`):
+   - Added `A genre has some text called the feel.` to Chapter 2 in `src/rulebooks.ni`.
+   - `compileRulebooks()` in `src/inform.mjs` parses `feel` (defaulting to `""`).
+   - Tagged existing rhythm-sensitive genres: `parlor_ragtime` ("habanera"), `doowop_ballad` ("swing"), `tango_habanera` ("habanera").
+   - `THE CREATURE'S OWN` explicitly defaults `feel: ""` to preserve phrase determinism (`score.rhythm`).
+   - Exported `RHYTHMIC_FEELS` and `effectiveRhythmIndex(score, genreCode)` in `src/conductor.mjs`.
+2. Three New Kapellmeister Genres (`src/rulebooks.ni`):
+   - Chapter 19: **Vaudeville Viennese Waltz** (`vaudeville_waltz`, feel: `"waltz"`). I · vi · ii · V7 changes, member snapping, `{rotation, relative substitution, authentic cadence}`.
+   - Chapter 20: **Swing-Era Savoy Ballroom** (`swing_ballroom`, feel: `"swing"`). I6 · vi7 · ii7 · V7 changes, guide-tone organ, `{rotation, relative substitution, tritone substitution, secondary dominants}`.
+   - Chapter 21: **Javanese Gamelan Pelog** (`gamelan_pelog`, feel: `"straight"`). i5 · iv5 · v5 · i5 fifth-and-second open sonorities `{0, 7, 2}`, pentatonic scale snapping `{0, 2, 5, 7, 9}`, `{rotation, phrygian cadence, harmonic pace}`.
+   - Raw Esoteric Chaos moved to Chapter 22 at the conclusion of Part 2.
+   - Three Fun Machine progression tables added to Part 3 (`Table of Viennese Whirl`, `Table of Savoy Stomp`, `Table of Court Slendro`).
+3. Rhythm Templates & Audio Graph Wiring (`src/app.mjs`, `src/ensemble.mjs`):
+   - Added 3/4 waltz template `[1.4, 0.8, 0.8]` at index 6 in `RHYTHMS` ($12 \bmod 3 = 0$, dividing 12 steps into 4 measures of 3 steps with zero loop drift).
+   - Extended `DELAY_MULTIPLIERS` to length 7 with index 6 at `0.75`.
+   - Wired `effectiveRhythmIndex` into `loopStepDuration`, `scheduleAhead`, `renderEnsembleLoop`, and `elements.kapellmeisterGenre` change listener.
+4. Fixtures, Tests & Assets:
+   - Re-froze `tests/fixtures/rulebooks-golden.json` and `tests/fixtures/variations-golden.json`.
+   - Updated genre count assertions to 22 across `tests/audit.test.mjs`, `tests/inform.test.mjs`, and `tests/oracle.test.mjs`.
+   - Updated `tests/clashes.test.mjs` and `tests/variation.test.mjs`.
+   - Re-stamped assets to `41c33f2f715c`.
+   - Rebuilt `manual.html` from `docs/manual.json`.
 
 **Verified:**
-- 160/160 Node checks.
-- Golden fixtures contain additions only; existing 13 genres unchanged.
-- Documentation consistency checks pass (0 errors, 0 warnings).
+- `node --test tests/*.test.mjs`: 186/186 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
 
-**Next session should start with:** Maintainer listen to the six Wave 2 genres in the browser, or Wave 3 (feel) / P4-02.
+**Next session should start with:** Maintainer listen to the 22 Kapellmeister genres and rhythmic feels in the browser, or P5-31 (live capture of live play converted to loop sequencing).
+
 
 
 

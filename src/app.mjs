@@ -10,10 +10,12 @@ import {
   chordLabelFor,
   compiledRulebooks,
   conductEnsemble,
+  effectiveRhythmIndex,
   genreBook,
   genreCodes,
   installCreatureBook,
   installRulebooks,
+  RHYTHMIC_FEELS,
   rulebooksInstalled,
   semitoneGradus,
 } from "./conductor.mjs";
@@ -156,6 +158,7 @@ const RHYTHMS = Object.freeze([
   [1, 0.5, 0.5, 1, 0.5, 0.5],     // 3: Charleston / gallop (length 6)
   [2, 0.5, 0.5, 1],               // 4: Dotted stately downbeat (length 4)
   [0.75, 0.75, 0.5, 1, 0.5, 0.5], // 5: Ragtime / Habanera (length 6)
+  [1.4, 0.8, 0.8],                // 6: Vaudeville / Viennese Waltz (length 3)
 ]);
 
 const SURPRISES = Object.freeze([
@@ -4473,7 +4476,7 @@ const FUN_PAD_LEVEL = Object.freeze({
 });
 
 function loopStepDuration(score, step) {
-  const rhythm = RHYTHMS[score.rhythm];
+  const rhythm = RHYTHMS[effectiveRhythmIndex(score, activeGenre)];
   return (60 / (activeTempoBpm || score.pulse) / 2) * rhythm[((step % rhythm.length) + rhythm.length) % rhythm.length];
 }
 
@@ -4602,7 +4605,7 @@ updateFunKeyboardChordLabels();
 
 // Options shared by the live and offline graphs, read from the current session
 // controls so an export captures exactly what the listener has dialed in.
-function ensembleGraphOptions(context, { start, unit, fadeIn, stop = null, meters = false }) {
+function ensembleGraphOptions(context, { start, unit, fadeIn, stop = null, meters = false, rhythmIndex = undefined }) {
   let impulseBuffer = null;
   let crackleBuffer = null;
   try {
@@ -4620,6 +4623,7 @@ function ensembleGraphOptions(context, { start, unit, fadeIn, stop = null, meter
     stop,
     unit,
     fadeIn,
+    rhythmIndex,
     outputGain: masterGainFor(masterVolume),
     channels: channelSettings(mixerState),
     meters,
@@ -4817,6 +4821,7 @@ async function playScore(score, { cursor = 0 } = {}) {
     unit: initialUnit,
     fadeIn: true,
     meters: true,
+    rhythmIndex: effectiveRhythmIndex(score, activeGenre),
   }));
   const transport = {
     ...graph,
@@ -4835,7 +4840,7 @@ async function playScore(score, { cursor = 0 } = {}) {
   const scheduleAhead = () => {
     if (currentTransport !== transport) return;
     updateAudioInteraction();
-    const rhythm = RHYTHMS[score.rhythm];
+    const rhythm = RHYTHMS[effectiveRhythmIndex(score, activeGenre)];
     while (transport.nextNoteTime < context.currentTime + 0.28) {
       if (casioOutroEnding) break;
       const livePulse = activeTempoBpm || score.pulse;
@@ -5711,7 +5716,8 @@ async function renderEnsembleLoop(score, {
   const OfflineAudioCtx = offlineAudioConstructor();
   const bpm = activeTempoBpm || score.pulse;
   const unit = 60 / bpm / 2;
-  const rhythm = RHYTHMS[score.rhythm];
+  const rhythmIndex = effectiveRhythmIndex(score, activeGenre);
+  const rhythm = RHYTHMS[rhythmIndex];
   // With a loop-machine song the render is the whole song (D-039), at most
   // MAX_SONG_PASSES passes; without one it is the whole harmonic cycle, four
   // loops, so the file holds the full progression and still loops (D-044).
@@ -5725,7 +5731,7 @@ async function renderEnsembleLoop(score, {
   const totalDuration = loopDuration + LOOP_TAIL_SECONDS;
   const sampleRate = 44100;
   const offlineCtx = new OfflineAudioCtx(2, Math.ceil(totalDuration * sampleRate), sampleRate);
-  const options = ensembleGraphOptions(offlineCtx, { start: 0, stop: totalDuration, unit, fadeIn: false });
+  const options = ensembleGraphOptions(offlineCtx, { start: 0, stop: totalDuration, unit, fadeIn: false, rhythmIndex });
   if (channels) options.channels = channels;
   if (parlor) options.parlor = parlor;
   const graph = buildEnsembleGraph(offlineCtx, score, options);
@@ -7719,6 +7725,9 @@ elements.chipTick?.addEventListener("click", () => {
 
 elements.kapellmeisterGenre?.addEventListener("change", (e) => {
   activeGenre = e.target.value;
+  if (currentTransport && audioContext && currentScore) {
+    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, activeTempoBpm || currentScore.pulse, effectiveRhythmIndex(currentScore, activeGenre)), audioContext.currentTime, 0.08);
+  }
   updateKapellmeisterUI();
   applyEnsembleConductor();
   updateBeatGrid();

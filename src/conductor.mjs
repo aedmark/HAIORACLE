@@ -48,6 +48,30 @@ export function genreBook(code) {
   return books.byCode[code] ?? books.genres[0];
 }
 
+export const RHYTHMIC_FEELS = Object.freeze({
+  straight: 0,
+  swing: 1,
+  syncopated: 2,
+  gallop: 3,
+  stately: 4,
+  habanera: 5,
+  waltz: 6,
+});
+
+/**
+ * Resolves the effective rhythm template index (0..6) for a score and genre.
+ * If the genre declares a recognized feel, that feel's rhythm is used;
+ * otherwise, or for THE CREATURE'S OWN, the score's native rhythm is preserved (D-041 Wave 3).
+ */
+export function effectiveRhythmIndex(score, genreCode) {
+  if (!genreCode || genreCode === CREATURE_GENRE) return score?.rhythm ?? 0;
+  const book = genreBook(genreCode);
+  if (book?.feel && RHYTHMIC_FEELS[book.feel] !== undefined) {
+    return RHYTHMIC_FEELS[book.feel];
+  }
+  return score?.rhythm ?? 0;
+}
+
 export const PITCH_NAMES = Object.freeze(["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"]);
 
 const SEMITONE_RATIOS = Object.freeze([

@@ -62,7 +62,7 @@ export function creatureFilter(score) {
     q: 0.9 + score.edge / 40,
   };
 }
-const DELAY_MULTIPLIERS = Object.freeze([1, 1.5, 0.75, 2, 1.25, 0.5]);
+const DELAY_MULTIPLIERS = Object.freeze([1, 1.5, 0.75, 2, 1.25, 0.5, 0.75]);
 const DRONE_INTERVALS = Object.freeze([-12, -5, 7]);
 const DRONE_DETUNE = Object.freeze([-5, 4, -3]);
 
@@ -87,9 +87,10 @@ export function parlorSendLevels({ enabled, reverbEnabled, crackleEnabled, level
  * loop step (an eighth note), capped by the delay line. The live loop calls
  * this again whenever the tempo changes, so echoes stay on the beat.
  */
-export function delayTimeFor(score, bpm) {
+export function delayTimeFor(score, bpm, rhythmOverride = undefined) {
   const unit = 60 / bpm / 2;
-  return Math.min(1.45, unit * DELAY_MULTIPLIERS[score.rhythm]);
+  const rhythmIndex = rhythmOverride !== undefined ? rhythmOverride : (score?.rhythm ?? 0);
+  return Math.min(1.45, unit * (DELAY_MULTIPLIERS[rhythmIndex] ?? 1));
 }
 
 /**
@@ -158,6 +159,7 @@ export function buildEnsembleGraph(context, score, {
   parlor = { reverb: SILENT_GAIN, crackle: SILENT_GAIN },
   impulseBuffer = null,
   crackleBuffer = null,
+  rhythmIndex = undefined,
 } = {}) {
   const now = start;
   const mix = context.createGain();
@@ -195,7 +197,7 @@ export function buildEnsembleGraph(context, score, {
   compressor.threshold.value = -18;
   compressor.knee.value = 18;
   compressor.ratio.value = 5;
-  delay.delayTime.value = delayTimeFor(score, 60 / (unit * 2));
+  delay.delayTime.value = delayTimeFor(score, 60 / (unit * 2), rhythmIndex);
   feedback.gain.value = 0.14 + score.bloom / 650;
   output.gain.value = outputGain;
 
