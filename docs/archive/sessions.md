@@ -1378,6 +1378,42 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** P5-30 phase 2, Inform 7 "permits" sentences and the conductor's variation moves. The golden fixture keeps guarding "as written", and a second fixture freezes the varied spines.
 
+### Session 55: 2026-10-20: every creature varies its genre (P5-30 phase 2)
+
+**Contributor:** Claude Code with maintainer direction
+
+**Goal:** P5-30 phase 2: the Inform 7 permitted moves and the conductor's variation moves (D-043).
+
+**Done:** Phase 1 was committed and pushed (ea94bbb). Phase 2 is done.
+
+**Changed:**
+1. `src/rulebooks.ni` adds a kind, "Variation move" (rotation, relative and tritone substitution, secondary dominants, modal borrowing, deceptive, plagal, Phrygian, and authentic cadence, harmonic pace), and a property, "permitted moves". Every fettered genre lists its moves; Raw Chaos lists none.
+2. `src/inform.mjs` compiles the moves into `book.variation`. The property is optional, so the barbershop fixture still compiles.
+3. New `src/variation.mjs`, `varySpine(spine, score, permitted, makeChord)`. It works on runs of one chord and never swaps the home run:
+   - rotation by `harmony_turn`;
+   - swaps on runs flagged in `harmony_swap`;
+   - borrowing by `harmony_borrow` (major homes only);
+   - a cadence on the last run by `harmony_cadence`;
+   - pushed or lingering changes by `harmony_pace`.
+
+   New chords take the genre's colour (ninths in jazz, dom7 in the blues) and labels like "♭II7 (tritone)" or "V7/ii9".
+4. `src/conductor.mjs`: `conductEnsemble({ varied })` varies only when asked, never over a held key, and returns `variation` (the move names). `src/app.mjs` passes `varied: true` and keeps `currentVariation` for the phase 4 readout. The import map gains `variation.mjs`.
+5. Tests:
+   - new `tests/variation.test.mjs`, `tests/variation-capture.mjs`, `tests/fixtures/variations-golden.json`, and `tools/freeze_variations.mjs`;
+   - varied clash ceilings in `tests/clashes.test.mjs` (jazz 10%).
+
+**Verified:**
+- 151/151 Node checks. The golden fixture ("as written") passes unchanged.
+- Distinct progressions over 80 creatures: Victorian 73, Jazz 69, Blues 51, Ragtime 34, Palestrina 30, Drone 21. Before, each genre had 1, and Victorian 16.
+- Varied clash rates: Victorian 5%, Palestrina 5%, Jazz 8%, Drone 0%, Ragtime 0%, Blues 32% (blue notes).
+- Live in Smoky Jazz, the readout's vector over one loop:
+  - "three pigeons": ii9 → ♭II7alt → Imaj9 → V7/vi9 → V7 (deceptive) → vi9 (deceptive)
+  - "the moth reads braille": vi9 → ii9 → V7/♭II7 → ♭II7alt → Imaj9 → V7/vi9
+  - "velvet ossuary hymn": Imaj9 → vi9 → V7/ii9 → ii9 → V7 (tritone)
+
+**Not verified:** The maintainer's listen. The Fun Machine's PROGRESSION style does not vary yet; that comes with phase 4, along with the readout's VARIATION line and the AS WRITTEN switch.
+
+
 
 
 

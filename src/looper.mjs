@@ -24,9 +24,15 @@ export const MAX_REPEATS = 8;
 export const MAX_SONG_PASSES = 32;
 const MAX_KEY = 12;
 export const SLOT_VOICES = Object.freeze([CREATURE_VOICE_ID, ...VOICE_IDS]);
+export const LOOP_ROLES = Object.freeze(["intro", "main", "bridge", "outro"]);
+export const DEFAULT_LOOP_ROLE = "main";
 
 const freezeSong = (loops) => Object.freeze({ loops: Object.freeze(loops) });
-const freezeLoop = (repeats, layers) => Object.freeze({ repeats, layers: Object.freeze(layers) });
+const freezeLoop = (repeats, layers, role) => {
+  const loop = { repeats, layers: Object.freeze(layers) };
+  if (role !== undefined) loop.role = role;
+  return Object.freeze(loop);
+};
 
 export function emptySong() {
   return freezeSong([]);
@@ -65,16 +71,16 @@ export function canOverdub(song, loopIndex) {
 // allowed (full song, full loop, empty take, bad index), so callers can test
 // `next === song` to tell the visitor nothing changed.
 
-export function appendLoop(song, take) {
+export function appendLoop(song, take, role) {
   if (isEmptyTake(take) || !canAppendLoop(song)) return song;
-  return freezeSong([...song.loops, freezeLoop(1, [Object.freeze([...take])])]);
+  return freezeSong([...song.loops, freezeLoop(1, [Object.freeze([...take])], role)]);
 }
 
 export function overdubLayer(song, loopIndex, take) {
   if (isEmptyTake(take) || !canOverdub(song, loopIndex)) return song;
   const loops = [...song.loops];
   const loop = loops[loopIndex];
-  loops[loopIndex] = freezeLoop(loop.repeats, [...loop.layers, Object.freeze([...take])]);
+  loops[loopIndex] = freezeLoop(loop.repeats, [...loop.layers, Object.freeze([...take])], loop.role);
   return freezeSong(loops);
 }
 
@@ -84,7 +90,7 @@ export function undoLayer(song, loopIndex) {
   if (!loop) return song;
   if (loop.layers.length <= 1) return deleteLoop(song, loopIndex);
   const loops = [...song.loops];
-  loops[loopIndex] = freezeLoop(loop.repeats, loop.layers.slice(0, -1));
+  loops[loopIndex] = freezeLoop(loop.repeats, loop.layers.slice(0, -1), loop.role);
   return freezeSong(loops);
 }
 
@@ -122,7 +128,7 @@ export function setLoopSlot(song, loopIndex, layerIndex, step, slot = null) {
   const layers = [...loop.layers];
   layers[layIdx] = Object.freeze(take);
   const loops = [...song.loops];
-  loops[lIdx] = freezeLoop(loop.repeats, layers);
+  loops[lIdx] = freezeLoop(loop.repeats, layers, loop.role);
   return freezeSong(loops);
 }
 
@@ -134,7 +140,17 @@ export function setRepeats(song, loopIndex, repeats) {
   const next = Math.max(1, Math.min(MAX_REPEATS, budget, Math.trunc(repeats)));
   if (next === loop.repeats) return song;
   const loops = [...song.loops];
-  loops[loopIndex] = freezeLoop(next, loop.layers);
+  loops[loopIndex] = freezeLoop(next, loop.layers, loop.role);
+  return freezeSong(loops);
+}
+
+/** Sets a loop's musical section role: "intro", "main", "bridge", or "outro". */
+export function setLoopRole(song, loopIndex, role) {
+  const loop = song.loops[loopIndex];
+  if (!loop || !LOOP_ROLES.includes(role)) return song;
+  if ((loop.role ?? DEFAULT_LOOP_ROLE) === role) return song;
+  const loops = [...song.loops];
+  loops[loopIndex] = freezeLoop(loop.repeats, loop.layers, role);
   return freezeSong(loops);
 }
 
@@ -150,15 +166,35 @@ export function clampSelection(song, index) {
  * step): the loop, which of its repeats, and the step within the loop. The song
  * starts over after its last pass. Returns null for an empty song.
  */
-export function songPosition(song, absoluteStep) {
+export function songPosition(song, absoluteStep, { cueOutro = false, isExport = false } = {}) {
   const passes = songPasses(song);
   if (passes === 0) return null;
   const step = ((Math.trunc(absoluteStep) % LOOP_STEPS) + LOOP_STEPS) % LOOP_STEPS;
-  let pass = ((Math.floor(absoluteStep / LOOP_STEPS) % passes) + passes) % passes;
+  const rawPass = Math.floor(absoluteStep / LOOP_STEPS);
+  if (rawPass < 0) return null;
+
+  const introPasses = song.loops.filter((l) => l.role === "intro").reduce((sum, l) => sum + l.repeats, 0);
+  const bodyPasses = song.loops.filter((l) => (l.role ?? DEFAULT_LOOP_ROLE) === "main" || l.role === "bridge").reduce((sum, l) => sum + l.repeats, 0);
+  const outroPasses = song.loops.filter((l) => l.role === "outro").reduce((sum, l) => sum + l.repeats, 0);
+
+  let targetPass;
+  if (isExport || bodyPasses === 0) {
+    targetPass = ((rawPass % passes) + passes) % passes;
+  } else if (rawPass < introPasses) {
+    targetPass = rawPass;
+  } else if (cueOutro && outroPasses > 0) {
+    const outroOffset = rawPass - introPasses;
+    targetPass = introPasses + bodyPasses + (outroOffset % outroPasses);
+  } else {
+    const bodyOffset = (rawPass - introPasses) % bodyPasses;
+    targetPass = introPasses + bodyOffset;
+  }
+
+  let p = targetPass;
   for (let loopIndex = 0; loopIndex < song.loops.length; loopIndex += 1) {
     const { repeats } = song.loops[loopIndex];
-    if (pass < repeats) return Object.freeze({ loopIndex, repeat: pass, step });
-    pass -= repeats;
+    if (p < repeats) return Object.freeze({ loopIndex, repeat: p, step, role: song.loops[loopIndex].role ?? DEFAULT_LOOP_ROLE });
+    p -= repeats;
   }
   return null;
 }
@@ -247,7 +283,9 @@ export function recorderReduce(recorder, event) {
     current = Object.freeze({ ...current, mode: "recording", take: emptyTake(), countIn: 0, step: 0 });
   }
   const take = [...current.take];
-  take[event.step] = (event.step === 0 && current.anticipatedSlot) ? current.anticipatedSlot : (event.held ?? null);
+  take[event.step] = (event.step === 0 && current.anticipatedSlot)
+    ? current.anticipatedSlot
+    : (event.held ?? take[event.step] ?? null);
   current = current.anticipatedSlot ? Object.freeze({ ...current, anticipatedSlot: null }) : current;
   if (event.step === LOOP_STEPS - 1) {
     return {
@@ -290,7 +328,15 @@ export function validateSong(raw, path = "song", { legacy = false } = {}) {
   if (!Array.isArray(raw.loops) || raw.loops.length > MAX_LOOPS) throw new SongError(`${path}.loops`, `must list at most ${MAX_LOOPS} loops`);
   const loops = raw.loops.map((loop, loopIndex) => {
     const loopPath = `${path}.loops[${loopIndex}]`;
-    expectExactKeys(loop, loopPath, ["repeats", "layers"]);
+    const loopKeys = Object.keys(loop);
+    for (const key of loopKeys) {
+      if (!["repeats", "layers", "role"].includes(key)) throw new SongError(`${loopPath}.${key}`, "is not allowed");
+    }
+    if (!("repeats" in loop)) throw new SongError(`${loopPath}.repeats`, "is required");
+    if (!("layers" in loop)) throw new SongError(`${loopPath}.layers`, "is required");
+    if (loop.role !== undefined && !LOOP_ROLES.includes(loop.role)) {
+      throw new SongError(`${loopPath}.role`, `must be one of ${LOOP_ROLES.join(", ")}`);
+    }
     if (!Number.isInteger(loop.repeats) || loop.repeats < 1 || loop.repeats > MAX_REPEATS) {
       throw new SongError(`${loopPath}.repeats`, `must be an integer 1..${MAX_REPEATS}`);
     }
@@ -313,7 +359,7 @@ export function validateSong(raw, path = "song", { legacy = false } = {}) {
       if (slots.every((slot) => slot === null)) throw new SongError(takePath, "must hold at least one key");
       return Object.freeze(slots);
     });
-    return freezeLoop(loop.repeats, layers);
+    return freezeLoop(loop.repeats, layers, loop.role);
   });
   const song = freezeSong(loops);
   if (songPasses(song) > MAX_SONG_PASSES) throw new SongError(`${path}.loops`, `must total at most ${MAX_SONG_PASSES} passes`);

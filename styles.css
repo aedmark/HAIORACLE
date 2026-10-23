@@ -282,6 +282,70 @@ select:focus-visible {
   background: linear-gradient(180deg, rgba(107, 31, 40, 0.55) 0%, rgba(28, 20, 16, 0.95) 100%);
 }
 
+.looper-tile[data-role="intro"] {
+  border-color: rgba(212, 175, 101, 0.7);
+}
+
+.looper-tile[data-role="bridge"] {
+  border-color: rgba(168, 104, 212, 0.7);
+}
+
+.looper-tile[data-role="outro"] {
+  border-color: rgba(196, 52, 60, 0.7);
+}
+
+.looper-tile .looper-role-tag {
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.looper-role-chips {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.looper-role-button {
+  min-width: 3.2rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.6rem;
+}
+
+.looper-role-button[aria-pressed="true"] {
+  color: #fff;
+  border-color: var(--brass-bright);
+  background: rgba(85, 65, 25, 0.95);
+  box-shadow: 0 0 6px rgba(255, 216, 117, 0.4);
+}
+
+.looper-role-button[data-role="intro"][aria-pressed="true"] {
+  border-color: rgba(255, 216, 117, 0.9);
+  background: rgba(100, 75, 20, 0.9);
+}
+
+.looper-role-button[data-role="bridge"][aria-pressed="true"] {
+  border-color: rgba(190, 130, 240, 0.9);
+  background: rgba(75, 30, 100, 0.9);
+}
+
+.looper-role-button[data-role="outro"][aria-pressed="true"] {
+  border-color: rgba(240, 90, 100, 0.9);
+  background: rgba(110, 25, 35, 0.9);
+}
+
+#looper-cue-outro.is-cued {
+  color: #fff;
+  border-color: rgba(240, 90, 100, 0.9);
+  background: rgba(140, 30, 45, 0.95);
+  box-shadow: 0 0 10px rgba(240, 90, 100, 0.6);
+  animation: pulse-cue 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-cue {
+  from { opacity: 0.8; }
+  to { opacity: 1; transform: scale(1.02); }
+}
+
 .looper-edit {
   display: flex;
   flex: 1 0 100%;

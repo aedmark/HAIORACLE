@@ -102,6 +102,8 @@ import {
   appendLoop,
   canAppendLoop,
   canOverdub,
+  DEFAULT_LOOP_ROLE,
+  LOOP_ROLES,
   clampSelection,
   deleteLoop,
   emptySong,
@@ -112,6 +114,7 @@ import {
   moveLoop,
   overdubLayer,
   recorderReduce,
+  setLoopRole,
   setLoopSlot,
   setRepeats,
   slotsAt,
@@ -4790,7 +4793,7 @@ async function playScore(score, { cursor = 0 } = {}) {
       const stepIndex = currentStep % 12;
       const at = transport.nextNoteTime;
       const liveSlot = activeHeldFunKey !== null && activeFunPerformance ? makeSlot(activeHeldFunKey, funMachineStyle, funVoiceId) : null;
-      const position = songPosition(song, currentStep);
+      const position = songPosition(song, currentStep, { cueOutro: isOutroCued });
       const loop = position ? song.loops[position.loopIndex] : null;
       transport.songPosition = position;
       // The harmony moves on at the loop's downbeat (D-044).
@@ -4810,7 +4813,8 @@ async function playScore(score, { cursor = 0 } = {}) {
           const padDuration = activeFunPerformance.steps[stepIndex].isRegionStart ? padStepsDuration(score, currentStep, strikeLength(activeFunPerformance, stepIndex)) : null;
           playPerformanceStep(context, transport, liveVoiceOf(transport), activeFunPerformance, { ...timing, padDuration });
         }
-        if (loop) playSongLayers(context, transport, score, currentStep, loop, timing);
+        const isRecordingNewLoop = recorder.mode === "recording" && recorder.kind === "new";
+        if (loop && !isRecordingNewLoop) playSongLayers(context, transport, score, currentStep, loop, timing);
       }
       const delayMs = Math.max(0, (transport.nextNoteTime - context.currentTime) * 1000);
       // The scheduler runs ahead and re-conducts at the next downbeat before
@@ -4822,7 +4826,21 @@ async function playScore(score, { cursor = 0 } = {}) {
         heardHarmony = scheduledHarmony;
         if (currentStep % 12 === 11) noteLoopHeard();
         if (currentStep % 12 === 0) {
-          transport.audiblePosition = songPosition(song, currentStep);
+          transport.audiblePosition = songPosition(song, currentStep, { cueOutro: isOutroCued });
+        }
+        if (isOutroCued && position?.role === "outro" && currentStep % 12 === 11) {
+          const l = song.loops[position.loopIndex];
+          if (position.repeat === (l?.repeats ?? 1) - 1) {
+            isOutroCued = false;
+            window.setTimeout(() => {
+              runTransportCommand("stop");
+              announceLooper("OUTRO COMPLETE · OMEN RESTS");
+            }, delayMs + 60);
+          }
+        }
+        if (recorder.mode === "recording" && activeHeldFunKey !== null && activeFunPerformance) {
+          const heldSlot = makeSlot(activeHeldFunKey, funMachineStyle, funVoiceId);
+          recorder = recorderReduce(recorder, { type: "slot", step: currentStep % 12, slot: heldSlot }).recorder;
         }
         renderLooper();
         highlightBeatStep(currentStep);
@@ -5586,7 +5604,7 @@ async function renderEnsembleLoop(score, {
     const stepDuration = unit * rhythm[step % rhythm.length];
     const gateRatio = Math.min(0.94, score.gate / 100);
     const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
-    const position = songPosition(song, step);
+    const position = songPosition(song, step, { isExport: true });
     const loop = position ? song.loops[position.loopIndex] : null;
     // Each loop boundary moves the band to its pass of the harmonic cycle.
     if (step % 12 === 0 && harmonicPassAt(step) !== currentHarmonicPass) {
@@ -5717,9 +5735,10 @@ function arrangementMarkers(stepStarts) {
   const markers = [];
   for (let pass = 0; pass < passes; pass += 1) {
     const base = pass * 12;
-    const position = songPosition(song, base);
+    const position = songPosition(song, base, { isExport: true });
     const repeats = position ? song.loops[position.loopIndex].repeats : 1;
-    const loopLabel = position ? `LOOP ${position.loopIndex + 1}${repeats > 1 ? ` (${position.repeat + 1}/${repeats})` : ""}` : null;
+    const roleTag = position?.role && position.role !== "main" ? ` [${position.role.toUpperCase()}]` : "";
+    const loopLabel = position ? `LOOP ${position.loopIndex + 1}${roleTag}${repeats > 1 ? ` (${position.repeat + 1}/${repeats})` : ""}` : null;
     const prefix = loopLabel ? `${loopLabel} · ` : "";
     if (!arrangement) {
       if (loopLabel) markers.push({ at: stepStarts[base], text: loopLabel });
@@ -6731,6 +6750,7 @@ let recorder = idleRecorder();
 let selectedLoop = null;
 let selectedStepIndex = null;
 let isStepRecActive = false;
+let isOutroCued = false;
 const performanceCache = new Map();
 
 function performanceFor(slot) {
@@ -6821,6 +6841,14 @@ function followSong(transport, loop, stepIndex, liveSlot) {
     transport.followedSlot = "live";
     return;
   }
+  if (recorder.mode === "recording" && recorder.kind === "new") {
+    transport.songLeading = false;
+    if (transport.followedSlot !== null) {
+      transport.followedSlot = null;
+      applyEnsembleConductor();
+    }
+    return;
+  }
   const lead = leadSlotAt(loop, stepIndex);
   transport.songLeading = Boolean(lead);
   const followed = lead ? `${lead.key}:${lead.style}` : null;
@@ -6853,7 +6881,7 @@ function armRecorder(kind) {
   const isStopped = transportState.state !== TRANSPORT_STATES.PLAYING;
   const currentAudible = currentTransport && !isStopped ? ((currentTransport.audibleStep % 12) + 12) % 12 : 0;
   const stepsRemaining = (12 - currentAudible) % 12 || 12;
-  const countIn = isStopped ? LOOP_STEPS : 0;
+  const countIn = isStopped ? LOOP_STEPS : (stepsRemaining + LOOP_STEPS);
 
   isStepRecActive = false;
   selectedStepIndex = null;
@@ -6867,9 +6895,7 @@ function armRecorder(kind) {
   announceLooper(
     isStopped
       ? "ARMED · 12-STEP COUNT-IN STARTS ON STEP 1"
-      : kind === "new"
-        ? `ARMED · RECORDING STARTS ON NEXT DOWNBEAT (IN ${stepsRemaining} STEPS)`
-        : `ARMED · OVERDUB WAITS FOR LOOP ${selectedLoop + 1}`
+      : `ARMED · COUNT-IN STARTS ON NEXT DOWNBEAT (IN ${stepsRemaining} STEPS)`
   );
   renderLooper();
   if (isStopped) runTransportCommand("play");
@@ -6887,6 +6913,7 @@ function clearSong() {
   selectedLoop = null;
   selectedStepIndex = null;
   isStepRecActive = false;
+  isOutroCued = false;
   recorder = idleRecorder();
   if (currentTransport) currentTransport.followedSlot = null;
   if (currentTransport) currentTransport.songLeading = false;
@@ -6908,9 +6935,13 @@ function looperReadoutText() {
       const antNote = FUN_KEY_MAP[recorder.anticipatedSlot.key]?.note ?? recorder.anticipatedSlot.key;
       return `ARMED · [${antNote}] LATCHED FOR STEP 1 · ${remaining} STEP${remaining === 1 ? "" : "S"} TO RECORD`;
     }
+    if (recorder.countIn > LOOP_STEPS) {
+      const untilCountIn = recorder.countIn - LOOP_STEPS;
+      return `ARMED · SYNCING TO DOWNBEAT · ${untilCountIn} STEP${untilCountIn === 1 ? "" : "S"} TO COUNT-IN`;
+    }
     if (recorder.countIn > 0) {
-      const remaining = recorder.countIn;
-      return `ARMED · COUNT-IN STEP ${audibleNum} OF 12 · ${remaining} STEP${remaining === 1 ? "" : "S"} TO RECORD`;
+      const stepNum = LOOP_STEPS - recorder.countIn + 1;
+      return `ARMED · COUNT-IN STEP ${stepNum} OF 12 · ${recorder.countIn} STEP${recorder.countIn === 1 ? "" : "S"} TO RECORD`;
     }
     const stepsUntil = audible !== null ? (12 - audible) % 12 || 12 : 1;
     if (recorder.kind === "new") {
@@ -7087,15 +7118,17 @@ function renderLooperTiles() {
   if (!renderedTiles || renderedTiles[0] !== signature[0] || renderedTiles[1] !== signature[1]) {
     renderedTiles = signature;
     list.replaceChildren(...song.loops.map((loop, index) => {
+      const role = loop.role ?? DEFAULT_LOOP_ROLE;
       const item = document.createElement("li");
       const tile = document.createElement("button");
       tile.type = "button";
       tile.className = "looper-tile";
       tile.dataset.loop = String(index);
+      tile.dataset.role = role;
       tile.setAttribute("aria-pressed", String(index === selectedLoop));
-      tile.setAttribute("aria-label", `Loop ${index + 1}: ${loop.layers.length} layer${loop.layers.length === 1 ? "" : "s"}, plays ${loop.repeats} time${loop.repeats === 1 ? "" : "s"}`);
+      tile.setAttribute("aria-label", `Loop ${index + 1} (${role.toUpperCase()}): ${loop.layers.length} layer${loop.layers.length === 1 ? "" : "s"}, plays ${loop.repeats} time${loop.repeats === 1 ? "" : "s"}`);
       const number = document.createElement("b");
-      number.textContent = `LOOP ${index + 1}`;
+      number.textContent = `L${index + 1} · ${role.toUpperCase().slice(0, 4)}`;
       const detail = document.createElement("span");
       detail.textContent = `${loop.layers.length}L · ×${loop.repeats}`;
       tile.append(number, detail);
@@ -7117,13 +7150,21 @@ function renderLooperEdit() {
   const loop = selectedLoop !== null ? song.loops[selectedLoop] : null;
   const busy = recorder.mode !== "idle";
   const label = document.querySelector("#looper-edit-label");
-  if (label) label.textContent = loop ? `LOOP ${selectedLoop + 1} · ${loop.layers.length} LAYER${loop.layers.length === 1 ? "" : "S"}` : "NO LOOP SELECTED";
+  const currentRole = loop ? (loop.role ?? DEFAULT_LOOP_ROLE) : DEFAULT_LOOP_ROLE;
+  if (label) label.textContent = loop ? `LOOP ${selectedLoop + 1} [${currentRole.toUpperCase()}] · ${loop.layers.length} LAYER${loop.layers.length === 1 ? "" : "S"}` : "NO LOOP SELECTED";
   const repeats = document.querySelector("#looper-repeats");
   if (repeats) repeats.value = loop ? `×${loop.repeats}` : "×1";
   const enable = (id, on) => {
     const button = document.querySelector(id);
     if (button) button.disabled = !on;
   };
+  for (const role of LOOP_ROLES) {
+    const btn = document.querySelector(`#looper-role-${role}`);
+    if (btn) {
+      btn.disabled = !loop || busy;
+      btn.setAttribute("aria-pressed", String(loop && currentRole === role));
+    }
+  }
   enable("#looper-repeats-down", loop && loop.repeats > 1);
   enable("#looper-repeats-up", loop && loop.repeats < MAX_REPEATS && songPasses(song) < MAX_SONG_PASSES);
   enable("#looper-move-earlier", loop && !busy && selectedLoop > 0);
@@ -7154,6 +7195,7 @@ function renderLooper() {
   renderLooperSteps();
   const record = document.querySelector("#looper-record");
   const overdub = document.querySelector("#looper-overdub");
+  const cueOutro = document.querySelector("#looper-cue-outro");
   const clear = document.querySelector("#looper-clear");
   const readout = document.querySelector("#looper-readout");
   const active = (kind) => recorder.mode !== "idle" && recorder.kind === kind;
@@ -7179,6 +7221,14 @@ function renderLooper() {
     overdub.disabled = !song.loops.length;
   }
 
+  if (cueOutro) {
+    const hasOutro = song.loops.some((l) => l.role === "outro");
+    cueOutro.disabled = !hasOutro || !currentTransport;
+    cueOutro.setAttribute("aria-pressed", String(isOutroCued));
+    cueOutro.classList.toggle("is-cued", isOutroCued);
+    cueOutro.textContent = isOutroCued ? "OUTRO CUED" : "CUE OUTRO";
+  }
+
   const stepRec = document.querySelector("#looper-step-rec");
   const rest = document.querySelector("#looper-rest");
 
@@ -7201,6 +7251,24 @@ document.querySelector("#looper-record")?.addEventListener("click", () => armRec
 document.querySelector("#looper-overdub")?.addEventListener("click", () => armRecorder("overdub"));
 document.querySelector("#looper-step-rec")?.addEventListener("click", toggleStepRec);
 document.querySelector("#looper-rest")?.addEventListener("click", handleRestStep);
+document.querySelector("#looper-cue-outro")?.addEventListener("click", () => {
+  const hasOutro = song.loops.some((l) => l.role === "outro");
+  if (!hasOutro) {
+    announceLooper("ADD OR DESIGNATE AN OUTRO LOOP FIRST");
+    return;
+  }
+  isOutroCued = !isOutroCued;
+  announceLooper(isOutroCued ? "OUTRO CUED · TRANSITIONS ON NEXT CYCLE" : "OUTRO CUE CANCELLED");
+  renderLooper();
+});
+for (const role of LOOP_ROLES) {
+  document.querySelector(`#looper-role-${role}`)?.addEventListener("click", () => {
+    if (selectedLoop === null) return;
+    editSong(setLoopRole(song, selectedLoop, role), {
+      done: `LOOP ${selectedLoop + 1} SET TO ${role.toUpperCase()}`,
+    });
+  });
+}
 document.querySelector("#looper-clear")?.addEventListener("click", clearSong);
 document.querySelector("#looper-repeats-down")?.addEventListener("click", () => {
   const loop = song.loops[selectedLoop];

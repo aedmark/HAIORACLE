@@ -1053,6 +1053,41 @@ Investigation revealed four distinct root causes in Web Audio scheduling:
 - Note transitions on the Fun Machine sound buttery, smooth, and natural.
 - Preserves all 178 tests, zero runtime dependencies, and strict score determinism.
 
+## D-052 Loop machine recording synchronization and musical section roles (Intro, Main, Bridge, Outro) (2026-10-22, status: accepted)
+
+**Context:** The maintainer requested a two-part looper overhaul: first, resolve severe recording glitches (playback chaos/clusterfuck when recording a new loop, overdubbing arming but never recording, and arpeggios/swells truncating held notes); second, introduce Intro, Outro, and Bridge loop sections with real-time cueing and linear offline exports.
+
+Investigation identified four root causes in the recording engine:
+1. *Look-ahead vs. real-time clock collision:* The look-ahead scheduler (`scheduleAhead`) samples `activeHeldFunKey` ~280 ms in advance. Live key strikes landed on audible steps while the look-ahead was already scheduling future steps, causing keystrokes to overwrite or be discarded by future null steps.
+2. *Premature 0-count-in take discard on overdub:* Arming an overdub during active playback set `countIn = 0`. The look-ahead scheduler processed steps 0–11 in roughly 1 second before the human player could strike a note. The engine evaluated the empty take, discarded it, and disarmed the recorder back to idle.
+3. *Sustained note truncation (arpeggios & swells):* Browser `keydown` only fires once on initial strike. Non-strike steps 1..11 were recorded as `null`. When `playSongLayers()` played back the loop, `padSteps` fell back to 1 (staccato cutoff) and arpeggios had no slots on subsequent steps, cutting off after step 0.
+4. *Playback clutter & conductor thrashing during recording:* When recording a new loop, `playSongLayers()` simultaneously sounded old loops alongside live keys on `transport.funBus`, while `followSong()` ping-ponged between old loop chords and live input chords every 90 ms.
+
+**Decision:**
+1. **Audible Clock Latching & Non-Destructive Step Reduce:**
+   - In `src/app.mjs`, keystrokes are continuously latched onto audible steps in the audible timer callback (`window.setTimeout`), recording `heldSlot` into every audible step while `activeHeldFunKey !== null`.
+   - In `src/looper.mjs`, `recorderReduce()` preserves previously latched slots (`event.held ?? take[event.step] ?? null`) so staccato taps aren't wiped out by look-ahead nulls.
+2. **Layer Isolation and Conductor Stabilization:**
+   - In `scheduleAhead()`, existing song layers are muted while recording a new loop (`recorder.mode === "recording" && recorder.kind === "new"`), isolating the live instrument and metronome count-in.
+   - `followSong()` is guarded during new loop recording, ensuring the band follows only the player's live Fun Machine chord.
+3. **Synchronized 1-Loop Count-In Pass:**
+   - Both new loop and overdub arming schedule a synchronized 1-loop count-in pass (`countIn = isStopped ? LOOP_STEPS : (stepsRemaining + LOOP_STEPS)`) with real-time countdown telemetry and metronome escapement clicks, giving the player a reliable 12-step pre-roll.
+4. **Musical Section Roles (`intro`, `main`, `bridge`, `outro`):**
+   - Added `LOOP_ROLES = ["intro", "main", "bridge", "outro"]` and `DEFAULT_LOOP_ROLE = "main"` in `src/looper.mjs`.
+   - Added `setLoopRole(song, loopIndex, role)` and role chips `#looper-role-chips` in the UI.
+   - `songPosition()` implements a role-aware progression state machine:
+     - Intro loops play once on initial start.
+     - Body loops (`main` and `bridge`) cycle continuously, skipping Intro loops.
+     - Outro loops play when cued via `#looper-cue-outro` (`CUE OUTRO`) and automatically stop the transport on completion.
+     - Offline WAV and SMF Type 1 MIDI exports render the complete linear arc (`Intro -> Body -> Outro -> Reverb ring-out`).
+   - Session schema and preset storage maintain 100% backwards compatibility with legacy v1–v6 sessions without explicit roles.
+
+**Consequences:**
+- Overdubbing and live loop recording work smoothly and reliably without playback clutter or timing thrashing.
+- Sustained arpeggio ripples and swell pads sustain cleanly across all held steps.
+- Songs can be arranged into complete musical forms with Intro, Main, Bridge, and Outro sections.
+- 180 automated tests passing; zero runtime dependencies.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

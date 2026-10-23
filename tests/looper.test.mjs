@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  DEFAULT_LOOP_ROLE,
+  LOOP_ROLES,
   LOOP_STEPS,
   MAX_LAYERS,
   MAX_LOOPS,
@@ -23,6 +25,7 @@ import {
   moveLoop,
   overdubLayer,
   recorderReduce,
+  setLoopRole,
   setLoopSlot,
   setRepeats,
   slotsAt,
@@ -285,5 +288,87 @@ test("downbeat anticipation latches keystrokes during count-in onto step 0", () 
   assert.equal(recordingState.take[0]?.key, 3);
   assert.equal(recordingState.anticipatedSlot, null);
 });
+
+test("holding a key continuously records across all sustained steps without truncation (arpeggios & swells)", () => {
+  let recorder = recorderReduce(idleRecorder(), { type: "arm", kind: "new", countIn: 0 }).recorder;
+  // Step 0 begins recording
+  recorder = recorderReduce(recorder, { type: "step", step: 0, held: null }).recorder;
+  assert.equal(recorder.mode, "recording");
+
+  // User presses and holds an arpeggio key from step 2 through step 5
+  const arpSlot = makeSlot(4, "arpeggio");
+  // Strike on step 2
+  recorder = recorderReduce(recorder, { type: "slot", step: 2, slot: arpSlot }).recorder;
+  let finished = null;
+  for (let s = 1; s < LOOP_STEPS; s += 1) {
+    const isHeld = s >= 2 && s <= 5;
+    const res = recorderReduce(recorder, { type: "step", step: s, held: isHeld ? arpSlot : null });
+    recorder = res.recorder;
+    if (res.finished) finished = res.finished;
+  }
+  assert.equal(recorder.mode, "idle");
+  assert.ok(finished);
+  // Assert steps 2, 3, 4, 5 all hold the arpeggio slot
+  assert.equal(finished.take[0], null);
+  assert.equal(finished.take[1], null);
+  assert.equal(finished.take[2]?.key, 4);
+  assert.equal(finished.take[3]?.key, 4);
+  assert.equal(finished.take[4]?.key, 4);
+  assert.equal(finished.take[5]?.key, 4);
+  assert.equal(finished.take[6], null);
+});
+
+test("loop section roles (intro, main, bridge, outro), progression state machine, and validation", () => {
+  let song = emptySong();
+  song = appendLoop(song, take(0, [0]), "intro");
+  song = appendLoop(song, take(2, [0]), "main");
+  song = appendLoop(song, take(4, [0]), "bridge");
+  song = appendLoop(song, take(7, [0]), "outro");
+
+  assert.equal(song.loops.length, 4);
+  assert.equal(song.loops[0].role, "intro");
+  assert.equal(song.loops[1].role, "main");
+  assert.equal(song.loops[2].role, "bridge");
+  assert.equal(song.loops[3].role, "outro");
+
+  // setLoopRole
+  song = setLoopRole(song, 1, "bridge");
+  assert.equal(song.loops[1].role, "bridge");
+  song = setLoopRole(song, 1, "main");
+  assert.equal(song.loops[1].role, "main");
+  assert.equal(setLoopRole(song, 1, "invalid_role"), song, "invalid role refused");
+
+  // Continuous playback: pass 0 is Intro; pass 1 is Main; pass 2 is Bridge; pass 3 loops back to Main (skips Intro)!
+  assert.equal(songPosition(song, 0 * LOOP_STEPS).loopIndex, 0, "pass 0 = intro");
+  assert.equal(songPosition(song, 1 * LOOP_STEPS).loopIndex, 1, "pass 1 = main");
+  assert.equal(songPosition(song, 2 * LOOP_STEPS).loopIndex, 2, "pass 2 = bridge");
+  assert.equal(songPosition(song, 3 * LOOP_STEPS).loopIndex, 1, "pass 3 = cycles back to main body, skipping intro");
+  assert.equal(songPosition(song, 4 * LOOP_STEPS).loopIndex, 2, "pass 4 = cycles body to bridge");
+  assert.equal(songPosition(song, 5 * LOOP_STEPS).loopIndex, 1, "pass 5 = cycles body to main");
+
+  // Cue Outro: transitions to Outro
+  assert.equal(songPosition(song, 3 * LOOP_STEPS, { cueOutro: true }).loopIndex, 3, "cued outro plays outro loop");
+
+  // Export: full linear render
+  assert.equal(songPosition(song, 0 * LOOP_STEPS, { isExport: true }).loopIndex, 0);
+  assert.equal(songPosition(song, 1 * LOOP_STEPS, { isExport: true }).loopIndex, 1);
+  assert.equal(songPosition(song, 2 * LOOP_STEPS, { isExport: true }).loopIndex, 2);
+  assert.equal(songPosition(song, 3 * LOOP_STEPS, { isExport: true }).loopIndex, 3);
+
+  // Validation
+  const plain = JSON.parse(JSON.stringify(song));
+  const restored = validateSong(plain);
+  assert.deepEqual(restored, song);
+
+  // Missing role defaults to main in playback and access
+  const withoutRole = { loops: [{ repeats: 1, layers: [take(0, [0])] }] };
+  assert.equal(validateSong(withoutRole).loops[0].role ?? DEFAULT_LOOP_ROLE, "main");
+
+  // Bad role throws
+  const badRole = { loops: [{ role: "chorus", repeats: 1, layers: [take(0, [0])] }] };
+  assert.throws(() => validateSong(badRole), (err) => err instanceof SongError && err.path === "song.loops[0].role");
+});
+
+
 
 

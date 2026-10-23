@@ -4,22 +4,23 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-22, session 67, on `main`._
+_Last updated: 2026-10-22, session 68, on `main`._
 
 - P5-28–P5-30: 19 Inform 7 genres, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-043, D-044).
 - D-045/D-046: armed downbeat sync, 1-loop count-in, tick metronome, interactive 12-step tracker ribbon with note sequencer & STEP REC.
 - D-047/D-048: expanded lexicon (83.8M names) & 72-slip urn; vitrine tap agitation, retaliatory strike, audio disruption, and sulk recovery.
 - D-049/D-050: generative fungal appendages replacing eyes; metric closure (lengths 4 & 6), tempo pocketing, boundary damping, anti-clash sieve.
 - D-051: eliminated volume spikes on note hold and legato transitions via GainNode 0.0001 bounding, safe pad release, and transition ducking smoothing.
-- Next: maintainer testing of note sequencer, vitrine retaliation, cellular fruiting bodies, locked mixes, and Fun Machine legato transitions, or Wave 3 (feel) / P4-02.
+- D-052: looper recording synchronization (audible-clock latching, 1-loop count-in, layer isolation) and section roles (Intro, Main, Bridge, Outro) with Outro cueing and linear offline export.
+- Next: maintainer testing of note sequencer, looper recording and section roles, vitrine retaliation, cellular fruiting bodies, locked mixes, and Fun Machine legato transitions, or Wave 3 (feel) / P4-02.
 
 **Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-28, P5-29 waves 1 & 2, and P5-30 are implemented and verified. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
 
-**Verified** (2026-10-22, session 67, local Linux environment)
+**Verified** (2026-10-22, session 68, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **178/178 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **180/180 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
 
@@ -49,7 +50,7 @@ _Last updated: 2026-10-22, session 67, on `main`._
 - An Euler-Tonnetz and Euclidean harmonic conductor (`src/conductor.mjs`) harmonizes all six esoteric bandmates across a 4-region Neo-Riemannian *Tonnetz* (`P`, `L`, `R`) progression, Leonhard Euler's 1739 *Gradus Suavitatis* consonance sieve, pure 5-limit Just Intonation chime overtones, and Bjorklund Euclidean rhythm hocketing $E(k, 12)$ (P5-14, D-016).
 - The Kapellmeister music-theory console (`#kapellmeister-engine`) provides 19 selectable rulebooks across five menu families plus THE CREATURE'S OWN rulebook, an Euler consonance strictness slider ($3\dots 14$), live harmonic step/chord/vector/Euler score telemetry, and an animated 4-region SVG Tonnetz compass (P5-15, P5-29, D-019, D-041).
 - The Antique Parlor Room Acoustic Space (`#parlor-acoustics-engine`) synthesizes authentic 1890s Edison wax-cylinder surface noise (horn resonance, Poisson dust pops, 78 RPM groove rumble), a 1.6-second wood-and-velvet chamber convolution reverb (`ConvolverNode`), and mechanical brass clockwork escapement ticks on quarter-beats, active in both live playback and offline 16-bit WAV rendering (P5-15, D-019).
-- The Fun Machine accompanist and Loop Machine (`#fun-machine-engine`, `#looper`, D-029, D-039, P5-26, D-045, D-046): hold a key on the 13-key manual or `[A..K]` and choose SWELL, ARPEGGIO, or PROGRESSION; the pad, arpeggio, and lead play in the band's rhythm, the band follows the chord, and the LOLCODE lead ducks. The Loop Machine records takes into stacked loops (up to 4 layers, 16 loops, 32 passes) with armed downbeat sync, a 1-loop count-in pass, a mechanical clockwork metronome, an interactive 12-step tracker ribbon, auto-advancing STEP REC, and downbeat anticipation latching, played live and exported to WAV, stems, and MIDI.
+- The Fun Machine accompanist and Loop Machine (`#fun-machine-engine`, `#looper`, D-029, D-039, P5-26, D-045, D-046, D-052): hold a key on the 13-key manual or `[A..K]` and choose SWELL, ARPEGGIO, or PROGRESSION; the pad, arpeggio, and lead play in the band's rhythm, the band follows the chord, and the LOLCODE lead ducks. The Loop Machine records takes into stacked loops (up to 4 layers, 16 loops, 32 passes) with real-time audible clock latching, layer isolation during new loop recording, armed downbeat sync, a 1-loop count-in pass, a mechanical clockwork metronome, an interactive 12-step tracker ribbon, auto-advancing STEP REC, downbeat anticipation latching, and musical section roles (Intro, Main, Bridge, Outro) with live Outro cueing and full linear offline export to WAV, stems, and MIDI.
 - Summoned creatures sync their phrase to `#omen=...` URL fragments without sending query parameters over HTTP, can be copied via `COPY OMEN LINK` (`#share-link`), and can be exported as a 1200×1520 engraved broadsheet PNG (`#export-png`) containing the live creature capture, specimen name, confided phrase, seed, and six-language ensemble ledger (P3-01, P3-02, D-015).
 - A comprehensive 3x technical manual (`docs/manual.json`, `manual.html`, `tools/manual.py`) documents What, How, and Why across all 28 major systems, interpreters, and algorithms with 0 warnings.
 - Full interactive and audiovisual functionality verified in live browser review (P4-01).
@@ -62,6 +63,7 @@ _Last updated: 2026-10-22, session 67, on `main`._
 - Updates load cleanly without a hard reload (D-035): `index.html` builds an import map that stamps every module with `?v=<ASSET_VERSION>` (a hash of `src/`), and sources are fetched with the same stamp. Verified in the built-in browser against plain `python3 -m http.server`: with 28 of 29 files served from heuristic cache, a new export added to `src/ensemble.mjs` and imported by `src/app.mjs`, plus a restamp, loaded on a normal reload with all 29 requests at the new stamp and no console errors.
 - All six rhythm templates divide the 12-step barline evenly ($12 \bmod \text{len} = 0$), mathematically guaranteeing zero metric loop drift across loop boundaries and seamless export loop tiling; summoned creature tempos fold into the $68\dots 144$ BPM groove pocket; region boundary damping prevents chord release tail bleed; and a vertical anti-clash sieve resolves passing tone collisions down to 0.00% under THE CREATURE'S OWN rulebook (D-050).
 - Voice envelope GainNodes initialize to `0.0001` at construction, pad releases cleanly anchor active gains via `cancelAndHoldAtTime` and cancel future look-ahead nodes before they sound, and legato key changes grace-window drone ducking to eliminate volume spikes (D-051).
+- Looper recording synchronization eliminates clock collision, premature overdub discards, and sustain note truncation; section roles (Intro, Main, Bridge, Outro) support full musical arrangements with seamless Outro cueing and linear export (D-052).
 
 **Not verified**
 
@@ -92,6 +94,39 @@ _Last updated: 2026-10-22, session 67, on `main`._
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 68: 2026-10-22: looper recording synchronization and musical section roles (D-052)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Overhaul looper recording synchronization (eliminating look-ahead collisions, overdubbing dropouts, and arpeggio/swell truncation) and implement Intro, Outro, and Bridge section roles with live cueing and linear export (D-052).
+
+**Done:** All parts implemented and verified. All 180 behavioral, structural, and audit checks pass.
+
+**Changed:**
+1. `src/looper.mjs`:
+   - Added musical section roles: `LOOP_ROLES = ["intro", "main", "bridge", "outro"]` with `DEFAULT_LOOP_ROLE = "main"`.
+   - Added `setLoopRole(song, loopIndex, role)`.
+   - Updated `appendLoop(song, take, role)` to associate sections.
+   - Updated `songPosition(song, absoluteStep, { cueOutro, isExport })` with progression state machine: Intro plays once on prelude, body (main + bridge) cycles continuously skipping intro, Outro plays on cue (`CUE OUTRO`) and halts transport, and linear render unfolds during export.
+   - Updated `recorderReduce(recorder, event)` to preserve previously latched audible steps (`take[step] = event.held ?? take[step] ?? null`).
+   - Updated `validateSong(raw)` to validate section roles while preserving full backwards compatibility with legacy v1–v6 sessions without explicit roles.
+2. `src/app.mjs`:
+   - Implemented real-time audible-clock keystroke latching in the audible timer callback, recording held keys across all active steps without truncation.
+   - Isolated new loop recording in `scheduleAhead()` by muting existing song layers and guarding `followSong()`.
+   - Wired 1-loop synchronized count-in pass for both new and overdub recording.
+   - Added `#looper-role-chips` role selector buttons and `#looper-cue-outro` cueing handler.
+   - Integrated `{ cueOutro: isOutroCued }` in live playback and `{ isExport: true }` in offline WAV/MIDI rendering.
+3. `index.html` & `styles.css`:
+   - Added `#looper-cue-outro` and `#looper-role-chips` in the looper control row.
+   - Added section color badges and active chip styling (gold intro, sage main, violet bridge, ruby outro) with font sizes compliant with the accessibility floor ($\ge 0.6\text{rem}$).
+4. Tests:
+   - Added sustained arpeggio/swell hold test and section role state machine/validation tests in `tests/looper.test.mjs`.
+
+**Verified:**
+- 180/180 Node tests pass across all test suites.
+- `python3 tools/check_docs.py` reports 0 errors, 0 warnings.
+- `python3 tools/manual.py check docs/manual.json` passes with 0 warnings.
 
 ### Session 67: 2026-10-22: volume spike elimination on note hold and legato key transitions (D-051)
 
@@ -406,41 +441,5 @@ _Last updated: 2026-10-22, session 67, on `main`._
 
 **Next session should start with:** that listen, then the rest of P5-30 phase 4: sessions v6 with AS WRITTEN (older files open as written), varying Fun Machine progressions, and chord names in MIDI markers.
 
-### Session 55: 2026-10-20: every creature varies its genre (P5-30 phase 2)
-
-**Contributor:** Claude Code with maintainer direction
-
-**Goal:** P5-30 phase 2: the Inform 7 permitted moves and the conductor's variation moves (D-043).
-
-**Done:** Phase 1 was committed and pushed (ea94bbb). Phase 2 is done.
-
-**Changed:**
-1. `src/rulebooks.ni` adds a kind, "Variation move" (rotation, relative and tritone substitution, secondary dominants, modal borrowing, deceptive, plagal, Phrygian, and authentic cadence, harmonic pace), and a property, "permitted moves". Every fettered genre lists its moves; Raw Chaos lists none.
-2. `src/inform.mjs` compiles the moves into `book.variation`. The property is optional, so the barbershop fixture still compiles.
-3. New `src/variation.mjs`, `varySpine(spine, score, permitted, makeChord)`. It works on runs of one chord and never swaps the home run:
-   - rotation by `harmony_turn`;
-   - swaps on runs flagged in `harmony_swap`;
-   - borrowing by `harmony_borrow` (major homes only);
-   - a cadence on the last run by `harmony_cadence`;
-   - pushed or lingering changes by `harmony_pace`.
-
-   New chords take the genre's colour (ninths in jazz, dom7 in the blues) and labels like "♭II7 (tritone)" or "V7/ii9".
-4. `src/conductor.mjs`: `conductEnsemble({ varied })` varies only when asked, never over a held key, and returns `variation` (the move names). `src/app.mjs` passes `varied: true` and keeps `currentVariation` for the phase 4 readout. The import map gains `variation.mjs`.
-5. Tests:
-   - new `tests/variation.test.mjs`, `tests/variation-capture.mjs`, `tests/fixtures/variations-golden.json`, and `tools/freeze_variations.mjs`;
-   - varied clash ceilings in `tests/clashes.test.mjs` (jazz 10%).
-
-**Verified:**
-- 151/151 Node checks. The golden fixture ("as written") passes unchanged.
-- Distinct progressions over 80 creatures: Victorian 73, Jazz 69, Blues 51, Ragtime 34, Palestrina 30, Drone 21. Before, each genre had 1, and Victorian 16.
-- Varied clash rates: Victorian 5%, Palestrina 5%, Jazz 8%, Drone 0%, Ragtime 0%, Blues 32% (blue notes).
-- Live in Smoky Jazz, the readout's vector over one loop:
-  - "three pigeons": ii9 → ♭II7alt → Imaj9 → V7/vi9 → V7 (deceptive) → vi9 (deceptive)
-  - "the moth reads braille": vi9 → ii9 → V7/♭II7 → ♭II7alt → Imaj9 → V7/vi9
-  - "velvet ossuary hymn": Imaj9 → vi9 → V7/ii9 → ii9 → V7 (tritone)
-
-**Not verified:** The maintainer's listen. The Fun Machine's PROGRESSION style does not vary yet; that comes with phase 4, along with the readout's VARIATION line and the AS WRITTEN switch.
-
-**Next session should start with:** the maintainer's listen, then P5-30 phase 3 (THE CREATURE'S OWN rulebook) or phase 4 (readout, sessions, AS WRITTEN, Fun Machine progressions).
 
 
