@@ -1619,6 +1619,35 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** Maintainer hands-on testing of loop machine arming, count-in, and sync, or proceeding with P5-29 Wave 3 (feel) / P4-02.
 
+### Session 62: 2026-10-21: note sequencer and downbeat anticipation latching (D-046)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Address timing at the start of loop recording and provide a step sequencer in addition to live loop capture (D-046).
+
+**Done:** D-046 implemented and verified. All 163 checks pass.
+
+**Changed:**
+1. `src/looper.mjs`:
+   - Added pure `setLoopSlot(song, loopIndex, layerIndex, step, slot)` helper to program individual steps or create an initial loop on demand.
+   - Added `{ type: "anticipate", slot }` event to `recorderReduce()` so keystrokes struck during armed count-in latch onto step 0 when recording begins.
+2. `src/app.mjs`:
+   - Made each cell in `#looper-steps` an accessible interactive button; clicking any step selects it (`selectedStepIndex`), and clicking an already-selected step with a note clears it to a rest.
+   - Pressing keys on the Fun Machine manual (`C..C'`) or computer keys (`[A..K]`) while a step is selected sets that note, style, and voice into the loop layer and plays an audition sound.
+   - Added `STEP REC` (`#looper-step-rec`) and `REST (—)` (`#looper-rest`) buttons: in STEP REC mode, striking keys automatically advances selection to the next step, while REST clears the step and advances.
+   - In `triggerFunKey`: latched downbeat anticipation during armed count-in (and during the step 11 lookahead window) into `recorder.anticipatedSlot`, and rendered the anticipated note on step 1 of `#looper-steps`.
+   - Updated `looperReadoutText()` to display live step-record and anticipated-note progress.
+3. `index.html` & `styles.css`: Added `#looper-step-rec` and `#looper-rest` buttons, `.is-selected-step` (bright brass focus glow), and `.is-step-rec` button styling.
+4. `docs/DECISIONS.md`: Recorded D-046.
+5. `docs/manual.json` & `manual.html`: Documented note sequencing and downbeat anticipation in `esoteric-fun-machine`.
+
+**Verified:**
+- 163/163 Node checks (including new unit tests for `setLoopSlot` and downbeat anticipation in `tests/looper.test.mjs`, and static UI checks in `tests/static.test.mjs`).
+- `python3 tools/check_docs.py` and `python3 tools/manual.py check docs/manual.json` pass with 0 errors.
+
+**Next session should start with:** Maintainer testing of the interactive 12-step note sequencer and STEP REC mode, or P5-29 Wave 3 (feel) / P4-02.
+
+
 
 
 

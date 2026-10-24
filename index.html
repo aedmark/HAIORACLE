@@ -642,8 +642,13 @@
             </div>
           </div>
           <div class="session-field" role="group" aria-labelledby="export-score-label">
-            <span class="session-files-label" id="export-score-label">NOTATED SCORE</span>
+            <span class="session-files-label" id="export-score-label">NOTATED SCORE (MIDI)</span>
             <div class="session-row">
+              <select id="export-midi-format" class="kapellmeister-select" aria-label="MIDI export format">
+                <option value="clean" selected>CLEAN DAW (NO PATCH OVERWRITE / NO TIMELINE WARPING)</option>
+                <option value="markers">DAW WITH CHORD MARKERS (NO PATCH OVERWRITE)</option>
+                <option value="full">FULL ARCHIVE (GM PROGRAM CHANGES &amp; CHORD MARKERS)</option>
+              </select>
               <button class="beat-button" id="export-midi" type="button" disabled>WRITE MIDI SCORE <span aria-hidden="true">♪</span></button>
             </div>
           </div>
@@ -750,7 +755,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "e29a23a41fbb";
+      const ASSET_VERSION = "97ce639b8f7b";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",

@@ -232,3 +232,68 @@ test("the MANUAL part splits into one track and channel per voice it was played 
   const hasProgram = (channel, program) => bytes.some((b, i) => b === (0xc0 | channel) && bytes[i + 1] === program);
   assert.ok(hasProgram(1, 10) && hasProgram(6, 20), "each voice track announces its own program");
 });
+
+test("Clean DAW mode options strip program changes, markers, and flatten channels", () => {
+  const sampleTracks = [
+    { name: "LEAD", channel: 1, program: 80, notes: [{ tick: 0, duration: 120, midi: 60, velocity: 100 }] },
+    { name: "BASS", channel: 2, program: 38, notes: [{ tick: 0, duration: 120, midi: 36, velocity: 90 }] },
+  ];
+  const sampleMarkers = [
+    { tick: 0, text: "I · EXPOSITION" },
+    { tick: 480, text: "CHORD · C" },
+  ];
+
+  // 1. Strip programs
+  const withoutPrograms = parseMidi(buildMidiFile({
+    bpm: 120,
+    lengthTicks: 960,
+    tracks: sampleTracks,
+    markers: sampleMarkers,
+    stripPrograms: true,
+  }));
+  assert.equal(withoutPrograms.tracks[1].some((e) => e.type === "program"), false, "lead track has no program change");
+  assert.equal(withoutPrograms.tracks[2].some((e) => e.type === "program"), false, "bass track has no program change");
+  assert.equal(withoutPrograms.tracks[0].filter((e) => e.meta === 0x06).length, 2, "markers are still present");
+
+  // 2. Strip markers
+  const withoutMarkers = parseMidi(buildMidiFile({
+    bpm: 120,
+    lengthTicks: 960,
+    tracks: sampleTracks,
+    markers: sampleMarkers,
+    stripMarkers: true,
+  }));
+  assert.equal(withoutMarkers.tracks[0].filter((e) => e.meta === 0x06).length, 0, "conductor track has zero markers");
+  assert.equal(withoutMarkers.tracks[1].some((e) => e.type === "program"), true, "programs are still present");
+
+  // 3. Flatten channels
+  const flattened = parseMidi(buildMidiFile({
+    bpm: 120,
+    lengthTicks: 960,
+    tracks: sampleTracks,
+    flattenChannels: true,
+  }));
+  for (const track of flattened.tracks.slice(1)) {
+    for (const event of track.filter((e) => e.type === "on" || e.type === "off")) {
+      assert.equal(event.channel, 0, "all note events are mapped to channel 0 (MIDI Ch 1)");
+    }
+  }
+
+  // 4. Combined Clean DAW mode
+  const cleanDaw = parseMidi(buildMidiFile({
+    bpm: 120,
+    lengthTicks: 960,
+    tracks: sampleTracks,
+    markers: sampleMarkers,
+    stripPrograms: true,
+    stripMarkers: true,
+    flattenChannels: true,
+  }));
+  assert.equal(cleanDaw.tracks[0].filter((e) => e.meta === 0x06).length, 0, "zero markers");
+  for (const track of cleanDaw.tracks.slice(1)) {
+    assert.equal(track.some((e) => e.type === "program"), false, "zero program changes");
+    for (const event of track.filter((e) => e.type === "on")) {
+      assert.equal(event.channel, 0, "flattened to channel 0");
+    }
+  }
+});

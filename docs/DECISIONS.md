@@ -1349,6 +1349,28 @@ Key findings:
 - Core remains 100% dependency-free vanilla ECMAScript modules.
 - 194/194 tests pass with zero warnings.
 
+## D-062 Clean DAW MIDI Export: Program Change & Marker Suppression (2026-10-24, status: accepted)
+
+**Context:** Experienced musicians and producers noted two critical friction points with standard SMF Type 1 MIDI exports in modern DAWs (e.g. REAPER, Ableton, Logic, Pro Tools):
+1. **Embedded Markers**: Exporting markers for every section and chord change causes DAWs to prompt for timeline/tempo map imports, and can trigger auto-warping or mismatched timebase stretching in audio tracks.
+2. **Program Change Events**: Writing General MIDI program change bytes at tick 0 overrides the producer's carefully sculpted VST synth presets (e.g. in Serum, Vital, Kontakt) back to stock GM instruments upon playback.
+3. **Multi-Channel Routing**: Discrete channels on separate tracks can prevent single-channel VST instruments from responding until the track is manually set to Omni.
+
+**Decision:**
+1. **Configurable Export Modes (`src/midi.mjs`, `src/app.mjs`):**
+   - Added `stripPrograms`, `stripMarkers`, and `flattenChannels` flags to `buildMidiFile()`.
+   - Added `#export-midi-format` selector in the Export Desk with three modes:
+     - **`CLEAN DAW (NO PATCH OVERWRITE / NO TIMELINE WARPING)`** (Default): Suppresses all program changes, suppresses timeline markers, and flattens track channels to Channel 1 for seamless drag-and-drop into modern VST synths.
+     - **`DAW WITH CHORD MARKERS (NO PATCH OVERWRITE)`**: Retains chord analysis markers on the conductor track while protecting VST presets from program changes.
+     - **`FULL ARCHIVE (GM PROGRAM CHANGES & CHORD MARKERS)`**: Preserves the classic General MIDI archival format with discrete channels 1..10, GM patch numbers, and section markers.
+2. **Verification & Tests:**
+   - Added unit test in `tests/export.test.mjs` verifying marker suppression, program change suppression, and channel flattening.
+   - Restamped asset version `97ce639b8f7b`.
+
+**Consequences:**
+- Exported MIDI files drop cleanly into any modern DAW track without resetting plugin presets or cluttering session timelines.
+- 195/195 automated tests pass with zero warnings.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

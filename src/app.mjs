@@ -264,6 +264,7 @@ const elements = {
   exportWav: document.querySelector("#export-wav"),
   exportStems: document.querySelector("#export-stems"),
   exportMidi: document.querySelector("#export-midi"),
+  exportMidiFormat: document.querySelector("#export-midi-format"),
   sound: document.querySelector("#sound-toggle"),
   transportDeck: document.querySelector("#transport-deck"),
   transportPlay: document.querySelector("#transport-play"),
@@ -6066,12 +6067,25 @@ async function exportSpecimenMidi() {
         })),
       };
     });
+    const format = elements.exportMidiFormat?.value || "clean";
+    const stripPrograms = format !== "full";
+    const stripMarkers = format === "clean";
+    const flattenChannels = format === "clean";
+
     const markers = [...arrangementMarkers(stepStarts), ...chordMarkers(stepStarts, stepChords, score)]
       .sort((x, y) => x.at - y.at)
       .map(({ at, text }) => ({ tick: ticksForSeconds(at, bpm), text }));
-    const bytes = buildMidiFile({ bpm, tracks, lengthTicks: ticksForSeconds(loopDuration, bpm), title: score.name, markers });
+    const bytes = buildMidiFile({
+      bpm,
+      tracks,
+      lengthTicks: ticksForSeconds(loopDuration, bpm),
+      title: score.name,
+      stripPrograms,
+      stripMarkers,
+      flattenChannels,
+      markers });
     downloadBlob(new Blob([bytes], { type: "audio/midi" }), specimenFilenameFor(score, "mid"));
-    elements.status.textContent = `MIDI SCORE WRITTEN · ${noteLog.length} NOTES`;
+    elements.status.textContent = `MIDI SCORE WRITTEN · ${noteLog.length} NOTES (${format.toUpperCase()})`;
   });
 }
 

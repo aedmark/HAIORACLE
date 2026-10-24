@@ -135,23 +135,34 @@ export function loopSafeNotes(notes, lengthTicks) {
  * `markers`: `[{ tick, text }]` written as Marker events on the conductor
  * track, so a DAW shows the arrangement's sections on its timeline.
  */
-export function buildMidiFile({ bpm, tracks, lengthTicks, title = "", markers = [], ppq = MIDI_PPQ }) {
+export function buildMidiFile({
+  bpm,
+  tracks,
+  lengthTicks,
+  title = "",
+  markers = [],
+  ppq = MIDI_PPQ,
+  stripPrograms = false,
+  stripMarkers = false,
+  flattenChannels = false,
+}) {
   if (!(bpm > 0)) throw new RangeError("MIDI tempo must be positive");
   const microsPerQuarter = Math.round(60_000_000 / bpm);
+  const activeMarkers = stripMarkers ? [] : markers;
   const conductor = [
     { tick: 0, order: 0, bytes: metaText(0x03, title || "CONDUCTOR") },
     { tick: 0, order: 1, bytes: [0xff, 0x51, 0x03, (microsPerQuarter >>> 16) & 0xff, (microsPerQuarter >>> 8) & 0xff, microsPerQuarter & 0xff] },
     { tick: 0, order: 2, bytes: [0xff, 0x58, 0x04, 4, 2, 24, 8] },
-    ...markers
+    ...activeMarkers
       .filter((marker) => marker.tick >= 0 && marker.tick < lengthTicks)
       .map((marker) => ({ tick: Math.round(marker.tick), order: 3, bytes: metaText(0x06, marker.text) })),
   ];
   const chunks = [chunk("MTrk", trackData(conductor, lengthTicks))];
 
   for (const track of tracks) {
-    const channel = clampByte(track.channel, 0, 15);
+    const channel = flattenChannels ? 0 : clampByte(track.channel, 0, 15);
     const events = [{ tick: 0, order: 0, bytes: metaText(0x03, track.name) }];
-    if (Number.isInteger(track.program)) {
+    if (!stripPrograms && Number.isInteger(track.program)) {
       events.push({ tick: 0, order: 1, bytes: [0xc0 | channel, clampByte(track.program)] });
     }
     for (const note of loopSafeNotes(track.notes || [], lengthTicks)) {

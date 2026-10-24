@@ -4,20 +4,20 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-24, session 74, on `main`._
+_Last updated: 2026-10-24, session 75, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-055: armed downbeat sync, 1-loop count-in, tracker ribbons, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk, fungal appendages, metric closure (D-050), volume surge elimination (D-051), looper sync & Casio sections (D-052), audio sweep audit (D-053), 4-pass breathing sections (D-054), section loops (+ INTRO/BRIDGE/OUTRO, D-055).
-- D-056–D-061: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061).
+- D-056–D-062: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061); Clean DAW MIDI Export, ALSA loopback filter, and local audio mute (D-062).
 - Next: CachyOS PipeWire & REAPER live routing verification (Stage 2) and Tauri v2 packaging (Stage 3).
 
-**Where things stand:** P1, P2, P3, P4, P5-01 through P5-31 are implemented and verified; P5-32 Stage 1 is complete. The application features bidirectional Web MIDI and multi-channel audio sink routing (`src/midi-io.mjs`, D-061), 22 Inform 7 genres across 5 families with rhythmic feel (D-060), and full DAW stem and SMF Type 1 MIDI export.
+**Where things stand:** P1, P2, P3, P4, P5-01 through P5-31 are implemented and verified; P5-32 Stage 1 is complete. The application features bidirectional Web MIDI and multi-channel audio sink routing (`src/midi-io.mjs`, D-061), Clean DAW MIDI export with program change and marker suppression (D-062), 22 Inform 7 genres across 5 families with rhythmic feel (D-060), and full DAW stem and SMF Type 1 MIDI export.
 
-**Verified** (2026-10-24, session 74, local Linux environment)
+**Verified** (2026-10-24, session 75, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **194/194 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **195/195 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 36 entries, 0 errors, 0 warnings** |
 
@@ -314,34 +314,6 @@ _Last updated: 2026-10-24, session 74, on `main`._
 - `python3 tools/check_docs.py` passes with 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json` passes with 0 errors, 0 warnings.
 
-### Session 62: 2026-10-21: note sequencer and downbeat anticipation latching (D-046)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Address timing at the start of loop recording and provide a step sequencer in addition to live loop capture (D-046).
-
-**Done:** D-046 implemented and verified. All 163 checks pass.
-
-**Changed:**
-1. `src/looper.mjs`:
-   - Added pure `setLoopSlot(song, loopIndex, layerIndex, step, slot)` helper to program individual steps or create an initial loop on demand.
-   - Added `{ type: "anticipate", slot }` event to `recorderReduce()` so keystrokes struck during armed count-in latch onto step 0 when recording begins.
-2. `src/app.mjs`:
-   - Made each cell in `#looper-steps` an accessible interactive button; clicking any step selects it (`selectedStepIndex`), and clicking an already-selected step with a note clears it to a rest.
-   - Pressing keys on the Fun Machine manual (`C..C'`) or computer keys (`[A..K]`) while a step is selected sets that note, style, and voice into the loop layer and plays an audition sound.
-   - Added `STEP REC` (`#looper-step-rec`) and `REST (—)` (`#looper-rest`) buttons: in STEP REC mode, striking keys automatically advances selection to the next step, while REST clears the step and advances.
-   - In `triggerFunKey`: latched downbeat anticipation during armed count-in (and during the step 11 lookahead window) into `recorder.anticipatedSlot`, and rendered the anticipated note on step 1 of `#looper-steps`.
-   - Updated `looperReadoutText()` to display live step-record and anticipated-note progress.
-3. `index.html` & `styles.css`: Added `#looper-step-rec` and `#looper-rest` buttons, `.is-selected-step` (bright brass focus glow), and `.is-step-rec` button styling.
-4. `docs/DECISIONS.md`: Recorded D-046.
-5. `docs/manual.json` & `manual.html`: Documented note sequencing and downbeat anticipation in `esoteric-fun-machine`.
-
-**Verified:**
-- 163/163 Node checks (including new unit tests for `setLoopSlot` and downbeat anticipation in `tests/looper.test.mjs`, and static UI checks in `tests/static.test.mjs`).
-- `python3 tools/check_docs.py` and `python3 tools/manual.py check docs/manual.json` pass with 0 errors.
-
-**Next session should start with:** Maintainer testing of the interactive 12-step note sequencer and STEP REC mode, or P5-29 Wave 3 (feel) / P4-02.
-
 ### Session 73 (2026-10-23): Wave 3 of P5-29 (Rhythmic feel & 22-genre expansion, D-060)
 
 **Done:**
@@ -411,7 +383,41 @@ _Last updated: 2026-10-24, session 74, on `main`._
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
-**Next session should start with:** Stage 2 live PipeWire / REAPER smoke testing on CachyOS, then Stage 3 Tauri v2 packaging.
+### Session 75 (2026-10-24): Clean DAW MIDI Export, ALSA Loopback Reflection Suppression & Local Audio Mute (D-062)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement musician feedback on MIDI exports (suppressing VST patch overwriting Program Changes, timeline marker clutter, and channel flattening), resolve ALSA `Midi Through Port-0` loopback reflection dissonances, and add a local control audio mute toggle.
+
+**Done:** All parts implemented and verified under D-062. 195/195 tests pass.
+
+**Changed:**
+1. `src/midi.mjs`:
+   - Added `stripPrograms`, `stripMarkers`, and `flattenChannels` flags to `buildMidiFile()`.
+   - When `stripPrograms` is true, omits `0xC0` Program Change bytes at tick 0, protecting VST synth presets from being overwritten.
+   - When `stripMarkers` is true, omits `0x06` Marker meta events on the conductor track, preventing DAWs from auto-warping or stretching imported sessions.
+   - When `flattenChannels` is true, remaps track events to Channel 1 (byte 0) for instant response on single-channel VST instruments.
+2. `src/app.mjs`:
+   - Registered `broadcastEchoFilter` ring buffer: outbound broadcast note keys `(ch << 8) | pitch` are tracked with timestamps, and incoming echo reflections within 300 ms on ALSA `Midi Through Port-0` loopback are discarded.
+   - Added `inboundMidiChannel` filter, defaulting to `1` (Manual Organ) and configurable via `#studio-midi-ch`.
+   - Added `setLocalControl(enabled)` and `#studio-local-control-btn`: zeroes browser master audio gain (`0.0001`) when muted while generative MIDI broadcast and scheduler operations continue at full rate.
+   - Added `#export-midi-format` dropdown with `CLEAN DAW` (default), `DAW WITH CHORD MARKERS`, and `FULL ARCHIVE`.
+3. `index.html` & `styles.css`:
+   - Added `#export-midi-format` select control to the Export Desk.
+   - Added `#studio-local-control-btn` to the Studio Deck.
+4. `tests/export.test.mjs`:
+   - Added comprehensive unit test asserting program change stripping, marker stripping, channel flattening, and combined Clean DAW export mode.
+5. Assets & Documentation:
+   - Stamped `ASSET_VERSION` to `97ce639b8f7b`.
+   - Recorded D-062 in `docs/DECISIONS.md`.
+   - Updated `docs/CHANGELOG.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 195/195 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** Stage 2 live REAPER test with Clean DAW export and ALSA/PipeWire routing, followed by Stage 3 Tauri v2 packaging.
 
 
 
