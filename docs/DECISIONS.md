@@ -1392,6 +1392,31 @@ Investigation showed two root causes:
 - Phrygian, Andalusian, and altered dominant chords export and broadcast with smooth, consonant voice leading without jarring semitone clusters in pad beds.
 - Determinism contract and rulebook structures preserved.
 
+## D-064 Standalone Desktop Packaging with Tauri v2 (2026-10-24, status: accepted)
+
+**Context:** While the zero-dependency browser app works in evergreen browsers, music production workflows require a dedicated desktop application that integrates seamlessly with desktop DAWs (e.g. REAPER, Ableton Live, Bitwig, Ardour) via system Web MIDI and PipeWire/JACK routing without requiring a browser tab or local dev server.
+
+**Decision:**
+1. **Isolated Desktop Shell (`src-tauri/`):**
+   - The core web application (`index.html`, `styles.css`, `src/`) remains 100% dependency-free vanilla ECMAScript. No npm packages, node_modules, or package.json in the repository root.
+   - Initialized Tauri v2 application wrapper in `src-tauri/` with Rust 2021 edition and `tauri-build 2.x`.
+   - `src-tauri/tauri.conf.json`:
+     - App name: `Edmark's Esoteric Fun Machine`.
+     - Identifier: `com.edmark.esoteric-fun-machine`.
+     - Window size: $1200 \times 900$ (min $380 \times 600$), resizable.
+     - Frontend dist: `"../"` (directly embedding web assets).
+     - Security: CSP null for local offline origin.
+2. **Build Tooling (`tools/build_desktop.sh`):**
+   - Added automated release build script that compiles an optimized 11 MB standalone desktop executable (`src-tauri/target/release/esoteric-fun-machine`).
+   - Links against standard system `webkit2gtk-4.1` and `gtk+-3.0`.
+3. **Verification & Tests:**
+   - Standalone binary built and verified on CachyOS / Wayland with zero launch errors.
+   - Automated tests: 196/196 passing.
+
+**Consequences:**
+- The Whimsy Machine runs as a native desktop companion window beside DAWs with native Web MIDI, ALSA/PipeWire routing, and full offline autonomy.
+- Core zero-dependency web architecture is untouched.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

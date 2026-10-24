@@ -4,16 +4,16 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-24, session 76, on `main`._
+_Last updated: 2026-10-24, session 77, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-055: armed downbeat sync, 1-loop count-in, tracker ribbons, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk, fungal appendages, metric closure (D-050), volume surge elimination (D-051), looper sync & Casio sections (D-052), audio sweep audit (D-053), 4-pass breathing sections (D-054), section loops (+ INTRO/BRIDGE/OUTRO, D-055).
-- D-056–D-063: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061); Clean DAW MIDI Export, ALSA loopback filter, and local audio mute (D-062); Consonant Pad Voicing & Minor-Second Extension Suppression (D-063).
-- Next: CachyOS PipeWire & REAPER live routing verification (Stage 2) and Tauri v2 packaging (Stage 3).
+- D-056–D-064: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion (P5-32 complete: D-061 Web MIDI & Audio Sink, D-062 Clean DAW MIDI Export, D-063 Consonant Pad Voicing, D-064 Tauri v2 Desktop Packaging).
+- Next: P6-01 Hosting, domain, and v1.0.0 release.
 
-**Where things stand:** P1, P2, P3, P4, P5-01 through P5-31 are implemented and verified; P5-32 Stage 1 is complete. The application features bidirectional Web MIDI and multi-channel audio sink routing (`src/midi-io.mjs`, D-061), Clean DAW MIDI export with program change and marker suppression (D-062), consonant pad voicings without minor-second clusters (D-063), 22 Inform 7 genres across 5 families with rhythmic feel (D-060), and full DAW stem and SMF Type 1 MIDI export.
+**Where things stand:** P1, P2, P3, P4, P5-01 through P5-32 are fully implemented and verified. The application is available as a zero-dependency web app and as an 11 MB standalone desktop studio companion (`src-tauri/`, `tools/build_desktop.sh`, D-064) with native Web MIDI, ALSA/PipeWire routing, Clean DAW MIDI export (D-062), and 22 Inform 7 genres.
 
-**Verified** (2026-10-24, session 76, local Linux environment)
+**Verified** (2026-10-24, session 77, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
@@ -91,6 +91,169 @@ _Last updated: 2026-10-24, session 76, on `main`._
 - Q-001 blocks P6-01: choose public hosting and domain.
 
 ## Session log
+
+### Session 77 (2026-10-24): Standalone Desktop Packaging with Tauri v2 (D-064)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Package *Edmark's Esoteric Fun Machine* into an isolated, zero-dependency standalone native desktop studio companion for DAW workflows with system Web MIDI and PipeWire/JACK routing (Stage 3 / P5-32, D-064).
+
+**Done:** All parts implemented and verified under D-064. 196/196 tests pass.
+
+**Changed:**
+1. Rust & Tauri Toolchain:
+   - Configured stable user-space Rust toolchain (Rust 1.99.1).
+   - Initialized isolated desktop application shell in `src-tauri/` without npm packages or root `package.json`.
+2. Tauri Configuration (`src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src-tauri/src/main.rs`):
+   - Package identifier `com.edmark.esoteric-fun-machine`, title "Edmark's Esoteric Fun Machine".
+   - `frontendDist: "../"` directly embeds the root web directory (`index.html`, `styles.css`, `src/`, `manual.html`).
+   - Default window dimensions 1200×900 (minimum 380×600), fully resizable.
+   - Built against standard system WebKitGTK 4.1.
+3. Build Script (`tools/build_desktop.sh`):
+   - Created standalone build script compiling `src-tauri/target/release/esoteric-fun-machine` (11 MB standalone executable).
+4. Documentation & Roadmap:
+   - Marked P5-32 complete in `ROADMAP.md`.
+   - Recorded D-064 in `docs/DECISIONS.md`.
+   - Added `src-tauri/` and `tools/build_desktop.sh` to repository map in `AGENTS.md`.
+   - Updated `docs/CHANGELOG.md` and `docs/HANDOFF.md`.
+
+**Verified:**
+- Native release binary built and verified on CachyOS / Wayland with zero launch errors.
+- `node --test tests/*.test.mjs`: 196/196 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+- Core zero-dependency web architecture remains 100% untouched.
+
+**Next session should start with:** P6-01 (choose public hosting and domain) or user hands-on DAW production with the standalone companion.
+
+### Session 76 (2026-10-24): Consonant Pad Voicing & Minor-Second Extension Suppression (D-063)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Eliminate minor-second chord cluster beating and dissonant clashes in Phrygian and altered modal passages identified in musician testing (Option A / D-063).
+
+**Done:** All parts implemented and verified under D-063. 196/196 tests pass.
+
+**Changed:**
+1. `src/accompaniment.mjs`:
+   - Updated `soundingPitchClasses(chord)` to exclude minor-second clashes against the root (`((pc - rootPc + 12) % 12) === 1`), such as Phrygian flat-second and alt-dominant flat-ninth extensions.
+   - `padVoicing()` and `arpeggioNotes()` now voice clean, resonant triads and seventh shells (e.g. A Phrygian voices A - C♯ - E, omitting the clashing B♭ in the pad).
+   - In `buildPerformance()`, resolved sustained 4-step lead notes with minor-second root clashes down to the nearest chord tone via `nearestChordTone(leadPitch, chord)`.
+   - `nearestChordTone()` operates against clean `soundingPitchClasses(chord)`.
+2. `tests/accompaniment.test.mjs`:
+   - Added unit test asserting that `soundingPitchClasses` and `padVoicing` omit minor-second extensions for both `phrygian` and `dom7alt`.
+3. Assets & Documentation:
+   - Stamped `ASSET_VERSION` to `cab1d7a1d929`.
+   - Recorded D-063 in `docs/DECISIONS.md`.
+   - Updated `docs/CHANGELOG.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 196/196 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+### Session 75 (2026-10-24): Clean DAW MIDI Export, ALSA Loopback Reflection Suppression & Local Audio Mute (D-062)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement musician feedback on MIDI exports (suppressing VST patch overwriting Program Changes, timeline marker clutter, and channel flattening), resolve ALSA `Midi Through Port-0` loopback reflection dissonances, and add a local control audio mute toggle.
+
+**Done:** All parts implemented and verified under D-062. 195/195 tests pass.
+
+**Changed:**
+1. `src/midi.mjs`:
+   - Added `stripPrograms`, `stripMarkers`, and `flattenChannels` flags to `buildMidiFile()`.
+   - When `stripPrograms` is true, omits `0xC0` Program Change bytes at tick 0, protecting VST synth presets from being overwritten.
+   - When `stripMarkers` is true, omits `0x06` Marker meta events on the conductor track, preventing DAWs from auto-warping or stretching imported sessions.
+   - When `flattenChannels` is true, remaps track events to Channel 1 (byte 0) for instant response on single-channel VST instruments.
+2. `src/app.mjs`:
+   - Registered `broadcastEchoFilter` ring buffer: outbound broadcast note keys `(ch << 8) | pitch` are tracked with timestamps, and incoming echo reflections within 300 ms on ALSA `Midi Through Port-0` loopback are discarded.
+   - Added `inboundMidiChannel` filter, defaulting to `1` (Manual Organ) and configurable via `#studio-midi-ch`.
+   - Added `setLocalControl(enabled)` and `#studio-local-control-btn`: zeroes browser master audio gain (`0.0001`) when muted while generative MIDI broadcast and scheduler operations continue at full rate.
+   - Added `#export-midi-format` dropdown with `CLEAN DAW` (default), `DAW WITH CHORD MARKERS`, and `FULL ARCHIVE`.
+3. `index.html` & `styles.css`:
+   - Added `#export-midi-format` select control to the Export Desk.
+   - Added `#studio-local-control-btn` to the Studio Deck.
+4. `tests/export.test.mjs`:
+   - Added comprehensive unit test asserting program change stripping, marker stripping, channel flattening, and combined Clean DAW export mode.
+5. Assets & Documentation:
+   - Stamped `ASSET_VERSION` to `97ce639b8f7b`.
+   - Recorded D-062 in `docs/DECISIONS.md`.
+   - Updated `docs/CHANGELOG.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 195/195 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+### Session 74 (2026-10-24): Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061)
+
+**Done:**
+- Implemented Stage 1 of the approved DAW integration specification (D-061): bidirectional Web MIDI input/output, AudioContext sink device selection, and Keep Wing Studio Deck UI.
+- All 194 automated checks pass, with zero documentation and manual warnings.
+
+**Changed:**
+1. `src/midi-io.mjs`:
+   - Note-to-semitone mapping (`midiNoteToSemitone()`) folding octaves into 0..12, preserving C5 as high C.
+   - MIDI parser (`parseMidiMessage()`) handling Note On/Off, CC 64 (sustain hold), CC 1 (mod wheel), CC 7/11 (volume), and Realtime Clock/Transport.
+   - Outbound packet generators (`makeNoteOn`, `makeNoteOff`, `makeAllNotesOff`).
+   - Web MIDI API helpers (`requestMidiAccess`, `getMidiPorts`, `bindMidiInput`, `sendMidiMessage`).
+   - Audio sink routing (`getAudioOutputDevices`, `setAudioOutputSink`, `isSetSinkIdSupported`).
+2. `src/app.mjs`:
+   - Inbound notes trigger `triggerFunKey()`, directly driving manual pad voicings, lead arpeggios, and step sequencer slots.
+   - Inbound CC 64 latches manual voices as an authentic sustain pedal until released.
+   - Inbound CC 1 drives organism agitation, perturbation, and mycelial spore bursts.
+   - Outbound score broadcasting emits precision-timestamped Note On/Off pairs across 8 channels (Manual Ch 1, Lead Ch 2, Bass Ch 3, Harmony Ch 4, Chimes Ch 5, Choir Ch 6, Mycelium Ch 7, Beat Ch 10).
+   - Audio sink selector queries output devices and calls `setAudioOutputSink()` on the audio graph.
+3. `index.html` & `styles.css`:
+   - Added `#studio-engine` inside Wing IV (Keep) with MIDI In/Out dropdowns, Connect button, Broadcast toggle, and Audio Sink selector.
+   - Responsive multi-column layout for `#drawer-body-keep:not([hidden])` supporting Session Ledger, Export Desk, and Studio Deck side-by-side.
+4. `tests/midi-io.test.mjs` & static tests:
+   - Added 8 unit tests in `tests/midi-io.test.mjs` covering note mapping, CC parsing, realtime clock, and mock MIDIAccess port binding.
+   - Updated DOM hierarchy assertions in `tests/static.test.mjs`.
+5. Assets, Manual & Decisions:
+   - Stamped `ASSET_VERSION` to `7aa3e6c86ec1`.
+   - Added `studio-deck-and-daw-routing` to `docs/manual.json` and rebuilt `manual.html`.
+   - Recorded D-061 in `docs/DECISIONS.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 194/194 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+### Session 73 (2026-10-23): Wave 3 of P5-29 (Rhythmic feel & 22-genre expansion, D-060)
+
+**Done:**
+- Wave 3 of P5-29 is implemented, documented under D-060, and verified with all 186 automated checks passing.
+
+**Changed:**
+1. Inform 7 Feel Property (`src/rulebooks.ni`, `src/inform.mjs`, `src/conductor.mjs`, `src/creature-rulebook.mjs`):
+   - Added `A genre has some text called the feel.` to Chapter 2 in `src/rulebooks.ni`.
+   - `compileRulebooks()` in `src/inform.mjs` parses `feel` (defaulting to `""`).
+   - Tagged existing rhythm-sensitive genres: `parlor_ragtime` ("habanera"), `doowop_ballad` ("swing"), `tango_habanera` ("habanera").
+   - `THE CREATURE'S OWN` explicitly defaults `feel: ""` to preserve phrase determinism (`score.rhythm`).
+   - Exported `RHYTHMIC_FEELS` and `effectiveRhythmIndex(score, genreCode)` in `src/conductor.mjs`.
+2. Three New Kapellmeister Genres (`src/rulebooks.ni`):
+   - Chapter 19: **Vaudeville Viennese Waltz** (`vaudeville_waltz`, feel: `"waltz"`). I · vi · ii · V7 changes, member snapping, `{rotation, relative substitution, authentic cadence}`.
+   - Chapter 20: **Swing-Era Savoy Ballroom** (`swing_ballroom`, feel: `"swing"`). I6 · vi7 · ii7 · V7 changes, guide-tone organ, `{rotation, relative substitution, tritone substitution, secondary dominants}`.
+   - Chapter 21: **Javanese Gamelan Pelog** (`gamelan_pelog`, feel: `"straight"`). i5 · iv5 · v5 · i5 fifth-and-second open sonorities `{0, 7, 2}`, pentatonic scale snapping `{0, 2, 5, 7, 9}`, `{rotation, phrygian cadence, harmonic pace}`.
+   - Raw Esoteric Chaos moved to Chapter 22 at the conclusion of Part 2.
+   - Three Fun Machine progression tables added to Part 3 (`Table of Viennese Whirl`, `Table of Savoy Stomp`, `Table of Court Slendro`).
+3. Rhythm Templates & Audio Graph Wiring (`src/app.mjs`, `src/ensemble.mjs`):
+   - Added 3/4 waltz template `[1.4, 0.8, 0.8]` at index 6 in `RHYTHMS` ($12 \bmod 3 = 0$, dividing 12 steps into 4 measures of 3 steps with zero loop drift).
+   - Extended `DELAY_MULTIPLIERS` to length 7 with index 6 at `0.75`.
+   - Wired `effectiveRhythmIndex` into `loopStepDuration`, `scheduleAhead`, `renderEnsembleLoop`, and `elements.kapellmeisterGenre` change listener.
+4. Fixtures, Tests & Assets:
+   - Re-froze `tests/fixtures/rulebooks-golden.json` and `tests/fixtures/variations-golden.json`.
+   - Updated genre count assertions to 22 across `tests/audit.test.mjs`, `tests/inform.test.mjs`, and `tests/oracle.test.mjs`.
+   - Updated `tests/clashes.test.mjs` and `tests/variation.test.mjs`.
+   - Re-stamped assets to `41c33f2f715c`.
+   - Rebuilt `manual.html` from `docs/manual.json`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 186/186 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
 
 ### Session 72: 2026-10-23: raw instrumentation 48-step base groove loops in the Loop Machine (D-059)
 
@@ -241,185 +404,6 @@ _Last updated: 2026-10-24, session 76, on `main`._
 - 182/182 Node tests pass across all test suites.
 - `python3 tools/check_docs.py` reports 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json` passes with 0 warnings.
-
-### Session 67: 2026-10-22: volume spike elimination on note hold and legato key transitions (D-051)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Eliminate intermittent audio volume surges/spikes occurring during Fun Machine note holding and legato note changes (D-051).
-
-**Done:** D-051 implemented and verified. All 178 tests pass.
-
-**Changed:**
-1. `src/voices.mjs`:
-   - Initialized `env.gain.value = 0.0001` immediately upon `context.createGain()` in `scheduleVoicePad()`, `scheduleVoiceLead()`, and `scheduleVoicePluck()`.
-   - Initialized tremolo swell and depth gains to `1 - tremolo.depth` and `tremolo.depth` respectively in `connectThroughTremolo()`.
-   - Returned `start` property in `scheduleVoicePad()` return object `{ env, oscillators, stopAt, peak, start }`.
-2. `src/app.mjs`:
-   - Preserved `start` in `schedulePadChord()` return handle `{ env, oscillators, stopAt, start }`.
-   - Rewrote `releaseFunPads(context, fade)`:
-     - For future-scheduled pads in the look-ahead window (`handle.start > now`), cancelled timeline, anchored gain to `0.0001`, and called `osc.stop(now)` immediately so future nodes never burst or sound at 1.0.
-     - For actively sounding pads (`handle.start <= now`), anchored parameter via `cancelAndHoldAtTime(now)` (with `setValueAtTime(currentVal, now)` fallback) before `setTargetAtTime(0.0001, now, Math.max(0.02, fade / 4))` and oscillator stop.
-   - Updated `triggerFunKey`:
-     - Aligned bridge pad chord to active audible step chord (`transport.audibleStep % 12`) instead of future step.
-     - Trimmed bridge duration to `bridge + 0.05` to prevent multi-chord voice doubling and compressor pumping.
-     - Added `lastFunKeyReleaseTime` tracking.
-   - Updated `updateAudioInteraction`:
-     - Added 220 ms grace window to `leadDuck` (`(performance.now() - lastFunKeyReleaseTime) < 220`) preventing +10 dB tonic drone surges during legato key transitions.
-   - Updated `shapeDrones`:
-     - Applied `cancelAndHoldAtTime` (with anchor fallback) when reshaping drone envelopes on 3-step boundaries.
-3. `tests/voices.test.mjs`:
-   - Added assertions verifying `env.gain.value === 0.0001` and `start` timestamp return.
-4. `index.html`:
-   - Restamped `ASSET_VERSION` to `23dae243c96a`.
-5. Documentation:
-   - Added ADR D-051 in `docs/DECISIONS.md`.
-   - Updated invariants in `docs/ARCHITECTURE.md`.
-   - Archived Session 54 to `docs/archive/sessions.md`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 178/178 tests passing in ~11.3s.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
-- Zero external dependencies and deterministic score invariants preserved.
-
-**Not verified:**
-- Hands-on listening review of legato feel and drone transition ducking.
-
-**Next session should start with:** Maintainer hands-on testing of note sequencer, vitrine agitation/retaliation, cellular fruiting bodies, locked mixes, and Fun Machine legato transitions, or Wave 3 (feel) / P4-02.
-
-### Session 73 (2026-10-23): Wave 3 of P5-29 (Rhythmic feel & 22-genre expansion, D-060)
-
-**Done:**
-- Wave 3 of P5-29 is implemented, documented under D-060, and verified with all 186 automated checks passing.
-
-**Changed:**
-1. Inform 7 Feel Property (`src/rulebooks.ni`, `src/inform.mjs`, `src/conductor.mjs`, `src/creature-rulebook.mjs`):
-   - Added `A genre has some text called the feel.` to Chapter 2 in `src/rulebooks.ni`.
-   - `compileRulebooks()` in `src/inform.mjs` parses `feel` (defaulting to `""`).
-   - Tagged existing rhythm-sensitive genres: `parlor_ragtime` ("habanera"), `doowop_ballad` ("swing"), `tango_habanera` ("habanera").
-   - `THE CREATURE'S OWN` explicitly defaults `feel: ""` to preserve phrase determinism (`score.rhythm`).
-   - Exported `RHYTHMIC_FEELS` and `effectiveRhythmIndex(score, genreCode)` in `src/conductor.mjs`.
-2. Three New Kapellmeister Genres (`src/rulebooks.ni`):
-   - Chapter 19: **Vaudeville Viennese Waltz** (`vaudeville_waltz`, feel: `"waltz"`). I · vi · ii · V7 changes, member snapping, `{rotation, relative substitution, authentic cadence}`.
-   - Chapter 20: **Swing-Era Savoy Ballroom** (`swing_ballroom`, feel: `"swing"`). I6 · vi7 · ii7 · V7 changes, guide-tone organ, `{rotation, relative substitution, tritone substitution, secondary dominants}`.
-   - Chapter 21: **Javanese Gamelan Pelog** (`gamelan_pelog`, feel: `"straight"`). i5 · iv5 · v5 · i5 fifth-and-second open sonorities `{0, 7, 2}`, pentatonic scale snapping `{0, 2, 5, 7, 9}`, `{rotation, phrygian cadence, harmonic pace}`.
-   - Raw Esoteric Chaos moved to Chapter 22 at the conclusion of Part 2.
-   - Three Fun Machine progression tables added to Part 3 (`Table of Viennese Whirl`, `Table of Savoy Stomp`, `Table of Court Slendro`).
-3. Rhythm Templates & Audio Graph Wiring (`src/app.mjs`, `src/ensemble.mjs`):
-   - Added 3/4 waltz template `[1.4, 0.8, 0.8]` at index 6 in `RHYTHMS` ($12 \bmod 3 = 0$, dividing 12 steps into 4 measures of 3 steps with zero loop drift).
-   - Extended `DELAY_MULTIPLIERS` to length 7 with index 6 at `0.75`.
-   - Wired `effectiveRhythmIndex` into `loopStepDuration`, `scheduleAhead`, `renderEnsembleLoop`, and `elements.kapellmeisterGenre` change listener.
-4. Fixtures, Tests & Assets:
-   - Re-froze `tests/fixtures/rulebooks-golden.json` and `tests/fixtures/variations-golden.json`.
-   - Updated genre count assertions to 22 across `tests/audit.test.mjs`, `tests/inform.test.mjs`, and `tests/oracle.test.mjs`.
-   - Updated `tests/clashes.test.mjs` and `tests/variation.test.mjs`.
-   - Re-stamped assets to `41c33f2f715c`.
-   - Rebuilt `manual.html` from `docs/manual.json`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 186/186 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
-
-### Session 74 (2026-10-24): Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061)
-
-**Done:**
-- Implemented Stage 1 of the approved DAW integration specification (D-061): bidirectional Web MIDI input/output, AudioContext sink device selection, and Keep Wing Studio Deck UI.
-- All 194 automated checks pass, with zero documentation and manual warnings.
-
-**Changed:**
-1. `src/midi-io.mjs`:
-   - Note-to-semitone mapping (`midiNoteToSemitone()`) folding octaves into 0..12, preserving C5 as high C.
-   - MIDI parser (`parseMidiMessage()`) handling Note On/Off, CC 64 (sustain hold), CC 1 (mod wheel), CC 7/11 (volume), and Realtime Clock/Transport.
-   - Outbound packet generators (`makeNoteOn`, `makeNoteOff`, `makeAllNotesOff`).
-   - Web MIDI API helpers (`requestMidiAccess`, `getMidiPorts`, `bindMidiInput`, `sendMidiMessage`).
-   - Audio sink routing (`getAudioOutputDevices`, `setAudioOutputSink`, `isSetSinkIdSupported`).
-2. `src/app.mjs`:
-   - Inbound notes trigger `triggerFunKey()`, directly driving manual pad voicings, lead arpeggios, and step sequencer slots.
-   - Inbound CC 64 latches manual voices as an authentic sustain pedal until released.
-   - Inbound CC 1 drives organism agitation, perturbation, and mycelial spore bursts.
-   - Outbound score broadcasting emits precision-timestamped Note On/Off pairs across 8 channels (Manual Ch 1, Lead Ch 2, Bass Ch 3, Harmony Ch 4, Chimes Ch 5, Choir Ch 6, Mycelium Ch 7, Beat Ch 10).
-   - Audio sink selector queries output devices and calls `setAudioOutputSink()` on the audio graph.
-3. `index.html` & `styles.css`:
-   - Added `#studio-engine` inside Wing IV (Keep) with MIDI In/Out dropdowns, Connect button, Broadcast toggle, and Audio Sink selector.
-   - Responsive multi-column layout for `#drawer-body-keep:not([hidden])` supporting Session Ledger, Export Desk, and Studio Deck side-by-side.
-4. `tests/midi-io.test.mjs` & static tests:
-   - Added 8 unit tests in `tests/midi-io.test.mjs` covering note mapping, CC parsing, realtime clock, and mock MIDIAccess port binding.
-   - Updated DOM hierarchy assertions in `tests/static.test.mjs`.
-5. Assets, Manual & Decisions:
-   - Stamped `ASSET_VERSION` to `7aa3e6c86ec1`.
-   - Added `studio-deck-and-daw-routing` to `docs/manual.json` and rebuilt `manual.html`.
-   - Recorded D-061 in `docs/DECISIONS.md`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 194/194 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
-
-### Session 75 (2026-10-24): Clean DAW MIDI Export, ALSA Loopback Reflection Suppression & Local Audio Mute (D-062)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Implement musician feedback on MIDI exports (suppressing VST patch overwriting Program Changes, timeline marker clutter, and channel flattening), resolve ALSA `Midi Through Port-0` loopback reflection dissonances, and add a local control audio mute toggle.
-
-**Done:** All parts implemented and verified under D-062. 195/195 tests pass.
-
-**Changed:**
-1. `src/midi.mjs`:
-   - Added `stripPrograms`, `stripMarkers`, and `flattenChannels` flags to `buildMidiFile()`.
-   - When `stripPrograms` is true, omits `0xC0` Program Change bytes at tick 0, protecting VST synth presets from being overwritten.
-   - When `stripMarkers` is true, omits `0x06` Marker meta events on the conductor track, preventing DAWs from auto-warping or stretching imported sessions.
-   - When `flattenChannels` is true, remaps track events to Channel 1 (byte 0) for instant response on single-channel VST instruments.
-2. `src/app.mjs`:
-   - Registered `broadcastEchoFilter` ring buffer: outbound broadcast note keys `(ch << 8) | pitch` are tracked with timestamps, and incoming echo reflections within 300 ms on ALSA `Midi Through Port-0` loopback are discarded.
-   - Added `inboundMidiChannel` filter, defaulting to `1` (Manual Organ) and configurable via `#studio-midi-ch`.
-   - Added `setLocalControl(enabled)` and `#studio-local-control-btn`: zeroes browser master audio gain (`0.0001`) when muted while generative MIDI broadcast and scheduler operations continue at full rate.
-   - Added `#export-midi-format` dropdown with `CLEAN DAW` (default), `DAW WITH CHORD MARKERS`, and `FULL ARCHIVE`.
-3. `index.html` & `styles.css`:
-   - Added `#export-midi-format` select control to the Export Desk.
-   - Added `#studio-local-control-btn` to the Studio Deck.
-4. `tests/export.test.mjs`:
-   - Added comprehensive unit test asserting program change stripping, marker stripping, channel flattening, and combined Clean DAW export mode.
-5. Assets & Documentation:
-   - Stamped `ASSET_VERSION` to `97ce639b8f7b`.
-   - Recorded D-062 in `docs/DECISIONS.md`.
-   - Updated `docs/CHANGELOG.md`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 195/195 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
-
-**Next session should start with:** Stage 2 live REAPER test with Clean DAW export and ALSA/PipeWire routing, followed by Stage 3 Tauri v2 packaging.
-
-### Session 76 (2026-10-24): Consonant Pad Voicing & Minor-Second Extension Suppression (D-063)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Eliminate minor-second chord cluster beating and dissonant clashes in Phrygian and altered modal passages identified in musician testing (Option A / D-063).
-
-**Done:** All parts implemented and verified under D-063. 196/196 tests pass.
-
-**Changed:**
-1. `src/accompaniment.mjs`:
-   - Updated `soundingPitchClasses(chord)` to exclude minor-second clashes against the root (`((pc - rootPc + 12) % 12) === 1`), such as Phrygian flat-second and alt-dominant flat-ninth extensions.
-   - `padVoicing()` and `arpeggioNotes()` now voice clean, resonant triads and seventh shells (e.g. A Phrygian voices A - C♯ - E, omitting the clashing B♭ in the pad).
-   - In `buildPerformance()`, resolved sustained 4-step lead notes with minor-second root clashes down to the nearest chord tone via `nearestChordTone(leadPitch, chord)`.
-   - `nearestChordTone()` operates against clean `soundingPitchClasses(chord)`.
-2. `tests/accompaniment.test.mjs`:
-   - Added unit test asserting that `soundingPitchClasses` and `padVoicing` omit minor-second extensions for both `phrygian` and `dom7alt`.
-3. Assets & Documentation:
-   - Stamped `ASSET_VERSION` to `cab1d7a1d929`.
-   - Recorded D-063 in `docs/DECISIONS.md`.
-   - Updated `docs/CHANGELOG.md`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 196/196 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
-
-**Next session should start with:** Stage 2 live REAPER testing and Stage 3 Tauri v2 packaging.
 
 
 

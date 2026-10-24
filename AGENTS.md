@@ -111,6 +111,7 @@ Never force-push or rewrite shared history.
 | `src/score.mjs` | Phrase hashing, score validation, and naming |
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |
 | `src/app.mjs` | Browser controls, Canvas creature, and Web Audio instrument |
+| `src-tauri/` | Isolated Tauri v2 desktop wrapper and native application packaging (D-064) |
 | `manual.html` | Standalone explorable 3x technical manual |
 | `docs/manual.json` | 3x documentation scheme manual source of truth |
 | `tests/` | Dependency-free Node tests |
@@ -118,6 +119,7 @@ Never force-push or rewrite shared history.
 | `docs/` | Architecture, decisions, tests, risks, and current state |
 | `tools/check_docs.py` | Documentation consistency checker |
 | `tools/manual.py` | 3x documentation manual validator and builder |
+| `tools/build_desktop.sh` | Builds the standalone desktop application binary with Tauri v2 and Cargo |
 | `tools/freeze_rulebooks.mjs` | One-time freezer for the Kapellmeister rulebook golden fixture (P5-23) |
 | `tools/freeze_variations.mjs` | Freezes sample creatures' varied progressions into `tests/fixtures/variations-golden.json` (D-043) |
 | `tools/stamp_assets.mjs` | Restamps `ASSET_VERSION` in `index.html` from a hash of `src/` (D-035) |

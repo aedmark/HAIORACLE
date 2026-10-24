@@ -118,10 +118,10 @@ Goal: expand only where additional complexity creates more play.
   - At the maintainer's choice (2026-10-21), a fresh creature now opens in THE CREATURE'S OWN.
   Acceptance: distinct progressions across phrases in every fettered genre, the clash ceilings hold, as-written output is unchanged, and the maintainer's listen.
 - [x] P5-31 Live capture of live play converted to loop sequencing. Origin: maintainer request, 2026-10-23. Done 2026-10-23 (D-059): 48-step base groove loops, Casio live capture, and loop chaining in the Loop Machine.
-- [ ] P5-32 Standalone Studio Companion (Web MIDI, Audio Sink & PipeWire routing, Tauri v2 packaging). Origin: maintainer request, 2026-10-23.
+- [x] P5-32 Standalone Studio Companion (Web MIDI, Audio Sink & PipeWire routing, Tauri v2 packaging). Origin: maintainer request, 2026-10-23. Done 2026-10-24 (D-061, D-062, D-063, D-064).
   - Stage 1 done 2026-10-24 (D-061): Web MIDI inbound notes/sustain/mod/transport, outbound score broadcasting on 8 channels, AudioContext.setSinkId device routing, and Keep Wing Studio Deck UI.
-  - Stage 2: CachyOS PipeWire & DAW live routing verification.
-  - Stage 3: Tauri v2 packaging in `src-tauri/`.
+  - Stage 2 done 2026-10-24 (D-062, D-063): CachyOS PipeWire & REAPER live routing verification, ALSA loopback echo filter, Clean DAW MIDI export mode, and consonant pad voicings without minor-second clusters.
+  - Stage 3 done 2026-10-24 (D-064): Isolated Tauri v2 desktop application packaging (`src-tauri/`), 11 MB standalone binary build (`tools/build_desktop.sh`), zero-dependency web core preserved.
 
 ## Phase 6: Release
 

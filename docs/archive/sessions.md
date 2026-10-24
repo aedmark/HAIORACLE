@@ -1673,6 +1673,48 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - `python3 tools/check_docs.py` passes with 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json` passes with 0 errors, 0 warnings.
 
+### Session 67: 2026-10-22: volume spike elimination on note hold and legato key transitions (D-051)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Eliminate intermittent audio volume surges/spikes occurring during Fun Machine note holding and legato note changes (D-051).
+
+**Done:** D-051 implemented and verified. All 178 tests pass.
+
+**Changed:**
+1. `src/voices.mjs`:
+   - Initialized `env.gain.value = 0.0001` immediately upon `context.createGain()` in `scheduleVoicePad()`, `scheduleVoiceLead()`, and `scheduleVoicePluck()`.
+   - Initialized tremolo swell and depth gains to `1 - tremolo.depth` and `tremolo.depth` respectively in `connectThroughTremolo()`.
+   - Returned `start` property in `scheduleVoicePad()` return object `{ env, oscillators, stopAt, peak, start }`.
+2. `src/app.mjs`:
+   - Preserved `start` in `schedulePadChord()` return handle `{ env, oscillators, stopAt, start }`.
+   - Rewrote `releaseFunPads(context, fade)`:
+     - For future-scheduled pads in the look-ahead window (`handle.start > now`), cancelled timeline, anchored gain to `0.0001`, and called `osc.stop(now)` immediately so future nodes never burst or sound at 1.0.
+     - For actively sounding pads (`handle.start <= now`), anchored parameter via `cancelAndHoldAtTime(now)` (with `setValueAtTime(currentVal, now)` fallback) before `setTargetAtTime(0.0001, now, Math.max(0.02, fade / 4))` and oscillator stop.
+   - Updated `triggerFunKey`:
+     - Aligned bridge pad chord to active audible step chord (`transport.audibleStep % 12`) instead of future step.
+     - Trimmed bridge duration to `bridge + 0.05` to prevent multi-chord voice doubling and compressor pumping.
+     - Added `lastFunKeyReleaseTime` tracking.
+   - Updated `updateAudioInteraction`:
+     - Added 220 ms grace window to `leadDuck` (`(performance.now() - lastFunKeyReleaseTime) < 220`) preventing +10 dB tonic drone surges during legato key transitions.
+   - Updated `shapeDrones`:
+     - Applied `cancelAndHoldAtTime` (with anchor fallback) when reshaping drone envelopes on 3-step boundaries.
+3. `tests/voices.test.mjs`:
+   - Added assertions verifying `env.gain.value === 0.0001` and `start` timestamp return.
+4. `index.html`:
+   - Restamped `ASSET_VERSION` to `23dae243c96a`.
+5. Documentation:
+   - Added ADR D-051 in `docs/DECISIONS.md`.
+   - Updated invariants in `docs/ARCHITECTURE.md`.
+   - Archived Session 54 to `docs/archive/sessions.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 178/178 tests passing in ~11.3s.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
+- Zero external dependencies and deterministic score invariants preserved.
+
+
 
 
 

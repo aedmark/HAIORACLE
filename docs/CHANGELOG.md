@@ -4,6 +4,7 @@
 
 ### Added
 
+- Package as a standalone desktop studio companion (D-064): isolated Tauri v2 desktop wrapper (`src-tauri/`) builds an 11 MB standalone native desktop binary (`tools/build_desktop.sh`) that integrates directly with DAWs via system Web MIDI and PipeWire/JACK routing without requiring a browser tab or local dev server.
 - Choose clean DAW MIDI export (D-062): an export format selector (`#export-midi-format`) offers `CLEAN DAW` (default, stripping General MIDI Program Change bytes that overwrite VST synth presets, omitting marker clutter that prompts DAW tempo stretching, and flattening notes to Channel 1), `DAW WITH CHORD MARKERS`, and archival `FULL ARCHIVE`.
 - Program loop notes with a 12-step note sequencer (D-046): click any step on the 12-step ribbon (`#looper-steps`) to select and assign notes with the keyboard manual or computer keys, playing an instant audition preview, or click again to clear.
 - Auto-advance step recording (`STEP REC`): toggle `STEP REC` (`#looper-step-rec`) to step through 1..12 automatically on each key strike on the manual, with a dedicated `REST (—)` button (`#looper-rest`) to insert rests.
