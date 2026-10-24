@@ -120,6 +120,24 @@ test("pad voicings keep the root low, upper voices in range, and no doubled note
   }
 });
 
+test("pad voicings omit minor-second clashes against the root (Phrygian flat-second and dom7alt flat-ninth)", () => {
+  // A Phrygian chord: root A (9), tones [9, 10, 1, 4]
+  const aPhryg = buildFunChord(9, "phrygian");
+  const aPcs = soundingPitchClasses(aPhryg);
+  assert.ok(!aPcs.includes(10), "Bb (minor second above A) is excluded from sounding pitch classes");
+  assert.deepEqual(aPcs, [9, 1, 4], "voicing keeps root A, major third C#, and fifth E");
+  const aVoicing = padVoicing(aPhryg);
+  assert.ok(!aVoicing.some((m) => m % 12 === 10), "no Bb in pad voicing for A Phrygian");
+
+  // C dom7alt: root C (0), tones [0, 4, 7, 10, 1]
+  const cAlt = buildFunChord(0, "dom7alt");
+  const cPcs = soundingPitchClasses(cAlt);
+  assert.ok(!cPcs.includes(1), "Db (minor second / flat-ninth above C) is excluded from sounding pitch classes");
+  assert.deepEqual(cPcs, [0, 4, 7, 10], "voicing keeps clean dominant 7th shell");
+  const cVoicing = padVoicing(cAlt);
+  assert.ok(!cVoicing.some((m) => m % 12 === 1), "no Db in pad voicing for C dom7alt");
+});
+
 test("voice leading moves each upper voice to the nearest octave of its pitch class", () => {
   const jazz = buildPerformance(2, "progression", "smoky_jazz", 52).chords;
   let previous = null;

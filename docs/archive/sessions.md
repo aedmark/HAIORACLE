@@ -1647,6 +1647,33 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** Maintainer testing of the interactive 12-step note sequencer and STEP REC mode, or P5-29 Wave 3 (feel) / P4-02.
 
+### Session 66: 2026-10-22: metric closure, tempo pocketing, boundary damping, and anti-clash sieve (D-050)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Eliminate out-of-sync rhythm drift across loop passes and harmonic clutter in default mixes while preserving the 12-step architecture (Option 3 / D-050).
+
+**Done:** D-050 implemented and verified. All 178 checks pass.
+
+**Changed:**
+1. `src/app.mjs`:
+   - Replaced length-5 polymetric rhythm patterns 2 and 3 with syncopated patterns of lengths 4 and 6 (divisors of 12). All 6 rhythms now divide 12 evenly ($12 \bmod 4 = 0$, $12 \bmod 6 = 0$), mathematically guaranteeing identical loop pass duration and metric phase lock.
+   - Added `musicalPocketBpm(bpm)`: folds summoned pulse values into the $68\dots 144$ BPM groove pocket via 2:1 octave gears on creature summon and dblclick reset, preserving the full $36\dots 208$ BPM manual range and raw `score.pulse` LOLCODE determinism.
+   - Added harmonic boundary damping in `scheduleHarmonyStep` and `scheduleChimeStep`: voice durations on region boundaries (`stepIndex % 3 === 2`) clamped to $\le 0.90 \times \text{stepDuration}$ and $\le 0.92 \times \text{stepDuration}$, eliminating chord release tail mud before new downbeats.
+2. `src/conductor.mjs`:
+   - Implemented vertical anti-clash sieve (step 6 in `conductEnsemble`): non-chord passing tones under `CREATURE_GENRE` creating semitone clashes against active bass, chord organ, chimes, or vowel chant are cleanly snapped to the nearest chord tone. Clash rate for `CREATURE_GENRE` drops from 5.8% to 0.00%.
+   - Added optional `creatureBook` parameter to `conductEnsemble` to cleanly install the creature's book on invocation.
+3. `tests/audit.test.mjs`:
+   - Added Audit Dimension 9 verifying metric closure across all templates, tempo range folding invariance across all pulse integers $36\dots 208$, and 0.00% semitone clashes across sample creatures.
+4. `docs/DECISIONS.md`, `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`:
+   - Recorded ADR D-050, updated invariants and session handoff state.
+
+**Verified:**
+- 178/178 Node checks pass in 11.3s.
+- `python3 tools/check_docs.py` passes with 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json` passes with 0 errors, 0 warnings.
+
+
 
 
 

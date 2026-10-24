@@ -40,6 +40,7 @@
 
 ### Fixed
 
+- Keep pad voicings consonant in Phrygian and altered modal passages (D-063): pad voicings and sounding pitch classes now exclude minor-second clashes against the chord root (such as Phrygian flat-second and alt-dominant flat-ninth extensions), keeping pad beds and arpeggios on pure triads and 7th shells without jarring semitone clusters, and resolving held 4-step lead notes cleanly to chord tones.
 - See the Fun Machine's status line again: the line under its title that narrates the held key, style, voice, and chord had gone missing from the page, so it never showed. A test now checks that every element the app looks for exists.
 - Hear the band agree with its chords: the chimes no longer ring a minor third over a major chord (or a fourth against its third), the melody no longer sits a semitone above a chord tone, walking basses land on each chord's own fifth and seventh, and altered, diminished, Lydian, Phrygian, and open-fifth chords are voiced with their own notes. Measured clashes fell from 20–33% of steps to 0–5% in every genre except the blues, whose blue notes stay.
 - Hear the Befunge organ and the chimes: the creature filter could silence the organ even while its meter moved, and dulled the chimes and mycelium. Only the LOLCODE lead passes through it now, and the organ and chimes sit level with the band.

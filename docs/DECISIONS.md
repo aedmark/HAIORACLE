@@ -1371,6 +1371,27 @@ Key findings:
 - Exported MIDI files drop cleanly into any modern DAW track without resetting plugin presets or cluttering session timelines.
 - 195/195 automated tests pass with zero warnings.
 
+## D-063 Consonant Pad Voicing & Minor-Second Extension Suppression in Accompaniment (2026-10-24, status: accepted)
+
+**Context:** Analysis of exported MIDI files in a DAW session by an experienced musician revealed harsh, errant notes in Phrygian and altered modal passages (e.g. two dissonant B♭ notes in Measure 7 over an A major sonority, and two C notes in Measure 19 over B major). 
+Investigation showed two root causes:
+1. `padVoicing()` included all pitch classes from `soundingPitchClasses(chord)`. In Phrygian dominant (`[r, r+1, r+4, r+7]`) and altered dominant (`dom7alt`), the minor-second extension above the root (`(r + 1) % 12`, flat-second / flat-ninth) was compressed directly into a closed keyboard cluster alongside the root in the upper register (e.g. A4 and B♭4, a semitone apart, beating at 26 Hz).
+2. The esoteric band (Organ, Chimes, Choir, Bass) was playing a clean major triad without the flat-second, making the Fun Machine manual track's flat-second cluster and sustained quarter-note lead sound like an accidental finger slip or counterpoint clash.
+
+**Decision:**
+1. **Consonant Pad Voicing (`src/accompaniment.mjs`):**
+   - Updated `soundingPitchClasses(chord)` to exclude minor-second clashes against the chord root (`((pc - rootPc + 12) % 12) === 1`), such as Phrygian flat-second and alt-dominant flat-ninth extensions.
+   - Pads and arpeggios now voice pure, resonant triads and seventh shells (e.g., A Phrygian voices clean A - C♯ - E; C7alt voices clean C - E - G - B♭).
+2. **Sustained Lead Figure Resolution (`src/accompaniment.mjs`):**
+   - In `buildPerformance()`, when a 4-step held lead note forms a minor-second clash with the active chord's root (`((leadPitch - chord.rootPc + 12) % 12) === 1`), it smoothly resolves via `nearestChordTone(leadPitch, chord)` down by semitone to the root, following authentic Baroque and classical voice leading.
+3. **Verification & Tests:**
+   - Added unit test in `tests/accompaniment.test.mjs` verifying that `soundingPitchClasses` and `padVoicing` omit minor-second extensions for both `phrygian` and `dom7alt`.
+   - 196/196 automated tests pass with zero warnings.
+
+**Consequences:**
+- Phrygian, Andalusian, and altered dominant chords export and broadcast with smooth, consonant voice leading without jarring semitone clusters in pad beds.
+- Determinism contract and rulebook structures preserved.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

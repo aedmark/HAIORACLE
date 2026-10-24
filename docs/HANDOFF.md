@@ -4,20 +4,20 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-24, session 75, on `main`._
+_Last updated: 2026-10-24, session 76, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-055: armed downbeat sync, 1-loop count-in, tracker ribbons, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk, fungal appendages, metric closure (D-050), volume surge elimination (D-051), looper sync & Casio sections (D-052), audio sweep audit (D-053), 4-pass breathing sections (D-054), section loops (+ INTRO/BRIDGE/OUTRO, D-055).
-- D-056–D-062: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061); Clean DAW MIDI Export, ALSA loopback filter, and local audio mute (D-062).
+- D-056–D-063: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061); Clean DAW MIDI Export, ALSA loopback filter, and local audio mute (D-062); Consonant Pad Voicing & Minor-Second Extension Suppression (D-063).
 - Next: CachyOS PipeWire & REAPER live routing verification (Stage 2) and Tauri v2 packaging (Stage 3).
 
-**Where things stand:** P1, P2, P3, P4, P5-01 through P5-31 are implemented and verified; P5-32 Stage 1 is complete. The application features bidirectional Web MIDI and multi-channel audio sink routing (`src/midi-io.mjs`, D-061), Clean DAW MIDI export with program change and marker suppression (D-062), 22 Inform 7 genres across 5 families with rhythmic feel (D-060), and full DAW stem and SMF Type 1 MIDI export.
+**Where things stand:** P1, P2, P3, P4, P5-01 through P5-31 are implemented and verified; P5-32 Stage 1 is complete. The application features bidirectional Web MIDI and multi-channel audio sink routing (`src/midi-io.mjs`, D-061), Clean DAW MIDI export with program change and marker suppression (D-062), consonant pad voicings without minor-second clusters (D-063), 22 Inform 7 genres across 5 families with rhythmic feel (D-060), and full DAW stem and SMF Type 1 MIDI export.
 
-**Verified** (2026-10-24, session 75, local Linux environment)
+**Verified** (2026-10-24, session 76, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **195/195 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **196/196 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 36 entries, 0 errors, 0 warnings** |
 
@@ -288,32 +288,6 @@ _Last updated: 2026-10-24, session 75, on `main`._
 
 **Next session should start with:** Maintainer hands-on testing of note sequencer, vitrine agitation/retaliation, cellular fruiting bodies, locked mixes, and Fun Machine legato transitions, or Wave 3 (feel) / P4-02.
 
-### Session 66: 2026-10-22: metric closure, tempo pocketing, boundary damping, and anti-clash sieve (D-050)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Eliminate out-of-sync rhythm drift across loop passes and harmonic clutter in default mixes while preserving the 12-step architecture (Option 3 / D-050).
-
-**Done:** D-050 implemented and verified. All 178 checks pass.
-
-**Changed:**
-1. `src/app.mjs`:
-   - Replaced length-5 polymetric rhythm patterns 2 and 3 with syncopated patterns of lengths 4 and 6 (divisors of 12). All 6 rhythms now divide 12 evenly ($12 \bmod 4 = 0$, $12 \bmod 6 = 0$), mathematically guaranteeing identical loop pass duration and metric phase lock.
-   - Added `musicalPocketBpm(bpm)`: folds summoned pulse values into the $68\dots 144$ BPM groove pocket via 2:1 octave gears on creature summon and dblclick reset, preserving the full $36\dots 208$ BPM manual range and raw `score.pulse` LOLCODE determinism.
-   - Added harmonic boundary damping in `scheduleHarmonyStep` and `scheduleChimeStep`: voice durations on region boundaries (`stepIndex % 3 === 2`) clamped to $\le 0.90 \times \text{stepDuration}$ and $\le 0.92 \times \text{stepDuration}$, eliminating chord release tail mud before new downbeats.
-2. `src/conductor.mjs`:
-   - Implemented vertical anti-clash sieve (step 6 in `conductEnsemble`): non-chord passing tones under `CREATURE_GENRE` creating semitone clashes against active bass, chord organ, chimes, or vowel chant are cleanly snapped to the nearest chord tone. Clash rate for `CREATURE_GENRE` drops from 5.8% to 0.00%.
-   - Added optional `creatureBook` parameter to `conductEnsemble` to cleanly install the creature's book on invocation.
-3. `tests/audit.test.mjs`:
-   - Added Audit Dimension 9 verifying metric closure across all templates, tempo range folding invariance across all pulse integers $36\dots 208$, and 0.00% semitone clashes across sample creatures.
-4. `docs/DECISIONS.md`, `docs/ARCHITECTURE.md`, `docs/HANDOFF.md`:
-   - Recorded ADR D-050, updated invariants and session handoff state.
-
-**Verified:**
-- 178/178 Node checks pass in 11.3s.
-- `python3 tools/check_docs.py` passes with 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json` passes with 0 errors, 0 warnings.
-
 ### Session 73 (2026-10-23): Wave 3 of P5-29 (Rhythmic feel & 22-genre expansion, D-060)
 
 **Done:**
@@ -418,6 +392,34 @@ _Last updated: 2026-10-24, session 75, on `main`._
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
 **Next session should start with:** Stage 2 live REAPER test with Clean DAW export and ALSA/PipeWire routing, followed by Stage 3 Tauri v2 packaging.
+
+### Session 76 (2026-10-24): Consonant Pad Voicing & Minor-Second Extension Suppression (D-063)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Eliminate minor-second chord cluster beating and dissonant clashes in Phrygian and altered modal passages identified in musician testing (Option A / D-063).
+
+**Done:** All parts implemented and verified under D-063. 196/196 tests pass.
+
+**Changed:**
+1. `src/accompaniment.mjs`:
+   - Updated `soundingPitchClasses(chord)` to exclude minor-second clashes against the root (`((pc - rootPc + 12) % 12) === 1`), such as Phrygian flat-second and alt-dominant flat-ninth extensions.
+   - `padVoicing()` and `arpeggioNotes()` now voice clean, resonant triads and seventh shells (e.g. A Phrygian voices A - C♯ - E, omitting the clashing B♭ in the pad).
+   - In `buildPerformance()`, resolved sustained 4-step lead notes with minor-second root clashes down to the nearest chord tone via `nearestChordTone(leadPitch, chord)`.
+   - `nearestChordTone()` operates against clean `soundingPitchClasses(chord)`.
+2. `tests/accompaniment.test.mjs`:
+   - Added unit test asserting that `soundingPitchClasses` and `padVoicing` omit minor-second extensions for both `phrygian` and `dom7alt`.
+3. Assets & Documentation:
+   - Stamped `ASSET_VERSION` to `cab1d7a1d929`.
+   - Recorded D-063 in `docs/DECISIONS.md`.
+   - Updated `docs/CHANGELOG.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 196/196 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** Stage 2 live REAPER testing and Stage 3 Tauri v2 packaging.
 
 
 

@@ -45,9 +45,15 @@ export function chordText(chord) {
 
 // Raw-chaos chords have no pitch classes; the accompanist still needs
 // something to sing, so it falls back to an open fifth on the root.
+// Minor-second clashes against the root ((pc - rootPc + 12) % 12 === 1), such
+// as Phrygian flat-second and alt-dominant flat-ninth extensions, are omitted
+// from pad voicings and sustained figures so the pad bed remains consonant.
 export function soundingPitchClasses(chord) {
-  const pcs = chord?.pitchClasses?.length ? chord.pitchClasses : [chord.rootPc, (chord.rootPc + 7) % 12];
-  return [...new Set(pcs.map((pc) => ((pc % 12) + 12) % 12))];
+  const rootPc = Number.isFinite(chord?.rootPc) ? ((chord.rootPc % 12) + 12) % 12 : 0;
+  const rawPcs = chord?.pitchClasses?.length ? chord.pitchClasses : [rootPc, (rootPc + 7) % 12];
+  const pcs = [...new Set(rawPcs.map((pc) => ((pc % 12) + 12) % 12))];
+  const filtered = pcs.filter((pc) => ((pc - rootPc + 12) % 12) !== 1);
+  return filtered.length > 0 ? filtered : pcs;
 }
 
 /**
@@ -98,7 +104,10 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
       const previous = index > 0 ? spine[regionIndex * 3 + Math.floor((index - 1) / 4)] : null;
       let leadPitch = index % 4 === 0 ? leadPitches[entry] : null;
       // A note written for the old chord moves to the new chord's nearest tone.
-      if (leadPitch !== null && chord !== chords[regionIndex]) leadPitch = nearestChordTone(leadPitch, chord);
+      // Minor-second clashes against the root in sustained lead notes resolve to the nearest clean tone.
+      if (leadPitch !== null && (chord !== chords[regionIndex] || ((leadPitch - chord.rootPc + 12) % 12) === 1)) {
+        leadPitch = nearestChordTone(leadPitch, chord);
+      }
       return Object.freeze({ chord, regionIndex, isRegionStart: chord !== previous, leadPitch, leadSteps: 4 });
     });
     const shown = spine.map(chordText).filter((text, index, all) => index === 0 || text !== all[index - 1]);
@@ -145,6 +154,9 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
         if (index === 0) leadPitch = leadPitches[baseNoteIdx];
         else if (index === 4) leadPitch = leadPitches[baseNoteIdx + 1];
         else if (index === 8) leadPitch = leadPitches[baseNoteIdx + 2];
+        if (leadPitch !== null && ((leadPitch - chord.rootPc + 12) % 12) === 1) {
+          leadPitch = nearestChordTone(leadPitch, chord);
+        }
       }
 
       return Object.freeze({
@@ -202,9 +214,10 @@ function varyProgression(chords, key, genre, score) {
 }
 
 function nearestChordTone(pitch, chord) {
+  const safePcs = soundingPitchClasses(chord);
   for (let distance = 0; distance <= 6; distance += 1) {
     for (const candidate of [pitch - distance, pitch + distance]) {
-      if (chord.pitchClasses.includes(((candidate % 12) + 12) % 12)) return candidate;
+      if (safePcs.includes(((candidate % 12) + 12) % 12)) return candidate;
     }
   }
   return pitch;
