@@ -285,10 +285,12 @@ const elements = {
   sessionFileInput: document.querySelector("#session-file-input"),
   studioTelemetry: document.querySelector("#studio-telemetry"),
   midiInSelect: document.querySelector("#midi-in-select"),
+  midiInChannelSelect: document.querySelector("#midi-in-channel-select"),
   midiConnectBtn: document.querySelector("#midi-connect-btn"),
   midiOutSelect: document.querySelector("#midi-out-select"),
   midiBroadcastBtn: document.querySelector("#midi-broadcast-btn"),
   audioSinkSelect: document.querySelector("#audio-sink-select"),
+  studioLocalControlBtn: document.querySelector("#studio-local-control-btn"),
   volume: document.querySelector("#master-volume"),
   volumeValue: document.querySelector("#volume-value"),
   tempo: document.querySelector("#tempo-bpm"),
@@ -431,9 +433,12 @@ let audibleCasioPerformance = null;
 let casioOutroEnding = false;
 let midiAccess = null;
 let midiInPortId = "omni";
+let inboundMidiChannel = "1";
 let midiOutPortId = "none";
 let midiBroadcastActive = false;
 let midiSustainActive = false;
+let localControlEnabled = true;
+const broadcastEchoFilter = new Set();
 const midiHeldNotes = new Map();
 let unbindMidiIn = null;
 let selectedAudioSinkId = "default";
@@ -485,8 +490,34 @@ function midiToFrequency(note) {
 }
 
 function masterGainFor(volume) {
-  if (volume <= 0) return 0;
+  if (!localControlEnabled || volume <= 0) return 0.0001;
   return Math.min(1.4, (volume / 82) ** 1.6);
+}
+
+function setLocalControl(enabled) {
+  localControlEnabled = Boolean(enabled);
+  if (elements.studioLocalControlBtn) {
+    elements.studioLocalControlBtn.setAttribute("aria-pressed", String(localControlEnabled));
+    elements.studioLocalControlBtn.classList.toggle("is-active", localControlEnabled);
+    elements.studioLocalControlBtn.innerHTML = localControlEnabled
+      ? 'LOCAL AUDIO: ON <span aria-hidden="true">☊</span>'
+      : 'LOCAL AUDIO: MUTED (DAW ONLY) <span aria-hidden="true">✕</span>';
+  }
+  if (audioContext && funMachineDryGain) {
+    const now = audioContext.currentTime;
+    funMachineDryGain.gain.cancelScheduledValues(now);
+    funMachineDryGain.gain.setTargetAtTime(masterGainFor(masterVolume), now, 0.018);
+  }
+  if (audioContext && currentTransport) {
+    const now = audioContext.currentTime;
+    currentTransport.output.gain.cancelScheduledValues(now);
+    currentTransport.output.gain.setTargetAtTime(masterGainFor(masterVolume), now, 0.018);
+  }
+  if (elements.studioTelemetry) {
+    elements.studioTelemetry.textContent = localControlEnabled
+      ? "LOCAL SOUND RESTORED · PLAYING THROUGH BROWSER & MIDI"
+      : "LOCAL SOUND MUTED · DRIVING DAW SYNTHS IN SILENCE ✦";
+  }
 }
 
 function setMasterVolume(value) {
@@ -3216,6 +3247,13 @@ function broadcastLiveMidiNote(channelId, midi, at, duration, peak) {
   const nowMs = performance.now();
   const noteOnTime = nowMs + delaySec * 1000;
   const noteOffTime = noteOnTime + Math.max(20, duration * 1000);
+
+  // Suppress loopback echoes so Midi Through does not feed our own notes back into manual keys
+  const noteKey = (ch << 8) | pitch;
+  broadcastEchoFilter.add(noteKey);
+  window.setTimeout(() => {
+    broadcastEchoFilter.delete(noteKey);
+  }, delaySec * 1000 + Math.max(20, duration * 1000) + 150);
 
   const noteOnBytes = makeNoteOn(ch, pitch, velocity);
   const noteOffBytes = makeNoteOff(ch, pitch);
@@ -6039,13 +6077,24 @@ async function exportSpecimenMidi() {
 
 function handleIncomingMidi(parsed) {
   if (!parsed) return;
+  // If this note was broadcasted by our own score generator, drop it (suppress loopback echo)
+  if (parsed.note !== undefined) {
+    const noteKey = (parsed.channel << 8) | parsed.note;
+    if (broadcastEchoFilter.has(noteKey)) return;
+  }
+
+  // Filter channel for manual organ play (default: Channel 1)
+  const isMatchingChannel = inboundMidiChannel === "omni" || parsed.channel === Number(inboundMidiChannel);
+
   switch (parsed.type) {
     case "noteon": {
+      if (!isMatchingChannel) return;
       midiHeldNotes.set(parsed.note, parsed.semitone);
       triggerFunKey(parsed.semitone, true);
       break;
     }
     case "noteoff": {
+      if (!isMatchingChannel) return;
       midiHeldNotes.delete(parsed.note);
       if (!midiSustainActive) {
         triggerFunKey(parsed.semitone, false);
@@ -8226,6 +8275,17 @@ elements.audioSinkSelect?.addEventListener("change", async (event) => {
   } else if (elements.studioTelemetry) {
     elements.studioTelemetry.textContent = "AUDIO ROUTING APPLIES ON SOUND START";
   }
+});
+
+elements.midiInChannelSelect?.addEventListener("change", (event) => {
+  inboundMidiChannel = event.target.value;
+  if (elements.studioTelemetry) {
+    elements.studioTelemetry.textContent = `MIDI IN CHANNEL: ${inboundMidiChannel === "omni" ? "OMNI (ALL CHANNELS)" : `CH ${inboundMidiChannel} (MANUAL ORGAN)`}`;
+  }
+});
+
+elements.studioLocalControlBtn?.addEventListener("click", () => {
+  setLocalControl(!localControlEnabled);
 });
 
 window.addEventListener("hashchange", () => {

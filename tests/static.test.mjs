@@ -643,7 +643,7 @@ test("the page groups the workstation into perform, mix, band, and keep wings (D
     assert.equal(wingOf(id), "wing-perform", id);
     assert.ok(at(id) < at("fun-machine-engine"), `${id} belongs to the transport rail`);
   }
-  for (const id of ["export-wav", "export-stems", "export-midi", "export-png", "share-link", "midi-connect-btn", "midi-broadcast-btn"]) {
+  for (const id of ["export-wav", "export-stems", "export-midi", "export-png", "share-link", "midi-connect-btn", "midi-broadcast-btn", "studio-local-control-btn"]) {
     assert.equal(wingOf(id), "wing-keep", id);
     assert.ok(at(id) > at("export-engine"), `${id} belongs to the keep wing`);
   }

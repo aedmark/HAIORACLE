@@ -674,6 +674,25 @@
               <select id="midi-in-select" class="kapellmeister-select" aria-label="MIDI input port">
                 <option value="omni">ALL INPUTS (OMNI)</option>
               </select>
+              <select id="midi-in-channel-select" class="kapellmeister-select" aria-label="MIDI input channel">
+                <option value="1">CH 1 (MANUAL ORGAN)</option>
+                <option value="omni">OMNI (ALL CHANNELS)</option>
+                <option value="2">CH 2</option>
+                <option value="3">CH 3</option>
+                <option value="4">CH 4</option>
+                <option value="5">CH 5</option>
+                <option value="6">CH 6</option>
+                <option value="7">CH 7</option>
+                <option value="8">CH 8</option>
+                <option value="9">CH 9</option>
+                <option value="10">CH 10</option>
+                <option value="11">CH 11</option>
+                <option value="12">CH 12</option>
+                <option value="13">CH 13</option>
+                <option value="14">CH 14</option>
+                <option value="15">CH 15</option>
+                <option value="16">CH 16</option>
+              </select>
               <button class="beat-button" id="midi-connect-btn" type="button">CONNECT MIDI <span aria-hidden="true">⚡</span></button>
             </div>
           </div>
@@ -687,11 +706,12 @@
             </div>
           </div>
           <div class="session-field" role="group" aria-labelledby="studio-audio-sink-label">
-            <span class="session-files-label" id="studio-audio-sink-label">AUDIO OUTPUT ROUTING (DEVICE / SINK)</span>
+            <span class="session-files-label" id="studio-audio-sink-label">AUDIO OUTPUT ROUTING &amp; LOCAL SOUND</span>
             <div class="session-row">
               <select id="audio-sink-select" class="kapellmeister-select" aria-label="Audio output device">
                 <option value="default">SYSTEM DEFAULT OUTPUT</option>
               </select>
+              <button class="beat-button is-active" id="studio-local-control-btn" type="button" aria-pressed="true">LOCAL AUDIO: ON <span aria-hidden="true">☊</span></button>
             </div>
           </div>
         </div>
@@ -730,7 +750,7 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "7aa3e6c86ec1";
+      const ASSET_VERSION = "e29a23a41fbb";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
