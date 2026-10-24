@@ -25,6 +25,21 @@ import { BEAT_NAMES, composeBeat, cycleBeatStep } from "./malbolge.mjs";
 import { MELODY_NAMES, melodyFor } from "./music.mjs";
 import { composeScore, WAVEFORMS } from "./score.mjs";
 import { GM_DRUMS, MIDI_TRACKS, buildMidiFile, funVoiceTracks, ticksForSeconds, velocitiesFor } from "./midi.mjs";
+import {
+  MIDI_CHANNELS,
+  bindMidiInput,
+  getAudioOutputDevices,
+  getMidiPorts,
+  isSetSinkIdSupported,
+  isWebMidiSupported,
+  makeAllNotesOff,
+  makeNoteOff,
+  makeNoteOn,
+  parseMidiMessage,
+  requestMidiAccess,
+  sendMidiMessage,
+  setAudioOutputSink,
+} from "./midi-io.mjs";
 import { createStoredZip } from "./zip.mjs";
 import {
   ACCOMPANIMENT_STYLES,
@@ -268,6 +283,12 @@ const elements = {
   sessionSaveFile: document.querySelector("#session-save-file"),
   sessionOpenFile: document.querySelector("#session-open-file"),
   sessionFileInput: document.querySelector("#session-file-input"),
+  studioTelemetry: document.querySelector("#studio-telemetry"),
+  midiInSelect: document.querySelector("#midi-in-select"),
+  midiConnectBtn: document.querySelector("#midi-connect-btn"),
+  midiOutSelect: document.querySelector("#midi-out-select"),
+  midiBroadcastBtn: document.querySelector("#midi-broadcast-btn"),
+  audioSinkSelect: document.querySelector("#audio-sink-select"),
   volume: document.querySelector("#master-volume"),
   volumeValue: document.querySelector("#volume-value"),
   tempo: document.querySelector("#tempo-bpm"),
@@ -408,6 +429,14 @@ let audibleCasioSection = null;
 let audibleCasioKey = 0;
 let audibleCasioPerformance = null;
 let casioOutroEnding = false;
+let midiAccess = null;
+let midiInPortId = "omni";
+let midiOutPortId = "none";
+let midiBroadcastActive = false;
+let midiSustainActive = false;
+const midiHeldNotes = new Map();
+let unbindMidiIn = null;
+let selectedAudioSinkId = "default";
 
 
 const interaction = {
@@ -2837,7 +2866,12 @@ class OracleVision {
 const vision = new OracleVision(elements.canvas);
 
 async function ensureAudioContext() {
-  if (!audioContext) audioContext = new AudioContext();
+  if (!audioContext) {
+    audioContext = new AudioContext();
+    if (selectedAudioSinkId && selectedAudioSinkId !== "default" && isSetSinkIdSupported(audioContext)) {
+      setAudioOutputSink(audioContext, selectedAudioSinkId);
+    }
+  }
   if (audioContext.state === "suspended") await audioContext.resume();
   return audioContext;
 }
@@ -3108,6 +3142,7 @@ function triggerSporePuff(strength = 1, atTime = null) {
 // null when nothing was playing. Steps already queued in the look-ahead window
 // are cut by fading the whole output, not just the drone mix.
 function stopCurrentSound() {
+  silenceExternalMidi();
   releaseFunPads(audioContext, 0.25);
   casioOutroEnding = false;
   scheduledCasio = null;
@@ -3162,8 +3197,45 @@ function transportEngages(transport, id) {
   return transport.engageAll === true || channelEngaged(id);
 }
 
+function broadcastLiveMidiNote(channelId, midi, at, duration, peak) {
+  if (!midiBroadcastActive || !midiAccess || !audioContext) return;
+  const ch = channelId === "fun" ? MIDI_CHANNELS.MANUAL
+    : channelId === "lead" ? MIDI_CHANNELS.LEAD
+    : channelId === "bass" ? MIDI_CHANNELS.BASS
+    : channelId === "harmony" ? MIDI_CHANNELS.HARMONY
+    : channelId === "chime" ? MIDI_CHANNELS.CHIME
+    : channelId === "chant" ? MIDI_CHANNELS.CHANT
+    : channelId === "fungal" ? MIDI_CHANNELS.FUNGAL
+    : channelId === "beat" ? MIDI_CHANNELS.BEAT
+    : 1;
+
+  const pitch = Math.max(0, Math.min(127, Math.round(midi)));
+  const velocity = Math.max(1, Math.min(127, Math.round(peak ? 40 + 87 * Math.min(1, peak) : 100)));
+
+  const delaySec = Math.max(0, at - audioContext.currentTime);
+  const nowMs = performance.now();
+  const noteOnTime = nowMs + delaySec * 1000;
+  const noteOffTime = noteOnTime + Math.max(20, duration * 1000);
+
+  const noteOnBytes = makeNoteOn(ch, pitch, velocity);
+  const noteOffBytes = makeNoteOff(ch, pitch);
+
+  sendMidiMessage(midiAccess, midiOutPortId, noteOnBytes, noteOnTime);
+  sendMidiMessage(midiAccess, midiOutPortId, noteOffBytes, noteOffTime);
+}
+
+function silenceExternalMidi() {
+  if (!midiAccess || !midiBroadcastActive) return;
+  for (let ch = 1; ch <= 16; ch++) {
+    sendMidiMessage(midiAccess, midiOutPortId, makeAllNotesOff(ch));
+  }
+}
+
 function logNote(transport, channel, midi, at, duration, peak, voice = null) {
-  transport.noteLog?.push({ channel, midi: Math.round(midi), at, duration, peak, ...(voice ? { voice } : {}) });
+  transport?.noteLog?.push({ channel, midi: Math.round(midi), at, duration, peak, ...(voice ? { voice } : {}) });
+  if (midiBroadcastActive && audioContext && transport && transport === currentTransport) {
+    broadcastLiveMidiNote(channel, midi, at, duration, peak);
+  }
 }
 
 // How a Fun Machine note names its voice in the MIDI export (one track per
@@ -3824,6 +3896,10 @@ function scheduleFungalBioStep(context, transport, score, stepIndex, at, stepDur
       source.type = event.wave;
       source.frequency.setValueAtTime(event.freq, start);
       if (event.to !== event.freq) source.frequency.exponentialRampToValueAtTime(event.to, end);
+      if (event.freq > 20) {
+        const fungalMidi = Math.round(12 * Math.log2(event.freq / 440) + 69);
+        logNote(transport, "fungal", fungalMidi, start, event.decay, event.peak);
+      }
     }
     if (event.band) {
       const band = context.createBiquadFilter();
@@ -5961,6 +6037,124 @@ async function exportSpecimenMidi() {
   });
 }
 
+function handleIncomingMidi(parsed) {
+  if (!parsed) return;
+  switch (parsed.type) {
+    case "noteon": {
+      midiHeldNotes.set(parsed.note, parsed.semitone);
+      triggerFunKey(parsed.semitone, true);
+      break;
+    }
+    case "noteoff": {
+      midiHeldNotes.delete(parsed.note);
+      if (!midiSustainActive) {
+        triggerFunKey(parsed.semitone, false);
+      }
+      break;
+    }
+    case "cc": {
+      if (parsed.isSustain) {
+        const isDown = parsed.value >= 64;
+        midiSustainActive = isDown;
+        if (!isDown && midiHeldNotes.size === 0 && activeHeldFunKey !== null) {
+          triggerFunKey(activeHeldFunKey, false);
+        }
+      } else if (parsed.isModWheel) {
+        interaction.agitation = parsed.value / 127;
+        interaction.wakeTime = performance.now();
+      } else if (parsed.isVolume || parsed.isExpression) {
+        setMasterVolume((parsed.value / 127) * 100);
+        if (elements.volume) elements.volume.value = String(Math.round(masterVolume));
+      }
+      break;
+    }
+    case "start": {
+      runTransportCommand("play");
+      break;
+    }
+    case "stop": {
+      runTransportCommand("stop");
+      break;
+    }
+    case "continue": {
+      runTransportCommand("play");
+      break;
+    }
+  }
+}
+
+function attachMidiInputListener() {
+  if (unbindMidiIn) {
+    unbindMidiIn();
+    unbindMidiIn = null;
+  }
+  if (midiAccess) {
+    unbindMidiIn = bindMidiInput(midiAccess, midiInPortId, handleIncomingMidi);
+  }
+}
+
+function refreshMidiPorts() {
+  if (!midiAccess || !elements.midiInSelect || !elements.midiOutSelect) return;
+  const { inputs, outputs } = getMidiPorts(midiAccess);
+
+  elements.midiInSelect.innerHTML = "";
+  const omniOpt = document.createElement("option");
+  omniOpt.value = "omni";
+  omniOpt.textContent = "ALL INPUTS (OMNI)";
+  elements.midiInSelect.appendChild(omniOpt);
+  for (const input of inputs) {
+    const opt = document.createElement("option");
+    opt.value = input.id;
+    opt.textContent = input.name;
+    elements.midiInSelect.appendChild(opt);
+  }
+  elements.midiInSelect.value = midiInPortId;
+  if (!elements.midiInSelect.value) {
+    midiInPortId = "omni";
+    elements.midiInSelect.value = "omni";
+  }
+
+  elements.midiOutSelect.innerHTML = "";
+  const noneOpt = document.createElement("option");
+  noneOpt.value = "none";
+  noneOpt.textContent = "NO OUTPUT SELECTED";
+  elements.midiOutSelect.appendChild(noneOpt);
+  const allOpt = document.createElement("option");
+  allOpt.value = "all";
+  allOpt.textContent = "ALL OUTPUTS (BROADCAST)";
+  elements.midiOutSelect.appendChild(allOpt);
+  for (const output of outputs) {
+    const opt = document.createElement("option");
+    opt.value = output.id;
+    opt.textContent = output.name;
+    elements.midiOutSelect.appendChild(opt);
+  }
+  elements.midiOutSelect.value = midiOutPortId;
+  if (!elements.midiOutSelect.value) {
+    midiOutPortId = "none";
+    elements.midiOutSelect.value = "none";
+  }
+
+  attachMidiInputListener();
+}
+
+async function refreshAudioOutputDevices() {
+  if (!elements.audioSinkSelect) return;
+  const devices = await getAudioOutputDevices();
+  elements.audioSinkSelect.innerHTML = "";
+  const defaultOpt = document.createElement("option");
+  defaultOpt.value = "default";
+  defaultOpt.textContent = "SYSTEM DEFAULT (PIPEWIRE / JACK)";
+  elements.audioSinkSelect.appendChild(defaultOpt);
+  for (const d of devices) {
+    if (d.deviceId === "default") continue;
+    const opt = document.createElement("option");
+    opt.value = d.deviceId;
+    opt.textContent = d.label;
+    elements.audioSinkSelect.appendChild(opt);
+  }
+}
+
 function vitrineCoordinates(event) {
   const rect = elements.canvas.getBoundingClientRect();
   const x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
@@ -7972,6 +8166,68 @@ elements.exportMidi?.addEventListener("click", () => {
   exportSpecimenMidi();
 });
 
+elements.midiConnectBtn?.addEventListener("click", async () => {
+  if (!isWebMidiSupported()) {
+    if (elements.studioTelemetry) elements.studioTelemetry.textContent = "WEB MIDI NOT SUPPORTED IN THIS BROWSER";
+    return;
+  }
+  if (elements.studioTelemetry) elements.studioTelemetry.textContent = "REQUESTING MIDI ACCESS...";
+  const access = await requestMidiAccess();
+  if (!access) {
+    if (elements.studioTelemetry) elements.studioTelemetry.textContent = "MIDI ACCESS DENIED OR UNAVAILABLE";
+    return;
+  }
+  midiAccess = access;
+  refreshMidiPorts();
+  midiAccess.onstatechange = () => refreshMidiPorts();
+  if (elements.midiConnectBtn) {
+    elements.midiConnectBtn.textContent = "MIDI CONNECTED ✦";
+    elements.midiConnectBtn.disabled = true;
+  }
+  if (elements.studioTelemetry) elements.studioTelemetry.textContent = "MIDI CONNECTED · READY FOR DAW ROUTING";
+});
+
+elements.midiInSelect?.addEventListener("change", (event) => {
+  midiInPortId = event.target.value;
+  attachMidiInputListener();
+  if (elements.studioTelemetry) {
+    elements.studioTelemetry.textContent = `MIDI IN: ${elements.midiInSelect.options[elements.midiInSelect.selectedIndex]?.text || midiInPortId}`;
+  }
+});
+
+elements.midiOutSelect?.addEventListener("change", (event) => {
+  midiOutPortId = event.target.value;
+  if (elements.studioTelemetry) {
+    elements.studioTelemetry.textContent = `MIDI OUT: ${elements.midiOutSelect.options[elements.midiOutSelect.selectedIndex]?.text || midiOutPortId}`;
+  }
+});
+
+elements.midiBroadcastBtn?.addEventListener("click", () => {
+  midiBroadcastActive = !midiBroadcastActive;
+  elements.midiBroadcastBtn.setAttribute("aria-pressed", String(midiBroadcastActive));
+  elements.midiBroadcastBtn.classList.toggle("is-active", midiBroadcastActive);
+  if (!midiBroadcastActive) silenceExternalMidi();
+  if (elements.studioTelemetry) {
+    elements.studioTelemetry.textContent = midiBroadcastActive
+      ? "BROADCASTING GENERATIVE SCORE TO MIDI OUT ✦"
+      : "MIDI BROADCAST MUTED";
+  }
+});
+
+elements.audioSinkSelect?.addEventListener("change", async (event) => {
+  selectedAudioSinkId = event.target.value;
+  if (audioContext && isSetSinkIdSupported(audioContext)) {
+    const success = await setAudioOutputSink(audioContext, selectedAudioSinkId);
+    if (elements.studioTelemetry) {
+      elements.studioTelemetry.textContent = success
+        ? `AUDIO ROUTED ➔ ${elements.audioSinkSelect.options[elements.audioSinkSelect.selectedIndex]?.text || selectedAudioSinkId}`
+        : "AUDIO ROUTING FAILED";
+    }
+  } else if (elements.studioTelemetry) {
+    elements.studioTelemetry.textContent = "AUDIO ROUTING APPLIES ON SOUND START";
+  }
+});
+
 window.addEventListener("hashchange", () => {
   const hashPhrase = decodeOmenHash(window.location.hash);
   if (hashPhrase && (!currentScore || currentScore.phrase !== hashPhrase)) {
@@ -8054,6 +8310,10 @@ try {
   updateFunKeyboardChordLabels();
   renderPresetList();
   syncSessionButtons();
+  refreshAudioOutputDevices();
+  if (typeof navigator !== "undefined" && navigator.mediaDevices && typeof navigator.mediaDevices.addEventListener === "function") {
+    navigator.mediaDevices.addEventListener("devicechange", () => refreshAudioOutputDevices());
+  }
   const initialHashPhrase = decodeOmenHash(window.location.hash);
   if (initialHashPhrase) {
     elements.phrase.value = initialHashPhrase;

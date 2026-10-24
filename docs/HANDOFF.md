@@ -4,22 +4,22 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-23, session 73, on `main`._
+_Last updated: 2026-10-24, session 74, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-055: armed downbeat sync, 1-loop count-in, tracker ribbons, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk, fungal appendages, metric closure (D-050), volume surge elimination (D-051), looper sync & Casio sections (D-052), audio sweep audit (D-053), 4-pass breathing sections (D-054), section loops (+ INTRO/BRIDGE/OUTRO, D-055).
-- D-056–D-060: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (+ GROOVE, D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060).
-- Next: maintainer testing of the 22 Kapellmeister genres and rhythmic feels, or P5-31 (live capture of live play converted to loop sequencing).
+- D-056–D-061: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061).
+- Next: CachyOS PipeWire & REAPER live routing verification (Stage 2) and Tauri v2 packaging (Stage 3).
 
-**Where things stand:** P1, P2, P3-01 through P3-03, P4-01, P5-01 through P5-30 (including P5-29 Waves 1, 2, & 3) are implemented and verified; P5-31 is planned on the roadmap. The ensemble features an INTERCAL 1972 Grand Conductor (`src/conductor.i`, `src/intercal.mjs`, P5-22, D-028) that overcomes the "wall of sound" by executing a canonical 35-statement INTERCAL score with 22.9% politeness checking (ICL079/ICL099) that reads each creature's arrangement word with `WRITE IN` and chooses its form per phrase with at least five band voices on every step (D-031, D-032), channel registers that the program itself sets across four regions (Exposition groove, Antiphonal conversation, Tutti climax, Breakdown), and `COME FROM (60)` turnaround cadence interception at step 11 (D-030). The transport names the current section, rested console strips light TACET, and MIDI exports carry section markers. The Esoteric Fun Machine (`#fun-machine-engine`, P5-17, P5-22, D-029) is a one-finger accompanist: a held key plays a SWELL, ARPEGGIO, or PROGRESSION on the band's step grid through a voice-led stereo pad, a soft arpeggio pluck, and a gliding lead, while the band is re-conducted onto that chord in the correct key and the LOLCODE lead and drones step back by 10 dB. A master transport with `Space`/`Esc` (P5-18), an eight-channel mixer with VU meters in a graph shared by live and offline audio (P5-19), nine-stem ZIP and Type 1 MIDI export (P5-21), and a Session Ledger with on-device presets and validated `.fun` files (P5-20) complete the workstation wings.
+**Where things stand:** P1, P2, P3, P4, P5-01 through P5-31 are implemented and verified; P5-32 Stage 1 is complete. The application features bidirectional Web MIDI and multi-channel audio sink routing (`src/midi-io.mjs`, D-061), 22 Inform 7 genres across 5 families with rhythmic feel (D-060), and full DAW stem and SMF Type 1 MIDI export.
 
-**Verified** (2026-10-23, session 73, local Linux environment)
+**Verified** (2026-10-24, session 74, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **186/186 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **194/194 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 35 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 36 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -342,33 +342,6 @@ _Last updated: 2026-10-23, session 73, on `main`._
 
 **Next session should start with:** Maintainer testing of the interactive 12-step note sequencer and STEP REC mode, or P5-29 Wave 3 (feel) / P4-02.
 
-### Session 61: 2026-10-21: loop machine arming, count-in, downbeat sync, and step tracker (D-045)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Address loop machine usability: provide armed downbeat sync, a 1-loop count-in, an audible tick metronome, live step readouts, and a 12-step tracker ribbon (D-045).
-
-**Done:** D-045 implemented and verified. All 161 checks pass.
-
-**Changed:**
-1. `src/looper.mjs`: `type: "arm"` accepts `countIn` steps (12 for stopped start, or steps until downbeat). Added `type: "slot"` event to update take slots directly during recording. `recorderReduce` handles `countIn` countdown before transitioning into recording.
-2. `src/app.mjs`:
-   - `armRecorder`: Starts transport with 12-step count-in if stopped; if already playing, calculates steps remaining until downbeat.
-   - `triggerFunKey`: Writes struck key directly into `recorder.take` at `transport.audibleStep % 12` during active recording, eliminating dropped notes from 280ms look-ahead scheduling.
-   - `scheduleAhead`: Calls `renderLooper()` on every audible step, driving live step-by-step UI updates.
-   - `scheduleClockworkTick`: Automatically sounds the clockwork tick during armed count-in and recording with an accented high tick on step 1 (downbeat), bypassing muted parlor acoustics.
-   - `renderLooperSteps` & `looperReadoutText`: 12-step LED ribbon shows playhead, amber count-in countdown, and red recording note pips. Readout announces exact step numbers and keys.
-3. `index.html` & `styles.css`: Added `#looper-steps` 12-column grid. Added `.is-armed` (pulsing amber) and `.is-recording` (pulsing red) button and step styles. Accessible $\ge 0.6$rem text.
-4. `docs/DECISIONS.md`: Recorded D-045.
-5. `docs/manual.json` & `manual.html`: Documented arming, count-in, sync, and step tracker.
-
-**Verified:**
-- 161/161 Node checks.
-- Static checks verify `#looper-steps`, `.is-count-in`, `.is-recording`, and step rendering.
-- `tools/manual.py check docs/manual.json` passes with 0 errors.
-
-**Next session should start with:** Maintainer hands-on testing of loop machine arming, count-in, and sync, or proceeding with P5-29 Wave 3 (feel) / P4-02.
-
 ### Session 73 (2026-10-23): Wave 3 of P5-29 (Rhythmic feel & 22-genre expansion, D-060)
 
 **Done:**
@@ -403,7 +376,42 @@ _Last updated: 2026-10-23, session 73, on `main`._
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
 
-**Next session should start with:** Maintainer listen to the 22 Kapellmeister genres and rhythmic feels in the browser, or P5-31 (live capture of live play converted to loop sequencing).
+### Session 74 (2026-10-24): Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061)
+
+**Done:**
+- Implemented Stage 1 of the approved DAW integration specification (D-061): bidirectional Web MIDI input/output, AudioContext sink device selection, and Keep Wing Studio Deck UI.
+- All 194 automated checks pass, with zero documentation and manual warnings.
+
+**Changed:**
+1. `src/midi-io.mjs`:
+   - Note-to-semitone mapping (`midiNoteToSemitone()`) folding octaves into 0..12, preserving C5 as high C.
+   - MIDI parser (`parseMidiMessage()`) handling Note On/Off, CC 64 (sustain hold), CC 1 (mod wheel), CC 7/11 (volume), and Realtime Clock/Transport.
+   - Outbound packet generators (`makeNoteOn`, `makeNoteOff`, `makeAllNotesOff`).
+   - Web MIDI API helpers (`requestMidiAccess`, `getMidiPorts`, `bindMidiInput`, `sendMidiMessage`).
+   - Audio sink routing (`getAudioOutputDevices`, `setAudioOutputSink`, `isSetSinkIdSupported`).
+2. `src/app.mjs`:
+   - Inbound notes trigger `triggerFunKey()`, directly driving manual pad voicings, lead arpeggios, and step sequencer slots.
+   - Inbound CC 64 latches manual voices as an authentic sustain pedal until released.
+   - Inbound CC 1 drives organism agitation, perturbation, and mycelial spore bursts.
+   - Outbound score broadcasting emits precision-timestamped Note On/Off pairs across 8 channels (Manual Ch 1, Lead Ch 2, Bass Ch 3, Harmony Ch 4, Chimes Ch 5, Choir Ch 6, Mycelium Ch 7, Beat Ch 10).
+   - Audio sink selector queries output devices and calls `setAudioOutputSink()` on the audio graph.
+3. `index.html` & `styles.css`:
+   - Added `#studio-engine` inside Wing IV (Keep) with MIDI In/Out dropdowns, Connect button, Broadcast toggle, and Audio Sink selector.
+   - Responsive multi-column layout for `#drawer-body-keep:not([hidden])` supporting Session Ledger, Export Desk, and Studio Deck side-by-side.
+4. `tests/midi-io.test.mjs` & static tests:
+   - Added 8 unit tests in `tests/midi-io.test.mjs` covering note mapping, CC parsing, realtime clock, and mock MIDIAccess port binding.
+   - Updated DOM hierarchy assertions in `tests/static.test.mjs`.
+5. Assets, Manual & Decisions:
+   - Stamped `ASSET_VERSION` to `7aa3e6c86ec1`.
+   - Added `studio-deck-and-daw-routing` to `docs/manual.json` and rebuilt `manual.html`.
+   - Recorded D-061 in `docs/DECISIONS.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 194/194 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** Stage 2 live PipeWire / REAPER smoke testing on CachyOS, then Stage 3 Tauri v2 packaging.
 
 
 

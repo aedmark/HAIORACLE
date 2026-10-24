@@ -627,7 +627,7 @@ test("the page groups the workstation into perform, mix, band, and keep wings (D
   const order = ["reading", "cabinet-switch", "wing-perform", "transport-deck", "fun-machine-engine", "kapellmeister-engine",
     "wing-mix", "bandstand-engine", "mixer-engine", "parlor-acoustics-engine",
     "wing-band", "beat-engine", "bass-engine", "harmony-engine", "chime-engine", "chant-engine",
-    "wing-keep", "session-engine", "export-engine"];
+    "wing-keep", "session-engine", "export-engine", "studio-engine"];
   for (let i = 1; i < order.length; i += 1) {
     assert.ok(at(order[i - 1]) < at(order[i]), `${order[i - 1]} must precede ${order[i]}`);
   }
@@ -643,9 +643,9 @@ test("the page groups the workstation into perform, mix, band, and keep wings (D
     assert.equal(wingOf(id), "wing-perform", id);
     assert.ok(at(id) < at("fun-machine-engine"), `${id} belongs to the transport rail`);
   }
-  for (const id of ["export-wav", "export-stems", "export-midi", "export-png", "share-link"]) {
+  for (const id of ["export-wav", "export-stems", "export-midi", "export-png", "share-link", "midi-connect-btn", "midi-broadcast-btn"]) {
     assert.equal(wingOf(id), "wing-keep", id);
-    assert.ok(at(id) > at("export-engine"), `${id} belongs to the export desk`);
+    assert.ok(at(id) > at("export-engine"), `${id} belongs to the keep wing`);
   }
 
   // The calling-slip look belongs to the phrase alone, so the preset field stays one line tall.

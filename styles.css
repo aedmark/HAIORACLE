@@ -1532,6 +1532,14 @@ h1 em {
   background: rgba(12, 9, 8, 0.7);
 }
 
+.beat-button[aria-pressed="true"],
+.beat-button.is-active {
+  border-color: var(--brass-bright);
+  color: var(--ebony);
+  background: var(--brass-bright);
+  box-shadow: 0 0 10px rgba(229, 184, 91, 0.45);
+}
+
 .beat-button:not(:disabled):hover {
   border-color: var(--brass-bright);
   color: var(--ink);
@@ -2865,20 +2873,21 @@ noscript {
       0 30px 80px rgba(0, 0, 0, 0.92);
   }
 
-  /* In keep drawer, put session-engine and export-engine side by side */
+  /* In keep drawer, put session-engine, export-engine, and studio-engine side by side */
   #drawer-body-keep:not([hidden]) {
     display: grid;
-    grid-template-columns: minmax(360px, 1fr) minmax(420px, 1.25fr);
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: clamp(1.2rem, 3vw, 2.5rem);
     padding: 1.2rem clamp(1.1rem, 3vw, 2.8rem);
   }
 
-  #session-engine {
+  #session-engine,
+  #export-engine {
     border-right: 2px solid var(--brass-dim);
     border-bottom: 0;
   }
 
-  #export-engine {
+  #studio-engine {
     border-bottom: 0;
   }
 }

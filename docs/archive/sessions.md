@@ -1592,6 +1592,34 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 
 **Next session should start with:** Maintainer listen to the six Wave 2 genres in the browser, or Wave 3 (feel) / P4-02.
 
+### Session 61: 2026-10-21: loop machine arming, count-in, downbeat sync, and step tracker (D-045)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Address loop machine usability: provide armed downbeat sync, a 1-loop count-in, an audible tick metronome, live step readouts, and a 12-step tracker ribbon (D-045).
+
+**Done:** D-045 implemented and verified. All 161 checks pass.
+
+**Changed:**
+1. `src/looper.mjs`: `type: "arm"` accepts `countIn` steps (12 for stopped start, or steps until downbeat). Added `type: "slot"` event to update take slots directly during recording. `recorderReduce` handles `countIn` countdown before transitioning into recording.
+2. `src/app.mjs`:
+   - `armRecorder`: Starts transport with 12-step count-in if stopped; if already playing, calculates steps remaining until downbeat.
+   - `triggerFunKey`: Writes struck key directly into `recorder.take` at `transport.audibleStep % 12` during active recording, eliminating dropped notes from 280ms look-ahead scheduling.
+   - `scheduleAhead`: Calls `renderLooper()` on every audible step, driving live step-by-step UI updates.
+   - `scheduleClockworkTick`: Automatically sounds the clockwork tick during armed count-in and recording with an accented high tick on step 1 (downbeat), bypassing muted parlor acoustics.
+   - `renderLooperSteps` & `looperReadoutText`: 12-step LED ribbon shows playhead, amber count-in countdown, and red recording note pips. Readout announces exact step numbers and keys.
+3. `index.html` & `styles.css`: Added `#looper-steps` 12-column grid. Added `.is-armed` (pulsing amber) and `.is-recording` (pulsing red) button and step styles. Accessible $\ge 0.6$rem text.
+4. `docs/DECISIONS.md`: Recorded D-045.
+5. `docs/manual.json` & `manual.html`: Documented arming, count-in, sync, and step tracker.
+
+**Verified:**
+- 161/161 Node checks.
+- Static checks verify `#looper-steps`, `.is-count-in`, `.is-recording`, and step rendering.
+- `tools/manual.py check docs/manual.json` passes with 0 errors.
+
+**Next session should start with:** Maintainer hands-on testing of loop machine arming, count-in, and sync, or proceeding with P5-29 Wave 3 (feel) / P4-02.
+
+
 
 
 

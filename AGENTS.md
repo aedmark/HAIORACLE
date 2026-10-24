@@ -106,6 +106,7 @@ Never force-push or rewrite shared history.
 | `src/session.mjs` | Validated `.fun` session format and on-device preset store |
 | `src/zip.mjs` | Zero-dependency STORED ZIP writer for stem bundles |
 | `src/midi.mjs` | Standard MIDI File (Type 1) writer for the ensemble score |
+| `src/midi-io.mjs` | Web MIDI input/output and Web Audio sink routing adapter (D-061) |
 | `src/transport.mjs` | Master transport state model and `Space`/`Esc` hotkey rules |
 | `src/score.mjs` | Phrase hashing, score validation, and naming |
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |

@@ -1319,6 +1319,36 @@ Key findings:
 - The Kapellmeister catalog expands to 22 genres across 5 families with idiomatic rhythm feels.
 - 186/186 automated tests pass; 100% phrase determinism and metric closure preserved.
 
+## D-061 Standalone Studio Companion: Web MIDI and Audio Sink Interoperability (2026-10-24, status: accepted)
+
+**Context:** The maintainer requested converting the machine into an interoperable instrument for DAW production (Path A: Standalone Studio Companion). Music producers on Linux (CachyOS/PipeWire), macOS, and Windows require:
+1. Playing the Fun Machine and conducting the esoteric ensemble via external MIDI controllers or DAW MIDI tracks.
+2. Routing audio directly from the browser/webview into DAW tracks with low latency via PipeWire/JACK or virtual audio cables.
+3. Broadcasting the live conducted generative score out to DAW tracks across discrete MIDI channels to drive software instruments.
+4. Packaging as a zero-dependency standalone desktop app (Tauri v2) without bloating or mutating the zero-dependency browser core.
+
+**Decision:**
+1. **Web MIDI Inbound Adapter (`src/midi-io.mjs`, `src/app.mjs`):**
+   - Implemented `parseMidiMessage()`, `midiNoteToSemitone()`, and `bindMidiInput()`.
+   - Notes fold into manual semitones 0..12 ($C\dots C'$), triggering `triggerFunKey(semitone, true/false)` to play manual pad voicings, lead arpeggios, and program step sequencer slots.
+   - CC 64 engages authentic sustain pedal hold, maintaining manual voices until pedal release.
+   - CC 1 (Mod Wheel) scales vitrine agitation ($0.0\dots 1.0$), driving organism perturbation, kinetic vibration, and mycelial spore bursts.
+   - CC 7 / 11 trims master volume; Realtime $0xFA$, $0xFC$, $0xFB$ drives transport start, stop, and continue.
+2. **Web MIDI Outbound Score Broadcast (`src/midi-io.mjs`, `src/app.mjs`):**
+   - Discrete note-on and note-off events emitted with sample-accurate Web Audio timestamp offsets (`performance.now() + (at - audioContext.currentTime) * 1000`).
+   - Mapped across 8 channels: Manual (Ch 1), Lead (Ch 2), Bass (Ch 3), Harmony (Ch 4), Chimes (Ch 5), Choir (Ch 6), Mycelium (Ch 7), and GM Percussion (Ch 10).
+3. **Web Audio Output Sink Device Selection (`AudioContext.setSinkId`):**
+   - Populates available system audio output devices via `navigator.mediaDevices.enumerateDevices()`.
+   - Routes audio to chosen virtual audio sinks or soundcard ports without third-party plugins. Under CachyOS / Linux, PipeWire creates patchable nodes patchable via `pw-link` or Helvum.
+4. **Studio Deck Interface (`index.html`, `styles.css`):**
+   - Integrated `#studio-engine` inside Wing IV (Keep) with MIDI In/Out dropdowns, Connect button, Broadcast toggle, and Audio Sink selector.
+   - Restamped asset version `7aa3e6c86ec1`.
+
+**Consequences:**
+- The Whimsy Machine functions as an algorithmic MIDI generator and tabletop synthesizer companion.
+- Core remains 100% dependency-free vanilla ECMAScript modules.
+- 194/194 tests pass with zero warnings.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)

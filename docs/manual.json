@@ -922,6 +922,30 @@
             {"label": "Security boundaries", "target": "docs/SECURITY.md"}
           ],
           "related": ["client-url-sharing", "parlor-mixing-console", "stem-and-midi-export"]
+        },
+        {
+          "id": "studio-deck-and-daw-routing",
+          "title": "Studio Deck: Web MIDI & Audio Sink Interconnect",
+          "summary": "Connects the apparatus directly to digital audio workstations via bidirectional Web MIDI and multi-channel audio sink routing.",
+          "tags": ["midi", "web-midi", "audio-sink", "pipewire", "daw"],
+          "what": "The Studio Deck (`#studio-engine`) turns the machine into a studio synthesizer and algorithmic MIDI generator. It receives hardware and DAW MIDI notes, sustain pedal (CC 64), modulation wheel (CC 1), master volume (CC 7/11), and transport control (start/stop/continue), and broadcasts the generative score out across 8 independent MIDI channels to drive external instruments. It also provides Web Audio output sink device selection for routing directly to virtual audio patchbays (PipeWire, JACK, BlackHole).",
+          "how": {
+            "lead": "`src/midi-io.mjs` interfaces with standard Web MIDI and `AudioContext.setSinkId` APIs:",
+            "points": [
+              "Incoming MIDI Note On messages fold into manual semitones 0..12 and trigger `triggerFunKey()`, allowing real-time keyboard accompaniment and step programming.",
+              "CC 64 acts as a true sustain pedal, latching manual chords until released; CC 1 modulates vitrine agitation and spore release; CC 7/11 scales master volume.",
+              "Broadcasting transmits conducted note events from `logNote()` with sample-accurate Web Audio timestamp offsets across Channels 1 (Manual), 2 (Lead), 3 (Bass), 4 (Harmony), 5 (Chimes), 6 (Choir), 7 (Mycelium), and 10 (Beat).",
+              "Audio sink device selection redirects the audio graph's output to PipeWire or virtual cable endpoints without requiring third-party plugins."
+            ]
+          },
+          "why": "Allowing the esoteric engines and Euler-Tonnetz harmonic conductor to interface seamlessly with modern DAWs gives producers an algorithmic generative MIDI generator and tabletop synthesizer companion while maintaining the zero-dependency browser core (ADR D-061).",
+          "evidence": [
+            {"label": "Web MIDI and Audio Sink adapter", "target": "src/midi-io.mjs"},
+            {"label": "Studio Deck wiring and event handlers", "target": "src/app.mjs"},
+            {"label": "Studio MIDI unit tests", "target": "tests/midi-io.test.mjs"},
+            {"label": "Architecture Record D-061", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["stem-and-midi-export", "session-ledger", "generative-melody-transport"]
         }
       ]
     }

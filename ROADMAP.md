@@ -117,7 +117,11 @@ Goal: expand only where additional complexity creates more play.
   - Over 200 creatures: 103 distinct progressions, every chord tone in the creature's scale, clashes at most 6%. Sessions accept `"creature"`.
   - At the maintainer's choice (2026-10-21), a fresh creature now opens in THE CREATURE'S OWN.
   Acceptance: distinct progressions across phrases in every fettered genre, the clash ceilings hold, as-written output is unchanged, and the maintainer's listen.
-- [ ] P5-31 Live capture of live play converted to loop sequencing. Origin: maintainer request, 2026-10-23. Enable real-time live capture of manual play and multi-pass Casio section performances directly converted into sequenced, chained loops in the Loop Machine.
+- [x] P5-31 Live capture of live play converted to loop sequencing. Origin: maintainer request, 2026-10-23. Done 2026-10-23 (D-059): 48-step base groove loops, Casio live capture, and loop chaining in the Loop Machine.
+- [ ] P5-32 Standalone Studio Companion (Web MIDI, Audio Sink & PipeWire routing, Tauri v2 packaging). Origin: maintainer request, 2026-10-23.
+  - Stage 1 done 2026-10-24 (D-061): Web MIDI inbound notes/sustain/mod/transport, outbound score broadcasting on 8 channels, AudioContext.setSinkId device routing, and Keep Wing Studio Deck UI.
+  - Stage 2: CachyOS PipeWire & DAW live routing verification.
+  - Stage 3: Tauri v2 packaging in `src-tauri/`.
 
 ## Phase 6: Release
 

@@ -656,6 +656,46 @@
           </div>
         </div>
       </section>
+
+      <section class="beat-engine studio-engine" id="studio-engine" aria-labelledby="studio-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">STUDIO DECK · MIDI &amp; AUDIO INTERCONNECT</p>
+            <div class="beat-title-row">
+              <h3 id="studio-heading">DAW ROUTING &amp; HARDWARE SYNTHESIS</h3>
+              <span class="beat-telemetry" id="studio-telemetry" role="status">WEB MIDI &amp; PIPEWIRE / AUDIO SINK</span>
+            </div>
+          </div>
+        </div>
+        <div class="session-body studio-body">
+          <div class="session-field" role="group" aria-labelledby="studio-midi-in-label">
+            <span class="session-files-label" id="studio-midi-in-label">MIDI INPUT (DAW / CONTROLLER ➔ MACHINE)</span>
+            <div class="session-row">
+              <select id="midi-in-select" class="kapellmeister-select" aria-label="MIDI input port">
+                <option value="omni">ALL INPUTS (OMNI)</option>
+              </select>
+              <button class="beat-button" id="midi-connect-btn" type="button">CONNECT MIDI <span aria-hidden="true">⚡</span></button>
+            </div>
+          </div>
+          <div class="session-field" role="group" aria-labelledby="studio-midi-out-label">
+            <span class="session-files-label" id="studio-midi-out-label">MIDI OUTPUT (MACHINE SCORE ➔ DAW)</span>
+            <div class="session-row">
+              <select id="midi-out-select" class="kapellmeister-select" aria-label="MIDI output port">
+                <option value="none">NO OUTPUT SELECTED</option>
+              </select>
+              <button class="beat-button" id="midi-broadcast-btn" type="button" aria-pressed="false">BROADCAST SCORE <span aria-hidden="true">♪</span></button>
+            </div>
+          </div>
+          <div class="session-field" role="group" aria-labelledby="studio-audio-sink-label">
+            <span class="session-files-label" id="studio-audio-sink-label">AUDIO OUTPUT ROUTING (DEVICE / SINK)</span>
+            <div class="session-row">
+              <select id="audio-sink-select" class="kapellmeister-select" aria-label="Audio output device">
+                <option value="default">SYSTEM DEFAULT OUTPUT</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
     </section>
 
     <footer>
@@ -690,11 +730,11 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "41c33f2f715c";
+      const ASSET_VERSION = "7aa3e6c86ec1";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
-        "malbolge.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "mycelium.mjs", "score.mjs",
+        "malbolge.mjs", "midi-io.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "mycelium.mjs", "score.mjs",
         "session.mjs", "shakespeare.mjs", "share.mjs", "transport.mjs", "variation.mjs", "voices.mjs", "zip.mjs",
       ];
       const imports = {};
