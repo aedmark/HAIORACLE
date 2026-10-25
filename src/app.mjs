@@ -111,6 +111,7 @@ import {
   serializePresetStore,
   serializeSession,
   upsertPreset,
+  writePresetStoreTo,
 } from "./session.mjs";
 import { TRANSPORT_STATES, createTransportState, transportCommandForKey, transportReduce } from "./transport.mjs";
 import {
@@ -3539,10 +3540,9 @@ function readPresetStore() {
 function writePresetStore(store) {
   try {
     if (store.presets.length) {
-      window.localStorage.setItem(PRESET_STORAGE_KEY, serializePresetStore(store));
-    } else {
-      window.localStorage.removeItem(PRESET_STORAGE_KEY);
+      return writePresetStoreTo(window.localStorage, store);
     }
+    window.localStorage.removeItem(PRESET_STORAGE_KEY);
     return true;
   } catch {
     return false;

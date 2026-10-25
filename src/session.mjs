@@ -297,3 +297,61 @@ export function removePreset(store, name) {
 export function serializePresetStore(store) {
   return JSON.stringify({ version: 1, presets: store.presets });
 }
+
+function isQuotaExceededError(error) {
+  return (
+    error?.name === "QuotaExceededError" ||
+    error?.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+    error?.code === 22 ||
+    error?.code === 1014 ||
+    /quota/i.test(error?.message ?? "")
+  );
+}
+
+/**
+ * Reads and validates the preset store from a Web Storage-compatible object.
+ * Missing or blocked storage yields an empty store; throws if genre rulebooks
+ * have not been installed yet.
+ */
+export function readPresetStoreFrom(storage, key = PRESET_STORAGE_KEY) {
+  let text;
+  try {
+    if (!storage || typeof storage.getItem !== "function") return emptyPresetStore();
+    text = storage.getItem(key);
+  } catch {
+    return emptyPresetStore();
+  }
+  return parsePresetStore(text);
+}
+
+/**
+ * Writes the preset store to a Web Storage-compatible object. If a write hits
+ * a storage quota limit (`QuotaExceededError`), evicts the oldest presets from
+ * the tail until the newest presets fit; if even a single preset exceeds the
+ * remaining quota or storage is blocked, returns `false` without corrupting
+ * the existing stored entry.
+ */
+export function writePresetStoreTo(storage, store, key = PRESET_STORAGE_KEY) {
+  if (!storage) return false;
+  if (!store?.presets?.length) {
+    try {
+      storage.removeItem(key);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  for (let count = store.presets.length; count >= 1; count -= 1) {
+    const candidate = count === store.presets.length
+      ? store
+      : Object.freeze({ version: 1, presets: Object.freeze(store.presets.slice(0, count)) });
+    try {
+      storage.setItem(key, serializePresetStore(candidate));
+      return true;
+    } catch (error) {
+      if (!isQuotaExceededError(error)) return false;
+    }
+  }
+  return false;
+}
+

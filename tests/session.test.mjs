@@ -17,11 +17,13 @@ import {
   emptyPresetStore,
   parsePresetStore,
   parseSession,
+  readPresetStoreFrom,
   removePreset,
   serializePresetStore,
   serializeSession,
   upsertPreset,
   validateSession,
+  writePresetStoreTo,
 } from "../src/session.mjs";
 
 const root = new URL("../", import.meta.url);
@@ -288,3 +290,59 @@ test("v5 keeps the Fun Machine's voice and each slot's; v4 songs open in VELVET 
   rejectsAt(v4WithVoice, "session.song.loops[0].layers[0][0].voice");
   rejectsAt({ ...olderSession(4), funMachine: { style: "arpeggio", voice: "music_box" } }, "session.funMachine.voice");
 });
+
+test("preset storage handles mid-write QuotaExceededError by evicting oldest presets or preserving existing data (P4-05)", () => {
+  const entries = new Map();
+  let maxBytes = Infinity;
+
+  const mockStorage = {
+    getItem(key) {
+      return entries.has(key) ? entries.get(key) : null;
+    },
+    setItem(key, value) {
+      const bytes = new TextEncoder().encode(String(value)).length;
+      if (bytes > maxBytes) {
+        const err = new Error("The quota has been exceeded.");
+        err.name = "QuotaExceededError";
+        err.code = 22;
+        throw err;
+      }
+      entries.set(key, String(value));
+    },
+    removeItem(key) {
+      entries.delete(key);
+    },
+  };
+
+  let store = emptyPresetStore();
+  store = upsertPreset(store, "oldest take", sampleSession({ tempo: 84 }), "2026-10-25T10:00:00.000Z");
+  store = upsertPreset(store, "middle take", sampleSession({ tempo: 96 }), "2026-10-25T11:00:00.000Z");
+  assert.equal(writePresetStoreTo(mockStorage, store), true);
+  const twoPresetBytes = new TextEncoder().encode(serializePresetStore(store)).length;
+
+  // Cap quota so 2 presets fit, but 3 presets throw QuotaExceededError mid-write.
+  maxBytes = twoPresetBytes + 16;
+  const threePresets = upsertPreset(store, "newest take", sampleSession({ tempo: 108 }), "2026-10-25T12:00:00.000Z");
+  assert.equal(writePresetStoreTo(mockStorage, threePresets), true, "evicts oldest preset so newest take still saves under tight quota");
+  const recovered = readPresetStoreFrom(mockStorage);
+  assert.deepEqual(
+    recovered.presets.map((p) => p.name),
+    ["newest take", "middle take"],
+    "newest presets survive while oldest is evicted to fit quota",
+  );
+
+  // Exhaust quota completely (0 bytes available): write returns false and leaves existing stored presets intact.
+  maxBytes = 0;
+  const fourthPreset = upsertPreset(recovered, "overflow take", sampleSession({ tempo: 120 }), "2026-10-25T13:00:00.000Z");
+  assert.equal(writePresetStoreTo(mockStorage, fourthPreset), false, "returns false when even a single preset exceeds remaining quota");
+  assert.deepEqual(
+    readPresetStoreFrom(mockStorage).presets.map((p) => p.name),
+    ["newest take", "middle take"],
+    "previously stored presets remain intact after failed quota write",
+  );
+
+  // Clearing an empty store removes the key cleanly.
+  assert.equal(writePresetStoreTo(mockStorage, emptyPresetStore()), true);
+  assert.deepEqual(readPresetStoreFrom(mockStorage), emptyPresetStore());
+});
+
