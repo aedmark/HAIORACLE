@@ -104,14 +104,15 @@ _Last updated: 2026-10-25, session 79, on `main`._
 1. Cross-Platform Application Icon (`src-tauri/icons/`):
    - Designed 1024×1024 master icon (`src-tauri/icons/master-icon.png`): centered antique brass-rimmed bell jar vitrine mounted on turned mahogany, enclosing a glowing bioluminescent organism with emerald/amethyst tendrils, flanked by celestial crescent moon (☽) and radiant sun (☉) sigils on parlor velvet.
    - Generated native platform icons using `@tauri-apps/cli icon`: `icon.ico` (Windows), `icon.icns` (macOS), `icon.png` (512×512 Linux), `128x128.png`, `32x32.png`.
-   - Registered Linux desktop application entry `~/.local/share/applications/esoteric-fun-machine.desktop` and icon `~/.local/share/icons/esoteric-fun-machine.png`.
-2. Version Bump to v1.0.0:
+   - Registered Linux desktop application entry `~/.local/share/applications/whimsy-machine.desktop` and icon `~/.local/share/icons/whimsy-machine.png`.
+2. Version Bump to v1.0.0 & Canonical Branding:
+   - Synchronized product branding to "The Whimsy Machine" (`whimsy-machine`, identifier `com.aedmark.whimsy-machine`) across `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and desktop manifests.
    - Bumped version to `1.0.0` in `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`, `docs/manual.json`.
    - Rebuilt `manual.html` via `python3 tools/manual.py build --output manual.html docs/manual.json`.
    - Updated `docs/CHANGELOG.md` converting `Unreleased` into `[1.0.0] - 2026-10-25`.
    - Marked Phase 6 roadmap item P6-01 complete in `ROADMAP.md`.
 3. Release Packaging & GitHub Actions CI:
-   - Updated `tools/build_desktop.sh` to package portable Linux standalone tarball (`dist-desktop/esoteric-fun-machine-v1.0.0-linux-x86_64.tar.gz`, 3.5 MB) with executable, desktop entry, icon, and install script, and support `--bundle` for `.deb`, `.rpm`, `.AppImage`.
+   - Updated `tools/build_desktop.sh` to package portable Linux standalone tarball (`dist-desktop/whimsy-machine-v1.0.0-linux-x86_64.tar.gz`, 3.5 MB) with executable, desktop entry, icon, and install script, and support `--bundle` for `.deb`, `.rpm`, `.AppImage`.
    - Created `.github/workflows/release.yml` using `tauri-apps/tauri-action@v0` matrix across Ubuntu 22.04 (.deb, .AppImage), Windows (.msi, .exe), and macOS (Universal .dmg) on tag push or manual workflow dispatch.
    - Added `dist-desktop/` to `.gitignore`.
    - Logged D-066 in `docs/DECISIONS.md`.

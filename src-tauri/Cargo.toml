@@ -1,13 +1,13 @@
 [package]
-name = "esoteric-fun-machine"
+name = "whimsy-machine"
 version = "1.0.0"
-description = "Edmark's Esoteric Fun Machine - Standalone Studio Companion"
+description = "The Whimsy Machine - Standalone Studio Companion"
 authors = ["Gordon K"]
 license = "MIT"
 edition = "2021"
 
 [lib]
-name = "esoteric_fun_machine_lib"
+name = "whimsy_machine_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

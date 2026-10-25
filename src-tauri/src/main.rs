@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-  esoteric_fun_machine_lib::run();
+  whimsy_machine_lib::run();
 }

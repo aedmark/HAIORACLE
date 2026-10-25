@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Edmark's Esoteric Fun Machine",
+  "productName": "The Whimsy Machine",
   "version": "1.0.0",
-  "identifier": "com.edmark.esoteric-fun-machine",
+  "identifier": "com.aedmark.whimsy-machine",
   "build": {
     "beforeBuildCommand": "node tools/stage_tauri_dist.mjs",
     "frontendDist": "dist"
@@ -10,7 +10,7 @@
   "app": {
     "windows": [
       {
-        "title": "Edmark's Esoteric Fun Machine",
+        "title": "The Whimsy Machine",
         "width": 1200,
         "height": 900,
         "minWidth": 380,

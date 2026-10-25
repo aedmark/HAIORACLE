@@ -15,10 +15,11 @@ VERSION=$(grep -m1 '^version =' src-tauri/Cargo.toml | cut -d '"' -f2)
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-echo "Building Edmark's Esoteric Fun Machine v${VERSION} standalone desktop release..."
+echo "Building The Whimsy Machine v${VERSION} standalone desktop release..."
+node tools/stage_tauri_dist.mjs
 cargo build --release --manifest-path src-tauri/Cargo.toml
 
-BINARY="src-tauri/target/release/esoteric-fun-machine"
+BINARY="src-tauri/target/release/whimsy-machine"
 if [ ! -f "$BINARY" ]; then
   echo "Error: expected binary not found at $BINARY" >&2
   exit 1
@@ -29,29 +30,29 @@ echo "✦ Standalone desktop binary built successfully: $BINARY ($SIZE)"
 
 # Stage portable Linux standalone bundle in dist-desktop/
 DIST_DIR="dist-desktop"
-PKG_NAME="esoteric-fun-machine-v${VERSION}-linux-x86_64"
+PKG_NAME="whimsy-machine-v${VERSION}-linux-x86_64"
 STAGE_DIR="${DIST_DIR}/${PKG_NAME}"
 
 echo "Packaging portable Linux release into ${DIST_DIR}/${PKG_NAME}.tar.gz..."
 rm -rf "$STAGE_DIR" "${STAGE_DIR}.tar.gz"
 mkdir -p "$STAGE_DIR"
 
-cp "$BINARY" "${STAGE_DIR}/esoteric-fun-machine"
-chmod +x "${STAGE_DIR}/esoteric-fun-machine"
-cp "src-tauri/icons/icon.png" "${STAGE_DIR}/esoteric-fun-machine.png"
+cp "$BINARY" "${STAGE_DIR}/whimsy-machine"
+chmod +x "${STAGE_DIR}/whimsy-machine"
+cp "src-tauri/icons/icon.png" "${STAGE_DIR}/whimsy-machine.png"
 
-cat << 'EOF' > "${STAGE_DIR}/esoteric-fun-machine.desktop"
+cat << 'EOF' > "${STAGE_DIR}/whimsy-machine.desktop"
 [Desktop Entry]
 Name=The Whimsy Machine
-GenericName=Edmark's Esoteric Fun Machine
+GenericName=The Whimsy Machine
 Comment=Deterministic audiovisual omen synthesizer & esoteric play-along organ
-Exec=esoteric-fun-machine
-Icon=esoteric-fun-machine
+Exec=whimsy-machine
+Icon=whimsy-machine
 Terminal=false
 Type=Application
 Categories=AudioVideo;Audio;Midi;Music;
-Keywords=synthesizer;organ;omen;esoteric;tauri;
-StartupWMClass=esoteric-fun-machine
+Keywords=synthesizer;organ;omen;esoteric;tauri;whimsy;
+StartupWMClass=whimsy-machine
 EOF
 
 cat << 'EOF' > "${STAGE_DIR}/install.sh"
@@ -65,21 +66,24 @@ DEST_ICONS="${HOME}/.local/share/icons/hicolor/512x512/apps"
 mkdir -p "$DEST_BIN" "$DEST_APPS" "$DEST_ICONS"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-install -m 755 "${SCRIPT_DIR}/esoteric-fun-machine" "${DEST_BIN}/esoteric-fun-machine"
-install -m 644 "${SCRIPT_DIR}/esoteric-fun-machine.png" "${DEST_ICONS}/esoteric-fun-machine.png"
-install -m 644 "${SCRIPT_DIR}/esoteric-fun-machine.desktop" "${DEST_APPS}/esoteric-fun-machine.desktop"
+install -m 755 "${SCRIPT_DIR}/whimsy-machine" "${DEST_BIN}/whimsy-machine"
+install -m 644 "${SCRIPT_DIR}/whimsy-machine.png" "${DEST_ICONS}/whimsy-machine.png"
+install -m 644 "${SCRIPT_DIR}/whimsy-machine.desktop" "${DEST_APPS}/whimsy-machine.desktop"
 
-echo "✦ Installed Edmark's Esoteric Fun Machine to ${DEST_BIN}/esoteric-fun-machine"
+# Clean up legacy desktop entry if present
+rm -f "${DEST_APPS}/esoteric-fun-machine.desktop" "${DEST_BIN}/esoteric-fun-machine"
+
+echo "✦ Installed The Whimsy Machine to ${DEST_BIN}/whimsy-machine"
 echo "  Desktop entry and icon registered. You can now launch it from your application menu!"
 EOF
 chmod +x "${STAGE_DIR}/install.sh"
 
 cat << EOF > "${STAGE_DIR}/README.txt"
-Edmark's Esoteric Fun Machine / The Whimsy Machine v${VERSION}
+The Whimsy Machine v${VERSION}
 Standalone Studio Companion (Linux x86_64)
 
 RUN DIRECTLY:
-  ./esoteric-fun-machine
+  ./whimsy-machine
 
 INSTALL TO USER MENU (~/.local):
   ./install.sh
