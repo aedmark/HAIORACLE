@@ -4,16 +4,16 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-24, session 77, on `main`._
+_Last updated: 2026-10-25, session 78, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-055: armed downbeat sync, 1-loop count-in, tracker ribbons, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk, fungal appendages, metric closure (D-050), volume surge elimination (D-051), looper sync & Casio sections (D-052), audio sweep audit (D-053), 4-pass breathing sections (D-054), section loops (+ INTRO/BRIDGE/OUTRO, D-055).
-- D-056–D-064: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion (P5-32 complete: D-061 Web MIDI & Audio Sink, D-062 Clean DAW MIDI Export, D-063 Consonant Pad Voicing, D-064 Tauri v2 Desktop Packaging).
-- Next: P6-01 Hosting, domain, and v1.0.0 release.
+- D-056–D-065: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion (P5-32 complete: D-061 Web MIDI & Audio Sink, D-062 Clean DAW MIDI Export, D-063 Consonant Pad Voicing, D-064 Tauri v2 Desktop Packaging); Neocities Static Web Release (D-065, Q-001 answered, P4-02 verified).
+- Next: P6-01 Deploy to Neocities and tag v1.0.0.
 
-**Where things stand:** P1, P2, P3, P4, P5-01 through P5-32 are fully implemented and verified. The application is available as a zero-dependency web app and as an 11 MB standalone desktop studio companion (`src-tauri/`, `tools/build_desktop.sh`, D-064) with native Web MIDI, ALSA/PipeWire routing, Clean DAW MIDI export (D-062), and 22 Inform 7 genres.
+**Where things stand:** P1, P2, P3, P4 (P4-01, P4-02 verified), and P5-01 through P5-32 are fully implemented and verified. P6-01 is in progress with Neocities chosen as public host (D-065). The application is available as a zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`) and as an 11 MB standalone desktop studio companion (`src-tauri/`, `tools/build_desktop.sh`, D-064) with native Web MIDI, ALSA/PipeWire routing, Clean DAW MIDI export (D-062), and 22 Inform 7 genres.
 
-**Verified** (2026-10-24, session 77, local Linux environment)
+**Verified** (2026-10-25, session 78, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
@@ -81,16 +81,47 @@ _Last updated: 2026-10-24, session 77, on `main`._
 
 ## Next steps
 
-1. Maintainer hands-on testing of the note sequencer, STEP REC mode, armed downbeat sync, and count-in (D-045, D-046).
-2. Hands-on review of the four-wing layout (D-027) in Safari and Firefox; the maintainer approved it from the Chromium review. A sticky transport rail was deferred; it needs the cabinet's `overflow: hidden` changed to `overflow: clip`.
-3. Complete P4-02 with keyboard, reduced-motion, contrast, and screen-reader checks.
-4. Choose public hosting and domain (Q-001 / P6-01). Serve `index.html` with `Cache-Control: no-cache` there (D-035); stamped `src/` URLs can be cached freely.
+1. Deploy staged bundle (`dist-neocities/`) to Neocities via web dashboard or `neocities-cli` (P6-01, D-065).
+2. Hands-on review of the four-wing layout (D-027) in Safari and Firefox.
+3. Tag v1.0.0 semantic release.
 
 ## Open questions
 
-- Q-001 blocks P6-01: choose public hosting and domain.
+- None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 78 (2026-10-25): Neocities Static Web Release & Accessibility Completion (D-065, P4-02, P6-01)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Verify accessibility completion (P4-02), resolve public hosting selection with Neocities (Q-001, P6-01, D-065), and add dual-extension fallback handling and bundle staging for seamless deployment across free and supporter Neocities tiers.
+
+**Done:** All parts implemented and verified under D-065. P4-02 marked complete. 196/196 tests pass.
+
+**Changed:**
+1. Esoteric Spell Fetch Fallback (`src/app.mjs`):
+   - Implemented `fetchSource(name)`: attempts `sourceUrl(name)`, and upon 404/403 status (common on free Neocities accounts where non-standard extensions are whitelisted out), seamlessly falls back to `sourceUrl(name + ".txt")`.
+   - Restamped asset version (`tools/stamp_assets.mjs`).
+2. Neocities Staging Tool (`tools/stage_neocities.py`):
+   - Creates a self-contained static release directory (`dist-neocities/`) containing `index.html`, `styles.css`, `manual.html`, and `src/`.
+   - Automatically generates `.txt` dual-fallbacks alongside all nine esoteric source files (`oracle.lol.txt`, `beat.mal.txt`, etc.).
+   - Added `dist-neocities/` to root `.gitignore`.
+3. Roadmap & Decisions:
+   - Marked P4-02 complete in `ROADMAP.md` following maintainer accessibility verification.
+   - Set P6-01 in progress in `ROADMAP.md` with Neocities hosting.
+   - Recorded D-065 in `docs/DECISIONS.md` and answered Q-001.
+   - Added `tools/stage_neocities.py` to `AGENTS.md` repository map.
+   - Updated `docs/CHANGELOG.md` and `docs/HANDOFF.md`.
+   - Archived Session 68 to `docs/archive/sessions.md`.
+
+**Verified:**
+- `python3 tools/stage_neocities.py` successfully stages 48 files (1071.7 KB) with 9 fallbacks.
+- `node --test tests/*.test.mjs`: 196/196 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** P6-01 Neocities public deployment and v1.0.0 release.
 
 ### Session 77 (2026-10-24): Standalone Desktop Packaging with Tauri v2 (D-064)
 
@@ -358,52 +389,7 @@ _Last updated: 2026-10-24, session 77, on `main`._
    - Added Casio progress reporting to `looperReadoutText()`.
    - Restamped `ASSET_VERSION` to `698d822fb894`.
 
-### Session 68: 2026-10-22: looper recording synchronization, Casio arranger sections, and rulebook accompaniment (D-052)
 
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Overhaul looper recording synchronization (eliminating look-ahead collisions, overdubbing dropouts, and arpeggio/swell truncation), implement Casio-style 1-pass arranger section buttons (Intro, Bridge, Outro) on the Fun Machine, and streamline the Looper to pure sequential playback without trapped loops (D-052).
-
-**Done:** All parts implemented and verified. All 182 behavioral, structural, and audit checks pass.
-
-**Changed:**
-1. `src/accompaniment.mjs`:
-   - Added `"intro"`, `"bridge"`, `"outro"` to `ACCOMPANIMENT_STYLES` and `STYLE_LABELS`.
-   - Implemented `buildFunSectionProgression(key, section, genre, tonicRoot)` generating Inform 7 rulebook-governed harmonic progressions:
-     - Intro: tonic vamp/turnaround ($I \to IV \to I \to V$ or $\flat II7$ setup) with lead motif and a step 11 breath before downbeat.
-     - Bridge: contrasting subdominant ($IV$) or relative minor ($vi$), secondary dominant ($V/V$ or $II7$) or modal borrowing ($\flat VI$), predominant, and dominant suspension ($V7$).
-     - Outro: genre-specific cadence (Phrygian descent for Andalusian/Palestrina/Tango, Plagal "Amen" for Gospel/Blues/Doo-Wop, Authentic $ii \to V \to V7 \to I$ for others) with tonic held through steps 9..11.
-   - Integrated section progression routing into `buildPerformance()`, preserving exact octave-climbing ($C' = C + 12$) invariants.
-2. `src/looper.mjs`:
-   - Restored `songPosition(song, absoluteStep)` to pure, reliable sequential playback (playing each loop for its repeats, then cycling cleanly), eliminating endless bridge loops.
-   - Preserved `LOOP_ROLES` and `validateSong` backwards-compatibility with sessions containing role tags.
-3. `src/app.mjs`:
-   - Implemented real-time audible-clock keystroke latching in the audible timer callback, recording held keys across all active steps without truncation.
-   - Isolated new loop recording in `scheduleAhead()` by muting existing song layers and guarding `followSong()`.
-   - Wired 1-loop synchronized count-in pass for both new and overdub recording.
-   - Implemented Casio arranger section engine (`triggerCasioSection(role)` and `updateCasioUI()`):
-     - `INTRO` (`#casio-intro`): plays 1-pass prelude, then smoothly rolls into the normal groove.
-     - `BRIDGE` (`#casio-bridge`): cues on the next downbeat, plays 1-pass contrasting departure, and automatically returns to the groove.
-     - `OUTRO` (`#casio-outro`): cues on the next downbeat, plays the closing cadence, and automatically halts the transport and rests.
-   - Decluttered the looper UI by removing role chips, quick-generate buttons, and cue toggles.
-4. `index.html` & `styles.css`:
-   - Added `.fun-casio-bar` with `#casio-intro`, `#casio-bridge`, and `#casio-outro` buttons on the Fun Machine panel.
-   - Restored `.fun-quality-chips` to pure chord playing styles (`SWELL`, `ARPEGGIO`, `PROGRESSION`).
-   - Cleaned up looper markup and CSS, removing `.looper-gen-button` and `.looper-role-chips`.
-   - Styled Casio section buttons with gold (intro), violet (bridge), and ruby (outro) active/cued states and accessible typography ($\ge 0.6\text{rem}$).
-5. Tests:
-   - Added sustained arpeggio/swell hold test and sequential song playback tests in `tests/looper.test.mjs`.
-   - Added unit test in `tests/looper.test.mjs` verifying that section loop slots (`intro`, `bridge`, `outro`) enforce manual key bounds $0..12$ and that MIDI root pitches correctly map to manual pitch classes.
-   - Added 11 unit tests in `tests/accompaniment.test.mjs` verifying intro, bridge, outro progressions across 19 genres and 13 keys.
-6. Browser runtime hotfixes:
-   - Imported `LOOP_STEPS` from `./looper.mjs` in `src/app.mjs`.
-   - Used `globalThis.performance ? globalThis.performance.now() : Date.now()` in `triggerFunKey` to eliminate lexical scope TDZ collisions when releasing keys.
-   - Mapped `currentScore.root` to the manual key semitone (`((root % 12) + 12) % 12`) when triggering Casio sections without a held key.
-
-**Verified:**
-- 182/182 Node tests pass across all test suites.
-- `python3 tools/check_docs.py` reports 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json` passes with 0 warnings.
 
 
 

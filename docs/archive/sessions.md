@@ -1714,6 +1714,54 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
 - Zero external dependencies and deterministic score invariants preserved.
 
+### Session 68: 2026-10-22: looper recording synchronization, Casio arranger sections, and rulebook accompaniment (D-052)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Overhaul looper recording synchronization (eliminating look-ahead collisions, overdubbing dropouts, and arpeggio/swell truncation), implement Casio-style 1-pass arranger section buttons (Intro, Bridge, Outro) on the Fun Machine, and streamline the Looper to pure sequential playback without trapped loops (D-052).
+
+**Done:** All parts implemented and verified. All 182 behavioral, structural, and audit checks pass.
+
+**Changed:**
+1. `src/accompaniment.mjs`:
+   - Added `"intro"`, `"bridge"`, `"outro"` to `ACCOMPANIMENT_STYLES` and `STYLE_LABELS`.
+   - Implemented `buildFunSectionProgression(key, section, genre, tonicRoot)` generating Inform 7 rulebook-governed harmonic progressions:
+     - Intro: tonic vamp/turnaround ($I \to IV \to I \to V$ or $\flat II7$ setup) with lead motif and a step 11 breath before downbeat.
+     - Bridge: contrasting subdominant ($IV$) or relative minor ($vi$), secondary dominant ($V/V$ or $II7$) or modal borrowing ($\flat VI$), predominant, and dominant suspension ($V7$).
+     - Outro: genre-specific cadence (Phrygian descent for Andalusian/Palestrina/Tango, Plagal "Amen" for Gospel/Blues/Doo-Wop, Authentic $ii \to V \to V7 \to I$ for others) with tonic held through steps 9..11.
+   - Integrated section progression routing into `buildPerformance()`, preserving exact octave-climbing ($C' = C + 12$) invariants.
+2. `src/looper.mjs`:
+   - Restored `songPosition(song, absoluteStep)` to pure, reliable sequential playback (playing each loop for its repeats, then cycling cleanly), eliminating endless bridge loops.
+   - Preserved `LOOP_ROLES` and `validateSong` backwards-compatibility with sessions containing role tags.
+3. `src/app.mjs`:
+   - Implemented real-time audible-clock keystroke latching in the audible timer callback, recording held keys across all active steps without truncation.
+   - Isolated new loop recording in `scheduleAhead()` by muting existing song layers and guarding `followSong()`.
+   - Wired 1-loop synchronized count-in pass for both new and overdub recording.
+   - Implemented Casio arranger section engine (`triggerCasioSection(role)` and `updateCasioUI()`):
+     - `INTRO` (`#casio-intro`): plays 1-pass prelude, then smoothly rolls into the normal groove.
+     - `BRIDGE` (`#casio-bridge`): cues on the next downbeat, plays 1-pass contrasting departure, and automatically returns to the groove.
+     - `OUTRO` (`#casio-outro`): cues on the next downbeat, plays the closing cadence, and automatically halts the transport and rests.
+   - Decluttered the looper UI by removing role chips, quick-generate buttons, and cue toggles.
+4. `index.html` & `styles.css`:
+   - Added `.fun-casio-bar` with `#casio-intro`, `#casio-bridge`, and `#casio-outro` buttons on the Fun Machine panel.
+   - Restored `.fun-quality-chips` to pure chord playing styles (`SWELL`, `ARPEGGIO`, `PROGRESSION`).
+   - Cleaned up looper markup and CSS, removing `.looper-gen-button` and `.looper-role-chips`.
+   - Styled Casio section buttons with gold (intro), violet (bridge), and ruby (outro) active/cued states and accessible typography ($\ge 0.6\text{rem}$).
+5. Tests:
+   - Added sustained arpeggio/swell hold test and sequential song playback tests in `tests/looper.test.mjs`.
+   - Added unit test in `tests/looper.test.mjs` verifying that section loop slots (`intro`, `bridge`, `outro`) enforce manual key bounds $0..12$ and that MIDI root pitches correctly map to manual pitch classes.
+   - Added 11 unit tests in `tests/accompaniment.test.mjs` verifying intro, bridge, outro progressions across 19 genres and 13 keys.
+6. Browser runtime hotfixes:
+   - Imported `LOOP_STEPS` from `./looper.mjs` in `src/app.mjs`.
+   - Used `globalThis.performance ? globalThis.performance.now() : Date.now()` in `triggerFunKey` to eliminate lexical scope TDZ collisions when releasing keys.
+   - Mapped `currentScore.root` to the manual key semitone (`((root % 12) + 12) % 12`) when triggering Casio sections without a held key.
+
+**Verified:**
+- 182/182 Node tests pass across all test suites.
+- `python3 tools/check_docs.py` reports 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json` passes with 0 warnings.
+
+
 
 
 

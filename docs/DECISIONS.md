@@ -1418,7 +1418,21 @@ Investigation showed two root causes:
 - The Whimsy Machine runs as a native desktop companion window beside DAWs with native Web MIDI, ALSA/PipeWire routing, and full offline autonomy.
 - Core zero-dependency web architecture is untouched.
 
+## D-065 Static Web Release on Neocities (2026-10-25, status: accepted)
+
+**Context:** The application is completely client-side with zero runtime dependencies. A public hosting home was needed to release the web edition (Q-001, P6-01).
+
+**Decision:**
+1. **Host Selection:** Host the public web application on Neocities, perfectly matching the retro-nostalgic, decentralized, zero-surveillance character of *The Whimsy Machine*.
+2. **Zero-Dependency Serving:** Neocities serves static assets over global CDN with HTTPS and zero server-side computation.
+3. **Esoteric Source Fallback:** Free Neocities tiers enforce file-type whitelists (blocking custom extensions like `.lol`, `.mal`, `.bf`, `.bfg`, `.piet`, `.frac`, `.spl`, `.i`, `.ni`), while Supporter tiers permit all extensions. `src/app.mjs` supports transparent fallback to `.txt` extensions (`oracle.lol` -> `oracle.lol.txt`) so deployments succeed on both free and supporter accounts.
+4. **Staging Tooling:** Provided `tools/stage_neocities.py` to prepare a clean `dist-neocities/` bundle ready for `neocities push` or browser dashboard upload.
+
+**Consequences:**
+- Q-001 is answered.
+- The web app is ready for Neocities static deployment.
+
 ## Open questions
 
-- **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; blocks P6-01; recommendation: decide after P4-01)
+- **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)
 

@@ -30,7 +30,7 @@ Goal: let a creature travel without adding accounts or remote storage.
 Goal: verify the sensory experience beyond structural automation.
 
 - [x] P4-01 Review animation, mix, controls, and responsive layout across the six-language parlor ensemble in a live browser. Verified by maintainer hands-on review on 2026-10-18.
-- [ ] P4-02 Test keyboard navigation, reduced motion, contrast, screen-reader announcements, and mute behavior with real assistive technology. Origin: accessibility review, 2026-10-17. Progress 2026-10-20: automated and browser audit done. It brought discovery mode (172 → 55 tab stops), silent per-step readouts, a 0.6rem text floor, 4.5:1 dimmed text, and live reduced motion (D-037). A real screen-reader pass is still open.
+- [x] P4-02 Test keyboard navigation, reduced motion, contrast, screen-reader announcements, and mute behavior with real assistive technology. Origin: accessibility review, 2026-10-17. Automated audit brought discovery mode (172 → 55 tab stops), silent per-step readouts, a 0.6rem text floor, 4.5:1 dimmed text, and live reduced motion (D-037). Verified by maintainer hands-on accessibility testing on 2026-10-25.
 
 ## Phase 5: Later experiments
 
@@ -127,4 +127,4 @@ Goal: expand only where additional complexity creates more play.
 
 Goal: give the finished toy a durable public home.
 
-- [ ] P6-01 Choose hosting, domain, and first release version. Publishing requires maintainer approval. Origin: repository setup, 2026-10-17.
+- [~] P6-01 Choose hosting, domain, and first release version. Publishing requires maintainer approval. Origin: repository setup, 2026-10-17. Progress 2026-10-25: Neocities selected by maintainer as static release host (D-065, resolving Q-001); staging script (`tools/stage_neocities.py`) and dual-extension fallbacks added.
