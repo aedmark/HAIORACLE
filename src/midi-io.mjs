@@ -39,6 +39,101 @@ export function midiNoteToSemitone(note) {
 }
 
 /**
+ * Checks if a port name or manufacturer belongs to an M-VAVE / Cuvave device (e.g. FM-1, SMK-25).
+ */
+export function isFm1Port(port) {
+  if (!port) return false;
+  const target = `${port.name || ""} ${port.manufacturer || ""}`.toLowerCase();
+  return target.includes("m-vave") || target.includes("cuvave") || target.includes("fm-1") || target.includes("fm1");
+}
+
+/**
+ * Maps incoming MIDI Control Change messages to Whimsy Machine parameters (D-072).
+ * Supports standard CCs (Mod Wheel CC1, Cutoff CC2/74, Volume CC7, Expression CC11)
+ * as well as FM-1 parameter knobs 1-4 (CC 70..73 for Lead, Bass, Organ, Beat faders)
+ * and Euler strictness (CC 75).
+ */
+export function mapFm1ControlChange(controller, value) {
+  const c = Math.max(0, Math.min(127, Math.round(controller || 0)));
+  const v = Math.max(0, Math.min(127, Math.round(value || 0)));
+  const norm = v / 127; // 0..1
+
+  if (c === 64) {
+    return { target: "sustain", active: v >= 64, value: v };
+  }
+  if (c === 1) {
+    return { target: "modWheel", agitation: norm, value: v };
+  }
+  if (c === 7 || c === 11) {
+    return { target: "volume", volume: Math.round(norm * 100), value: v };
+  }
+  if (c === 2 || c === 74) {
+    return { target: "filterCutoff", cutoffPercent: Math.round(norm * 100), value: v };
+  }
+  if (c === 70) {
+    return { target: "mixerFader", channel: "lead", fader: Math.round(norm * 100), value: v };
+  }
+  if (c === 71) {
+    return { target: "mixerFader", channel: "bass", fader: Math.round(norm * 100), value: v };
+  }
+  if (c === 72) {
+    return { target: "mixerFader", channel: "harmony", fader: Math.round(norm * 100), value: v };
+  }
+  if (c === 73) {
+    return { target: "mixerFader", channel: "beat", fader: Math.round(norm * 100), value: v };
+  }
+  if (c === 75) {
+    // Euler strictness: maps 0..127 to 3..14
+    return { target: "strictness", strictness: Math.round(3 + norm * 11), value: v };
+  }
+
+  return { target: "unmapped", controller: c, value: v };
+}
+
+/**
+ * Maps a key press on an M-VAVE FM-1 (27 keys, typically MIDI 48..74 or 36..62)
+ * into a Fun Machine action (D-072).
+ * Keys in the manual range (MIDI 60..72) trigger the 13-key organ manual.
+ * Lower control keys (MIDI 48..59) trigger quick sections, styles, and transport.
+ */
+export function mapFm1NoteEvent(note, isDown = true) {
+  const n = Math.round(note || 0);
+
+  // Manual organ range: Middle C (60) to High C (72)
+  if (n >= 60 && n <= 72) {
+    return { type: "manual", semitone: n - 60, isDown: Boolean(isDown) };
+  }
+  if (n > 72) {
+    return { type: "manual", semitone: midiNoteToSemitone(n), isDown: Boolean(isDown) };
+  }
+
+  // Lower hotkey octave (MIDI 48..59): triggers fire on Note On only
+  if (!isDown) {
+    return { type: "commandRelease", note: n };
+  }
+
+  switch (n) {
+    case 48: // C3
+      return { type: "command", action: "cycleStyle" };
+    case 50: // D3
+      return { type: "command", action: "triggerSection", section: "intro" };
+    case 52: // E3
+      return { type: "command", action: "triggerSection", section: "bridge" };
+    case 53: // F3
+      return { type: "command", action: "triggerSection", section: "outro" };
+    case 55: // G3
+      return { type: "command", action: "cycleVoice" };
+    case 57: // A3
+      return { type: "command", action: "togglePlayPause" };
+    case 59: // B3
+      return { type: "command", action: "stop" };
+    default:
+      // Fold any other lower notes into manual semitones
+      return { type: "manual", semitone: midiNoteToSemitone(n), isDown: true };
+  }
+}
+
+/**
  * Converts a Fun Machine manual semitone (0..12) to a standard MIDI note number.
  * Octave 4 base: 0 -> 60 (Middle C), 12 -> 72 (C5).
  */
@@ -79,6 +174,7 @@ export function parseMidiMessage(data) {
   }
 
   if (messageType === 0xb0) {
+    const mapping = mapFm1ControlChange(byte1, byte2);
     return {
       type: "cc",
       channel,
@@ -88,6 +184,7 @@ export function parseMidiMessage(data) {
       isModWheel: byte1 === 1,
       isVolume: byte1 === 7,
       isExpression: byte1 === 11,
+      mapping,
     };
   }
 

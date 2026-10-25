@@ -33,6 +33,7 @@ import {
   createMidiClockSlave,
   getAudioOutputDevices,
   getMidiPorts,
+  isFm1Port,
   isSetSinkIdSupported,
   isWebMidiSupported,
   makeAllNotesOff,
@@ -42,6 +43,7 @@ import {
   makeMidiStop,
   makeNoteOff,
   makeNoteOn,
+  mapFm1NoteEvent,
   parseMidiMessage,
   requestMidiAccess,
   sendMidiMessage,
@@ -2896,19 +2898,86 @@ function handleIncomingMidi(parsed, event) {
   switch (parsed.type) {
     case "noteon": {
       if (!isMatchingChannel) return;
-      midiHeldNotes.set(parsed.note, parsed.semitone);
-      triggerFunKey(parsed.semitone, true);
+      const fm1Event = mapFm1NoteEvent(parsed.note, true);
+      if (fm1Event.type === "command") {
+        if (fm1Event.action === "cycleStyle") {
+          const styles = ["swell", "arpeggio", "progression"];
+          const nextStyle = styles[(styles.indexOf(funMachineStyle) + 1) % styles.length];
+          setFunStyle(nextStyle);
+        } else if (fm1Event.action === "triggerSection") {
+          triggerCasioSection(fm1Event.section);
+        } else if (fm1Event.action === "cycleVoice") {
+          const voices = [CREATURE_VOICE_ID, "velvet_pad", "harmonium", "glass_harmonica", "theatre_organ", "string_machine", "music_box", "aether_choir"];
+          const nextVoice = voices[(voices.indexOf(funVoiceId) + 1) % voices.length];
+          setFunVoice(nextVoice);
+        } else if (fm1Event.action === "togglePlayPause") {
+          runTransportCommand(transportState.state === TRANSPORT_STATES.PLAYING ? "pause" : "play");
+        } else if (fm1Event.action === "stop") {
+          runTransportCommand("stop");
+        }
+        return;
+      }
+      const semitone = fm1Event.semitone ?? parsed.semitone;
+      midiHeldNotes.set(parsed.note, semitone);
+      triggerFunKey(semitone, true);
       break;
     }
     case "noteoff": {
       if (!isMatchingChannel) return;
+      const fm1Event = mapFm1NoteEvent(parsed.note, false);
+      if (fm1Event.type === "commandRelease") return;
+      const semitone = fm1Event.semitone ?? parsed.semitone;
       midiHeldNotes.delete(parsed.note);
       if (!midiSustainActive) {
-        triggerFunKey(parsed.semitone, false);
+        triggerFunKey(semitone, false);
       }
       break;
     }
     case "cc": {
+      const mapping = parsed.mapping;
+      if (mapping && mapping.target !== "unmapped") {
+        switch (mapping.target) {
+          case "sustain": {
+            midiSustainActive = mapping.active;
+            if (!mapping.active && midiHeldNotes.size === 0 && activeHeldFunKey !== null) {
+              triggerFunKey(activeHeldFunKey, false);
+            }
+            break;
+          }
+          case "modWheel": {
+            interaction.agitation = mapping.agitation;
+            interaction.wakeTime = performance.now();
+            break;
+          }
+          case "volume": {
+            setMasterVolume(mapping.volume);
+            if (elements.volume) elements.volume.value = String(Math.round(masterVolume));
+            break;
+          }
+          case "filterCutoff": {
+            // Cutoff percent (0..100) scales the creature filter sweep smoothly
+            if (audioContext && currentTransport && currentTransport.ensembleFilter) {
+              const now = audioContext.currentTime;
+              const freq = 120 * Math.pow(16000 / 120, mapping.cutoffPercent / 100);
+              currentTransport.ensembleFilter.frequency.setTargetAtTime(freq, now, 0.025);
+            }
+            break;
+          }
+          case "mixerFader": {
+            updateMixer(setFader(mixerState, mapping.channel, mapping.fader));
+            break;
+          }
+          case "strictness": {
+            activeStrictness = mapping.strictness;
+            if (elements.kapellmeisterStrictness) {
+              elements.kapellmeisterStrictness.value = String(activeStrictness);
+            }
+            applyEnsembleConductor();
+            break;
+          }
+        }
+        break;
+      }
       if (parsed.isSustain) {
         const isDown = parsed.value >= 64;
         midiSustainActive = isDown;
@@ -2990,6 +3059,11 @@ function refreshMidiPorts() {
   if (!elements.midiInSelect.value) {
     midiInPortId = "omni";
     elements.midiInSelect.value = "omni";
+  }
+
+  const hasFm1Connected = inputs.some((p) => isFm1Port(p)) || outputs.some((p) => isFm1Port(p));
+  if (hasFm1Connected && elements.studioTelemetry) {
+    elements.studioTelemetry.textContent = "M-VAVE FM-1 DETECTED · HARDWARE PROFILE ENGAGED ✦";
   }
 
   elements.midiOutSelect.innerHTML = "";

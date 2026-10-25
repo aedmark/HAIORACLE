@@ -13,6 +13,7 @@ import {
   createMidiClockSlave,
   getAudioOutputDevices,
   getMidiPorts,
+  isFm1Port,
   isSetSinkIdSupported,
   isWebMidiSupported,
   makeAllNotesOff,
@@ -22,6 +23,8 @@ import {
   makeMidiStop,
   makeNoteOff,
   makeNoteOn,
+  mapFm1ControlChange,
+  mapFm1NoteEvent,
   midiNoteToSemitone,
   parseMidiMessage,
   requestMidiAccess,
@@ -52,6 +55,59 @@ test("midiNoteToSemitone folds octaves into 0..12 while preserving Middle C and 
   // Non-finite edge cases
   assert.equal(midiNoteToSemitone(NaN), 0);
   assert.equal(midiNoteToSemitone(null), 0);
+});
+
+test("isFm1Port detects M-VAVE and Cuvave device identifiers", () => {
+  assert.equal(isFm1Port({ name: "M-VAVE FM-1 MIDI 1", manufacturer: "M-VAVE" }), true);
+  assert.equal(isFm1Port({ name: "Cuvave Box", manufacturer: "Cuvave" }), true);
+  assert.equal(isFm1Port({ name: "FM1 Bluetooth", manufacturer: "" }), true);
+  assert.equal(isFm1Port({ name: "nanoKONTROL2", manufacturer: "KORG" }), false);
+  assert.equal(isFm1Port(null), false);
+});
+
+test("mapFm1ControlChange maps standard and FM-1 knob CCs (D-072)", () => {
+  // Standard CCs
+  assert.deepEqual(mapFm1ControlChange(64, 127), { target: "sustain", active: true, value: 127 });
+  assert.deepEqual(mapFm1ControlChange(64, 0), { target: "sustain", active: false, value: 0 });
+  assert.deepEqual(mapFm1ControlChange(1, 127), { target: "modWheel", agitation: 1, value: 127 });
+  assert.deepEqual(mapFm1ControlChange(7, 127), { target: "volume", volume: 100, value: 127 });
+  assert.deepEqual(mapFm1ControlChange(11, 64), { target: "volume", volume: 50, value: 64 });
+  assert.deepEqual(mapFm1ControlChange(2, 127), { target: "filterCutoff", cutoffPercent: 100, value: 127 });
+  assert.deepEqual(mapFm1ControlChange(74, 0), { target: "filterCutoff", cutoffPercent: 0, value: 0 });
+
+  // FM-1 Parameter Knobs 1..4 (CC 70..73) map to mixer faders
+  assert.deepEqual(mapFm1ControlChange(70, 100), { target: "mixerFader", channel: "lead", fader: 79, value: 100 });
+  assert.deepEqual(mapFm1ControlChange(71, 127), { target: "mixerFader", channel: "bass", fader: 100, value: 127 });
+  assert.deepEqual(mapFm1ControlChange(72, 0), { target: "mixerFader", channel: "harmony", fader: 0, value: 0 });
+  assert.deepEqual(mapFm1ControlChange(73, 64), { target: "mixerFader", channel: "beat", fader: 50, value: 64 });
+
+  // Euler Strictness (CC 75) maps 0..127 to 3..14
+  assert.deepEqual(mapFm1ControlChange(75, 0), { target: "strictness", strictness: 3, value: 0 });
+  assert.deepEqual(mapFm1ControlChange(75, 127), { target: "strictness", strictness: 14, value: 127 });
+  assert.deepEqual(mapFm1ControlChange(75, 64), { target: "strictness", strictness: 9, value: 64 });
+
+  // Unmapped CC
+  assert.deepEqual(mapFm1ControlChange(99, 50), { target: "unmapped", controller: 99, value: 50 });
+});
+
+test("mapFm1NoteEvent splits manual organ and hotkey octaves (D-072)", () => {
+  // Manual Organ (MIDI 60..72)
+  assert.deepEqual(mapFm1NoteEvent(60, true), { type: "manual", semitone: 0, isDown: true });
+  assert.deepEqual(mapFm1NoteEvent(67, true), { type: "manual", semitone: 7, isDown: true });
+  assert.deepEqual(mapFm1NoteEvent(72, true), { type: "manual", semitone: 12, isDown: true });
+  assert.deepEqual(mapFm1NoteEvent(60, false), { type: "manual", semitone: 0, isDown: false });
+
+  // Lower hotkey octave (MIDI 48..59)
+  assert.deepEqual(mapFm1NoteEvent(48, true), { type: "command", action: "cycleStyle" });
+  assert.deepEqual(mapFm1NoteEvent(50, true), { type: "command", action: "triggerSection", section: "intro" });
+  assert.deepEqual(mapFm1NoteEvent(52, true), { type: "command", action: "triggerSection", section: "bridge" });
+  assert.deepEqual(mapFm1NoteEvent(53, true), { type: "command", action: "triggerSection", section: "outro" });
+  assert.deepEqual(mapFm1NoteEvent(55, true), { type: "command", action: "cycleVoice" });
+  assert.deepEqual(mapFm1NoteEvent(57, true), { type: "command", action: "togglePlayPause" });
+  assert.deepEqual(mapFm1NoteEvent(59, true), { type: "command", action: "stop" });
+
+  // Hotkey release does not trigger manual Note Off
+  assert.deepEqual(mapFm1NoteEvent(48, false), { type: "commandRelease", note: 48 });
 });
 
 test("semitoneToMidiNote converts semitones to MIDI note numbers", () => {

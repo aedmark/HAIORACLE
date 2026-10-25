@@ -135,3 +135,13 @@ Goal: expand only where additional complexity creates more play.
 Goal: give the finished toy a durable public home.
 
 - [x] P6-01 Choose hosting, domain, and first release version. Publishing requires maintainer approval. Origin: repository setup, 2026-10-17. Done 2026-10-25: First release version v1.0.0 prepared and tagged. Neocities selected as static release host (D-065, resolving Q-001) with staging bundle (`tools/stage_neocities.py`) and dual-extension fallbacks. Cross-platform application icon generated for Linux, Windows, and macOS (`src-tauri/icons/`). Multi-platform desktop release builds configured for Linux (.deb, .rpm, .AppImage, .tar.gz), Windows (.msi, .exe), and macOS (.dmg) via `.github/workflows/release.yml`.
+
+## Phase 7: Hardware & Firmware Integration (M-VAVE FM-1)
+
+Goal: transform The Whimsy Machine into a physical handheld synthesizer, starting with an out-of-the-box hardware controller profile and progressing to native standalone firmware for the M-VAVE FM-1 (JieLi AC791N SoC).
+
+- [x] P7-01 Add dedicated M-VAVE FM-1 hardware controller profile to `src/midi-io.mjs`, `src/app.mjs`, and the Studio Deck: 27-key auto-chord split, CC parameter bindings (Cutoff CC2/74, Master Vol CC7, Faders CC70–73, Quick Section & Style Triggers), and bi-directional status feedback. Done 2026-10-25 (D-072): added `isFm1Port()`, `mapFm1ControlChange()`, `mapFm1NoteEvent()` in `src/midi-io.mjs`, wired in `src/app.mjs` with hardware detection telemetry; verified by `tests/midi-io.test.mjs` (223/223 tests passing).
+- [ ] P7-02 Implement pure C/C++ reference port of the deterministic phrase-hashing spell, Euler Tonnetz conductor, and all 7 esoteric interpreters (Malbolge, Brainfuck, Befunge, Piet/FRACTRAN, Shakespeare, INTERCAL, Inform 7 subset), guarded by cross-language regression tests against the JavaScript golden fixtures.
+- [ ] P7-03 Build the standalone FM-1 firmware application on the `m-vave/fm1_open` / Felucca SDK: map the 8 ensemble voices to native audio renderers (FM operators, 303 subtractive bass, drum transients, formant bandpass filters).
+- [ ] P7-04 Render the Apparition Vitrine 12-step tracker ribbon, specimen silhouette, and Tonnetz compass onto the FM-1's 1.54″ 240×240 color TFT screen.
+- [ ] P7-05 Package the standalone firmware binary (`.bin`) and provide one-click Web MIDI flashing via the FM-1 Web Workbench / WebAssembly emulator (`tools/flash_fm1.html`).

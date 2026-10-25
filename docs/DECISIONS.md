@@ -1535,6 +1535,39 @@ Investigation showed two root causes:
 **Consequences:**
 - Visitors can write and test custom Inform 7 music-theory rulebooks live in the browser with line-numbered compiler diagnostics while canonical genres remain protected against mutation.
 
+## D-072 M-VAVE FM-1 Hardware Controller Companion Profile (2026-10-25, status: accepted)
+
+**Context:** The M-VAVE / Cuvave FM-1 is a popular \$60–\$70 battery-powered pocket FM synthesizer with 27 silicone keys, a 1.54″ color TFT display, 4 parameter encoders + 1 select encoder, USB-C, BLE Bluetooth MIDI, 3.5mm TRS MIDI, and an open SDK (`m-vave/fm1_open`). To let users plug the FM-1 directly into The Whimsy Machine via Web MIDI over USB or Bluetooth and play immediately without flashing custom firmware, a specialized hardware controller profile was required (`P7-01`).
+
+**Decision:**
+1. **27-Key Auto-Chord Split (`mapFm1KeyToCommand` in `src/midi-io.mjs`):**
+   - Keys in the upper octave (C4–C5 / MIDI 60–72) trigger the 13-key Fun Machine manual directly (`semitone: 0..12`).
+   - Keys below C4 (MIDI 48–59 / C3–B3) act as instant performance and section hotkeys:
+     - 48 (C3): Cycle Accompaniment Style (`swell` -> `arpeggio` -> `progression`).
+     - 50 (D3): Trigger Casio Intro Section.
+     - 52 (E3): Trigger Casio Bridge Section.
+     - 53 (F3): Trigger Casio Outro Section.
+     - 55 (G3): Cycle Voice Preset.
+     - 57 (A3): Toggle Transport Play/Pause.
+     - 59 (B3): Transport Stop & Rewind.
+2. **Standard & Custom MIDI CC Bindings (`mapFm1ControlChange` in `src/midi-io.mjs`):**
+   - CC 1 (Modulation Wheel): Organ vibrato & Vitrine agitation flux.
+   - CC 2 / CC 74 (Filter Cutoff): Creature resonant filter cutoff frequency (`0..100%`).
+   - CC 7 (Volume) / CC 11 (Expression): Master parlor volume slider (`0..100`).
+   - CC 70–73 (FM-1 Parameter Knobs 1–4): Mapped directly to Mixing Console channel faders:
+     - CC 70: Lead fader (LOLCODE).
+     - CC 71: Bass fader (Brainfuck).
+     - CC 72: Harmony / Organ fader (Befunge).
+     - CC 73: Pulse / Beat fader (Malbolge).
+   - CC 75: Euler *Gradus Suavitatis* strictness slider ($3\dots 14$).
+3. **Hardware Profile Detection & Studio UI Integration:**
+   - Detects M-VAVE / Cuvave devices via MIDI port manufacturer/name substring matching (`isFm1Port`).
+   - Adds an `FM-1 PROFILE: ENGAGED` indicator in the Studio Deck telemetry with zero-configuration automatic mapping on incoming MIDI messages.
+
+**Consequences:**
+- Plugging an M-VAVE FM-1 into The Whimsy Machine instantly provides a tactile physical control surface for the keys, mixer, filter, and arrangement sections.
+- The web zero-dependency boundary is maintained.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)

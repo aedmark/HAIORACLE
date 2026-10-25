@@ -4,22 +4,21 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-25, session 79, on `main`._
+_Last updated: 2026-10-25, session 80, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
-- D-045–D-055: armed downbeat sync, 1-loop count-in, tracker ribbons, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk, fungal appendages, metric closure (D-050), volume surge elimination (D-051), looper sync & Casio sections (D-052), audio sweep audit (D-053), 4-pass breathing sections (D-054), section loops (+ INTRO/BRIDGE/OUTRO, D-055).
-- D-056–D-065: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion (P5-32 complete: D-061 Web MIDI & Audio Sink, D-062 Clean DAW MIDI Export, D-063 Consonant Pad Voicing, D-064 Tauri v2 Desktop Packaging); Neocities Static Web Release (D-065, Q-001 answered, P4-02 verified).
-- D-066: Official v1.0.0 Release, Cross-Platform Application Icon & Multi-Platform Desktop Builds (Linux, Windows, macOS; P6-01 complete).
-- D-067–D-071: Module decomposition of `src/app.mjs` into `src/vitrine-canvas.mjs`, `src/broadsheet.mjs`, and `src/schedulers.mjs` (P4-03 complete), lightweight GitHub Actions CI check workflow (`.github/workflows/ci.yml`, P4-04 complete), storage-quota `QuotaExceededError` fallback & doc sync (P4-05 complete), 24-PPQ External MIDI Clock & Transport Slave/Master Mode in the Studio Deck (P5-33 complete, D-068), "Under the Parlor Glass" Live Esoteric VM Step Inspector for Plates I–V in Wing III (`src/inspector.mjs`, P5-34 complete, D-069), "The Naturalist's Herbarium" on-device curio gallery and trait comparator (`src/herbarium.mjs`, P5-35 complete, D-070), and "The Kapellmeister's Manuscript" live Inform 7 custom rulebook sandbox (`src/manuscript.mjs`, P5-36 complete, D-071), packaged into release `v1.1.0`.
-- Next: All planned roadmap items across P1–P6 are complete and packaged as `v1.1.0`!
+- D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
+- D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
+- Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) established in `ROADMAP.md` (P7-01 through P7-05, D-072). P7-01 complete: M-VAVE FM-1 hardware controller profile (`isFm1Port`, `mapFm1ControlChange`, `mapFm1NoteEvent`, 27-key auto-chord split, knob faders CC 70..73, cutoff CC 2/74, Euler strictness CC 75).
+- Next: P7-02 (C/C++ reference port of phrase-hashing spell, Euler conductor, and esoteric VMs for FM-1 native firmware).
 
-**Where things stand:** P1, P2, P3, P4 (P4-01 through P4-05 verified), P5 (P5-01 through P5-36 verified), and P6-01 are fully implemented, verified, and complete. Semantic version bumped to 1.1.0. The application is available as a zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and as an official multi-platform desktop release (Linux .deb, .rpm, .AppImage, portable .tar.gz; Windows .msi, .exe; macOS .dmg) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066), equipped with a bespoke Victorian parlor icon across all operating systems.
+**Where things stand:** P1–P6 and P7-01 are fully implemented, verified, and complete. Semantic version 1.1.0. Phase 7 initiated for M-VAVE FM-1 pocket synthesizer companion mode and standalone firmware. Zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and official multi-platform desktop release (Linux, Windows, macOS) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066).
 
-**Verified** (2026-10-25, session 79, local Linux environment)
+**Verified** (2026-10-25, session 80, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **220/220 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **223/223 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 39 entries, 0 errors, 0 warnings** |
 
