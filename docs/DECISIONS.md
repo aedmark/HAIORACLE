@@ -1468,6 +1468,24 @@ Investigation showed two root causes:
 - `src/app.mjs` drops from 8,440 lines to 5,056 lines (~40% reduction) and focuses on DOM wiring, session state, looper UI, and transport orchestration.
 - Canvas geometry builders, broadsheet layout, and all seven Web Audio voice schedulers are now directly unit-tested in Node (`tests/decomposition.test.mjs`).
 
+## D-068 Add 24-PPQ External MIDI Clock & Transport Slave/Master Mode to the Studio Deck (2026-10-25, status: accepted)
+
+**Context:** Stage 1 of the Standalone Studio Companion (`D-061`, `P5-32`) added Web MIDI note/CC input, 8-channel generative score broadcasting, and `0xFA`/`0xFB`/`0xFC` transport message parsing. However, when running alongside an external DAW (such as REAPER over PipeWire/ALSA) or hardware drum machines and sequencers, there was no 24-Pulses-Per-Quarter-Note (`24-PPQ`, `0xF8`) MIDI Timing Clock synchronization: the machine could neither lock its BPM and 12-step bar phase to an external master clock nor transmit a steady 24-PPQ clock stream when acting as the master timepiece.
+
+**Decision:**
+1. **Three Selectable Clock Modes (`MIDI_CLOCK_MODES`):** Added `#midi-clock-mode-select` and `#midi-clock-status` to `#studio-engine` in Wing IV (`index.html`) supporting `internal` (`INTERNAL CLOCK (FREE)`), `slave` (`SLAVE TO MIDI IN (24 PPQ)`), and `master` (`MASTER CLOCK OUT (24 PPQ)`).
+2. **Slave Synchronizer (`createMidiClockSlave` in `src/midi-io.mjs`):**
+   - Tracks incoming `0xF8` inter-tick deltas over a 24-tick (1 quarter-note) rolling window to smooth USB/OS jitter and derive a clamped integer BPM (`36..208`).
+   - Counts 12-tick eighth-note step boundaries (`144` ticks per 12-step loop) and phase-aligns `currentTransport.nextNoteTime` in `src/app.mjs` when drift exceeds 15 ms.
+   - Handles `0xFA` (`Start` -> resets tick counter and starts/restarts from step 0), `0xFB` (`Continue` -> resumes from current step cursor), and `0xFC` (`Stop`).
+3. **Master Clock Generator (`computeMasterClockWindow` in `src/midi-io.mjs`):**
+   - Maintains a continuous `nextClockTime` cursor on the active transport so `0xF8` ticks are scheduled at an exact $\frac{60}{24 \times \text{BPM}}$ period via high-resolution Web MIDI timestamps (`port.send([0xF8], tickMs)`), independent of swing or waltz step multipliers in `RHYTHMS`.
+   - Transmits `0xFA` (`Start`), `0xFB` (`Continue`), and `0xFC` (`Stop`) on `midiOutPortId` when the master transport starts, resumes, pauses, or stops.
+
+**Consequences:**
+- The Whimsy Machine can lock tightly as a 24-PPQ slave to an external DAW/hardware clock or drive external hardware/DAW synths as a 24-PPQ master clock.
+- Pure synchronization math (`createMidiClockSlave`, `computeMasterClockWindow`) is verified in Node unit tests (`tests/midi-io.test.mjs`) without requiring hardware MIDI devices.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)

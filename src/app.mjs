@@ -27,12 +27,19 @@ import { composeScore, WAVEFORMS } from "./score.mjs";
 import { GM_DRUMS, MIDI_TRACKS, buildMidiFile, funVoiceTracks, ticksForSeconds, velocitiesFor } from "./midi.mjs";
 import {
   MIDI_CHANNELS,
+  MIDI_CLOCK_MODES,
   bindMidiInput,
+  computeMasterClockWindow,
+  createMidiClockSlave,
   getAudioOutputDevices,
   getMidiPorts,
   isSetSinkIdSupported,
   isWebMidiSupported,
   makeAllNotesOff,
+  makeClockTick,
+  makeMidiContinue,
+  makeMidiStart,
+  makeMidiStop,
   makeNoteOff,
   makeNoteOn,
   parseMidiMessage,
@@ -314,6 +321,8 @@ const elements = {
   midiConnectBtn: document.querySelector("#midi-connect-btn"),
   midiOutSelect: document.querySelector("#midi-out-select"),
   midiBroadcastBtn: document.querySelector("#midi-broadcast-btn"),
+  midiClockModeSelect: document.querySelector("#midi-clock-mode-select"),
+  midiClockStatus: document.querySelector("#midi-clock-status"),
   audioSinkSelect: document.querySelector("#audio-sink-select"),
   studioLocalControlBtn: document.querySelector("#studio-local-control-btn"),
   volume: document.querySelector("#master-volume"),
@@ -460,6 +469,8 @@ let midiInPortId = "omni";
 let inboundMidiChannel = "1";
 let midiOutPortId = "none";
 let midiBroadcastActive = false;
+let midiClockMode = "internal";
+const midiClockSlave = createMidiClockSlave();
 let midiSustainActive = false;
 let localControlEnabled = true;
 const broadcastEchoFilter = new Set();
@@ -530,6 +541,7 @@ function setTempoBpm(value) {
   if (audioContext && currentTransport?.delay && currentScore) {
     currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, activeTempoBpm), audioContext.currentTime, 0.08);
   }
+  if (midiClockMode === "master") updateMidiClockStatus();
 }
 
 const stageContainer = elements.canvas.closest(".vision-stage");
@@ -1791,6 +1803,7 @@ async function playScore(score, { cursor = 0 } = {}) {
     timeouts: new Set(),
     activeTakeLanding: null,
     nextNoteTime: now,
+    nextClockTime: now,
     step: cursor,
     // Last step that actually sounded; pause resumes after it, not after the
     // look-ahead window, so no scheduled-but-unheard steps are skipped.
@@ -1946,6 +1959,21 @@ async function playScore(score, { cursor = 0 } = {}) {
       }, delayMs);
       transport.timeouts?.add(stepTimerId);
       transport.nextNoteTime += stepDuration;
+      if (midiClockMode === "master" && midiAccess && midiOutPortId !== "none") {
+        const nowMs = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+        const clockWin = computeMasterClockWindow({
+          nextClockTimeSec: transport.nextClockTime,
+          windowEndSec: transport.nextNoteTime,
+          bpm: livePulse,
+          audioCurrentTimeSec: context.currentTime,
+          nowMs,
+        });
+        transport.nextClockTime = clockWin.nextClockTimeSec;
+        const clockBytes = makeClockTick();
+        for (const tickMs of clockWin.tickTimestampsMs) {
+          sendMidiMessage(midiAccess, midiOutPortId, clockBytes, tickMs);
+        }
+      }
       transport.step += 1;
     }
   };
@@ -2004,11 +2032,22 @@ function syncTransportUI() {
 // transport state alone and freezes the cursor where the sound stopped.
 async function runTransportCommand(command) {
   if (!currentScore) return;
+  const fromMidiRealtime = Boolean(arguments[1]?.fromMidiRealtime);
+  const prevState = transportState.state;
   const resumeStep = currentTransport ? currentTransport.audibleStep + 1 : transportState.cursor;
   const next = transportReduce(transportState, command, { cursor: resumeStep });
   if (next === transportState) return;
   transportState = next;
   syncTransportUI();
+  if (!fromMidiRealtime && midiClockMode === "master" && midiAccess && midiOutPortId !== "none") {
+    if (next.state === TRANSPORT_STATES.PLAYING) {
+      const startBytes = command === "restart" || prevState === TRANSPORT_STATES.STOPPED ? makeMidiStart() : makeMidiContinue();
+      sendMidiMessage(midiAccess, midiOutPortId, startBytes);
+    } else if (prevState === TRANSPORT_STATES.PLAYING) {
+      sendMidiMessage(midiAccess, midiOutPortId, makeMidiStop());
+    }
+  }
+  updateMidiClockStatus();
   // A take needs an unbroken pass: stop, pause, and restart (and a new summon,
   // which restarts) abandon it. Playing on from a pause or an arm does not.
   if (command === "restart" || next.state !== TRANSPORT_STATES.PLAYING) {
@@ -2738,7 +2777,21 @@ async function exportSpecimenMidi() {
   });
 }
 
-function handleIncomingMidi(parsed) {
+function updateMidiClockStatus(extra = null) {
+  if (!elements.midiClockStatus) return;
+  if (midiClockMode === "slave") {
+    const state = midiClockSlave.getState();
+    const bpmText = state.bpm ? `${state.bpm} BPM` : "WAITING 0xF8";
+    elements.midiClockStatus.value = extra || `SLAVE · ${bpmText} · STEP ${String(state.stepIndex + 1).padStart(2, "0")}/12`;
+  } else if (midiClockMode === "master") {
+    const running = transportState.state === TRANSPORT_STATES.PLAYING;
+    elements.midiClockStatus.value = extra || `MASTER 24 PPQ · ${activeTempoBpm} BPM · ${running ? "TX 0xF8" : "IDLE"}`;
+  } else {
+    elements.midiClockStatus.value = extra || "CLOCK: INTERNAL";
+  }
+}
+
+function handleIncomingMidi(parsed, event) {
   if (!parsed) return;
   // If this note was broadcasted by our own score generator, drop it (suppress loopback echo)
   if (parsed.note !== undefined) {
@@ -2748,6 +2801,9 @@ function handleIncomingMidi(parsed) {
 
   // Filter channel for manual organ play (default: Channel 1)
   const isMatchingChannel = inboundMidiChannel === "omni" || parsed.channel === Number(inboundMidiChannel);
+  const ts = Number.isFinite(event?.timeStamp) && event.timeStamp > 0
+    ? event.timeStamp
+    : (typeof performance !== "undefined" && performance.now ? performance.now() : Date.now());
 
   switch (parsed.type) {
     case "noteon": {
@@ -2780,16 +2836,38 @@ function handleIncomingMidi(parsed) {
       }
       break;
     }
+    case "clock": {
+      if (midiClockMode !== "slave") break;
+      const sync = midiClockSlave.onClock(ts);
+      if (sync.bpm !== null && sync.bpm !== activeTempoBpm) {
+        setTempoBpm(sync.bpm);
+      }
+      if (sync.stepBoundary && currentTransport && audioContext) {
+        const drift = currentTransport.nextNoteTime - audioContext.currentTime;
+        if (Math.abs(drift) > 0.015 && drift < 0.25) {
+          currentTransport.nextNoteTime = audioContext.currentTime + 0.005;
+        }
+      }
+      updateMidiClockStatus();
+      break;
+    }
     case "start": {
-      runTransportCommand("play");
+      midiClockSlave.onStart(ts);
+      const cmd = transportState.state === TRANSPORT_STATES.STOPPED ? "play" : "restart";
+      runTransportCommand(cmd, { fromMidiRealtime: true });
+      updateMidiClockStatus();
       break;
     }
     case "stop": {
-      runTransportCommand("stop");
+      midiClockSlave.onStop();
+      runTransportCommand("stop", { fromMidiRealtime: true });
+      updateMidiClockStatus();
       break;
     }
     case "continue": {
-      runTransportCommand("play");
+      midiClockSlave.onContinue(ts);
+      runTransportCommand("play", { fromMidiRealtime: true });
+      updateMidiClockStatus();
       break;
     }
   }
@@ -4928,6 +5006,26 @@ elements.midiBroadcastBtn?.addEventListener("click", () => {
     elements.studioTelemetry.textContent = midiBroadcastActive
       ? "BROADCASTING GENERATIVE SCORE TO MIDI OUT ✦"
       : "MIDI BROADCAST MUTED";
+  }
+});
+
+elements.midiClockModeSelect?.addEventListener("change", (event) => {
+  const nextMode = MIDI_CLOCK_MODES.includes(event.target.value) ? event.target.value : "internal";
+  if (midiClockMode === "master" && nextMode !== "master" && midiAccess && midiOutPortId !== "none" && transportState.state === TRANSPORT_STATES.PLAYING) {
+    sendMidiMessage(midiAccess, midiOutPortId, makeMidiStop());
+  }
+  midiClockMode = nextMode;
+  midiClockSlave.reset();
+  if (midiClockMode === "master" && currentTransport && audioContext) {
+    currentTransport.nextClockTime = audioContext.currentTime;
+  }
+  updateMidiClockStatus();
+  if (elements.studioTelemetry) {
+    elements.studioTelemetry.textContent = midiClockMode === "slave"
+      ? "MIDI CLOCK SLAVE · LOCKING TO INCOMING 24-PPQ 0xF8 & TRANSPORT"
+      : midiClockMode === "master"
+        ? "MIDI CLOCK MASTER · TRANSMITTING 24-PPQ 0xF8 & TRANSPORT ON MIDI OUT"
+        : "MIDI CLOCK INTERNAL · FREE PARLOR OSCILLATOR";
   }
 });
 

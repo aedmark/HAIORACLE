@@ -14,6 +14,18 @@ export const MIDI_CHANNELS = Object.freeze({
   BEAT: 10,
 });
 
+export const MIDI_CLOCK_MODES = Object.freeze(["internal", "slave", "master"]);
+export const MIDI_REALTIME = Object.freeze({
+  CLOCK: 0xf8,
+  START: 0xfa,
+  CONTINUE: 0xfb,
+  STOP: 0xfc,
+});
+export const MIDI_CLOCK_PPQ = 24;
+export const MIDI_TICKS_PER_STEP = 12;
+export const MIN_MIDI_CLOCK_BPM = 36;
+export const MAX_MIDI_CLOCK_BPM = 208;
+
 /**
  * Maps a standard MIDI note number (0..127) to a Fun Machine manual semitone (0..12, C..C').
  * Middle C (MIDI 60) maps to 0. C5 (MIDI 72) maps to 12.
@@ -104,6 +116,141 @@ export function makeNoteOff(channel, note) {
 export function makeAllNotesOff(channel) {
   const ch = Math.max(0, Math.min(15, (channel || 1) - 1));
   return new Uint8Array([0xb0 | ch, 123, 0]);
+}
+
+/**
+ * System Realtime 1-byte message builders (24-PPQ MIDI Clock & Transport).
+ */
+export function makeClockTick() {
+  return new Uint8Array([MIDI_REALTIME.CLOCK]);
+}
+
+export function makeMidiStart() {
+  return new Uint8Array([MIDI_REALTIME.START]);
+}
+
+export function makeMidiContinue() {
+  return new Uint8Array([MIDI_REALTIME.CONTINUE]);
+}
+
+export function makeMidiStop() {
+  return new Uint8Array([MIDI_REALTIME.STOP]);
+}
+
+/**
+ * Computes Web MIDI high-resolution timestamps (ms) for all 24-PPQ `0xF8` clock
+ * pulses falling within the audio scheduler window `[nextClockTimeSec, windowEndSec)`.
+ */
+export function computeMasterClockWindow({
+  nextClockTimeSec = 0,
+  windowEndSec = 0,
+  bpm = 108,
+  audioCurrentTimeSec = 0,
+  nowMs = 0,
+} = {}) {
+  const clampedBpm = Math.max(MIN_MIDI_CLOCK_BPM, Math.min(MAX_MIDI_CLOCK_BPM, Number(bpm) || 108));
+  const tickPeriodSec = 60 / (clampedBpm * MIDI_CLOCK_PPQ);
+  const tickTimestampsMs = [];
+  let cursorSec = Number.isFinite(nextClockTimeSec) ? nextClockTimeSec : audioCurrentTimeSec;
+  const endSec = Number.isFinite(windowEndSec) ? windowEndSec : cursorSec;
+
+  while (cursorSec < endSec - 1e-9) {
+    const delaySec = Math.max(0, cursorSec - audioCurrentTimeSec);
+    tickTimestampsMs.push(nowMs + delaySec * 1000);
+    cursorSec += tickPeriodSec;
+  }
+
+  return {
+    tickTimestampsMs,
+    nextClockTimeSec: cursorSec,
+    tickPeriodSec,
+  };
+}
+
+/**
+ * Stateful 24-PPQ MIDI Clock & Transport Slave synchronizer (P5-33).
+ * Smooths incoming `0xF8` inter-tick deltas over a rolling 24-tick (1 quarter-note)
+ * window to derive BPM (`36..208`) and tracks 12-tick eighth-note step boundaries
+ * across the 12-step (144-tick) ensemble loop.
+ */
+export function createMidiClockSlave({
+  windowSize = MIDI_CLOCK_PPQ,
+  minBpm = MIN_MIDI_CLOCK_BPM,
+  maxBpm = MAX_MIDI_CLOCK_BPM,
+  ticksPerStep = MIDI_TICKS_PER_STEP,
+} = {}) {
+  let running = false;
+  let tickCount = 0;
+  let lastTickMs = null;
+  let intervals = [];
+  let bpm = null;
+
+  function stepIndex() {
+    return Math.floor(tickCount / ticksPerStep) % 12;
+  }
+
+  return {
+    reset() {
+      running = false;
+      tickCount = 0;
+      lastTickMs = null;
+      intervals = [];
+      bpm = null;
+    },
+    onStart(timestampMs = null) {
+      running = true;
+      tickCount = 0;
+      lastTickMs = Number.isFinite(timestampMs) ? timestampMs : null;
+      return { command: "restart", step: 0, tickCount: 0, bpm };
+    },
+    onContinue(timestampMs = null) {
+      running = true;
+      lastTickMs = Number.isFinite(timestampMs) ? timestampMs : null;
+      return { command: "play", step: stepIndex(), tickCount, bpm };
+    },
+    onStop() {
+      running = false;
+      lastTickMs = null;
+      return { command: "stop", step: stepIndex(), tickCount, bpm };
+    },
+    onClock(timestampMs = null) {
+      if (Number.isFinite(timestampMs)) {
+        if (lastTickMs !== null) {
+          const deltaMs = timestampMs - lastTickMs;
+          // Accept plausible 24-PPQ inter-tick intervals (~4 ms to ~1500 ms)
+          if (deltaMs > 4 && deltaMs < 1500) {
+            intervals.push(deltaMs);
+            if (intervals.length > windowSize) intervals.shift();
+            const sum = intervals.reduce((acc, v) => acc + v, 0);
+            const avgDeltaMs = sum / intervals.length;
+            const rawBpm = 60000 / (MIDI_CLOCK_PPQ * avgDeltaMs);
+            bpm = Math.max(minBpm, Math.min(maxBpm, Math.round(rawBpm)));
+          }
+        }
+        lastTickMs = timestampMs;
+      }
+      const currentTick = tickCount;
+      tickCount += 1;
+      const stepBoundary = currentTick % ticksPerStep === 0;
+      const currentStepIndex = Math.floor(currentTick / ticksPerStep) % 12;
+      return {
+        running,
+        currentTick,
+        tickCount,
+        stepBoundary,
+        stepIndex: currentStepIndex,
+        bpm,
+      };
+    },
+    getState() {
+      return {
+        running,
+        tickCount,
+        bpm,
+        stepIndex: stepIndex(),
+      };
+    },
+  };
 }
 
 /**

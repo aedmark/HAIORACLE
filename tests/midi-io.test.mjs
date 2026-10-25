@@ -1,13 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  MAX_MIDI_CLOCK_BPM,
   MIDI_CHANNELS,
+  MIDI_CLOCK_MODES,
+  MIDI_CLOCK_PPQ,
+  MIDI_REALTIME,
+  MIDI_TICKS_PER_STEP,
+  MIN_MIDI_CLOCK_BPM,
   bindMidiInput,
+  computeMasterClockWindow,
+  createMidiClockSlave,
   getAudioOutputDevices,
   getMidiPorts,
   isSetSinkIdSupported,
   isWebMidiSupported,
   makeAllNotesOff,
+  makeClockTick,
+  makeMidiContinue,
+  makeMidiStart,
+  makeMidiStop,
   makeNoteOff,
   makeNoteOn,
   midiNoteToSemitone,
@@ -183,3 +195,95 @@ test("Audio sink detection and routing fallbacks", async () => {
   const failed = await setAudioOutputSink({}, "bus");
   assert.equal(failed, false);
 });
+
+test("System Realtime 24-PPQ MIDI clock and transport byte builders (P5-33)", () => {
+  assert.deepEqual(MIDI_CLOCK_MODES, ["internal", "slave", "master"]);
+  assert.equal(MIDI_CLOCK_PPQ, 24);
+  assert.equal(MIDI_TICKS_PER_STEP, 12);
+  assert.deepEqual([...makeClockTick()], [MIDI_REALTIME.CLOCK]);
+  assert.deepEqual([...makeMidiStart()], [MIDI_REALTIME.START]);
+  assert.deepEqual([...makeMidiContinue()], [MIDI_REALTIME.CONTINUE]);
+  assert.deepEqual([...makeMidiStop()], [MIDI_REALTIME.STOP]);
+});
+
+test("createMidiClockSlave tracks 24-PPQ tempo, 12-tick step boundaries, and Start/Continue/Stop (P5-33)", () => {
+  const slave = createMidiClockSlave();
+  assert.deepEqual(slave.getState(), { running: false, tickCount: 0, bpm: null, stepIndex: 0 });
+
+  // Start at t = 1000 ms
+  const startRes = slave.onStart(1000);
+  assert.equal(startRes.command, "restart");
+  assert.equal(startRes.step, 0);
+  assert.equal(slave.getState().running, true);
+
+  // At 120 BPM, 1 quarter note = 500 ms -> 24 PPQ tick interval = 500 / 24 = 20.8333... ms
+  const interval120 = 500 / 24;
+  const boundaries = [];
+  let lastSync = null;
+  for (let i = 0; i < 144; i += 1) {
+    const sync = slave.onClock(1000 + i * interval120);
+    if (sync.stepBoundary) boundaries.push(sync.stepIndex);
+    lastSync = sync;
+  }
+
+  // 144 ticks = 6 quarter notes = 12 eighth-note steps (0..11)
+  assert.deepEqual(boundaries, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  assert.equal(lastSync.bpm, 120);
+  assert.equal(lastSync.tickCount, 144);
+
+  // Next tick wraps around to step 0 of the next 12-step bar
+  const wrapSync = slave.onClock(1000 + 144 * interval120);
+  assert.equal(wrapSync.stepBoundary, true);
+  assert.equal(wrapSync.stepIndex, 0);
+
+  // Stop & Continue preserve step position while Start rewinds to step 0
+  for (let i = 1; i < 24; i += 1) {
+    slave.onClock(1000 + (144 + i) * interval120);
+  }
+  const stopRes = slave.onStop();
+  assert.equal(stopRes.command, "stop");
+  assert.equal(stopRes.step, 2);
+  assert.equal(slave.getState().running, false);
+
+  const contRes = slave.onContinue(5000);
+  assert.equal(contRes.command, "play");
+  assert.equal(contRes.step, 2);
+  assert.equal(slave.getState().running, true);
+
+  // Clamp out-of-range BPMs to [MIN_MIDI_CLOCK_BPM, MAX_MIDI_CLOCK_BPM]
+  slave.reset();
+  for (let i = 0; i < 30; i += 1) slave.onClock(i * 6); // ~416 BPM -> clamped to 208
+  assert.equal(slave.getState().bpm, MAX_MIDI_CLOCK_BPM);
+
+  slave.reset();
+  for (let i = 0; i < 30; i += 1) slave.onClock(i * 120); // ~20.8 BPM -> clamped to 36
+  assert.equal(slave.getState().bpm, MIN_MIDI_CLOCK_BPM);
+});
+
+test("computeMasterClockWindow schedules exact 24-PPQ 0xF8 timestamps across a step window (P5-33)", () => {
+  // At 120 BPM, 1 eighth-note step = 0.25 s, and 24-PPQ tick period = 0.5 / 24 = 0.0208333... s.
+  // One eighth-note step of 0.25 s contains exactly 12 ticks.
+  const win1 = computeMasterClockWindow({
+    nextClockTimeSec: 1.0,
+    windowEndSec: 1.25,
+    bpm: 120,
+    audioCurrentTimeSec: 1.0,
+    nowMs: 5000,
+  });
+  assert.equal(win1.tickTimestampsMs.length, 12);
+  assert.equal(win1.tickTimestampsMs[0], 5000);
+  assert.ok(Math.abs(win1.nextClockTimeSec - 1.25) < 1e-9);
+
+  // Subsequent step window continues seamlessly without dropping or duplicating a pulse
+  const win2 = computeMasterClockWindow({
+    nextClockTimeSec: win1.nextClockTimeSec,
+    windowEndSec: 1.5,
+    bpm: 120,
+    audioCurrentTimeSec: 1.0,
+    nowMs: 5000,
+  });
+  assert.equal(win2.tickTimestampsMs.length, 12);
+  assert.ok(Math.abs(win2.tickTimestampsMs[0] - 5250) < 1e-6);
+  assert.ok(Math.abs(win2.nextClockTimeSec - 1.5) < 1e-9);
+});
+
