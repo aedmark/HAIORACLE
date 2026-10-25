@@ -106,7 +106,7 @@ _Last updated: 2026-10-24, session 77, on `main`._
    - Initialized isolated desktop application shell in `src-tauri/` without npm packages or root `package.json`.
 2. Tauri Configuration (`src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `src-tauri/src/main.rs`):
    - Package identifier `com.edmark.esoteric-fun-machine`, title "Edmark's Esoteric Fun Machine".
-   - `frontendDist: "../"` directly embeds the root web directory (`index.html`, `styles.css`, `src/`, `manual.html`).
+   - `frontendDist: "dist"` staged automatically by `build.rs` from root web assets (`index.html`, `styles.css`, `manual.html`, `src/`), completely self-contained with no dev server or localhost dependency.
    - Default window dimensions 1200×900 (minimum 380×600), fully resizable.
    - Built against standard system WebKitGTK 4.1.
 3. Build Script (`tools/build_desktop.sh`):

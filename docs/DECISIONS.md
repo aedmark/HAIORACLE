@@ -1404,7 +1404,7 @@ Investigation showed two root causes:
      - App name: `Edmark's Esoteric Fun Machine`.
      - Identifier: `com.edmark.esoteric-fun-machine`.
      - Window size: $1200 \times 900$ (min $380 \times 600$), resizable.
-     - Frontend dist: `"../"` (directly embedding web assets).
+     - Frontend dist: `"dist"` (staged from root web assets `index.html`, `styles.css`, `manual.html`, and `src/` via `build.rs`, completely self-contained with no dev server or localhost dependency).
      - Security: CSP null for local offline origin.
 2. **Build Tooling (`tools/build_desktop.sh`):**
    - Added automated release build script that compiles an optimized 11 MB standalone desktop executable (`src-tauri/target/release/esoteric-fun-machine`).
