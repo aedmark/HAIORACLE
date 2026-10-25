@@ -13,6 +13,7 @@ target/
 # Staged release distributions
 dist-neocities/
 dist-desktop/
+firmware-c/test_whimsy
 
 # IDE & OS junk
 .idea/

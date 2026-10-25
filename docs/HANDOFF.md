@@ -9,16 +9,16 @@ _Last updated: 2026-10-25, session 80, on `main`._
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
 - D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
-- Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) established in `ROADMAP.md` (P7-01 through P7-05, D-072). P7-01 complete: M-VAVE FM-1 hardware controller profile (`isFm1Port`, `mapFm1ControlChange`, `mapFm1NoteEvent`, 27-key auto-chord split, knob faders CC 70..73, cutoff CC 2/74, Euler strictness CC 75).
-- Next: P7-02 (C/C++ reference port of phrase-hashing spell, Euler conductor, and esoteric VMs for FM-1 native firmware).
+- Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) established in `ROADMAP.md` (P7-01 through P7-05, D-072). P7-01 complete: M-VAVE FM-1 hardware controller profile. P7-02 complete: C core port in `firmware-c/` verified against golden fixtures.
+- Next: P7-03 (FM-1 native audio synthesis engine mapping on `m-vave/fm1_open` / Felucca SDK).
 
-**Where things stand:** P1–P6 and P7-01 are fully implemented, verified, and complete. Semantic version 1.1.0. Phase 7 initiated for M-VAVE FM-1 pocket synthesizer companion mode and standalone firmware. Zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and official multi-platform desktop release (Linux, Windows, macOS) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066).
+**Where things stand:** P1–P6, P7-01, and P7-02 are fully implemented, verified, and complete. Semantic version 1.1.0. Phase 7 active for M-VAVE FM-1 pocket synthesizer companion mode and standalone firmware. Zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and official multi-platform desktop release (Linux, Windows, macOS) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066).
 
 **Verified** (2026-10-25, session 80, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **223/223 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **224/224 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 39 entries, 0 errors, 0 warnings** |
 
