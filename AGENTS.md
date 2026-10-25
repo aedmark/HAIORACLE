@@ -112,6 +112,7 @@ Never force-push or rewrite shared history.
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |
 | `src/app.mjs` | Browser controls, Canvas creature, and Web Audio instrument |
 | `src-tauri/` | Isolated Tauri v2 desktop wrapper and native application packaging (D-064) |
+| `.github/workflows/release.yml` | Multi-platform GitHub Actions release workflow for Linux, Windows, and macOS (D-066) |
 | `manual.html` | Standalone explorable 3x technical manual |
 | `docs/manual.json` | 3x documentation scheme manual source of truth |
 | `tests/` | Dependency-free Node tests |

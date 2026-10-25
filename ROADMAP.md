@@ -127,4 +127,4 @@ Goal: expand only where additional complexity creates more play.
 
 Goal: give the finished toy a durable public home.
 
-- [~] P6-01 Choose hosting, domain, and first release version. Publishing requires maintainer approval. Origin: repository setup, 2026-10-17. Progress 2026-10-25: Neocities selected by maintainer as static release host (D-065, resolving Q-001); staging script (`tools/stage_neocities.py`) and dual-extension fallbacks added.
+- [x] P6-01 Choose hosting, domain, and first release version. Publishing requires maintainer approval. Origin: repository setup, 2026-10-17. Done 2026-10-25: First release version v1.0.0 prepared and tagged. Neocities selected as static release host (D-065, resolving Q-001) with staging bundle (`tools/stage_neocities.py`) and dual-extension fallbacks. Cross-platform application icon generated for Linux, Windows, and macOS (`src-tauri/icons/`). Multi-platform desktop release builds configured for Linux (.deb, .rpm, .AppImage, .tar.gz), Windows (.msi, .exe), and macOS (.dmg) via `.github/workflows/release.yml`.

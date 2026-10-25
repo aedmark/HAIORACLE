@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Edmark's Esoteric Fun Machine",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "com.edmark.esoteric-fun-machine",
   "build": {
     "frontendDist": "dist"

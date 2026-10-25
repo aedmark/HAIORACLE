@@ -4,16 +4,17 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-25, session 78, on `main`._
+_Last updated: 2026-10-25, session 79, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-055: armed downbeat sync, 1-loop count-in, tracker ribbons, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk, fungal appendages, metric closure (D-050), volume surge elimination (D-051), looper sync & Casio sections (D-052), audio sweep audit (D-053), 4-pass breathing sections (D-054), section loops (+ INTRO/BRIDGE/OUTRO, D-055).
 - D-056–D-065: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion (P5-32 complete: D-061 Web MIDI & Audio Sink, D-062 Clean DAW MIDI Export, D-063 Consonant Pad Voicing, D-064 Tauri v2 Desktop Packaging); Neocities Static Web Release (D-065, Q-001 answered, P4-02 verified).
-- Next: P6-01 Deploy to Neocities and tag v1.0.0.
+- D-066: Official v1.0.0 Release, Cross-Platform Application Icon & Multi-Platform Desktop Builds (Linux, Windows, macOS; P6-01 complete).
+- Next: Deploy staged bundle (`dist-neocities/`) to Neocities and tag release.
 
-**Where things stand:** P1, P2, P3, P4 (P4-01, P4-02 verified), and P5-01 through P5-32 are fully implemented and verified. P6-01 is in progress with Neocities chosen as public host (D-065). The application is available as a zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`) and as an 11 MB standalone desktop studio companion (`src-tauri/`, `tools/build_desktop.sh`, D-064) with native Web MIDI, ALSA/PipeWire routing, Clean DAW MIDI export (D-062), and 22 Inform 7 genres.
+**Where things stand:** P1, P2, P3, P4 (P4-01, P4-02 verified), P5-01 through P5-32, and P6-01 are fully implemented, verified, and complete. Semantic version bumped to 1.0.0. The application is available as a zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and as an official multi-platform desktop release (Linux .deb, .rpm, .AppImage, portable .tar.gz; Windows .msi, .exe; macOS .dmg) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066), equipped with a bespoke Victorian parlor icon across all operating systems.
 
-**Verified** (2026-10-25, session 78, local Linux environment)
+**Verified** (2026-10-25, session 79, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
@@ -90,6 +91,40 @@ _Last updated: 2026-10-25, session 78, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 79 (2026-10-25): Cross-Platform Application Icon & Official v1.0.0 Release (D-066, P6-01)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Create a cross-platform application icon across Linux, Windows, and macOS capturing the Victorian esoteric parlor aesthetic, bump project version to 1.0.0, and configure automated multi-platform desktop release builds.
+
+**Done:** All parts implemented and verified under D-066. P6-01 marked complete. 196/196 tests pass.
+
+**Changed:**
+1. Cross-Platform Application Icon (`src-tauri/icons/`):
+   - Designed 1024×1024 master icon (`src-tauri/icons/master-icon.png`): centered antique brass-rimmed bell jar vitrine mounted on turned mahogany, enclosing a glowing bioluminescent organism with emerald/amethyst tendrils, flanked by celestial crescent moon (☽) and radiant sun (☉) sigils on parlor velvet.
+   - Generated native platform icons using `@tauri-apps/cli icon`: `icon.ico` (Windows), `icon.icns` (macOS), `icon.png` (512×512 Linux), `128x128.png`, `32x32.png`.
+   - Registered Linux desktop application entry `~/.local/share/applications/esoteric-fun-machine.desktop` and icon `~/.local/share/icons/esoteric-fun-machine.png`.
+2. Version Bump to v1.0.0:
+   - Bumped version to `1.0.0` in `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`, `docs/manual.json`.
+   - Rebuilt `manual.html` via `python3 tools/manual.py build --output manual.html docs/manual.json`.
+   - Updated `docs/CHANGELOG.md` converting `Unreleased` into `[1.0.0] - 2026-10-25`.
+   - Marked Phase 6 roadmap item P6-01 complete in `ROADMAP.md`.
+3. Release Packaging & GitHub Actions CI:
+   - Updated `tools/build_desktop.sh` to package portable Linux standalone tarball (`dist-desktop/esoteric-fun-machine-v1.0.0-linux-x86_64.tar.gz`, 3.5 MB) with executable, desktop entry, icon, and install script, and support `--bundle` for `.deb`, `.rpm`, `.AppImage`.
+   - Created `.github/workflows/release.yml` using `tauri-apps/tauri-action@v0` matrix across Ubuntu 22.04 (.deb, .AppImage), Windows (.msi, .exe), and macOS (Universal .dmg) on tag push or manual workflow dispatch.
+   - Added `dist-desktop/` to `.gitignore`.
+   - Logged D-066 in `docs/DECISIONS.md`.
+   - Archived Session 69 to `docs/archive/sessions.md`.
+
+**Verified:**
+- `./tools/build_desktop.sh` built standalone binary and portable tarball in 7.2s.
+- `npx @tauri-apps/cli build` verified local packaging of `.deb`, `.rpm`, and `.AppImage`.
+- `node --test tests/*.test.mjs`: 196/196 tests passing.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+**Next session should start with:** Push release tag `v1.0.0` and deploy staged bundle (`dist-neocities/`) to Neocities.
 
 ### Session 78 (2026-10-25): Neocities Static Web Release & Accessibility Completion (D-065, P4-02, P6-01)
 
@@ -367,30 +402,5 @@ _Last updated: 2026-10-25, session 78, on `main`._
    - Line 321: updated fixed line box assertions for `#kapellmeister-heading` (`2.5em`) and `#fun-machine-heading` (`1.25em`).
 3. `docs/DECISIONS.md`:
    - Logged D-057.
-
-### Session 69: 2026-10-23: Casio arranger section lookahead race condition and premature cutoff fix (D-052)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Eliminate premature section cutoff (intro/bridge/outro dying off after 2 notes during active playback), eliminate trapped bridge loops, and align live look-ahead audio scheduling with real-time audible callbacks and UI states.
-
-**Root cause:** Web Audio look-ahead vs. real-time callback collision. The scheduler schedules ~280ms ahead. When playback was active and a Casio section was cued, the look-ahead reached step 0 of the upcoming pass and populated the global `activeCasioSection`, scheduling steps 0 and 1. Meanwhile, the previous pass's step 11 was sounding in the room. When its `setTimeout` callback fired, its step 11 check wiped `activeCasioSection = null`. On the next scheduler tick, `activeCasioSection` was null, so steps 2..11 were scheduled as normal groove—cutting the section off after two notes.
-
-**Done:** All parts implemented and verified. All 182 behavioral, structural, and audit checks pass.
-
-**Changed:**
-1. `src/app.mjs`:
-   - Replaced mutable shared `activeCasioSection` with pass-indexed `scheduledCasio = { role, key, pass, performance }` where `stepPass = Math.floor(currentStep / 12)`.
-   - Look-ahead scheduler checks `isCasioStep = scheduledCasio !== null && stepPass === scheduledCasio.pass;`, mathematically guaranteeing all 12 steps (0..11) are scheduled without premature clearing.
-   - Enclosed `stepCasioRole`, `stepCasioKey`, `stepCasioPerf`, and `stepIsLast = isCasioStep && stepIndex === 11` within each step's loop scope. Audible `setTimeout` callbacks now update `audibleCasioSection` and reset only when that specific Casio pass completes step 11.
-   - Wired live ensemble conduction during Casio sections via `followSong()` and `scheduledCasio.performance`.
-   - Prevented post-outro scheduling bleed using `casioOutroEnding` break in the look-ahead loop; when step 11 of the outro finishes sounding, transport cleanly halts and rewinds.
-   - Synchronized button UI states: `.is-cued` pulsing while pending/scheduled ahead, transitioning to `.is-active` once audible, and clearing upon step 11 completion.
-   - Added Casio progress reporting to `looperReadoutText()`.
-   - Restamped `ASSET_VERSION` to `698d822fb894`.
-
-
-
-
 
 

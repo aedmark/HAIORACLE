@@ -1761,6 +1761,28 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - `python3 tools/check_docs.py` reports 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json` passes with 0 warnings.
 
+### Session 69: 2026-10-23: Casio arranger section lookahead race condition and premature cutoff fix (D-052)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Eliminate premature section cutoff (intro/bridge/outro dying off after 2 notes during active playback), eliminate trapped bridge loops, and align live look-ahead audio scheduling with real-time audible callbacks and UI states.
+
+**Root cause:** Web Audio look-ahead vs. real-time callback collision. The scheduler schedules ~280ms ahead. When playback was active and a Casio section was cued, the look-ahead reached step 0 of the upcoming pass and populated the global `activeCasioSection`, scheduling steps 0 and 1. Meanwhile, the previous pass's step 11 was sounding in the room. When its `setTimeout` callback fired, its step 11 check wiped `activeCasioSection = null`. On the next scheduler tick, `activeCasioSection` was null, so steps 2..11 were scheduled as normal groove—cutting the section off after two notes.
+
+**Done:** All parts implemented and verified. All 182 behavioral, structural, and audit checks pass.
+
+**Changed:**
+1. `src/app.mjs`:
+   - Replaced mutable shared `activeCasioSection` with pass-indexed `scheduledCasio = { role, key, pass, performance }` where `stepPass = Math.floor(currentStep / 12)`.
+   - Look-ahead scheduler checks `isCasioStep = scheduledCasio !== null && stepPass === scheduledCasio.pass;`, mathematically guaranteeing all 12 steps (0..11) are scheduled without premature clearing.
+   - Enclosed `stepCasioRole`, `stepCasioKey`, `stepCasioPerf`, and `stepIsLast = isCasioStep && stepIndex === 11` within each step's loop scope. Audible `setTimeout` callbacks now update `audibleCasioSection` and reset only when that specific Casio pass completes step 11.
+   - Wired live ensemble conduction during Casio sections via `followSong()` and `scheduledCasio.performance`.
+   - Prevented post-outro scheduling bleed using `casioOutroEnding` break in the look-ahead loop; when step 11 of the outro finishes sounding, transport cleanly halts and rewinds.
+   - Synchronized button UI states: `.is-cued` pulsing while pending/scheduled ahead, transitioning to `.is-active` once audible, and clearing upon step 11 completion.
+   - Added Casio progress reporting to `looperReadoutText()`.
+   - Restamped `ASSET_VERSION` to `698d822fb894`.
+
+
 
 
 

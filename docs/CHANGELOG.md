@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased
+## [1.0.0] - 2026-10-25
 
 ### Added
 
+- Bespoke cross-platform master application icon (`src-tauri/icons/`): high-resolution centered Victorian brass-rimmed bell jar vitrine containing a luminous ethereal organism with celestial crescent moon (☽) and sun (☉) sigils, compiled into `.ico` (Windows), `.icns` (macOS), `.png` (Linux desktop launcher), and Android/iOS icon sets.
+- Automated multi-platform release builds for Linux, Windows, and macOS (`.github/workflows/release.yml`): automated GitHub Actions matrix compiling native installers (.deb, .rpm, .AppImage, .tar.gz for Linux; .msi, .exe for Windows; .dmg for macOS) on tag push.
 - Stage Neocities static web release bundle (D-065): added `tools/stage_neocities.py` and transparent dual-extension fallbacks in `src/app.mjs` (`oracle.lol` -> `oracle.lol.txt`) to support zero-dependency hosting on both free (file-extension whitelisted) and supporter Neocities accounts.
 - Package as a standalone desktop studio companion (D-064): isolated Tauri v2 desktop wrapper (`src-tauri/`) builds an 11 MB standalone native desktop binary (`tools/build_desktop.sh`) that integrates directly with DAWs via system Web MIDI and PipeWire/JACK routing without requiring a browser tab or local dev server.
 - Choose clean DAW MIDI export (D-062): an export format selector (`#export-midi-format`) offers `CLEAN DAW` (default, stripping General MIDI Program Change bytes that overwrite VST synth presets, omitting marker clutter that prompts DAW tempo stretching, and flattening notes to Channel 1), `DAW WITH CHORD MARKERS`, and archival `FULL ARCHIVE`.

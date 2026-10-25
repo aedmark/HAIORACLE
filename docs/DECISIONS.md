@@ -1432,6 +1432,28 @@ Investigation showed two root causes:
 - Q-001 is answered.
 - The web app is ready for Neocities static deployment.
 
+## D-066 Cross-Platform Application Icon & Multi-Platform Release Distribution (2026-10-25, status: accepted)
+
+**Context:** The standalone desktop companion (D-064) required an application icon representing the visual and musical aesthetic of *The Whimsy Machine* / *Edmark's Esoteric Fun Machine* across all supported platforms (Linux, Windows, macOS). Furthermore, the official v1.0.0 release required automated packaging and distribution for Linux (.deb, .rpm, .AppImage, .tar.gz), Windows (.msi, .exe), and macOS (.dmg).
+
+**Decision:**
+1. **Application Icon Design & Multi-Platform Generation:**
+   - Designed a high-resolution $1024 \times 1024$ master application icon (`src-tauri/icons/master-icon.png`) capturing the core parlor aesthetic: centered antique brass-rimmed glass bell jar vitrine mounted on turned mahogany, enclosing a bioluminescent organism with glowing emerald and amethyst mycelial tendrils and an ocular brass core, flanked by celestial crescent moon (☽) and radiant sun (☉) sigils on deep parlor obsidian velvet.
+   - Generated native platform icon formats via `@tauri-apps/cli icon`:
+     - Windows: `icon.ico` (multi-resolution embedded icon) and Appx logos.
+     - macOS: `icon.icns` (multi-resolution Apple icon format).
+     - Linux: `icon.png` (512x512), `128x128.png`, `32x32.png`, and installed Linux desktop launcher entry (`~/.local/share/applications/esoteric-fun-machine.desktop`) with high-res icon in `~/.local/share/icons/`.
+2. **v1.0.0 Semantic Version Bump:**
+   - Bumped version to `1.0.0` in `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`, `docs/manual.json`, `manual.html`, and `docs/CHANGELOG.md`.
+   - Marked Phase 6 roadmap item P6-01 complete.
+3. **Multi-Platform Desktop Packaging & GitHub Actions CI:**
+   - Updated `tools/build_desktop.sh` to compile the optimized native binary, package a portable Linux standalone distribution bundle (`dist-desktop/esoteric-fun-machine-v1.0.0-linux-x86_64.tar.gz`) with executable, desktop entry, icon, and install script, and optionally build platform packages (`.deb`, `.rpm`, `.AppImage`).
+   - Created `.github/workflows/release.yml` using `tauri-apps/tauri-action@v0` with a matrix across `ubuntu-22.04` (Linux .deb, .AppImage), `windows-latest` (Windows .msi, .exe), and `macos-latest` (Universal macOS .dmg for Apple Silicon and Intel). Triggers on version tag pushes (`v*`) and manual workflow dispatch to publish release assets directly to GitHub Releases.
+
+**Consequences:**
+- The Whimsy Machine has a cohesive visual brand and application icon across all major desktop environments.
+- Official v1.0.0 release builds are automated and repeatable across Linux, Windows, and macOS.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)
