@@ -1,7 +1,22 @@
-.DS_Store
-.idea/
+# Dependencies & caches
 node_modules/
 coverage/
+__pycache__/
+*.py[cod]
+
+# Desktop build artifacts & Tauri targets
+src-tauri/target/
+src-tauri/dist/
+src-tauri/gen/
+target/
+
+# Staged release distributions
 dist-neocities/
 dist-desktop/
+
+# IDE & OS junk
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
 *.log

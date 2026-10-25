@@ -1,6 +1,6 @@
 # Architecture
 
-Edmark's Esoteric Fun Machine is a static browser application; HAI, ORACLE! is its LOLCODE score engine. A phrase is normalized and hashed locally, the resulting seed enters a purpose-built LOLCODE interpreter, and `src/oracle.lol` emits a text score. The host validates every field before Canvas and Web Audio render a named looping creature. Nothing leaves the browser. The only state that survives the page is the session presets a player chooses to save on-device (D-026).
+The Whimsy Machine is a static browser application; HAI, ORACLE! is its LOLCODE score engine. A phrase is normalized and hashed locally, the resulting seed enters a purpose-built LOLCODE interpreter, and `src/oracle.lol` emits a text score. The host validates every field before Canvas and Web Audio render a named looping creature. Nothing leaves the browser. The only state that survives the page is the session presets a player chooses to save on-device (D-026).
 
 Rationale lives in [DECISIONS.md](DECISIONS.md).
 
@@ -155,8 +155,8 @@ The visual system uses locally installed old-style and transitional book serifs 
 | Audio graph and loop timer | browser audio context and window | `playScore()` | pause, stop, mute, replacement, reload, or tab close | no |
 | Mixer settings | browser memory | `updateMixer()` | RESET CONSOLE, reload, or tab close | no |
 | Transport state and cursor | browser memory | `runTransportCommand()` | stop, summon, reload, or tab close | no |
-| Session presets | `localStorage` key `edmark-fun-machine.presets.v1` | SAVE PRESET | DELETE, or clearing site data | no |
-| Cabinet mode and drawers | `localStorage` key `edmark-fun-machine.cabinet.v1` | opening or closing drawers, the cabinet switch | clearing site data | no |
+| Session presets | `localStorage` key `whimsy-machine.presets.v1` | SAVE PRESET | DELETE, or clearing site data | no |
+| Cabinet mode and drawers | `localStorage` key `whimsy-machine.cabinet.v1` | opening or closing drawers, the cabinet switch | clearing site data | no |
 | Static HTTP cache | browser-managed, keyed by `?v=<ASSET_VERSION>` URLs (D-035) | browser | a new stamp, or browser controls | no |
 
 Because a file's content changes only together with its URL, the browser may keep any stamped module or source as long as it likes. Only `index.html`, which holds the stamp, should be revalidated: `tools/serve.py` does that locally with `Cache-Control: no-cache`, and a public host should do the same for the page (D-035).

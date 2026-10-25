@@ -674,7 +674,7 @@
             "points": [
               "`cabinetReduce()` applies unlock, toggle, and mode events: a trigger opens a drawer only the first time, and a drawer the visitor closes stays closed.",
               "Sealed drawer bodies use `hidden`, leaving the tab order and the accessibility tree (55 tab stops at first instead of 172); openings are announced through a polite status region without moving focus.",
-              "The mode and drawers are remembered in `localStorage` (`edmark-fun-machine.cabinet.v1`), validated by `parseCabinetState()`; without scripts every drawer simply stays open."
+              "The mode and drawers are remembered in `localStorage` (`whimsy-machine.cabinet.v1`), validated by `parseCabinetState()`; without scripts every drawer simply stays open."
             ]
           },
           "why": "Fifteen panels of esoteric machinery at once overwhelmed newcomers and keyboard and screen-reader users alike. Discovery lets the depth arrive as the visitor plays, and the whole cabinet keeps everything one switch away (D-037).",
@@ -710,7 +710,7 @@
             {"label": "A test-only genre in Inform 7 alone", "target": "tests/seventh-genre.test.mjs"},
             {"label": "Architecture Record D-033", "target": "docs/DECISIONS.md"}
           ],
-          "related": ["kapellmeister-genre-console", "tonnetz-spine", "euler-consonance-sieve", "esoteric-fun-machine"]
+          "related": ["kapellmeister-genre-console", "tonnetz-spine", "euler-consonance-sieve", "whimsy-machine-accompanist"]
         },
         {
           "id": "antique-parlor-acoustics",
@@ -737,7 +737,7 @@
           "related": ["kapellmeister-genre-console", "deterministic-wav-export", "tonnetz-spine"]
         },
         {
-          "id": "esoteric-fun-machine",
+          "id": "whimsy-machine-accompanist",
           "title": "The Whimsy Machine One-Finger Accompanist",
           "summary": "Hold one key and a synth pad plays a swell, arpeggio, or progression while Casio arranger buttons trigger 1-pass intro, bridge, or outro sections in the band's rhythm while the band follows your chord.",
           "tags": ["accompanist", "keyboard", "pad", "arpeggio", "fun-machine"],
@@ -791,7 +791,7 @@
             {"label": "INTERCAL conductor tests", "target": "tests/oracle.test.mjs"},
             {"label": "Architecture Records D-028, D-030, D-031, and D-032", "target": "docs/DECISIONS.md"}
           ],
-          "related": ["esoteric-fun-machine", "kapellmeister-genre-console", "bandstand-console"]
+          "related": ["whimsy-machine-accompanist", "kapellmeister-genre-console", "bandstand-console"]
         }
       ]
     },

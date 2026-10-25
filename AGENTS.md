@@ -1,6 +1,6 @@
-# Edmark's Esoteric Fun Machine
+# The Whimsy Machine
 
-Edmark's Esoteric Fun Machine is a zero-dependency browser toy and play-along synthesizer that turns a short phrase into a deterministic looping audiovisual omen with real-time organ accompaniment. A purpose-built browser interpreter executes the generative score in LOLCODE 1.2 (the *HAI, ORACLE!* spell); Canvas and Web Audio render the score and auto-chord organ without sending data off-device.
+The Whimsy Machine is a zero-dependency browser toy and play-along synthesizer that turns a short phrase into a deterministic looping audiovisual omen with real-time organ accompaniment. A purpose-built browser interpreter executes the generative score in LOLCODE 1.2 (the *HAI, ORACLE!* spell); Canvas and Web Audio render the score and auto-chord organ without sending data off-device.
 
 This is the canonical instruction file for coding agents. `CLAUDE.md` imports it. Project facts belong in the documents linked below.
 
@@ -63,7 +63,7 @@ Never force-push or rewrite shared history.
 
 | Canonical term | Meaning | Avoid confusing with |
 | --- | --- | --- |
-| Edmark's Esoteric Fun Machine | The product | A generic synthesizer or toy |
+| The Whimsy Machine | The product | A generic synthesizer or toy |
 | HAI, ORACLE! | The underlying generative score spell and engine | The overarching product |
 | spell | `src/oracle.lol`, the score-generating program | JavaScript rendering code |
 | score | Validated parameters emitted by the spell | Rendered sound alone |

@@ -106,9 +106,11 @@ _Last updated: 2026-10-25, session 79, on `main`._
    - Generated native platform icons using `@tauri-apps/cli icon`: `icon.ico` (Windows), `icon.icns` (macOS), `icon.png` (512×512 Linux), `128x128.png`, `32x32.png`.
    - Registered Linux desktop application entry `~/.local/share/applications/whimsy-machine.desktop` and icon `~/.local/share/icons/whimsy-machine.png`.
 2. Version Bump to v1.0.0 & Canonical Branding:
-   - Synchronized product branding to "The Whimsy Machine" (`whimsy-machine`, identifier `com.aedmark.whimsy-machine`) across `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and desktop manifests.
+   - Synchronized product branding to "The Whimsy Machine" (`whimsy-machine`, identifier `com.aedmark.whimsy-machine`) across `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, `AGENTS.md`, `README.md`, `LICENSE`, `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, `docs/manual.json`, and desktop manifests.
+   - Cleared legacy PyCharm IDE clutter: purged 8.1 GB of stale `src-tauri/target/` build files via `cargo clean`, added root `.gitignore` rules for desktop build outputs (`src-tauri/target/`, `src-tauri/dist/`, `src-tauri/gen/`), updated `.idea/whimsy-machine.iml` with explicit `<excludeFolder>` paths, and configured `.idea/.name` to display "The Whimsy Machine".
    - Bumped version to `1.0.0` in `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`, `docs/manual.json`.
    - Rebuilt `manual.html` via `python3 tools/manual.py build --output manual.html docs/manual.json`.
+   - Restamped asset version (`tools/stamp_assets.mjs`).
    - Updated `docs/CHANGELOG.md` converting `Unreleased` into `[1.0.0] - 2026-10-25`.
    - Marked Phase 6 roadmap item P6-01 complete in `ROADMAP.md`.
 3. Release Packaging & GitHub Actions CI:

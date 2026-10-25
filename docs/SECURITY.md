@@ -1,6 +1,6 @@
 # Security
 
-Edmark's Esoteric Fun Machine is a local static toy with no accounts, backend, analytics, or secrets. Its only durable data is the session presets a player saves in their own browser (D-026). This narrow surface reduces risk without claiming the project is vulnerability-free.
+The Whimsy Machine is a local static toy with no accounts, backend, analytics, or secrets. Its only durable data is the session presets a player saves in their own browser (D-026). This narrow surface reduces risk without claiming the project is vulnerability-free.
 
 ## Supported versions
 
