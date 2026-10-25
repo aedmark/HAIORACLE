@@ -2900,7 +2900,7 @@ noscript {
   background: rgba(10, 8, 6, 0.76);
   display: grid;
   gap: 0.25rem;
-  font-family: var(--font-mono);
+  font-family: var(--mono-ledger);
   font-variant-numeric: tabular-nums;
 }
 
@@ -2924,7 +2924,7 @@ noscript {
 
 .vm-inspector-headline {
   font-size: 0.68rem;
-  color: var(--ink-muted);
+  color: var(--parchment-deep);
 }
 
 .vm-inspector-registers,
@@ -2952,9 +2952,9 @@ noscript {
 }
 
 .herbarium-empty {
-  font-family: var(--font-mono);
+  font-family: var(--mono-ledger);
   font-size: 0.7rem;
-  color: var(--ink-muted);
+  color: var(--parchment-deep);
   padding: 0.4rem 0;
 }
 
@@ -2992,9 +2992,9 @@ noscript {
 }
 
 .herbarium-card-phrase {
-  font-family: var(--font-mono);
+  font-family: var(--mono-ledger);
   font-size: 0.65rem;
-  color: var(--ink-muted);
+  color: var(--parchment-deep);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3011,8 +3011,9 @@ noscript {
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--brass-dim);
   background: rgba(10, 8, 6, 0.82);
-  font-family: var(--font-mono);
+  font-family: var(--mono-ledger);
   font-size: 0.68rem;
+  color: var(--parchment-deep);
   display: grid;
   gap: 0.25rem;
 }
@@ -3034,7 +3035,7 @@ noscript {
 }
 
 .herbarium-compare-match {
-  color: var(--parchment);
+  color: var(--parchment-light);
 }
 
 /* Custom Rulebook Sandbox ("The Kapellmeister's Manuscript", P5-36, D-071) */
@@ -3060,10 +3061,10 @@ noscript {
 }
 
 .manuscript-title {
-  font-family: var(--font-mono);
+  font-family: var(--mono-ledger);
   font-size: 0.68rem;
   letter-spacing: 0.06em;
-  color: var(--brass);
+  color: var(--brass-bright);
 }
 
 .manuscript-actions {
@@ -3076,22 +3077,29 @@ noscript {
   width: 100%;
   min-height: 10.5rem;
   padding: 0.55rem 0.65rem;
-  border: 1px solid var(--brass-dim);
-  background: rgba(6, 5, 4, 0.92);
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  line-height: 1.45;
+  border: 1px solid var(--brass);
+  background: rgba(14, 11, 9, 0.96);
+  color: var(--parchment-light);
+  caret-color: var(--brass-bright);
+  font-family: var(--mono-ledger);
+  font-size: 0.78rem;
+  line-height: 1.5;
   resize: vertical;
 }
 
+.manuscript-textarea:focus-visible {
+  outline: 2px solid var(--brass-bright);
+  outline-offset: 2px;
+  border-color: var(--brass-bright);
+}
+
 .manuscript-diagnostic {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--parchment);
+  font-family: var(--mono-ledger);
+  font-size: 0.7rem;
+  color: var(--parchment-light);
   padding: 0.25rem 0.4rem;
   border-left: 2px solid var(--brass);
-  background: rgba(184, 146, 73, 0.08);
+  background: rgba(184, 146, 73, 0.12);
 }
 
 .manuscript-diagnostic.is-error {
