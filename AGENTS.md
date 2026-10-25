@@ -121,6 +121,7 @@ Never force-push or rewrite shared history.
 | `tools/check_docs.py` | Documentation consistency checker |
 | `tools/manual.py` | 3x documentation manual validator and builder |
 | `tools/build_desktop.sh` | Builds the standalone desktop application binary with Tauri v2 and Cargo |
+| `tools/stage_tauri_dist.mjs` | Stages static frontend assets into `src-tauri/dist/` for Tauri bundling |
 | `tools/stage_neocities.py` | Stages static deployment bundle for Neocities with .txt fallbacks (D-065) |
 | `tools/freeze_rulebooks.mjs` | One-time freezer for the Kapellmeister rulebook golden fixture (P5-23) |
 | `tools/freeze_variations.mjs` | Freezes sample creatures' varied progressions into `tests/fixtures/variations-golden.json` (D-043) |

@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "identifier": "com.edmark.esoteric-fun-machine",
   "build": {
+    "beforeBuildCommand": "node tools/stage_tauri_dist.mjs",
     "frontendDist": "dist"
   },
   "app": {

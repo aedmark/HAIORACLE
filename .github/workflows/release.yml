@@ -52,6 +52,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libasound2-dev
 
+      - name: Stage frontend assets
+        run: node tools/stage_tauri_dist.mjs
+
       - name: Build and package Tauri application
         uses: tauri-apps/tauri-action@v0
         env:
