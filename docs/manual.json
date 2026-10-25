@@ -3,7 +3,7 @@
   "project": {
     "name": "The Whimsy Machine",
     "short_name": "The Whimsy Machine",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "repository": "https://github.com/aedmark/whimsy-machine"
   },
   "manual": {
@@ -943,9 +943,78 @@
             {"label": "Web MIDI and Audio Sink adapter", "target": "src/midi-io.mjs"},
             {"label": "Studio Deck wiring and event handlers", "target": "src/app.mjs"},
             {"label": "Studio MIDI unit tests", "target": "tests/midi-io.test.mjs"},
-            {"label": "Architecture Record D-061", "target": "docs/DECISIONS.md"}
+            {"label": "Architecture Record D-061", "target": "docs/DECISIONS.md"},
+            {"label": "Architecture Record D-068", "target": "docs/DECISIONS.md"}
           ],
           "related": ["stem-and-midi-export", "session-ledger", "generative-melody-transport"]
+        },
+        {
+          "id": "esoteric-vm-inspector",
+          "title": "Under the Parlor Glass: Live Esoteric VM Step Inspector",
+          "summary": "Exposes real-time virtual-machine registers, tape windows, 2D torus coordinates, prime exponents, and dramatic cues across Plates I–V.",
+          "tags": ["inspector", "esoteric", "malbolge", "brainfuck", "befunge", "piet", "fractran", "shakespeare"],
+          "what": "Each of the five esoteric accompaniment plates in Wing III offers an expandable `INSPECT VM ⌕` loupe (`.vm-inspector`) that displays the exact virtual-machine state of the active step during playback or when any step cell is clicked: Malbolge 10-trit `rotr`/`crazy` words, Brainfuck 6-cell tape windows and `[->+<]` shuttles, Befunge-93 2D torus `(x, y)` coordinates and `/` vs. `\\` mirror deflections, Piet codel transitions and FRACTRAN prime-exponent registers, and Shakespeare Act/Scene `[SPEAKER ➔ ADDRESSEE]` dialogue cues and formant bandpass frequencies.",
+          "how": {
+            "lead": "`src/inspector.mjs` formats pure per-step VM telemetry without mutating interpreter state:",
+            "points": [
+              "`toTernary10()` converts Malbolge integers into 10-trit strings (`0t..........`) alongside `rotr(d)` and `crazy(a, d)` trace summaries.",
+              "`inspectBassStep()`, `inspectHarmonyStep()`, `inspectChimeStep()`, and `inspectChantStep()` format each machine's step snapshot into fixed-field `{ title, primary, secondary, badge }` records.",
+              "Closed inspector panels perform zero DOM updates during playback (`if (!inspectorOpen[id]) return;`), and open panels use `aria-live=\"off\"` and single-line tabular monospace (`white-space: nowrap`) so live step updates never wrap or shift page layout."
+            ]
+          },
+          "why": "Visitors curious about how the five esoteric languages compute each musical step can peer under the parlor glass in real time without compromising playback performance, layout stability, or screen-reader silence (roadmap P5-34, ADR D-069).",
+          "evidence": [
+            {"label": "VM step inspector module", "target": "src/inspector.mjs"},
+            {"label": "Inspector unit tests", "target": "tests/inspector.test.mjs"},
+            {"label": "Architecture Record D-069", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["malbolge-percussion", "brainfuck-bassline", "befunge-organ", "piet-fractran-chimes", "shakespeare-choir"]
+        },
+        {
+          "id": "naturalists-herbarium",
+          "title": "The Naturalist's Herbarium: Curio Gallery & Trait Comparator",
+          "summary": "Bookmarks up to 24 favorite summoned creatures on-device with miniature SVG portraits, one-click re-summoning, and side-by-side trait comparison.",
+          "tags": ["herbarium", "curio", "localstorage", "comparison", "svg"],
+          "what": "The Naturalist's Herbarium (`#herbarium-engine` in Wing IV) lets visitors pin summoned specimens into an on-device curio drawer (`whimsy-machine.herbarium.v1`), view deterministic 48-vertex miniature SVG silhouette portraits, re-summon any pinned specimen in one click, and compare any two pinned specimens side-by-side across 8 canonical anatomical and musical traits.",
+          "how": {
+            "lead": "`src/herbarium.mjs` enforces a strict 16-key validation boundary and deterministic portrait/comparison math:",
+            "points": [
+              "`validateSpecimen()` and `specimenFromScore()` enforce an exact 16-field allowlist, rejecting unknown or prototype keys and out-of-range values with `HerbariumError`.",
+              "`parseHerbariumStore()` drops corrupt entries individually while preserving valid neighbors, and `writeHerbariumStoreTo()` evicts oldest specimens first on `QuotaExceededError`.",
+              "`specimenMiniatureData()` computes a 48-vertex SVG polygon and 3-hue palette from `shapeFamilyRadius()` and `paletteFor()` (`src/vitrine-canvas.mjs`).",
+              "`compareSpecimens()` diffs two specimens across `SPECIMEN`, `PHRASE`, `FOLIO & CLASS`, `PULSE & WAVE`, `SILHOUETTE`, `MELODY MOTIF`, `SPOROPHORE`, and `CHROMATIC HUE`."
+            ]
+          },
+          "why": "Exploring an 83.8-million-specimen phase space rewards a lightweight curio cabinet for bookmarking and comparing favorite creatures alongside full `.fun` session files, while maintaining the strict client-only boundary (roadmap P5-35, ADR D-070).",
+          "evidence": [
+            {"label": "Herbarium boundary, SVG geometry, and comparator", "target": "src/herbarium.mjs"},
+            {"label": "Herbarium unit tests", "target": "tests/herbarium.test.mjs"},
+            {"label": "Architecture Record D-070", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["session-ledger", "silhouette-flux", "client-url-sharing"]
+        },
+        {
+          "id": "kapellmeister-manuscript",
+          "title": "The Kapellmeister's Manuscript: Live Inform 7 Rulebook Sandbox",
+          "summary": "Compiles visitor-authored Inform 7 music-theory rulebooks live in the browser with 1-based manuscript line diagnostics.",
+          "tags": ["inform7", "rulebooks", "kapellmeister", "sandbox", "compiler"],
+          "what": "The Kapellmeister's Manuscript (`#kapellmeister-manuscript` inside `#kapellmeister-engine`) opens a collapsible Inform 7 rulebook editor preloaded with a complete custom genre (`\"celestial_music_box\"` / `\"CELESTIAL MUSIC BOX\"`). Pressing `COMPILE & CONDUCT ✦` compiles the custom Inform 7 source alongside `src/rulebooks.ni`, reports 1-based manuscript line diagnostics on syntax or semantic errors, adds the new genre to the RULEBOOK menu, and immediately re-conducts the ensemble.",
+          "how": {
+            "lead": "`src/manuscript.mjs` wraps `compileRulebooks()` (`src/inform.mjs`) with canonical-genre immutability guards and line-number translation:",
+            "points": [
+              "`compileManuscript(canonicalSource, manuscriptSource)` compiles `${canonicalSource}\\n${manuscriptSource}` through `compileRulebooks()`.",
+              "If `InformError` is thrown, the canonical line count is subtracted so diagnostics point directly to the 1-based line in the manuscript editor (`MANUSCRIPT LINE <n>: ...`).",
+              "Every canonical genre in `src/rulebooks.ni` is checked bit-for-bit after compilation; manuscripts that alter a canonical genre or declare no new genre are refused."
+            ]
+          },
+          "why": "Since all Kapellmeister genres are written in Inform 7 (D-033), exposing the live compiler in the cabinet lets visitors author and audition their own harmonic progressions, bass walks, organ voicings, and overtone tables without touching JavaScript (roadmap P5-36, ADR D-071).",
+          "evidence": [
+            {"label": "Manuscript sandbox compiler", "target": "src/manuscript.mjs"},
+            {"label": "Inform 7 subset compiler", "target": "src/inform.mjs"},
+            {"label": "Manuscript unit tests", "target": "tests/manuscript.test.mjs"},
+            {"label": "Architecture Record D-071", "target": "docs/DECISIONS.md"}
+          ],
+          "related": ["inform-rulebooks", "kapellmeister-genre-console", "tonnetz-spine"]
         }
       ]
     }

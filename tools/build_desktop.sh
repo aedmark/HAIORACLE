@@ -11,9 +11,9 @@ if ! command -v cargo &>/dev/null; then
   exit 1
 fi
 
-VERSION=$(grep -m1 '^version =' ../src-tauri/Cargo.toml | cut -d '"' -f2)
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+VERSION=$(grep -m1 '^version =' src-tauri/Cargo.toml | cut -d '"' -f2)
 
 echo "Building The Whimsy Machine v${VERSION} standalone desktop release..."
 node tools/stage_tauri_dist.mjs

@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0] - 2026-10-25
+
+### Added
+
+- Add 24-PPQ External MIDI Clock & Transport Slave/Master Mode to the Studio Deck (`P5-33`, `D-068`): lock the parlor ensemble to an external DAW or hardware drum machine (`SLAVE TO MIDI IN (24 PPQ)` with 24-tick rolling BPM estimation and 12-tick eighth-note step phase lock) or transmit jitter-free `0xF8` Timing Clock and `0xFA`/`0xFB`/`0xFC` Start/Continue/Stop transport messages (`MASTER CLOCK OUT (24 PPQ)`) via `src/midi-io.mjs` and `src/app.mjs`.
+- Add "Under the Parlor Glass" Live Esoteric VM Step Inspector for Plates I–V in Wing III (`P5-34`, `D-069`): expandable `INSPECT VM ⌕` loupes (`src/inspector.mjs`) reveal real-time Malbolge 10-trit `rotr`/`crazy` words, Brainfuck 6-cell tape windows and `[->+<]` shuttles, Befunge-93 2D torus `(x, y)` coordinates and `/` vs. `\` mirror deflections, Piet codel transitions and FRACTRAN prime-exponent registers $2^{e_2}\cdots 13^{e_{13}}$, and Shakespeare Act/Scene `[SPEAKER ➔ ADDRESSEE]` dialogue cues and $F_1/F_2/F_3$ formant frequencies without layout shift or screen-reader chatter (`aria-live="off"`).
+- Add "The Naturalist's Herbarium" Cabinet Curio Gallery & Trait Comparator (`P5-35`, `D-070`): pin up to 24 favorite summoned creatures on-device (`src/herbarium.mjs`, `#herbarium-engine` in Wing IV) with deterministic 48-vertex miniature SVG portraits, re-summon any pinned specimen in one click, and compare two specimens side-by-side across 8 canonical anatomical and musical traits through a strictly validated storage boundary.
+- Add "The Kapellmeister's Manuscript" Live Inform 7 Custom Rulebook Sandbox (`P5-36`, `D-071`): collapsible Inform 7 rulebook editor (`src/manuscript.mjs`, `#kapellmeister-manuscript`) preloaded with the `"celestial_music_box"` custom genre template; compiles live in the browser via `compileRulebooks()` with 1-based manuscript line diagnostics while guaranteeing canonical genres in `src/rulebooks.ni` remain untouched.
+- Add lightweight GitHub Actions CI verification workflow (`P4-04`, `.github/workflows/ci.yml`): runs the full Node test suite (`220` checks), `tools/check_docs.py`, and `tools/manual.py check docs/manual.json` on every push and pull request.
+
+### Changed
+
+- Modularize host architecture (`P4-03`, `D-067`): extracted the Apparition Vitrine 2D Canvas renderer (`src/vitrine-canvas.mjs`), the 1200×1520 engraved broadsheet PNG renderer (`src/broadsheet.mjs`), and the per-step Web Audio voice schedulers and parlor acoustic buffer synthesizers (`src/schedulers.mjs`) out of `src/app.mjs` with direct unit test coverage (`tests/decomposition.test.mjs`).
+- Add `QuotaExceededError` oldest-entry eviction fallback (`P4-05`, `D-070`): both the Session Ledger (`writePresetStoreTo` in `src/session.mjs`) and the Naturalist's Herbarium (`writeHerbariumStoreTo` in `src/herbarium.mjs`) automatically evict oldest entries when browser `localStorage` quota is tight and fall back cleanly when storage quota is zero.
+
 ## [1.0.0] - 2026-10-25
 
 ### Added
