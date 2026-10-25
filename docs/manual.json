@@ -4,7 +4,7 @@
     "name": "The Whimsy Machine",
     "short_name": "The Whimsy Machine",
     "version": "1.0.0",
-    "repository": "https://github.com/aedmark/HAIORACLE"
+    "repository": "https://github.com/aedmark/whimsy-machine"
   },
   "manual": {
     "title": "{{project.name}} Manual",
