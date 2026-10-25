@@ -15,7 +15,7 @@ import { SLOT_VOICES, SongError, emptySong, validateSong } from "./looper.mjs";
 import { DEFAULT_VOICE_ID } from "./voices.mjs";
 import { MIXER_CHANNEL_IDS } from "./mixer.mjs";
 
-export const SESSION_FORMAT = "edmark-fun-session";
+export const SESSION_FORMAT = "whimsy-session";
 // Version 2 (D-028) replaced the Fun Machine's mode and chord quality with an
 // accompaniment style. Version 1 files still open and are upgraded on read.
 export const SESSION_VERSION = 6;
@@ -25,7 +25,7 @@ export const MAX_PHRASE_LENGTH = 72;
 export const MAX_CELL_CYCLES = 999;
 export const MAX_MUTATION = 9999;
 
-export const PRESET_STORAGE_KEY = "edmark-fun-machine.presets.v1";
+export const PRESET_STORAGE_KEY = "whimsy-machine.presets.v1";
 export const MAX_PRESETS = 24;
 export const MAX_PRESET_NAME_LENGTH = 40;
 

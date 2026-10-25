@@ -1,5 +1,5 @@
 /**
- * Edmark's Esoteric Fun Machine — INTERCAL 1972 Grand Ensemble Conductor
+ * INTERCAL 1972 Grand Ensemble Conductor
  *
  * Implements a purpose-built virtual machine for INTERCAL 1972 (Don Woods &
  * James M. Lyon, Princeton University), serving as the master conductor and

@@ -1,4 +1,4 @@
-"The Kapellmeister's Rulebooks" by Edmark's Esoteric Fun Machine
+"The Kapellmeister's Rulebooks" by The Whimsy Machine
 
 [The music-theory genres of the Kapellmeister console, written in a strict subset of Inform 7 (D-033) and read by src/inform.mjs. Everything a genre decides lives here: its chord colours, its changes, its Fun Machine progressions, how its melody snaps, how its bass walks, how its organ voices chords, and which overtones its chimes ring. The few true algorithms a genre may name (the Tonnetz walk, the Euler sieve, contrary motion, cell choosing, inverted triads) stay in src/conductor.mjs.]
 

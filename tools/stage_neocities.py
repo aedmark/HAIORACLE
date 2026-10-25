@@ -4,7 +4,7 @@
 Copies index.html, styles.css, manual.html, and src/ into dist-neocities/.
 Creates .txt copies of esoteric spell files (oracle.lol.txt, beat.mal.txt, etc.)
 so that free Neocities accounts (which whitelist file extensions) as well as
-Supporter accounts can host Edmark's Esoteric Fun Machine without upload errors.
+Supporter accounts can host The Whimsy Machine without upload errors.
 
 Usage:
     python3 tools/stage_neocities.py

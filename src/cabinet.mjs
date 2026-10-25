@@ -4,7 +4,7 @@
 // any drawer can be opened early. The whole cabinet lays every drawer bare.
 // Pure state only: src/app.mjs adds the drawer chrome and the triggers.
 
-export const CABINET_STORAGE_KEY = "edmark-fun-machine.cabinet.v1";
+export const CABINET_STORAGE_KEY = "whimsy-machine.cabinet.v1";
 export const CABINET_MODES = Object.freeze(["discovery", "cabinet"]);
 
 // In page order. `target` is the element the drawer wraps; `invite` is the

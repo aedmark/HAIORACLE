@@ -68,7 +68,7 @@ test("the remembered cabinet round-trips and anything malformed starts fresh", (
   const text = serializeCabinetState(state);
   assert.deepEqual(parseCabinetState(text), state);
   assert.deepEqual(JSON.parse(text).open, ["kapellmeister", "band"], "stored in page order");
-  assert.equal(CABINET_STORAGE_KEY, "edmark-fun-machine.cabinet.v1");
+  assert.equal(CABINET_STORAGE_KEY, "whimsy-machine.cabinet.v1");
   for (const junk of [null, "", "{", "[]", "42", JSON.stringify({ mode: "cabinet", open: [], seen: [], extra: 1 }),
     JSON.stringify({ mode: "attic", open: [], seen: [] }), JSON.stringify({ mode: "discovery", open: ["attic"], seen: [] }),
     JSON.stringify({ mode: "discovery", open: "mix", seen: [] }), "x".repeat(600)]) {
