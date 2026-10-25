@@ -1520,6 +1520,21 @@ Investigation showed two root causes:
 **Consequences:**
 - Visitors can curate and compare up to 24 favorite specimens on-device through a strictly validated boundary without adding runtime dependencies or network requests.
 
+## D-071 Add "The Kapellmeister's Manuscript" Live Inform 7 Custom Rulebook Sandbox (2026-10-25, status: accepted)
+
+**Context:** Since `D-033` (`P5-23`), all Kapellmeister music-theory genres have been authored in a strict subset of Inform 7 (`src/rulebooks.ni`) and compiled in the browser by `compileRulebooks()` (`src/inform.mjs`). While `tests/seventh-genre.test.mjs` proved that a new genre written purely in Inform 7 compiles alongside the canonical rulebooks and conducts all six esoteric players and the Fun Machine without JavaScript changes, players in the browser had no way to author or experiment with their own Inform 7 genre rulebooks live.
+
+**Decision:**
+1. **Manuscript Compiler & Boundary Guard (`src/manuscript.mjs`):**
+   - Exports `DEFAULT_MANUSCRIPT_SOURCE` (a complete custom genre, `"celestial_music_box"` / `"CELESTIAL MUSIC BOX"` in family `"Custom Manuscripts"`), `MAX_MANUSCRIPT_LENGTH` (`16384`), and `compileManuscript(canonicalSource, manuscriptSource)`.
+   - Compiles `${canonicalSource}\n${manuscriptSource}` via `compileRulebooks()`, translates `InformError` line numbers by subtracting the canonical line count so diagnostics report 1-based manuscript lines (`MANUSCRIPT LINE <n>: ...`), and verifies that every canonical genre in `src/rulebooks.ni` remains bit-for-bit unchanged and at least one new custom genre is declared.
+2. **Collapsible Manuscript Sandbox Drawer (`index.html`, `styles.css`, `src/app.mjs`):**
+   - Added `MANUSCRIPT ✎` (`#kapellmeister-manuscript-toggle`) and `#kapellmeister-manuscript` inside `#kapellmeister-engine` with `#manuscript-source`, `COMPILE & CONDUCT ✦` (`#manuscript-compile-btn`), `RESET TEMPLATE ↺` (`#manuscript-reset-btn`), `CANONICAL ONLY` (`#manuscript-restore-btn`), and `#manuscript-diagnostic`.
+   - Compiling a valid manuscript installs the extended rulebooks, rebuilds the `#kapellmeister-genre` menu (grouping custom genres under their declared family), selects the newly compiled genre, and immediately re-conducts the ensemble and Fun Machine chord labels.
+
+**Consequences:**
+- Visitors can write and test custom Inform 7 music-theory rulebooks live in the browser with line-numbered compiler diagnostics while canonical genres remain protected against mutation.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)

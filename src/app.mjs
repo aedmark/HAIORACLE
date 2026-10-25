@@ -170,6 +170,7 @@ import {
 import { OracleVision, interaction, mulberry32, paletteFor, shapeRadius } from "./vitrine-canvas.mjs";
 import { renderSpecimenBroadsheetCanvas as renderBroadsheetCanvas, wrapCanvasText } from "./broadsheet.mjs";
 import { INSPECTOR_PLATE_IDS, inspectPlateStep } from "./inspector.mjs";
+import { DEFAULT_MANUSCRIPT_SOURCE, compileManuscript } from "./manuscript.mjs";
 import {
   compareSpecimens,
   emptyHerbariumStore,
@@ -389,6 +390,13 @@ const elements = {
   kapellmeisterGenreMotto: document.querySelector("#kapellmeister-genre-motto"),
   kapellmeisterVariation: document.querySelector("#kapellmeister-variation"),
   kapellmeisterAsWritten: document.querySelector("#kapellmeister-as-written"),
+  kapellmeisterManuscriptToggle: document.querySelector("#kapellmeister-manuscript-toggle"),
+  kapellmeisterManuscript: document.querySelector("#kapellmeister-manuscript"),
+  manuscriptSource: document.querySelector("#manuscript-source"),
+  manuscriptCompileBtn: document.querySelector("#manuscript-compile-btn"),
+  manuscriptResetBtn: document.querySelector("#manuscript-reset-btn"),
+  manuscriptRestoreBtn: document.querySelector("#manuscript-restore-btn"),
+  manuscriptDiagnostic: document.querySelector("#manuscript-diagnostic"),
   kapellmeisterGenre: document.querySelector("#kapellmeister-genre"),
   kapellmeisterTelemetry: document.querySelector("#kapellmeister-telemetry"),
   kapellmeisterStrictness: document.querySelector("#kapellmeister-strictness"),
@@ -427,6 +435,7 @@ let pietSource = "";
 let fractranSource = "";
 let chantSource = "";
 let conductorSource = "";
+let canonicalRulebooksSource = "";
 let currentScore = null;
 // The moves this creature made on its genre's changes (D-043), for the readout,
 // and whether it may make them: AS WRITTEN plays the rulebook's own changes.
@@ -5076,6 +5085,83 @@ elements.kapellmeisterStrictness?.addEventListener("input", (e) => {
   updateChantGrid();
 });
 
+// --- The Kapellmeister's Manuscript live Inform 7 sandbox (P5-36, D-071) ---
+
+function setManuscriptDiagnostic(text, isError = false) {
+  if (elements.manuscriptDiagnostic) {
+    elements.manuscriptDiagnostic.value = text;
+    elements.manuscriptDiagnostic.classList.toggle("is-error", isError);
+  }
+  elements.status.textContent = text;
+}
+
+if (elements.manuscriptSource && !elements.manuscriptSource.value) {
+  elements.manuscriptSource.value = DEFAULT_MANUSCRIPT_SOURCE;
+}
+
+elements.kapellmeisterManuscriptToggle?.addEventListener("click", () => {
+  if (!elements.kapellmeisterManuscript) return;
+  const open = elements.kapellmeisterManuscript.hidden;
+  elements.kapellmeisterManuscript.hidden = !open;
+  elements.kapellmeisterManuscriptToggle.setAttribute("aria-expanded", String(open));
+  elements.kapellmeisterManuscriptToggle.classList.toggle("is-active", open);
+});
+
+elements.manuscriptCompileBtn?.addEventListener("click", () => {
+  const source = elements.manuscriptSource?.value ?? "";
+  const result = compileManuscript(canonicalRulebooksSource, source);
+  if (!result.ok) {
+    setManuscriptDiagnostic(result.diagnostic, true);
+    return;
+  }
+  installRulebooks(result.rulebooks);
+  if (currentScore) {
+    installCreatureBook(buildCreatureBook(currentScore, compiledRulebooks()));
+  }
+  activeGenre = result.primaryCode;
+  buildGenreMenu();
+  updateKapellmeisterUI();
+  applyEnsembleConductor();
+  updateBeatGrid();
+  updateBassGrid();
+  updateHarmonyGrid();
+  updateChimeGrid();
+  updateChantGrid();
+  updateFunKeyboardChordLabels();
+  updateArrangementDisplay(currentTransport?.audibleStep ?? null);
+  unlockDrawer("change");
+  setManuscriptDiagnostic(result.diagnostic, false);
+});
+
+elements.manuscriptResetBtn?.addEventListener("click", () => {
+  if (elements.manuscriptSource) {
+    elements.manuscriptSource.value = DEFAULT_MANUSCRIPT_SOURCE;
+  }
+  setManuscriptDiagnostic("MANUSCRIPT TEMPLATE RESTORED · PRESS COMPILE & CONDUCT TO INSTALL", false);
+});
+
+elements.manuscriptRestoreBtn?.addEventListener("click", () => {
+  if (!canonicalRulebooksSource) return;
+  installRulebooks(compileRulebooks(canonicalRulebooksSource));
+  if (currentScore) {
+    installCreatureBook(buildCreatureBook(currentScore, compiledRulebooks()));
+  }
+  if (activeGenre !== CREATURE_GENRE && !genreCodes().includes(activeGenre)) {
+    activeGenre = CREATURE_GENRE;
+  }
+  buildGenreMenu();
+  updateKapellmeisterUI();
+  applyEnsembleConductor();
+  updateBeatGrid();
+  updateBassGrid();
+  updateHarmonyGrid();
+  updateChimeGrid();
+  updateChantGrid();
+  updateFunKeyboardChordLabels();
+  updateArrangementDisplay(currentTransport?.audibleStep ?? null);
+  setManuscriptDiagnostic("CANONICAL RULEBOOKS RESTORED · CUSTOM MANUSCRIPTS UNLOADED", false);
+});
+
 function funStatusText() {
   return `ONE-FINGER ACCOMPANIST · ${STYLE_LABELS[funMachineStyle]}`;
 }
@@ -5448,6 +5534,7 @@ try {
   ]);
   // The Kapellmeister's genres live in Inform 7 (D-033). Nothing that reads a
   // genre (the conductor, the Fun Machine, saved presets) runs before this.
+  canonicalRulebooksSource = rulebooksSource;
   installRulebooks(compileRulebooks(rulebooksSource));
   // A fresh creature plays the rulebook it writes for itself (D-043).
   activeGenre = CREATURE_GENRE;

@@ -143,6 +143,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 | Session file | user-chosen `.fun` file, at most 64 KB | `parseSession()` allowlist, types, ranges, enums; a v5 song through `validateSong()` (keys 0–12, three styles, a voice per slot, 16 loops × 4 takes × 12 steps, 32 passes); v4 songs open with every slot in VELVET PAD; v6 adds `varied` (AS WRITTEN), and v1–v5 open as written | rejected whole on the first bad field; never repaired |
 | Stored presets | `localStorage` value on this origin | `parsePresetStore()` revalidates each preset on read | invalid entries dropped individually; storage errors degrade to files only |
 | Stored herbarium specimens | `localStorage` value on this origin (`whimsy-machine.herbarium.v1`) | `parseHerbariumStore()` and `validateSpecimen()` in `src/herbarium.mjs` | exact 16-key allowlist and range checks; corrupt entries dropped individually; `QuotaExceededError` evicts oldest specimens first (D-070) |
+| Custom Inform 7 manuscript | user-controlled text in `#manuscript-source` (at most 16 KB) | `compileManuscript()` in `src/manuscript.mjs` (`compileRulebooks()`) | fails closed with 1-based manuscript line diagnostics; refuses manuscripts that alter canonical genres or add no new genre (D-071) |
 | Stored cabinet | `localStorage` value on this origin | `parseCabinetState()` exact-key allowlist | anything malformed starts discovery fresh |
 | Browser capabilities | Canvas and Web Audio APIs | feature use at runtime | a failure surfaces as status text and console detail |
 

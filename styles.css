@@ -3037,6 +3037,68 @@ noscript {
   color: var(--parchment);
 }
 
+/* Custom Rulebook Sandbox ("The Kapellmeister's Manuscript", P5-36, D-071) */
+.kapellmeister-manuscript {
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--brass-dim);
+  background: rgba(10, 8, 6, 0.85);
+  display: grid;
+  gap: 0.45rem;
+}
+
+.kapellmeister-manuscript[hidden] {
+  display: none !important;
+}
+
+.manuscript-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.manuscript-title {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--brass);
+}
+
+.manuscript-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.manuscript-textarea {
+  width: 100%;
+  min-height: 10.5rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--brass-dim);
+  background: rgba(6, 5, 4, 0.92);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.manuscript-diagnostic {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--parchment);
+  padding: 0.25rem 0.4rem;
+  border-left: 2px solid var(--brass);
+  background: rgba(184, 146, 73, 0.08);
+}
+
+.manuscript-diagnostic.is-error {
+  border-left-color: #d96b52;
+  color: #f3b5a4;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
