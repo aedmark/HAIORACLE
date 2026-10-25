@@ -486,9 +486,20 @@
             <button class="beat-button" id="beat-mutate" type="button" disabled>
               RE-INCANT BEAT <span aria-hidden="true">☍</span>
             </button>
+            <button class="beat-button inspector-toggle" id="beat-inspect-toggle" type="button" aria-expanded="false" aria-controls="beat-inspector">
+              INSPECT VM <span aria-hidden="true">⌕</span>
+            </button>
           </div>
         </div>
         <div class="beat-grid" id="beat-grid" role="group" aria-label="Malbolge 12-step ternary beat matrix"></div>
+        <div class="vm-inspector" id="beat-inspector" hidden aria-live="off">
+          <div class="vm-inspector-row">
+            <span class="vm-inspector-label">UNDER THE PARLOR GLASS · MALBOLGE 1998</span>
+            <span class="vm-inspector-headline" id="beat-inspector-headline">MALBOLGE VM STANDBY</span>
+          </div>
+          <code class="vm-inspector-registers" id="beat-inspector-registers">A=0t0000000000 · ROTR=-- · CRAZY=--</code>
+          <code class="vm-inspector-detail" id="beat-inspector-detail">TRITS [000] · KICK=0 SNARE=0 HAT=0</code>
+        </div>
       </section>
 
       <section class="beat-engine bass-engine" id="bass-engine" aria-labelledby="bass-heading">
@@ -507,9 +518,20 @@
             <button class="beat-button" id="bass-mutate" type="button" disabled>
               SHIFT TAPE <span aria-hidden="true">⇄</span>
             </button>
+            <button class="beat-button inspector-toggle" id="bass-inspect-toggle" type="button" aria-expanded="false" aria-controls="bass-inspector">
+              INSPECT VM <span aria-hidden="true">⌕</span>
+            </button>
           </div>
         </div>
         <div class="beat-grid bass-grid" id="bass-grid" role="group" aria-label="Brainfuck 12-cell walking bass tape"></div>
+        <div class="vm-inspector" id="bass-inspector" hidden aria-live="off">
+          <div class="vm-inspector-row">
+            <span class="vm-inspector-label">UNDER THE PARLOR GLASS · BRAINFUCK 1993</span>
+            <span class="vm-inspector-headline" id="bass-inspector-headline">BRAINFUCK VM STANDBY</span>
+          </div>
+          <code class="vm-inspector-registers" id="bass-inspector-registers">PTR=*00 [0x00] · SHUTTLE [-&gt;+&lt;]</code>
+          <code class="vm-inspector-detail" id="bass-inspector-detail">NOTE=REST · GATE=0 · INT=+0st</code>
+        </div>
       </section>
 
       <section class="beat-engine harmony-engine" id="harmony-engine" aria-labelledby="harmony-heading">
@@ -528,9 +550,20 @@
             <button class="beat-button" id="harmony-mutate" type="button" disabled>
               DEFLECT MIRRORS <span aria-hidden="true">⤢</span>
             </button>
+            <button class="beat-button inspector-toggle" id="harmony-inspect-toggle" type="button" aria-expanded="false" aria-controls="harmony-inspector">
+              INSPECT VM <span aria-hidden="true">⌕</span>
+            </button>
           </div>
         </div>
         <div class="beat-grid harmony-grid" id="harmony-grid" role="group" aria-label="Befunge-93 12-step 2D mirror chord matrix"></div>
+        <div class="vm-inspector" id="harmony-inspector" hidden aria-live="off">
+          <div class="vm-inspector-row">
+            <span class="vm-inspector-label">UNDER THE PARLOR GLASS · BEFUNGE-93</span>
+            <span class="vm-inspector-headline" id="harmony-inspector-headline">BEFUNGE-93 VM STANDBY</span>
+          </div>
+          <code class="vm-inspector-registers" id="harmony-inspector-registers">IP=(0,0) DIR=→ · MIRROR '/' · STACK=0x00</code>
+          <code class="vm-inspector-detail" id="harmony-inspector-detail">CHORD=REST · TRIAD=[0, 7, 12]st</code>
+        </div>
       </section>
 
       <section class="beat-engine chime-engine" id="chime-engine" aria-labelledby="chime-heading">
@@ -549,9 +582,20 @@
             <button class="beat-button" id="chime-mutate" type="button" disabled>
               REFRACT CODELS <span aria-hidden="true">◈</span>
             </button>
+            <button class="beat-button inspector-toggle" id="chime-inspect-toggle" type="button" aria-expanded="false" aria-controls="chime-inspector">
+              INSPECT VM <span aria-hidden="true">⌕</span>
+            </button>
           </div>
         </div>
         <div class="beat-grid chime-grid" id="chime-grid" role="group" aria-label="Piet and FRACTRAN 12-step prime-ratio chime matrix"></div>
+        <div class="vm-inspector" id="chime-inspector" hidden aria-live="off">
+          <div class="vm-inspector-row">
+            <span class="vm-inspector-label">UNDER THE PARLOR GLASS · PIET &amp; FRACTRAN</span>
+            <span class="vm-inspector-headline" id="chime-inspector-headline">PIET &amp; FRACTRAN VM STANDBY</span>
+          </div>
+          <code class="vm-inspector-registers" id="chime-inspector-registers">PIET CODEL=LC · FRACTRAN=35/6 ➔ 2⁰3⁰5¹7¹</code>
+          <code class="vm-inspector-detail" id="chime-inspector-detail">JI RATIO=1/1 · GATE=0</code>
+        </div>
       </section>
 
       <section class="beat-engine chant-engine" id="chant-engine" aria-labelledby="chant-heading">
@@ -570,9 +614,20 @@
             <button class="beat-button" id="chant-mutate" type="button" disabled>
               RECAST FOLIO <span aria-hidden="true">✧</span>
             </button>
+            <button class="beat-button inspector-toggle" id="chant-inspect-toggle" type="button" aria-expanded="false" aria-controls="chant-inspector">
+              INSPECT VM <span aria-hidden="true">⌕</span>
+            </button>
           </div>
         </div>
         <div class="beat-grid chant-grid" id="chant-grid" role="group" aria-label="Shakespeare 12-scene formant vowel choir matrix"></div>
+        <div class="vm-inspector" id="chant-inspector" hidden aria-live="off">
+          <div class="vm-inspector-row">
+            <span class="vm-inspector-label">UNDER THE PARLOR GLASS · SHAKESPEARE 2001</span>
+            <span class="vm-inspector-headline" id="chant-inspector-headline">SHAKESPEARE VM STANDBY</span>
+          </div>
+          <code class="vm-inspector-registers" id="chant-inspector-registers">ACT I · SCENE I · [HAMLET ➔ OPHELIA]</code>
+          <code class="vm-inspector-detail" id="chant-inspector-detail">VOWEL=/ɑ/ · FORMANTS F1=730Hz F2=1090Hz F3=2440Hz</code>
+        </div>
       </section>
     </section>
 
@@ -766,10 +821,10 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "f8c6ed5acb84";
+      const ASSET_VERSION = "d2f5bc708247";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
-        "ensemble.mjs", "fractran.mjs", "inform.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
+        "ensemble.mjs", "fractran.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
         "malbolge.mjs", "midi-io.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "mycelium.mjs", "schedulers.mjs", "score.mjs",
         "session.mjs", "shakespeare.mjs", "share.mjs", "transport.mjs", "variation.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
       ];

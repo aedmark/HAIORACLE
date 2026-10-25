@@ -2892,6 +2892,56 @@ noscript {
   }
 }
 
+/* Under the Parlor Glass: Interactive Esoteric VM Step Inspector (P5-34, D-069) */
+.vm-inspector {
+  margin-top: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--brass-dim);
+  background: rgba(10, 8, 6, 0.76);
+  display: grid;
+  gap: 0.25rem;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.vm-inspector[hidden] {
+  display: none !important;
+}
+
+.vm-inspector-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.vm-inspector-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--brass);
+}
+
+.vm-inspector-headline {
+  font-size: 0.68rem;
+  color: var(--ink-muted);
+}
+
+.vm-inspector-registers,
+.vm-inspector-detail {
+  display: block;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: var(--parchment);
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.inspector-toggle[aria-expanded="true"] {
+  border-color: var(--brass-bright);
+  background: rgba(184, 146, 73, 0.2);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

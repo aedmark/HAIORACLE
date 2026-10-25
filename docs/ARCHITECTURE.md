@@ -13,6 +13,7 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | Apparition Vitrine Canvas | `src/vitrine-canvas.mjs` | `OracleVision`, `paletteFor()`, `shapeRadius()`, `buildMycelialNetwork()` | `#vision` 2D Canvas, gesture physics (`interaction`), `src/app.mjs` (D-067) |
 | Specimen broadsheet engraver | `src/broadsheet.mjs` | `renderSpecimenBroadsheetCanvas()`, `wrapCanvasText()` | PNG export (`#export-png`) in `src/app.mjs` (D-067) |
 | Ensemble voice schedulers | `src/schedulers.mjs` | `scheduleNote()`, `scheduleBeatStep()`, `scheduleBassStep()`, `scheduleHarmonyStep()`, `scheduleChimeStep()`, `scheduleChantStep()`, `scheduleFungalBioStep()`, `scheduleClockworkTick()`, `ensureParlorImpulseResponse()`, `ensureWaxCrackleBuffer()` | live and offline step scheduling in `src/app.mjs` (D-067) |
+| Esoteric VM inspector | `src/inspector.mjs` | `inspectPlateStep()`, `inspectBeatStep()`, `inspectBassStep()`, `inspectHarmonyStep()`, `inspectChimeStep()`, `inspectChantStep()`, `toTernary10()` | expandable "Under the Parlor Glass" VM step loupes on Plates I–V in `src/app.mjs` (P5-34, D-069) |
 | Phrase and score boundary | `src/score.mjs` | `composeScore()` | interpreter |
 | Share and PNG boundary | `src/share.mjs` | `encodeOmenHash()`, `decodeOmenHash()`, `specimenFilenameFor()` | browser URL fragment and PNG download |
 | Melody grammar | `src/music.mjs` | `melodyFor()` | validated score, browser host |

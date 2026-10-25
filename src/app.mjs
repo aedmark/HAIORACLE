@@ -169,6 +169,7 @@ import {
 } from "./cabinet.mjs";
 import { OracleVision, interaction, mulberry32, paletteFor, shapeRadius } from "./vitrine-canvas.mjs";
 import { renderSpecimenBroadsheetCanvas as renderBroadsheetCanvas, wrapCanvasText } from "./broadsheet.mjs";
+import { INSPECTOR_PLATE_IDS, inspectPlateStep } from "./inspector.mjs";
 import {
   LEAD_DUCK_GAIN,
   ensureNoiseBuffer,
@@ -1019,6 +1020,60 @@ function highlightBeatStep(stepIndex) {
       elements.funMachineTelemetry.textContent = `${funKeyLabel(activeHeldFunKey)} · ${STYLE_LABELS[activeFunPerformance.style]} · STEP @${String(normalized + 1).padStart(2, "0")} · ${chordText(stepInfo.chord)} · THE BAND FOLLOWS`;
     }
   }
+  updateAllPlateInspectors(normalized >= 0 ? normalized : 0);
+}
+
+// --- Under the Parlor Glass: Interactive Esoteric VM Step Inspector (P5-34) -
+
+const inspectorOpen = {
+  beat: false,
+  bass: false,
+  harmony: false,
+  chime: false,
+  chant: false,
+};
+
+function plateCurrentState(id) {
+  switch (id) {
+    case "beat": return currentBeat;
+    case "bass": return currentBass;
+    case "harmony": return currentHarmony;
+    case "chime": return currentChimes;
+    case "chant": return currentChant;
+    default: return null;
+  }
+}
+
+function updatePlateInspector(id, stepIndex = activeBeatStep >= 0 ? activeBeatStep : 0) {
+  if (!inspectorOpen[id]) return;
+  const info = inspectPlateStep(id, plateCurrentState(id), stepIndex);
+  const headlineEl = document.querySelector(`#${id}-inspector-headline`);
+  const registersEl = document.querySelector(`#${id}-inspector-registers`);
+  const detailEl = document.querySelector(`#${id}-inspector-detail`);
+  if (headlineEl) headlineEl.textContent = info.headline;
+  if (registersEl) registersEl.textContent = info.registers;
+  if (detailEl) detailEl.textContent = info.detail;
+}
+
+function updateAllPlateInspectors(stepIndex = activeBeatStep >= 0 ? activeBeatStep : 0) {
+  for (const id of INSPECTOR_PLATE_IDS) {
+    updatePlateInspector(id, stepIndex);
+  }
+}
+
+for (const id of INSPECTOR_PLATE_IDS) {
+  const toggleBtn = document.querySelector(`#${id}-inspect-toggle`);
+  const panelEl = document.querySelector(`#${id}-inspector`);
+  toggleBtn?.addEventListener("click", () => {
+    const nextOpen = !inspectorOpen[id];
+    inspectorOpen[id] = nextOpen;
+    toggleBtn.setAttribute("aria-expanded", String(nextOpen));
+    toggleBtn.innerHTML = nextOpen
+      ? 'HIDE VM <span aria-hidden="true">⌕</span>'
+      : 'INSPECT VM <span aria-hidden="true">⌕</span>';
+    if (panelEl) panelEl.hidden = !nextOpen;
+    if (nextOpen) updatePlateInspector(id);
+  });
 }
 
 // --- Plate state shared by cell edits, mutations, and sessions (P5-20) -----
@@ -1161,6 +1216,7 @@ function renderBeatGrid() {
       cyclePlateCell("beat", index);
       applyEnsembleConductor();
       updateBeatGrid();
+      updatePlateInspector("beat", index);
       if (audioContext && currentTransport && currentScore && !muted) {
         scheduleBeatStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.18);
       }
@@ -1216,6 +1272,7 @@ function renderBassGrid() {
       if (!currentBass || !currentScore) return;
       cyclePlateCell("bass", index);
       applyEnsembleConductor();
+      updatePlateInspector("bass", index);
       if (audioContext && currentTransport && !muted) {
         scheduleBassStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.24);
       }
@@ -1272,6 +1329,7 @@ function renderHarmonyGrid() {
       if (!currentHarmony || !currentScore) return;
       cyclePlateCell("harmony", index);
       applyEnsembleConductor();
+      updatePlateInspector("harmony", index);
       if (audioContext && currentTransport && !muted) {
         scheduleHarmonyStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.28);
       }
@@ -1344,6 +1402,7 @@ function renderChimeGrid() {
       if (!currentChimes || !currentScore) return;
       cyclePlateCell("chime", index);
       applyEnsembleConductor();
+      updatePlateInspector("chime", index);
       if (audioContext && currentTransport && !muted) {
         scheduleChimeStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.3);
       }
@@ -1408,6 +1467,7 @@ function renderChantGrid() {
       if (!currentChant || !currentScore) return;
       cyclePlateCell("chant", index);
       applyEnsembleConductor();
+      updatePlateInspector("chant", index);
       if (audioContext && currentTransport && !muted) {
         scheduleChantStep(audioContext, currentTransport, currentScore, index, audioContext.currentTime + 0.01, 0.32);
       }

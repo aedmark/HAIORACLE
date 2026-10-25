@@ -1486,6 +1486,24 @@ Investigation showed two root causes:
 - The Whimsy Machine can lock tightly as a 24-PPQ slave to an external DAW/hardware clock or drive external hardware/DAW synths as a 24-PPQ master clock.
 - Pure synchronization math (`createMidiClockSlave`, `computeMasterClockWindow`) is verified in Node unit tests (`tests/midi-io.test.mjs`) without requiring hardware MIDI devices.
 
+## D-069 Add "Under the Parlor Glass" Live Esoteric VM Step Inspector for Plates I–V (2026-10-25, status: accepted)
+
+**Context:** Wing III (`THE BAND`) runs five genuine esoteric virtual machines (`src/beat.mal` in Malbolge 1998, `src/bass.bf` in Brainfuck 1993, `src/harmony.bfg` in Befunge-93, `src/pad.piet` + `src/chimes.frac` in Piet 2001 & FRACTRAN 1987, and `src/chant.spl` in Shakespeare Programming Language 2001). While each plate displays a 12-step grid and a summary telemetry badge, players curious about how the esoteric languages actually compute each step could not inspect the live VM registers, tape pointers, 2D torus coordinates, prime-exponent registers, or dramatic cues as the loop played.
+
+**Decision:**
+1. **Pure Inspector Module (`src/inspector.mjs`):** Created a zero-dependency formatting module exporting `toTernary10`, `inspectBeatStep`, `inspectBassStep`, `inspectHarmonyStep`, `inspectChimeStep`, `inspectChantStep`, and `inspectPlateStep`.
+   - **Plate I (Malbolge):** Formats the 10-trit word (`0t..........`), `rotr(d)`, and `crazy(a, d)` ternary operations alongside the `kick`/`snare`/`hat` trits.
+   - **Plate II (Brainfuck):** Formats the active pointer `*00..*11`, byte hex/decimal value, `[->+<]` transfer shuttle, and a 6-cell tape window ribbon.
+   - **Plate III (Befunge-93):** Formats the 2D torus instruction pointer `(x, y)`, direction vector (`↗`, `↙`, `↘`, `↖`), `/` vs. `\` mirror deflection count, stack top byte, and 3-voice triad semitones.
+   - **Plate IV (Piet & FRACTRAN):** Formats the visited Piet codel code and name (`LC · LIGHT CYAN`), transition byte, FRACTRAN multiplier fraction (`num/den`), prime-exponent state $2^{e_2}\cdot 3^{e_3}\cdot 5^{e_5}\cdot 7^{e_7}\cdot 11^{e_{11}}\cdot 13^{e_{13}}$, and Just Intonation ratio.
+   - **Plate V (Shakespeare):** Formats the Act, Scene, `[SPEAKER ➔ ADDRESSEE]` dialogue cue, voice classification, vibrato rate, vowel IPA, and $F_1 / F_2 / F_3$ formant bandpass frequencies.
+2. **Zero-Layout-Shift Expandable Loupes (`index.html`, `styles.css`, `src/app.mjs`):**
+   - Added an `INSPECT VM ⌕` button (`aria-expanded`, `aria-controls`) and a collapsible `.vm-inspector` panel (`hidden`, `aria-live="off"`) to each of Plates I–V.
+   - Closed inspectors perform zero DOM updates during playback (`if (!inspectorOpen[id]) return;`), and open inspectors use single-line tabular monospace (`white-space: nowrap; font-variant-numeric: tabular-nums`) so live step updates never wrap or shift page layout.
+
+**Consequences:**
+- Visitors can peer "under the parlor glass" on any accompaniment plate to watch live esoteric VM state step-by-step or on cell click without affecting playback performance or screen-reader silence (`D-037`).
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)
