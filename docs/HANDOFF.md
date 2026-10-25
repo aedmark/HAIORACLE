@@ -10,16 +10,16 @@ _Last updated: 2026-10-25, session 79, on `main`._
 - D-045–D-055: armed downbeat sync, 1-loop count-in, tracker ribbons, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk, fungal appendages, metric closure (D-050), volume surge elimination (D-051), looper sync & Casio sections (D-052), audio sweep audit (D-053), 4-pass breathing sections (D-054), section loops (+ INTRO/BRIDGE/OUTRO, D-055).
 - D-056–D-065: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion (P5-32 complete: D-061 Web MIDI & Audio Sink, D-062 Clean DAW MIDI Export, D-063 Consonant Pad Voicing, D-064 Tauri v2 Desktop Packaging); Neocities Static Web Release (D-065, Q-001 answered, P4-02 verified).
 - D-066: Official v1.0.0 Release, Cross-Platform Application Icon & Multi-Platform Desktop Builds (Linux, Windows, macOS; P6-01 complete).
-- D-067: Module decomposition of `src/app.mjs` into `src/vitrine-canvas.mjs`, `src/broadsheet.mjs`, and `src/schedulers.mjs` (P4-03 complete), plus roadmap expansion (`P4-04`, `P4-05`, `P5-33`–`P5-36`).
-- Next: Deploy staged bundle (`dist-neocities/`) to Neocities and tag release, or tackle P4-04 / P4-05 / P5-33–P5-36.
+- D-067: Module decomposition of `src/app.mjs` into `src/vitrine-canvas.mjs`, `src/broadsheet.mjs`, and `src/schedulers.mjs` (P4-03 complete), lightweight GitHub Actions CI check workflow (`.github/workflows/ci.yml`, P4-04 complete), plus roadmap expansion (`P4-05`, `P5-33`–`P5-36`).
+- Next: Deploy staged bundle (`dist-neocities/`) to Neocities and tag release, or tackle P4-05 / P5-33–P5-36.
 
-**Where things stand:** P1, P2, P3, P4 (P4-01, P4-02, P4-03 verified), P5-01 through P5-32, and P6-01 are fully implemented, verified, and complete. Semantic version bumped to 1.0.0. The application is available as a zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and as an official multi-platform desktop release (Linux .deb, .rpm, .AppImage, portable .tar.gz; Windows .msi, .exe; macOS .dmg) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066), equipped with a bespoke Victorian parlor icon across all operating systems.
+**Where things stand:** P1, P2, P3, P4 (P4-01, P4-02, P4-03, P4-04 verified), P5-01 through P5-32, and P6-01 are fully implemented, verified, and complete. Semantic version bumped to 1.0.0. The application is available as a zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and as an official multi-platform desktop release (Linux .deb, .rpm, .AppImage, portable .tar.gz; Windows .msi, .exe; macOS .dmg) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066), equipped with a bespoke Victorian parlor icon across all operating systems.
 
 **Verified** (2026-10-25, session 79, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **201/201 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **202/202 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 36 entries, 0 errors, 0 warnings** |
 

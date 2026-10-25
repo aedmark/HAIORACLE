@@ -696,3 +696,12 @@ test("the urn holds an expansive spectrum of at least 60 distinct slips", async 
     assert.ok(slip.length > 5, "slips must be substantial text phrases");
   }
 });
+
+test("GitHub Actions CI workflow runs the full automated test, documentation, and manual checks (P4-04)", async () => {
+  const ci = await readFile(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8");
+  assert.match(ci, /push:/);
+  assert.match(ci, /pull_request:/);
+  assert.match(ci, /node --test tests\/\*\.test\.mjs/);
+  assert.match(ci, /python3 tools\/check_docs\.py/);
+  assert.match(ci, /python3 tools\/manual\.py check docs\/manual\.json/);
+});

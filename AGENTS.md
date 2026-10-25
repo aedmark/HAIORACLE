@@ -115,6 +115,7 @@ Never force-push or rewrite shared history.
 | `src/schedulers.mjs` | Per-step Web Audio voice schedulers, vitrine percussion, and parlor acoustic buffers (D-067) |
 | `src/app.mjs` | Browser controls, DOM wiring, session orchestration, and transport loop |
 | `src-tauri/` | Isolated Tauri v2 desktop wrapper and native application packaging (D-064) |
+| `.github/workflows/ci.yml` | Lightweight GitHub Actions CI verification workflow (P4-04) |
 | `.github/workflows/release.yml` | Multi-platform GitHub Actions release workflow for Linux, Windows, and macOS (D-066) |
 | `manual.html` | Standalone explorable 3x technical manual |
 | `docs/manual.json` | 3x documentation scheme manual source of truth |
