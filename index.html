@@ -787,6 +787,36 @@
           </div>
         </div>
       </section>
+
+      <section class="beat-engine herbarium-engine" id="herbarium-engine" aria-labelledby="herbarium-heading">
+        <div class="beat-header">
+          <div class="beat-identity">
+            <p class="reading-label">THE NATURALIST'S HERBARIUM · CABINET CURIO GALLERY</p>
+            <div class="beat-title-row">
+              <h3 id="herbarium-heading">PIN, SUMMON &amp; COMPARE SPECIMENS</h3>
+              <span class="beat-telemetry" id="herbarium-telemetry" role="status">PINNED IN THIS BROWSER · VALIDATED SPECIMEN FOLIO</span>
+            </div>
+          </div>
+        </div>
+        <div class="session-body herbarium-body">
+          <div class="session-field">
+            <span class="session-files-label" id="herbarium-pin-label">CURRENT VITRINE SPECIMEN</span>
+            <div class="session-row">
+              <button class="beat-button" id="herbarium-pin-btn" type="button" disabled>PIN CURRENT SPECIMEN <span aria-hidden="true">❖</span></button>
+            </div>
+          </div>
+          <div class="herbarium-cards" id="herbarium-cards" role="list" aria-label="Pinned herbarium specimens"></div>
+          <div class="session-field" role="group" aria-labelledby="herbarium-compare-label">
+            <span class="session-files-label" id="herbarium-compare-label">SIDE-BY-SIDE TRAIT COMPARISON</span>
+            <div class="session-row">
+              <select id="herbarium-compare-left" class="kapellmeister-select" aria-label="First specimen to compare"></select>
+              <select id="herbarium-compare-right" class="kapellmeister-select" aria-label="Second specimen to compare"></select>
+              <button class="beat-button" id="herbarium-compare-btn" type="button" disabled>COMPARE TRAITS <span aria-hidden="true">⚖</span></button>
+            </div>
+          </div>
+          <div class="herbarium-comparison" id="herbarium-comparison" hidden aria-live="off"></div>
+        </div>
+      </section>
     </section>
 
     <footer>
@@ -821,10 +851,10 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "d2f5bc708247";
+      const ASSET_VERSION = "37eba5627a2c";
       const MODULES = [
         "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
-        "ensemble.mjs", "fractran.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
+        "ensemble.mjs", "fractran.mjs", "herbarium.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
         "malbolge.mjs", "midi-io.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "mycelium.mjs", "schedulers.mjs", "score.mjs",
         "session.mjs", "shakespeare.mjs", "share.mjs", "transport.mjs", "variation.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
       ];

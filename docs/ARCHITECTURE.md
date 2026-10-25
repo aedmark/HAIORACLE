@@ -142,6 +142,7 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 | Spell output | line array | `parseScore()` allowlist, type, uniqueness, and ranges | no repair or best-effort coercion |
 | Session file | user-chosen `.fun` file, at most 64 KB | `parseSession()` allowlist, types, ranges, enums; a v5 song through `validateSong()` (keys 0–12, three styles, a voice per slot, 16 loops × 4 takes × 12 steps, 32 passes); v4 songs open with every slot in VELVET PAD; v6 adds `varied` (AS WRITTEN), and v1–v5 open as written | rejected whole on the first bad field; never repaired |
 | Stored presets | `localStorage` value on this origin | `parsePresetStore()` revalidates each preset on read | invalid entries dropped individually; storage errors degrade to files only |
+| Stored herbarium specimens | `localStorage` value on this origin (`whimsy-machine.herbarium.v1`) | `parseHerbariumStore()` and `validateSpecimen()` in `src/herbarium.mjs` | exact 16-key allowlist and range checks; corrupt entries dropped individually; `QuotaExceededError` evicts oldest specimens first (D-070) |
 | Stored cabinet | `localStorage` value on this origin | `parseCabinetState()` exact-key allowlist | anything malformed starts discovery fresh |
 | Browser capabilities | Canvas and Web Audio APIs | feature use at runtime | a failure surfaces as status text and console detail |
 
@@ -160,6 +161,7 @@ The visual system uses locally installed old-style and transitional book serifs 
 | Mixer settings | browser memory | `updateMixer()` | RESET CONSOLE, reload, or tab close | no |
 | Transport state and cursor | browser memory | `runTransportCommand()` | stop, summon, reload, or tab close | no |
 | Session presets | `localStorage` key `whimsy-machine.presets.v1` | SAVE PRESET | DELETE, or clearing site data | no |
+| Herbarium specimens | `localStorage` key `whimsy-machine.herbarium.v1` | PIN CURRENT SPECIMEN | UNPIN, or clearing site data | no |
 | Cabinet mode and drawers | `localStorage` key `whimsy-machine.cabinet.v1` | opening or closing drawers, the cabinet switch | clearing site data | no |
 | Static HTTP cache | browser-managed, keyed by `?v=<ASSET_VERSION>` URLs (D-035) | browser | a new stamp, or browser controls | no |
 

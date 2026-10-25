@@ -114,6 +114,7 @@ Never force-push or rewrite shared history.
 | `src/broadsheet.mjs` | 1200×1520 engraved specimen broadsheet PNG Canvas renderer (D-067) |
 | `src/schedulers.mjs` | Per-step Web Audio voice schedulers, vitrine percussion, and parlor acoustic buffers (D-067) |
 | `src/inspector.mjs` | "Under the Parlor Glass" live esoteric VM step inspector for Plates I–V in Wing III (P5-34, D-069) |
+| `src/herbarium.mjs` | "The Naturalist's Herbarium" on-device curio gallery, miniature SVG portrait geometry, and side-by-side trait comparator (P5-35, D-070) |
 | `src/app.mjs` | Browser controls, DOM wiring, session orchestration, and transport loop |
 | `src-tauri/` | Isolated Tauri v2 desktop wrapper and native application packaging (D-064) |
 | `.github/workflows/ci.yml` | Lightweight GitHub Actions CI verification workflow (P4-04) |

@@ -171,6 +171,16 @@ import { OracleVision, interaction, mulberry32, paletteFor, shapeRadius } from "
 import { renderSpecimenBroadsheetCanvas as renderBroadsheetCanvas, wrapCanvasText } from "./broadsheet.mjs";
 import { INSPECTOR_PLATE_IDS, inspectPlateStep } from "./inspector.mjs";
 import {
+  compareSpecimens,
+  emptyHerbariumStore,
+  isSpecimenPinned,
+  pinSpecimen,
+  readHerbariumStoreFrom,
+  specimenMiniatureData,
+  unpinSpecimen,
+  writeHerbariumStoreTo,
+} from "./herbarium.mjs";
+import {
   LEAD_DUCK_GAIN,
   ensureNoiseBuffer,
   ensureParlorImpulseResponse,
@@ -316,6 +326,13 @@ const elements = {
   sessionSaveFile: document.querySelector("#session-save-file"),
   sessionOpenFile: document.querySelector("#session-open-file"),
   sessionFileInput: document.querySelector("#session-file-input"),
+  herbariumTelemetry: document.querySelector("#herbarium-telemetry"),
+  herbariumPinBtn: document.querySelector("#herbarium-pin-btn"),
+  herbariumCards: document.querySelector("#herbarium-cards"),
+  herbariumCompareLeft: document.querySelector("#herbarium-compare-left"),
+  herbariumCompareRight: document.querySelector("#herbarium-compare-right"),
+  herbariumCompareBtn: document.querySelector("#herbarium-compare-btn"),
+  herbariumComparison: document.querySelector("#herbarium-comparison"),
   studioTelemetry: document.querySelector("#studio-telemetry"),
   midiInSelect: document.querySelector("#midi-in-select"),
   midiInChannelSelect: document.querySelector("#midi-in-channel-select"),
@@ -2381,6 +2398,8 @@ function showScore(score) {
   elements.replay.disabled = false;
   syncTransportUI();
   syncSessionButtons();
+  syncHerbariumButtons();
+  renderHerbarium();
   if (elements.shareLink) elements.shareLink.disabled = false;
   if (elements.exportPng) elements.exportPng.disabled = false;
   if (elements.exportWav) elements.exportWav.disabled = false;
@@ -3801,6 +3820,247 @@ elements.sessionFileInput?.addEventListener("change", async () => {
 
 syncSessionButtons();
 
+// --- The Naturalist's Herbarium curio gallery (P5-35, D-070) ----------------
+
+function readHerbariumStore() {
+  try {
+    return readHerbariumStoreFrom(window.localStorage);
+  } catch {
+    return emptyHerbariumStore();
+  }
+}
+
+function writeHerbariumStore(store) {
+  try {
+    return writeHerbariumStoreTo(window.localStorage, store);
+  } catch {
+    return false;
+  }
+}
+
+function setHerbariumTelemetry(text) {
+  if (elements.herbariumTelemetry) elements.herbariumTelemetry.textContent = text;
+  elements.status.textContent = text;
+}
+
+function syncHerbariumButtons() {
+  const ready = Boolean(currentScore);
+  const store = readHerbariumStore();
+  const pinned = ready && isSpecimenPinned(store, currentScore);
+  if (elements.herbariumPinBtn) {
+    elements.herbariumPinBtn.disabled = !ready;
+    elements.herbariumPinBtn.textContent = pinned ? "SPECIMEN PINNED IN HERBARIUM ✦" : "PIN CURRENT SPECIMEN ✦";
+  }
+}
+
+function createHerbariumMiniatureSvg(specimen) {
+  const mini = specimenMiniatureData(specimen, 56);
+  const svgNS = elements.compassReg0?.ownerSVGElement?.namespaceURI;
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${mini.size} ${mini.size}`);
+  svg.setAttribute("class", "herbarium-miniature");
+  svg.setAttribute("aria-hidden", "true");
+
+  const ring = document.createElementNS(svgNS, "circle");
+  ring.setAttribute("cx", String(mini.center));
+  ring.setAttribute("cy", String(mini.center));
+  ring.setAttribute("r", String(mini.size * 0.44));
+  ring.setAttribute("fill", "none");
+  ring.setAttribute("stroke", mini.palette.accentColor);
+  ring.setAttribute("stroke-opacity", "0.35");
+  ring.setAttribute("stroke-width", "1");
+
+  const poly = document.createElementNS(svgNS, "polygon");
+  poly.setAttribute("points", mini.points);
+  poly.setAttribute("fill", mini.palette.coreColor);
+  poly.setAttribute("fill-opacity", "0.42");
+  poly.setAttribute("stroke", mini.palette.highlightColor);
+  poly.setAttribute("stroke-width", "1.4");
+
+  const pupil = document.createElementNS(svgNS, "circle");
+  pupil.setAttribute("cx", String(mini.center));
+  pupil.setAttribute("cy", String(mini.center));
+  pupil.setAttribute("r", "2.6");
+  pupil.setAttribute("fill", mini.palette.highlightColor);
+
+  svg.append(ring, poly, pupil);
+  return svg;
+}
+
+function renderHerbarium() {
+  const store = readHerbariumStore();
+  const { specimens } = store;
+  if (elements.herbariumTelemetry) {
+    elements.herbariumTelemetry.textContent = `${specimens.length} SPECIMEN${specimens.length === 1 ? "" : "S"} PINNED · VALIDATED CURIO DRAWER`;
+  }
+  if (elements.herbariumCards) {
+    elements.herbariumCards.replaceChildren();
+    if (!specimens.length) {
+      const empty = document.createElement("p");
+      empty.className = "looper-empty herbarium-empty";
+      empty.textContent = "NO SPECIMENS PINNED YET · SUMMON AN OMEN AND PIN IT TO YOUR HERBARIUM";
+      elements.herbariumCards.append(empty);
+    } else {
+      for (const spec of specimens) {
+        const card = document.createElement("div");
+        card.className = "herbarium-card";
+        card.setAttribute("role", "listitem");
+        card.dataset.seed = String(spec.seed);
+        if (currentScore && (currentScore.seed === spec.seed || currentScore.phrase === spec.phrase)) {
+          card.classList.add("is-active");
+        }
+
+        const svg = createHerbariumMiniatureSvg(spec);
+
+        const body = document.createElement("div");
+        body.className = "herbarium-card-body";
+        const nameEl = document.createElement("p");
+        nameEl.className = "herbarium-card-name";
+        nameEl.textContent = spec.name;
+        const phraseEl = document.createElement("p");
+        phraseEl.className = "herbarium-card-phrase";
+        phraseEl.textContent = `"${spec.phrase}"`;
+        const metaEl = document.createElement("p");
+        metaEl.className = "herbarium-card-meta";
+        metaEl.textContent = `${spec.folioId} · ${spec.shapeName} · ${spec.pulse} BPM · ${WAVEFORMS[spec.wave] || "SINE"}`;
+        body.append(nameEl, phraseEl, metaEl);
+
+        const actions = document.createElement("div");
+        actions.className = "herbarium-card-actions";
+        const summonBtn = document.createElement("button");
+        summonBtn.type = "button";
+        summonBtn.className = "herbarium-card-btn";
+        summonBtn.textContent = "SUMMON";
+        summonBtn.addEventListener("click", () => {
+          elements.phrase.value = spec.phrase;
+          summon(spec.phrase);
+        });
+        const unpinBtn = document.createElement("button");
+        unpinBtn.type = "button";
+        unpinBtn.className = "herbarium-card-btn";
+        unpinBtn.textContent = "UNPIN";
+        unpinBtn.addEventListener("click", () => {
+          const next = unpinSpecimen(readHerbariumStore(), spec.seed);
+          writeHerbariumStore(next);
+          renderHerbarium();
+          syncHerbariumButtons();
+          setHerbariumTelemetry(`SPECIMEN UNPINNED · ${spec.name}`);
+        });
+        actions.append(summonBtn, unpinBtn);
+
+        card.append(svg, body, actions);
+        elements.herbariumCards.append(card);
+      }
+    }
+  }
+
+  for (const [idx, select] of [elements.herbariumCompareLeft, elements.herbariumCompareRight].entries()) {
+    if (!select) continue;
+    const prevValue = select.value;
+    select.replaceChildren();
+    if (specimens.length < 2) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = `— SPECIMEN ${idx === 0 ? "A" : "B"} —`;
+      select.append(opt);
+      select.disabled = true;
+    } else {
+      for (const spec of specimens) {
+        const opt = document.createElement("option");
+        opt.value = String(spec.seed);
+        opt.textContent = `${spec.name} (${spec.folioId})`;
+        select.append(opt);
+      }
+      select.disabled = false;
+      if (prevValue && specimens.some((s) => String(s.seed) === prevValue)) {
+        select.value = prevValue;
+      } else {
+        select.value = String(specimens[idx]?.seed ?? specimens[0].seed);
+      }
+    }
+  }
+  if (elements.herbariumCompareBtn) {
+    elements.herbariumCompareBtn.disabled = specimens.length < 2;
+  }
+  if (specimens.length < 2 && elements.herbariumComparison) {
+    elements.herbariumComparison.hidden = true;
+    elements.herbariumComparison.replaceChildren();
+  }
+}
+
+function renderHerbariumComparison() {
+  if (!elements.herbariumComparison) return;
+  const store = readHerbariumStore();
+  const leftSeed = Number(elements.herbariumCompareLeft?.value);
+  const rightSeed = Number(elements.herbariumCompareRight?.value);
+  const left = store.specimens.find((s) => s.seed === leftSeed);
+  const right = store.specimens.find((s) => s.seed === rightSeed);
+  if (!left || !right) {
+    elements.herbariumComparison.hidden = true;
+    return;
+  }
+  const report = compareSpecimens(left, right);
+  elements.herbariumComparison.replaceChildren();
+
+  const summary = document.createElement("p");
+  summary.className = "herbarium-compare-summary";
+  summary.textContent = `${left.name} vs. ${right.name} · ${report.summary}`;
+  elements.herbariumComparison.append(summary);
+
+  for (const row of report.rows) {
+    const rowEl = document.createElement("div");
+    rowEl.className = `herbarium-compare-row${row.match ? " is-match" : ""}`;
+    const leftCell = document.createElement("span");
+    leftCell.className = "herbarium-compare-val is-left";
+    leftCell.textContent = row.leftValue;
+    const labelCell = document.createElement("span");
+    labelCell.className = "herbarium-compare-label";
+    labelCell.textContent = `${row.label} (${row.delta})`;
+    const rightCell = document.createElement("span");
+    rightCell.className = "herbarium-compare-val is-right";
+    rightCell.textContent = row.rightValue;
+    rowEl.append(leftCell, labelCell, rightCell);
+    elements.herbariumComparison.append(rowEl);
+  }
+  elements.herbariumComparison.hidden = false;
+}
+
+elements.herbariumPinBtn?.addEventListener("click", () => {
+  if (!currentScore) return;
+  try {
+    const store = pinSpecimen(readHerbariumStore(), currentScore, new Date().toISOString());
+    if (!writeHerbariumStore(store)) {
+      setHerbariumTelemetry("BROWSER STORAGE UNAVAILABLE · CANNOT PIN SPECIMEN");
+      return;
+    }
+    unlockDrawer("change");
+    renderHerbarium();
+    syncHerbariumButtons();
+    setHerbariumTelemetry(`SPECIMEN PINNED TO HERBARIUM · ${currentScore.name}`);
+  } catch {
+    setHerbariumTelemetry("SPECIMEN REJECTED BY HERBARIUM BOUNDARY");
+  }
+});
+
+elements.herbariumCompareBtn?.addEventListener("click", () => {
+  renderHerbariumComparison();
+});
+
+elements.herbariumCompareLeft?.addEventListener("change", () => {
+  if (elements.herbariumComparison && !elements.herbariumComparison.hidden) {
+    renderHerbariumComparison();
+  }
+});
+
+elements.herbariumCompareRight?.addEventListener("change", () => {
+  if (elements.herbariumComparison && !elements.herbariumComparison.hidden) {
+    renderHerbariumComparison();
+  }
+});
+
+renderHerbarium();
+syncHerbariumButtons();
+
 // ---------------------------------------------------------------------------
 // Discovery and the whole cabinet (D-037). Each drawer target keeps its own
 // markup and ids; at load its contents move into a drawer body behind a bar
@@ -5196,6 +5456,8 @@ try {
   updateFunKeyboardChordLabels();
   renderPresetList();
   syncSessionButtons();
+  renderHerbarium();
+  syncHerbariumButtons();
   refreshAudioOutputDevices();
   if (typeof navigator !== "undefined" && navigator.mediaDevices && typeof navigator.mediaDevices.addEventListener === "function") {
     navigator.mediaDevices.addEventListener("devicechange", () => refreshAudioOutputDevices());

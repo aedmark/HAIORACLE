@@ -2942,6 +2942,101 @@ noscript {
   background: rgba(184, 146, 73, 0.2);
 }
 
+/* The Naturalist's Herbarium: Cabinet Curio Gallery (P5-35, D-070) */
+.herbarium-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.6rem;
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.herbarium-empty {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-muted);
+  padding: 0.4rem 0;
+}
+
+.herbarium-card {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--brass-dim);
+  background: rgba(12, 9, 7, 0.78);
+}
+
+.herbarium-miniature {
+  width: 3.2rem;
+  height: 3.2rem;
+  border: 1px solid var(--brass-dim);
+  background: radial-gradient(circle, rgba(28, 22, 16, 0.9), rgba(8, 6, 4, 0.98));
+  display: block;
+}
+
+.herbarium-card-meta {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.herbarium-card-name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--parchment);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.herbarium-card-phrase {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.herbarium-card-actions {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.herbarium-comparison {
+  margin-top: 0.4rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--brass-dim);
+  background: rgba(10, 8, 6, 0.82);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.herbarium-comparison[hidden] {
+  display: none !important;
+}
+
+.herbarium-compare-row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr 1fr;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+  border-bottom: 1px solid rgba(184, 146, 73, 0.16);
+}
+
+.herbarium-compare-trait {
+  color: var(--brass);
+}
+
+.herbarium-compare-match {
+  color: var(--parchment);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

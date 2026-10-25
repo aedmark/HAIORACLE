@@ -1504,6 +1504,22 @@ Investigation showed two root causes:
 **Consequences:**
 - Visitors can peer "under the parlor glass" on any accompaniment plate to watch live esoteric VM state step-by-step or on cell click without affecting playback performance or screen-reader silence (`D-037`).
 
+## D-070 Add "The Naturalist's Herbarium" On-Device Curio Gallery and Trait Comparator (2026-10-25, status: accepted)
+
+**Context:** While the Session Ledger (`src/session.mjs`, `D-026`) saves full workstation configurations (loops, mixer faders, plate mutations, and rulebooks), visitors exploring the 83.8-million-specimen phase space of `src/oracle.lol` had no lightweight curio cabinet to pin favorite summoned creatures with miniature visual portraits, recall them in one click, or compare two specimens' anatomical and musical traits side-by-side.
+
+**Decision:**
+1. **Validated Herbarium Module (`src/herbarium.mjs`):**
+   - Stores up to `MAX_HERBARIUM_SPECIMENS` (`24`) pinned specimens under `whimsy-machine.herbarium.v1` (`HERBARIUM_STORAGE_KEY`).
+   - Enforces a strict 16-field allowlist (`validateSpecimen` with `HerbariumError`) rejecting unknown or prototype keys and out-of-range integers/strings; `parseHerbariumStore()` drops individual corrupt entries while preserving valid neighbors, and `writeHerbariumStoreTo()` evicts oldest specimens on `QuotaExceededError`.
+   - Computes deterministic 48-vertex SVG silhouette polygons and 3-hue palettes (`specimenMiniatureData`) via `shapeFamilyRadius` and `paletteFor` from `src/vitrine-canvas.mjs`.
+   - Compares two specimens across 8 canonical traits (`SPECIMEN`, `PHRASE`, `FOLIO & CLASS`, `PULSE & WAVE`, `SILHOUETTE`, `MELODY MOTIF`, `SPOROPHORE`, `CHROMATIC HUE`) via `compareSpecimens()`, reporting per-trait match status (`SHARED` vs. `DIVERGENT`) and a shared-trait count summary.
+2. **Keep Wing Curio Drawer (`#herbarium-engine` in `index.html`, `styles.css`, `src/app.mjs`):**
+   - Renders pinned specimen cards with miniature SVG portraits, `SUMMON` (one-click re-summon) and `UNPIN` buttons, and a side-by-sideSpecimen A vs. Specimen B trait comparator.
+
+**Consequences:**
+- Visitors can curate and compare up to 24 favorite specimens on-device through a strictly validated boundary without adding runtime dependencies or network requests.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)
