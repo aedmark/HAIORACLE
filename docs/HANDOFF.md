@@ -108,7 +108,7 @@ _Last updated: 2026-10-24, session 77, on `main`._
    - Package identifier `com.edmark.esoteric-fun-machine`, title "Edmark's Esoteric Fun Machine".
    - `frontendDist: "dist"` staged automatically by `build.rs` from root web assets (`index.html`, `styles.css`, `manual.html`, `src/`), completely self-contained with no dev server or localhost dependency.
    - Default window dimensions 1200×900 (minimum 380×600), fully resizable.
-   - Built against standard system WebKitGTK 4.1.
+   - Built against standard system WebKitGTK 4.1 with `tauri-plugin-midi` (bridging WebKitGTK to system ALSA/PipeWire via `midir` and polyfilling `navigator.requestMIDIAccess`).
 3. Build Script (`tools/build_desktop.sh`):
    - Created standalone build script compiling `src-tauri/target/release/esoteric-fun-machine` (11 MB standalone executable).
 4. Documentation & Roadmap:

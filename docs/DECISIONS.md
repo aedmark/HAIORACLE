@@ -1406,6 +1406,7 @@ Investigation showed two root causes:
      - Window size: $1200 \times 900$ (min $380 \times 600$), resizable.
      - Frontend dist: `"dist"` (staged from root web assets `index.html`, `styles.css`, `manual.html`, and `src/` via `build.rs`, completely self-contained with no dev server or localhost dependency).
      - Security: CSP null for local offline origin.
+     - Linux Web MIDI bridge: WebKitGTK lacks native Web MIDI; `src-tauri` registers `tauri-plugin-midi` (ALSA/PipeWire via `midir`), automatically polyfilling `navigator.requestMIDIAccess` inside the webview so the web MIDI adapter connects to system hardware and virtual ports seamlessly.
 2. **Build Tooling (`tools/build_desktop.sh`):**
    - Added automated release build script that compiles an optimized 11 MB standalone desktop executable (`src-tauri/target/release/esoteric-fun-machine`).
    - Links against standard system `webkit2gtk-4.1` and `gtk+-3.0`.
