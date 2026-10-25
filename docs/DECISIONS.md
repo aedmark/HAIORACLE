@@ -1454,6 +1454,20 @@ Investigation showed two root causes:
 - The Whimsy Machine has a cohesive visual brand and application icon across all major desktop environments.
 - Official v1.0.0 release builds are automated and repeatable across Linux, Windows, and macOS.
 
+## D-067 Decompose `src/app.mjs` into focused rendering, broadsheet, and scheduler modules (2026-10-25, status: accepted)
+
+**Context:** By v1.0.0, `src/app.mjs` had grown to 8,440 lines (~296 KB), combining DOM element lookups and event listeners, the entire 2D Canvas rendering engine (`OracleVision`, 10 silhouette families, 8 kinetic cores, 8 cellular appendages, 8 fruiting body archetypes, ballistospores, pedestal, condensation, and gesture physics), the 1200×1520 PNG broadsheet engraver, and all Web Audio per-step voice schedulers and parlor acoustic buffer generators. Because `src/app.mjs` executes top-level `document.querySelector` calls at import time, none of its internal math, geometry, or scheduling functions could be imported directly by Node unit tests.
+
+**Decision:**
+1. **Extract `src/vitrine-canvas.mjs` (2,387 lines):** Houses `interaction`, `mulberry32`, `wrapHue`, `paletteFor`, `shapeFamilyRadius`, `shapeRadius`, `fluxOffset`, `traceBody`, `projectedTesseract`, `drawKineticCore`, `appendagePlacement`, `drawCellularAppendage`, `buildMycelialNetwork`, `buildFruitingBodies`, `buildSporeSystem`, `drawMycelium`, `drawFruitingBodies`, `stepInteraction`, `buildGlassCondensation`, `drawVitrinePedestal`, `drawGlassCondensation`, and `OracleVision`. Pure geometry and procedural builders are exported and directly testable in Node without a browser DOM.
+2. **Extract `src/broadsheet.mjs` (253 lines):** Houses `wrapCanvasText` and `renderSpecimenBroadsheetCanvas`, parameterized with `{ doc, sourceCanvas, currentBeat, currentBass, currentHarmony, currentChimes, currentChant }`.
+3. **Extract `src/schedulers.mjs` (923 lines):** Houses `LEAD_DUCK_GAIN`, `midiToFrequency`, `harmonicField`, `voiceStack`, `ensureNoiseBuffer`, `ensureWaxCrackleBuffer`, `ensureParlorImpulseResponse`, `triggerPercussion`, `triggerSporePuff`, `scheduleClockworkTick`, `scheduleNote`, `scheduleBeatStep`, `scheduleBassStep`, `scheduleHarmonyStep`, `scheduleChimeStep`, `scheduleChantStep`, and `scheduleFungalBioStep`. Fun Machine voice wrappers (`schedulePadChord`, `releaseFunPads`, `scheduleArpNote`, `scheduleFunLeadNote`) remain in `src/app.mjs` alongside `funPadHandles` and `voicePatch()`.
+4. **Preserve Cache Boundary (D-035):** Added `broadsheet.mjs`, `schedulers.mjs`, and `vitrine-canvas.mjs` to `MODULES` in `index.html` and restamped `ASSET_VERSION`.
+
+**Consequences:**
+- `src/app.mjs` drops from 8,440 lines to 5,056 lines (~40% reduction) and focuses on DOM wiring, session state, looper UI, and transport orchestration.
+- Canvas geometry builders, broadsheet layout, and all seven Web Audio voice schedulers are now directly unit-tested in Node (`tests/decomposition.test.mjs`).
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)

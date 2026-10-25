@@ -190,6 +190,73 @@ export function setLoopRole(song, loopIndex, role) {
   return freezeSong(loops);
 }
 
+/**
+ * Updates the Fun Machine voice on section loops (intro, bridge, outro) and
+ * on the newest layer of the selected loop so choosing a new voice chip
+ * updates recorded sections as well as live playback.
+ */
+export function setSectionVoices(song, voice, selectedLoopIndex = null) {
+  if (!song || !Array.isArray(song.loops) || !SLOT_VOICES.includes(voice)) return song;
+  let songChanged = false;
+  const loops = song.loops.map((loop, loopIndex) => {
+    const role = loop.role ?? DEFAULT_LOOP_ROLE;
+    const isSection = role === "intro" || role === "bridge" || role === "outro";
+    const isSelected = loopIndex === selectedLoopIndex;
+    if (!isSection && !isSelected) return loop;
+    const topLayerIndex = loop.layers.length - 1;
+    let loopChanged = false;
+    const layers = loop.layers.map((take, layerIndex) => {
+      if (!isSection && layerIndex !== topLayerIndex) return take;
+      let takeChanged = false;
+      const nextTake = take.map((slot) => {
+        if (!slot || slot.voice === voice) return slot;
+        takeChanged = true;
+        return makeSlot(slot.key, slot.style, voice);
+      });
+      if (!takeChanged) return take;
+      loopChanged = true;
+      songChanged = true;
+      return Object.freeze(nextTake);
+    });
+    return loopChanged ? freezeLoop(loop.repeats, layers, loop.role) : loop;
+  });
+  return songChanged ? freezeSong(loops) : song;
+}
+
+/**
+ * Transposes section loops (intro, bridge, outro) when a new creature is
+ * summoned so recorded sections follow the new creature's tonic root.
+ */
+export function transposeSectionLoops(song, oldRoot, newRoot) {
+  if (!song || !Array.isArray(song.loops)) return song;
+  const oldPc = ((Math.trunc(oldRoot) % 12) + 12) % 12;
+  const newPc = ((Math.trunc(newRoot) % 12) + 12) % 12;
+  const delta = ((newPc - oldPc) % 12 + 12) % 12;
+  if (delta === 0) return song;
+  let songChanged = false;
+  const loops = song.loops.map((loop) => {
+    const role = loop.role ?? DEFAULT_LOOP_ROLE;
+    if (role !== "intro" && role !== "bridge" && role !== "outro") return loop;
+    let loopChanged = false;
+    const layers = loop.layers.map((take) => {
+      let takeChanged = false;
+      const nextTake = take.map((slot) => {
+        if (!slot) return null;
+        const nextKey = ((slot.key + delta) % 12 + 12) % 12;
+        if (nextKey === slot.key) return slot;
+        takeChanged = true;
+        return makeSlot(nextKey, slot.style, slot.voice);
+      });
+      if (!takeChanged) return take;
+      loopChanged = true;
+      songChanged = true;
+      return Object.freeze(nextTake);
+    });
+    return loopChanged ? freezeLoop(loop.repeats, layers, loop.role) : loop;
+  });
+  return songChanged ? freezeSong(loops) : song;
+}
+
 /** A valid selected loop after an edit: the same index if it exists, else the last loop, else null. */
 export function clampSelection(song, index) {
   if (!song.loops.length) return null;

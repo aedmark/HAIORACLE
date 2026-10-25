@@ -31,9 +31,11 @@ import {
   setLoopRole,
   setLoopSlot,
   setRepeats,
+  setSectionVoices,
   slotsAt,
   songPasses,
   songPosition,
+  transposeSectionLoops,
   undoLayer,
   validateSong,
 } from "../src/looper.mjs";
@@ -467,6 +469,34 @@ test("raw instrumentation 48-step groove loops validate and walk harmonic passes
   // Empty takes on non-main roles (e.g. intro) are still rejected
   const badIntroSong = { loops: [{ role: "intro", repeats: 1, layers: [emptyTake()] }] };
   assert.throws(() => validateSong(badIntroSong), (err) => err instanceof SongError && err.path === "song.loops[0].layers[0]");
+});
+
+test("setSectionVoices and transposeSectionLoops update recorded section instrumentation and key", () => {
+  let song = emptySong();
+  const introSlot = makeSlot(0, "intro", "velvet_pad");
+  const bridgeSlot = makeSlot(0, "bridge", "velvet_pad");
+  const outroSlot = makeSlot(0, "outro", "velvet_pad");
+  song = insertSection(song, "intro", Array.from({ length: 4 }, () => Array(LOOP_STEPS).fill(introSlot)));
+  song = appendLoop(song, take(4, [0, 1], "progression"), "main");
+  song = overdubLayer(song, 4, [makeSlot(7, "swell", "music_box"), ...Array(11).fill(null)]);
+  song = insertSection(song, "bridge", Array.from({ length: 4 }, () => Array(LOOP_STEPS).fill(bridgeSlot)));
+  song = insertSection(song, "outro", Array.from({ length: 4 }, () => Array(LOOP_STEPS).fill(outroSlot)));
+
+  // Selecting a new voice updates all intro, bridge, and outro loops, plus the selected loop's top layer
+  const revoiced = setSectionVoices(song, "harmonium", 4);
+  assert.equal(revoiced.loops[0].layers[0][0].voice, "harmonium", "intro voice updated");
+  assert.equal(revoiced.loops[3].layers[0][11].voice, "harmonium", "all intro passes updated");
+  assert.equal(revoiced.loops[4].layers[0][0].voice, "velvet_pad", "older main layer preserved");
+  assert.equal(revoiced.loops[4].layers[1][0].voice, "harmonium", "selected main loop top layer updated");
+  assert.equal(revoiced.loops[5].layers[0][0].voice, "harmonium", "bridge voice updated");
+  assert.equal(revoiced.loops[9].layers[0][0].voice, "harmonium", "outro voice updated");
+
+  // Summoning a new creature transposes section loops to the new tonic root while preserving main loops
+  const transposed = transposeSectionLoops(revoiced, 48, 55); // C (0) -> G (7)
+  assert.equal(transposed.loops[0].layers[0][0].key, 7, "intro transposed to G");
+  assert.equal(transposed.loops[4].layers[0][0].key, 4, "manual main loop key untouched");
+  assert.equal(transposed.loops[5].layers[0][0].key, 7, "bridge transposed to G");
+  assert.equal(transposed.loops[9].layers[0][0].key, 7, "outro transposed to G");
 });
 
 

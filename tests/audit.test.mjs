@@ -482,7 +482,7 @@ test("Audit Dimension 4: Web Audio graph bus connectivity, filter isolation, and
 });
 
 test("Audit Dimension 6: Apparition Vitrine silhouette radius clamping and procedural mycelium", async () => {
-  const appSource = await readFile(new URL("src/app.mjs", root), "utf8");
+  const appSource = await readFile(new URL("src/vitrine-canvas.mjs", root), "utf8");
 
   // Invariant: silhouette radius clamping to [0.38, 1.08]
   assert.match(
@@ -709,7 +709,11 @@ test("Audit Dimension 9: Metric closure, tempo pocketing, and harmonic clash eli
 });
 
 test("Audit Dimension 10: Race conditions, audio param ramps, and acoustic conflict audit", async () => {
-  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  const [appOnly, schedulersOnly] = await Promise.all([
+    readFile(new URL("src/app.mjs", root), "utf8"),
+    readFile(new URL("src/schedulers.mjs", root), "utf8"),
+  ]);
+  const app = `${appOnly}\n${schedulersOnly}`;
 
   // 1. Looper real-time take preservation (no dropped steps during look-ahead boundary)
   assert.match(app, /currentTransport\.activeTakeLanding = \{/, "records pending take landing state when lookahead finishes step 11");

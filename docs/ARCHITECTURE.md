@@ -10,6 +10,9 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 | --- | --- | --- | --- |
 | Page shell | `index.html`, `styles.css`: vitrine and calling slip, read-only reading strip, then the Perform, Mix, Band, and Keep wings (D-027) | document load | browser host |
 | Browser host | `src/app.mjs` | form submission | score compiler, Canvas, Web Audio, share/PNG export |
+| Apparition Vitrine Canvas | `src/vitrine-canvas.mjs` | `OracleVision`, `paletteFor()`, `shapeRadius()`, `buildMycelialNetwork()` | `#vision` 2D Canvas, gesture physics (`interaction`), `src/app.mjs` (D-067) |
+| Specimen broadsheet engraver | `src/broadsheet.mjs` | `renderSpecimenBroadsheetCanvas()`, `wrapCanvasText()` | PNG export (`#export-png`) in `src/app.mjs` (D-067) |
+| Ensemble voice schedulers | `src/schedulers.mjs` | `scheduleNote()`, `scheduleBeatStep()`, `scheduleBassStep()`, `scheduleHarmonyStep()`, `scheduleChimeStep()`, `scheduleChantStep()`, `scheduleFungalBioStep()`, `scheduleClockworkTick()`, `ensureParlorImpulseResponse()`, `ensureWaxCrackleBuffer()` | live and offline step scheduling in `src/app.mjs` (D-067) |
 | Phrase and score boundary | `src/score.mjs` | `composeScore()` | interpreter |
 | Share and PNG boundary | `src/share.mjs` | `encodeOmenHash()`, `decodeOmenHash()`, `specimenFilenameFor()` | browser URL fragment and PNG download |
 | Melody grammar | `src/music.mjs` | `melodyFor()` | validated score, browser host |

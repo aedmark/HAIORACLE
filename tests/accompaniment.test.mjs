@@ -100,6 +100,37 @@ test("intro, bridge, and outro section progressions generate from the active rul
   assert.equal(outroPass3.steps[0].leadSteps, 12, "resolved home tonic holds for all 12 steps");
   assert.equal(outroPass3.steps[1].leadPitch, null, "steps 1..11 sustained from step 0");
   assert.equal(outroPass3.steps[11].leadPitch, null);
+
+  // Across all rulebook genres, intro, bridge, and outro produce distinct genre-specific progressions
+  const shapeOf = (perf) => perf.chords.map((c) => `${c.rootPc}:${c.quality}`).join(" -> ");
+  const introShapes = new Set(GENRES.map((g) => shapeOf(buildPerformance(0, "intro", g, 0))));
+  const bridgeShapes = new Set(GENRES.map((g) => shapeOf(buildPerformance(0, "bridge", g, 0))));
+  const outroShapes = new Set(GENRES.map((g) => shapeOf(buildPerformance(0, "outro", g, 0))));
+  assert.ok(introShapes.size >= 15, `expected diverse genre intros across rulebooks, got ${introShapes.size}`);
+  assert.ok(bridgeShapes.size >= 15, `expected diverse genre bridges across rulebooks, got ${bridgeShapes.size}`);
+  assert.ok(outroShapes.size >= 12, `expected diverse genre outros across rulebooks, got ${outroShapes.size}`);
+});
+
+test("intro, bridge, and outro progressions are deterministically varied per creature (D-043)", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { composeScore } = await import("../src/score.mjs");
+  const oracle = await readFile(new URL("../src/oracle.lol", import.meta.url), "utf8");
+  const scores = Array.from({ length: 24 }, (_, i) => composeScore(oracle, `section creature ${i}`));
+
+  for (const role of ["intro", "bridge", "outro"]) {
+    const sig = (score, varied) => {
+      const p = buildPerformance(0, role, "smoky_jazz", 0, { score, varied });
+      return `${p.chords.map((c) => `${c.rootPc}:${c.quality}`).join(",")}#${p.steps.map((s) => s.leadPitch ?? "-").join(",")}`;
+    };
+    const distinctVaried = new Set(scores.map((s) => sig(s, true)));
+    assert.ok(distinctVaried.size >= 6, `${role} varies deterministically across creatures (got ${distinctVaried.size})`);
+    for (const s of scores) {
+      assert.equal(sig(s, true), sig(s, true), `${role} is deterministic for a given creature`);
+      const p = buildPerformance(0, role, "smoky_jazz", 0, { score: s, varied: true });
+      if (role === "intro") assert.equal(p.chords[0].rootPc, 0, "intro still starts on home tonic");
+      if (role === "outro") assert.equal(p.chords[3].rootPc, 0, "outro still resolves to home tonic");
+    }
+  }
 });
 
 test("pad voicings keep the root low, upper voices in range, and no doubled notes", () => {

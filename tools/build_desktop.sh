@@ -11,7 +11,7 @@ if ! command -v cargo &>/dev/null; then
   exit 1
 fi
 
-VERSION=$(grep -m1 '^version =' src-tauri/Cargo.toml | cut -d '"' -f2)
+VERSION=$(grep -m1 '^version =' ../src-tauri/Cargo.toml | cut -d '"' -f2)
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 

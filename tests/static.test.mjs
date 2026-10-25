@@ -4,6 +4,16 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 
+async function readAppBundle() {
+  const parts = await Promise.all([
+    "src/app.mjs",
+    "src/vitrine-canvas.mjs",
+    "src/broadsheet.mjs",
+    "src/schedulers.mjs",
+  ].map((path) => readFile(new URL(path, root), "utf8")));
+  return parts.join("\n");
+}
+
 test("the static entry points exist", async () => {
   await Promise.all([
     "index.html",
@@ -11,6 +21,7 @@ test("the static entry points exist", async () => {
     "src/app.mjs",
     "src/befunge.mjs",
     "src/brainfuck.mjs",
+    "src/broadsheet.mjs",
     "src/accompaniment.mjs",
     "src/conductor.mjs",
     "src/ensemble.mjs",
@@ -20,12 +31,14 @@ test("the static entry points exist", async () => {
     "src/midi.mjs",
     "src/mixer.mjs",
     "src/music.mjs",
+    "src/schedulers.mjs",
     "src/score.mjs",
     "src/session.mjs",
     "src/share.mjs",
     "src/shakespeare.mjs",
     "src/intercal.mjs",
     "src/transport.mjs",
+    "src/vitrine-canvas.mjs",
     "src/zip.mjs",
     "src/oracle.lol",
     "src/beat.mal",
@@ -93,7 +106,7 @@ test("the interface uses the centered esoteric parlor cabinet design system", as
   const [html, styles, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),
-    readFile(new URL("src/app.mjs", root), "utf8"),
+    readAppBundle(),
   ]);
   assert.match(html, /class="vision-stage"/);
   assert.match(html, /UTTER A PHRASE<br><em>UNTO THE GLASS<\/em>/);
@@ -125,7 +138,7 @@ test("master volume raises the default mix and updates the live output safely", 
 });
 
 test("kinetic geometry remains inside a bounded, deforming silhouette", async () => {
-  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  const app = await readAppBundle();
   assert.match(app, /Math\.max\(0\.38, Math\.min\(1\.08, radius \+ fluxOffset/);
   assert.match(app, /ctx\.clip\(\);\s*drawKineticCore\(ctx, score, base, elapsed, colors\)/);
   assert.match(app, /case 0: drawTesseract/);
@@ -133,13 +146,13 @@ test("kinetic geometry remains inside a bounded, deforming silhouette", async ()
 });
 
 test("audio pulse does not resize the visual geometry", async () => {
-  const app = await readFile(new URL("src/app.mjs", root), "utf8");
-  const visualDraw = app.slice(app.indexOf("draw(timestamp)"), app.indexOf("async function ensureAudioContext"));
+  const vitrine = await readFile(new URL("src/vitrine-canvas.mjs", root), "utf8");
+  const visualDraw = vitrine.slice(vitrine.indexOf("draw(timestamp)"));
   assert.doesNotMatch(visualDraw, /score\.pulse|beatScale|smoothBeatScale/);
 });
 
 test("the expensive body glow is cleared before kinetic linework", async () => {
-  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  const app = await readAppBundle();
   const bodyDraw = app.slice(app.indexOf("const direction ="), app.indexOf("const ringCount ="));
   assert.match(bodyDraw, /ctx\.save\(\);\s*ctx\.shadowColor[\s\S]*ctx\.fill\(\);\s*ctx\.restore\(\);\s*ctx\.save\(\);\s*traceBody/);
   assert.match(app, /function drawKineticCore[\s\S]*ctx\.shadowBlur = 0;/);
@@ -148,7 +161,7 @@ test("the expensive body glow is cleared before kinetic linework", async () => {
 test("tapping, holding, and dragging the vitrine modulate shape morphing, movement, pitch, intensity, and percussion", async () => {
   const [styles, app] = await Promise.all([
     readFile(new URL("styles.css", root), "utf8"),
-    readFile(new URL("src/app.mjs", root), "utf8"),
+    readAppBundle(),
   ]);
   assert.match(styles, /touch-action:\s*none/);
   assert.match(app, /elements\.canvas\.addEventListener\("pointerdown"/);
@@ -170,7 +183,7 @@ test("tapping the vitrine escalates organism agitation, triggers retaliation, an
   const [html, styles, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),
-    readFile(new URL("src/app.mjs", root), "utf8"),
+    readAppBundle(),
   ]);
 
   // Vitrine caption element wiring
@@ -212,7 +225,7 @@ test("tapping the vitrine escalates organism agitation, triggers retaliation, an
 test("procedural mycelium and generative fruiting bodies grow within the vitrine", async () => {
   const [html, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
-    readFile(new URL("src/app.mjs", root), "utf8"),
+    readAppBundle(),
   ]);
   assert.match(html, /id="score-fungal"/);
   assert.match(app, /function buildMycelialNetwork/);
@@ -237,7 +250,7 @@ test("procedural mycelium and generative fruiting bodies grow within the vitrine
 });
 
 test("organism appendages render generative fungal fruiting bodies and cellular organelles without ocular sclera", async () => {
-  const app = await readFile(new URL("src/app.mjs", root), "utf8");
+  const app = await readAppBundle();
   assert.match(app, /function drawCellularAppendage/);
   assert.match(app, /function drawAppendageOrganelle/);
   assert.match(app, /function traceAppendageSilhouette/);
@@ -260,7 +273,7 @@ test("all five esoteric accompaniment plates and the parlor bandstand render 12-
   const [html, styles, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),
-    readFile(new URL("src/app.mjs", root), "utf8"),
+    readAppBundle(),
   ]);
   assert.match(html, /PLATE I · MALBOLGE TERNARY BEAT GENERATOR/);
   assert.match(html, /PLATE II · BRAINFUCK TAPE BASSLINE/);
@@ -344,6 +357,7 @@ test("the application has no remote runtime assets", async () => {
     "src/app.mjs",
     "src/befunge.mjs",
     "src/brainfuck.mjs",
+    "src/broadsheet.mjs",
     "src/accompaniment.mjs",
     "src/conductor.mjs",
     "src/ensemble.mjs",
@@ -353,12 +367,14 @@ test("the application has no remote runtime assets", async () => {
     "src/midi.mjs",
     "src/mixer.mjs",
     "src/music.mjs",
+    "src/schedulers.mjs",
     "src/score.mjs",
     "src/session.mjs",
     "src/share.mjs",
     "src/shakespeare.mjs",
     "src/intercal.mjs",
     "src/transport.mjs",
+    "src/vitrine-canvas.mjs",
     "src/zip.mjs",
   ].map((path) => readFile(new URL(path, root), "utf8")));
   assert.equal(files.some((contents) => /https?:\/\//i.test(contents)), false);
@@ -369,7 +385,7 @@ test("the Kapellmeister console and antique parlor acoustics controls are wired 
   const [html, styles, app, ensemble] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),
-    readFile(new URL("src/app.mjs", root), "utf8"),
+    readAppBundle(),
     readFile(new URL("src/ensemble.mjs", root), "utf8"),
   ]);
   assert.match(html, /id="kapellmeister-engine"/);
@@ -407,7 +423,7 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   const [html, styles, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
     readFile(new URL("styles.css", root), "utf8"),
-    readFile(new URL("src/app.mjs", root), "utf8"),
+    readAppBundle(),
   ]);
 
   // Markup: style chips replace the organ's mode switch and chord-quality chips (D-028).
@@ -558,7 +574,7 @@ test("the parlor mixing console sits after the Fun Machine and before the beat p
 test("stem ZIP and MIDI exports are wired through the shared offline renderer", async () => {
   const [html, app] = await Promise.all([
     readFile(new URL("index.html", root), "utf8"),
-    readFile(new URL("src/app.mjs", root), "utf8"),
+    readAppBundle(),
   ]);
   assert.match(html, /id="export-stems"[^>]*disabled/);
   assert.match(html, /EXPORT 9 STEMS \(ZIP\)/);

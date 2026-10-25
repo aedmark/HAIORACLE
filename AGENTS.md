@@ -110,7 +110,10 @@ Never force-push or rewrite shared history.
 | `src/transport.mjs` | Master transport state model and `Space`/`Esc` hotkey rules |
 | `src/score.mjs` | Phrase hashing, score validation, and naming |
 | `src/share.mjs` | Client-only `#omen=...` URL fragment encoding and PNG broadsheet filename helpers |
-| `src/app.mjs` | Browser controls, Canvas creature, and Web Audio instrument |
+| `src/vitrine-canvas.mjs` | Apparition Vitrine 2D Canvas renderer (`OracleVision`), silhouette/kinetic/appendage/mycelium geometry, and gesture physics (D-067) |
+| `src/broadsheet.mjs` | 1200×1520 engraved specimen broadsheet PNG Canvas renderer (D-067) |
+| `src/schedulers.mjs` | Per-step Web Audio voice schedulers, vitrine percussion, and parlor acoustic buffers (D-067) |
+| `src/app.mjs` | Browser controls, DOM wiring, session orchestration, and transport loop |
 | `src-tauri/` | Isolated Tauri v2 desktop wrapper and native application packaging (D-064) |
 | `.github/workflows/release.yml` | Multi-platform GitHub Actions release workflow for Linux, Windows, and macOS (D-066) |
 | `manual.html` | Standalone explorable 3x technical manual |

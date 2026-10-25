@@ -10,15 +10,16 @@ _Last updated: 2026-10-25, session 79, on `main`._
 - D-045–D-055: armed downbeat sync, 1-loop count-in, tracker ribbons, 83.8M names, 72-slip urn, vitrine agitation/retaliation/sulk, fungal appendages, metric closure (D-050), volume surge elimination (D-051), looper sync & Casio sections (D-052), audio sweep audit (D-053), 4-pass breathing sections (D-054), section loops (+ INTRO/BRIDGE/OUTRO, D-055).
 - D-056–D-065: "The Whimsy Machine" Korg R3-inspired tiered console UX (D-056–D-057); Wings III/IV swapped (D-058); raw 48-step groove loops (D-059); Wave 3 rhythmic feel & 22-genre expansion (D-060); Standalone Studio Companion (P5-32 complete: D-061 Web MIDI & Audio Sink, D-062 Clean DAW MIDI Export, D-063 Consonant Pad Voicing, D-064 Tauri v2 Desktop Packaging); Neocities Static Web Release (D-065, Q-001 answered, P4-02 verified).
 - D-066: Official v1.0.0 Release, Cross-Platform Application Icon & Multi-Platform Desktop Builds (Linux, Windows, macOS; P6-01 complete).
-- Next: Deploy staged bundle (`dist-neocities/`) to Neocities and tag release.
+- D-067: Module decomposition of `src/app.mjs` into `src/vitrine-canvas.mjs`, `src/broadsheet.mjs`, and `src/schedulers.mjs` (P4-03 complete), plus roadmap expansion (`P4-04`, `P4-05`, `P5-33`–`P5-36`).
+- Next: Deploy staged bundle (`dist-neocities/`) to Neocities and tag release, or tackle P4-04 / P4-05 / P5-33–P5-36.
 
-**Where things stand:** P1, P2, P3, P4 (P4-01, P4-02 verified), P5-01 through P5-32, and P6-01 are fully implemented, verified, and complete. Semantic version bumped to 1.0.0. The application is available as a zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and as an official multi-platform desktop release (Linux .deb, .rpm, .AppImage, portable .tar.gz; Windows .msi, .exe; macOS .dmg) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066), equipped with a bespoke Victorian parlor icon across all operating systems.
+**Where things stand:** P1, P2, P3, P4 (P4-01, P4-02, P4-03 verified), P5-01 through P5-32, and P6-01 are fully implemented, verified, and complete. Semantic version bumped to 1.0.0. The application is available as a zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and as an official multi-platform desktop release (Linux .deb, .rpm, .AppImage, portable .tar.gz; Windows .msi, .exe; macOS .dmg) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066), equipped with a bespoke Victorian parlor icon across all operating systems.
 
 **Verified** (2026-10-25, session 79, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **196/196 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **201/201 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 36 entries, 0 errors, 0 warnings** |
 
@@ -98,7 +99,7 @@ _Last updated: 2026-10-25, session 79, on `main`._
 
 **Goal:** Create a cross-platform application icon across Linux, Windows, and macOS capturing the Victorian esoteric parlor aesthetic, bump project version to 1.0.0, and configure automated multi-platform desktop release builds.
 
-**Done:** All parts implemented and verified under D-066. P6-01 marked complete. 196/196 tests pass.
+**Done:** All parts implemented and verified under D-066. P6-01 marked complete. 198/198 tests pass.
 
 **Changed:**
 1. Cross-Platform Application Icon (`src-tauri/icons/`):
@@ -119,11 +120,14 @@ _Last updated: 2026-10-25, session 79, on `main`._
    - Added `dist-desktop/` to `.gitignore`.
    - Logged D-066 in `docs/DECISIONS.md`.
    - Archived Session 69 to `docs/archive/sessions.md`.
+4. Section Loop Instrumentation & Deterministic Genre Progressions (`src/accompaniment.mjs`, `src/looper.mjs`, `src/app.mjs`):
+   - Overhauled `buildFunSectionProgression` and `buildPerformance` in `src/accompaniment.mjs` so `intro`, `bridge`, and `outro` progressions derive directly from the active rulebook genre's own Inform 7 progression tables and spines (`buildFunProgression`, `book.spine`, `THE CREATURE'S OWN`, and Tonnetz walks) and deterministically vary per creature (`varyProgression`, `score` harmony fields, and `melodyFor(score)`).
+   - Added `setSectionVoices` and `transposeSectionLoops` in `src/looper.mjs` and wired them in `src/app.mjs` so selecting a new Fun Machine voice chip, changing Kapellmeister genre/strictness/variation, or summoning a new creature immediately updates recorded `intro`, `bridge`, and `outro` section loops as well as live playback.
 
 **Verified:**
 - `./tools/build_desktop.sh` built standalone binary and portable tarball in 7.2s.
 - `npx @tauri-apps/cli build` verified local packaging of `.deb`, `.rpm`, and `.AppImage`.
-- `node --test tests/*.test.mjs`: 196/196 tests passing.
+- `node --test tests/*.test.mjs`: 198/198 tests passing.
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
