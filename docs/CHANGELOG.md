@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0] - 2026-10-26
+
+### Added
+
+- Add M-VAVE FM-1 Hardware Controller Companion Profile (`P7-01`, `D-072`): auto-detects connected M-VAVE / Cuvave FM-1 synthesizers over USB and BLE Bluetooth MIDI (`isFm1Port`), mapping upper keys ($C_4\dots G_5$) to the 13-key manual and lower keys ($F_3\dots B_3$) to section and accompaniment triggers, with dedicated MIDI CC bindings (CC 70–73 for mixer faders, CC 2/74 for filter cutoff, CC 7 for master volume, and CC 75 for Euler strictness) and live telemetry.
+- Add Standalone C Reference Engine (`P7-02`, `D-073`): exact pure C implementation of FNV-1a 32-bit score hashing, Euler *Gradus Suavitatis*, and all seven esoteric virtual machines (Brainfuck, Malbolge, Befunge-93, FRACTRAN/Piet, Shakespeare, and INTERCAL) in `firmware-c/whimsy_esoteric.h` and `firmware-c/whimsy_esoteric.c`, guarded by golden fixtures in `tests/firmware-c.test.mjs`.
+- Add FM-1 Native 44.1 kHz Stereo Audio Engine (`P7-03`, `D-073`): real-time 44.1 kHz, 128-frame signed Q23 stereo audio block renderer in `firmware-c/whimsy_fm1_synth.h/c` with precomputed MIDI note-to-phase-increment tables (zero runtime `math.h` / `libm` floating point) and 8-track voice synthesis.
+- Add FM-1 240×240 RGB565 Color TFT Screen Renderer (`P7-04`, `D-074`): embedded graphics engine in `firmware-c/whimsy_fm1_ui.h/c` rendering the Victorian parlor palette (Obsidian, Parchment, Brass, Oxblood, Verdigris, Cyan), precomputed static bell jar arch geometry, and 16-row DMA banded screen transfers.
+- Add Standalone Browser Web MIDI Firmware Flasher (`P7-05`, `tools/flash_fm1.html`): browser utility using W3C Web MIDI SysEx API (`00 59` bootloader protocol) for one-click USB flashing.
+- Add Native JieLi PI32v2 `.fwsc` Container Packaging & `fm1-emu` Integration (`P7-06`, `D-075`): firmware application core in `firmware-c/whimsy_fm1_app.h/c`, pure-Python zero-dependency JLFS/UFW firmware packager in `tools/build_fm1_firmware.py`, and automated headless smoke test in `tests/fm1-firmware.test.mjs` running inside Joakim Eriksson's `fm1-emu` emulator harness.
+
 ## [1.1.0] - 2026-10-25
 
 ### Added

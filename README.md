@@ -24,6 +24,12 @@ The cabinet starts in **discovery**: the phrase, the vitrine, the transport, and
 
 Opening `index.html` directly through a `file:` URL is unsupported. The browser must fetch the separate LOLCODE spell from the same HTTP origin.
 
+### Hardware & Emulator (M-VAVE FM-1)
+
+The Whimsy Machine connects to the **M-VAVE FM-1** pocket synthesizer as an out-of-the-box hardware controller companion over USB/Bluetooth MIDI (27-key auto-chord split, mixer faders, filter cutoff, and Euler strictness knobs).
+
+Alternatively, compile and package the standalone embedded firmware container (`firmware-c/whimsy-machine.fwsc`) using `python3 tools/build_fm1_firmware.py` and run it directly in Joakim Eriksson's browser-based [FM-1 Hardware Emulator](https://joakimeriksson.github.io/fm1-emu/) (`Open .fwsc…` -> `Start`) or flash it to physical hardware via [`tools/flash_fm1.html`](tools/flash_fm1.html).
+
 ## Verify it
 
 ```bash
