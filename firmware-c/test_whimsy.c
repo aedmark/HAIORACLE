@@ -1,5 +1,6 @@
 #include "whimsy_esoteric.h"
 #include "whimsy_fm1_synth.h"
+#include "whimsy_fm1_ui.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -143,8 +144,24 @@ static void test_synth_engine_render(void) {
     printf("✔ C FM-1 native audio synthesis engine renders valid 128-frame Q23 stereo blocks (P7-03)\n");
 }
 
+static void test_tft_ui_render(void) {
+    WhimsyTftCanvas canvas;
+    whimsy_tft_render_frame(&canvas, 0x379482c9u, 2, 4, 1, "CERULEAN POTATO", "VICTORIAN TONNETZ");
+
+    /* Verify top tracker has active step rendered */
+    assert(canvas.buffer[6][6] != 0);
+
+    /* Verify center vitrine bell jar has rendered brass and parchment pixels */
+    assert(canvas.buffer[95][120] == COLOR_PARCHMENT_LT || canvas.buffer[95][120] == COLOR_VERDIGRIS);
+
+    /* Verify Tonnetz compass box is rendered at bottom */
+    assert(canvas.buffer[195][12] != 0);
+
+    printf("✔ C FM-1 240x240 RGB565 color TFT screen renderer draws tracker, vitrine, and Tonnetz (P7-04)\n");
+}
+
 int main(void) {
-    printf("✦ Running Whimsy Machine C Reference Suite (P7-02 / P7-03)...\n");
+    printf("✦ Running Whimsy Machine C Reference Suite (P7-02 / P7-03 / P7-04)...\n");
     test_fnv1a_hash();
     test_gradus_suavitatis();
     test_brainfuck_vm_golden();
@@ -152,6 +169,7 @@ int main(void) {
     test_befunge_vm_golden();
     test_fractran_vm();
     test_synth_engine_render();
+    test_tft_ui_render();
     printf("All Whimsy Machine C tests passed successfully!\n");
     return 0;
 }

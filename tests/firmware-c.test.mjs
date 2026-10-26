@@ -8,6 +8,8 @@ test("Whimsy Machine C reference implementation compiles and passes all golden t
   assert.ok(existsSync("firmware-c/whimsy_esoteric.c"), "whimsy_esoteric.c exists");
   assert.ok(existsSync("firmware-c/whimsy_fm1_synth.h"), "whimsy_fm1_synth.h exists");
   assert.ok(existsSync("firmware-c/whimsy_fm1_synth.c"), "whimsy_fm1_synth.c exists");
+  assert.ok(existsSync("firmware-c/whimsy_fm1_ui.h"), "whimsy_fm1_ui.h exists");
+  assert.ok(existsSync("firmware-c/whimsy_fm1_ui.c"), "whimsy_fm1_ui.c exists");
   assert.ok(existsSync("firmware-c/test_whimsy.c"), "test_whimsy.c exists");
 
   // Compile with native gcc or clang
@@ -15,6 +17,7 @@ test("Whimsy Machine C reference implementation compiles and passes all golden t
     "-Wall", "-Wextra", "-O2",
     "firmware-c/whimsy_esoteric.c",
     "firmware-c/whimsy_fm1_synth.c",
+    "firmware-c/whimsy_fm1_ui.c",
     "firmware-c/test_whimsy.c",
     "-lm",
     "-o", "firmware-c/test_whimsy",
@@ -30,4 +33,5 @@ test("Whimsy Machine C reference implementation compiles and passes all golden t
   assert.match(output, /C Befunge-93 VM matches canonical src\/harmony\.bfg 12-cell golden output/);
   assert.match(output, /C FRACTRAN prime-ratio VM executes state transition accurately/);
   assert.match(output, /C FM-1 native audio synthesis engine renders valid 128-frame Q23 stereo blocks/);
+  assert.match(output, /C FM-1 240x240 RGB565 color TFT screen renderer draws tracker, vitrine, and Tonnetz/);
 });
