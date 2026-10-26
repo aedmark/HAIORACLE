@@ -1,4 +1,5 @@
 #include "whimsy_esoteric.h"
+#include "whimsy_fm1_synth.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -117,14 +118,40 @@ static void test_fractran_vm(void) {
     printf("✔ C FRACTRAN prime-ratio VM executes state transition accurately\n");
 }
 
+static void test_synth_engine_render(void) {
+    WhimsySynthEngine engine;
+    whimsy_synth_init(&engine);
+    assert(engine.bpm == 108);
+
+    /* Trigger LOLCODE lead and Brainfuck bass */
+    whimsy_synth_trigger_note(&engine, WHIMSY_VOICE_LEAD, 60, 100);
+    whimsy_synth_trigger_note(&engine, WHIMSY_VOICE_BASS, 36, 120);
+
+    int32_t block[WHIMSY_BLOCK_FRAMES * 2] = {0};
+    int res = whimsy_synth_render_block(&engine, block, WHIMSY_BLOCK_FRAMES);
+    assert(res == 0);
+
+    /* Verify audio has non-zero signed Q23 audio output */
+    bool non_zero = false;
+    for (int i = 0; i < WHIMSY_BLOCK_FRAMES * 2; i++) {
+        if (block[i] != 0) {
+            non_zero = true;
+            break;
+        }
+    }
+    assert(non_zero);
+    printf("✔ C FM-1 native audio synthesis engine renders valid 128-frame Q23 stereo blocks (P7-03)\n");
+}
+
 int main(void) {
-    printf("✦ Running Whimsy Machine C Reference Suite (P7-02)...\n");
+    printf("✦ Running Whimsy Machine C Reference Suite (P7-02 / P7-03)...\n");
     test_fnv1a_hash();
     test_gradus_suavitatis();
     test_brainfuck_vm_golden();
     test_malbolge_vm_golden();
     test_befunge_vm_golden();
     test_fractran_vm();
+    test_synth_engine_render();
     printf("All Whimsy Machine C tests passed successfully!\n");
     return 0;
 }

@@ -6,10 +6,19 @@ import { existsSync } from "node:fs";
 test("Whimsy Machine C reference implementation compiles and passes all golden tests (P7-02)", () => {
   assert.ok(existsSync("firmware-c/whimsy_esoteric.h"), "whimsy_esoteric.h exists");
   assert.ok(existsSync("firmware-c/whimsy_esoteric.c"), "whimsy_esoteric.c exists");
+  assert.ok(existsSync("firmware-c/whimsy_fm1_synth.h"), "whimsy_fm1_synth.h exists");
+  assert.ok(existsSync("firmware-c/whimsy_fm1_synth.c"), "whimsy_fm1_synth.c exists");
   assert.ok(existsSync("firmware-c/test_whimsy.c"), "test_whimsy.c exists");
 
   // Compile with native gcc or clang
-  execFileSync("gcc", ["-Wall", "-Wextra", "-O2", "firmware-c/whimsy_esoteric.c", "firmware-c/test_whimsy.c", "-o", "firmware-c/test_whimsy"]);
+  execFileSync("gcc", [
+    "-Wall", "-Wextra", "-O2",
+    "firmware-c/whimsy_esoteric.c",
+    "firmware-c/whimsy_fm1_synth.c",
+    "firmware-c/test_whimsy.c",
+    "-lm",
+    "-o", "firmware-c/test_whimsy",
+  ]);
 
   // Run executable
   const output = execFileSync("./firmware-c/test_whimsy", { encoding: "utf8" });
@@ -20,4 +29,5 @@ test("Whimsy Machine C reference implementation compiles and passes all golden t
   assert.match(output, /C Malbolge VM matches canonical src\/beat\.mal 12-step golden output/);
   assert.match(output, /C Befunge-93 VM matches canonical src\/harmony\.bfg 12-cell golden output/);
   assert.match(output, /C FRACTRAN prime-ratio VM executes state transition accurately/);
+  assert.match(output, /C FM-1 native audio synthesis engine renders valid 128-frame Q23 stereo blocks/);
 });
