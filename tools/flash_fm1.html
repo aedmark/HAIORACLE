@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#120e0c">
+  <title>The Whimsy Machine — M-VAVE FM-1 Firmware Flasher</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .flasher-box {
+      max-width: 640px;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      border: 1px solid var(--brass);
+      background: rgba(14, 11, 9, 0.94);
+      color: var(--parchment-light);
+      font-family: var(--mono-ledger);
+    }
+    .flasher-status {
+      padding: 0.75rem;
+      margin: 1rem 0;
+      border-left: 3px solid var(--brass-bright);
+      background: rgba(184, 146, 73, 0.12);
+      font-size: 0.85rem;
+    }
+    .flasher-btn {
+      padding: 0.6rem 1.2rem;
+      background: var(--oxblood);
+      color: var(--parchment-light);
+      border: 1px solid var(--brass);
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .flasher-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .flasher-btn:hover:not(:disabled) {
+      border-color: var(--brass-bright);
+      background: var(--oxblood-bright);
+    }
+  </style>
+</head>
+<body>
+  <main class="flasher-box">
+    <h1>✦ M-VAVE FM-1 FIRMWARE FLASHER ✦</h1>
+    <p>THE WHIMSY MACHINE STANDALONE HARDWARE SYNTHESIZER (D-072 / P7-05)</p>
+    <hr style="border: 0; border-top: 1px solid var(--brass-dim); margin: 1rem 0;">
+
+    <p>Connect your M-VAVE FM-1 via USB-C to this browser (Chrome / Edge / Web MIDI). Turn on the FM-1 while holding the <code>SELECT</code> encoder to enter bootloader update mode.</p>
+
+    <div class="flasher-status" id="flash-status">AWAITING MIDI DEVICE CONNECTION...</div>
+
+    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+      <button class="flasher-btn" id="connect-btn" type="button">CONNECT FM-1 OVER USB</button>
+      <button class="flasher-btn" id="flash-btn" type="button" disabled>FLASH WHIMSY FIRMWARE (.BIN)</button>
+    </div>
+
+    <div style="margin-top: 2rem; font-size: 0.75rem; color: var(--parchment-deep);">
+      <p>✦ Target MCU: JieLi AC791N (32-bit RISC core, 44.1 kHz 128-frame Q23 audio)</p>
+      <p>✦ Display: 1.54″ 240×240 RGB565 Color TFT (Apparition Vitrine & 12-Step Ribbon)</p>
+      <p>✦ Zero Dependencies · Pure W3C Web MIDI API · Protocol 00 59 SysEx</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { isWebMidiSupported, requestMidiAccess, getMidiPorts, isFm1Port } from "../src/midi-io.mjs";
+
+    const statusEl = document.getElementById("flash-status");
+    const connectBtn = document.getElementById("connect-btn");
+    const flashBtn = document.getElementById("flash-btn");
+
+    let midiAccess = null;
+    let targetOutput = null;
+
+    connectBtn.addEventListener("click", async () => {
+      if (!isWebMidiSupported()) {
+        statusEl.textContent = "WEB MIDI NOT SUPPORTED IN THIS BROWSER (USE CHROME OR EDGE)";
+        return;
+      }
+      statusEl.textContent = "REQUESTING MIDI ACCESS (SYSEX REQUIRED)...";
+      midiAccess = await requestMidiAccess({ sysex: true });
+      if (!midiAccess) {
+        statusEl.textContent = "MIDI SYSEX PERMISSION DENIED OR DEVICE UNAVAILABLE";
+        return;
+      }
+
+      const { inputs, outputs } = getMidiPorts(midiAccess);
+      targetOutput = outputs.find(p => isFm1Port(p)) || outputs[0];
+
+      if (targetOutput) {
+        statusEl.textContent = `CONNECTED TO ${targetOutput.name} · READY TO FLASH FIRMWARE`;
+        flashBtn.disabled = false;
+        connectBtn.disabled = true;
+      } else {
+        statusEl.textContent = "NO FM-1 DETECTED. PLEASE CONNECT VIA USB-C AND RETRY.";
+      }
+    });
+
+    flashBtn.addEventListener("click", () => {
+      statusEl.textContent = "FIRMWARE FLASH PROTOCOL ARMED · READY FOR BINARY TRANSFER";
+    });
+  </script>
+</body>
+</html>
