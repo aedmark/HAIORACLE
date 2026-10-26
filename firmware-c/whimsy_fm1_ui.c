@@ -1,6 +1,21 @@
 #include "whimsy_fm1_ui.h"
 #include <string.h>
-#include <math.h>
+
+/* Precomputed Bell Jar glass arch coordinates (cx=120, cy=95, r=48) */
+static const int16_t BELL_JAR_ARCH[46][2] = {
+    {72, 95}, {72, 92}, {72, 90}, {73, 88},
+    {74, 85}, {75, 83}, {76, 80}, {78, 78},
+    {79, 76}, {81, 74}, {83, 72}, {85, 70},
+    {88, 68}, {90, 67}, {93, 65}, {96, 64},
+    {99, 63}, {102, 62}, {105, 61}, {108, 60},
+    {112, 60}, {115, 59}, {118, 59}, {122, 59},
+    {125, 59}, {128, 60}, {132, 60}, {135, 61},
+    {138, 62}, {141, 63}, {144, 64}, {147, 65},
+    {150, 67}, {152, 68}, {155, 70}, {157, 72},
+    {159, 74}, {161, 76}, {162, 78}, {164, 80},
+    {165, 83}, {166, 85}, {167, 88}, {168, 90},
+    {168, 92}, {168, 95}
+};
 
 void whimsy_tft_clear(WhimsyTftCanvas *canvas, uint16_t color) {
     if (!canvas) return;
@@ -71,13 +86,11 @@ void whimsy_tft_render_vitrine(WhimsyTftCanvas *canvas, uint32_t seed, uint8_t s
     /* Centered Bell Jar outline (x: 50..190, y: 30..165) */
     const int cx = 120;
     const int cy = 95;
-    const int r = 48;
 
     /* Glass bell jar arch */
-    for (int angle_deg = -90; angle_deg <= 90; angle_deg += 4) {
-        double rad = (double)angle_deg * (M_PI / 180.0);
-        int px = (int)(cx + sin(rad) * r);
-        int py = (int)(cy - cos(rad) * (r * 0.75));
+    for (int i = 0; i < 46; i++) {
+        int px = BELL_JAR_ARCH[i][0];
+        int py = BELL_JAR_ARCH[i][1];
         whimsy_tft_draw_pixel(canvas, px, py, COLOR_BRASS);
         whimsy_tft_draw_pixel(canvas, px, py + 1, COLOR_BRASS);
     }

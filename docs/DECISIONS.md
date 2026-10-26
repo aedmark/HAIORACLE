@@ -1568,6 +1568,45 @@ Investigation showed two root causes:
 - Plugging an M-VAVE FM-1 into The Whimsy Machine instantly provides a tactile physical control surface for the keys, mixer, filter, and arrangement sections.
 - The web zero-dependency boundary is maintained.
 
+## D-073 Pure C Reference Implementation and Native Audio Synthesis Engine (2026-10-25, status: accepted)
+
+**Context:** Running The Whimsy Machine directly on standalone embedded microcontrollers (such as the M-VAVE FM-1's JieLi AC791N RISC SoC) requires pure C implementations of the core deterministic algorithms (FNV-1a 32-bit score hash, Euler *Gradus Suavitatis*, Brainfuck 256-cell tape VM, Malbolge 59,049-word ternary machine, Befunge-93 2D torus mirror organ, and FRACTRAN prime-ratio stepper) and a real-time fixed-point/integer audio synthesis block renderer.
+
+**Decision:**
+1. Implemented `firmware-c/whimsy_esoteric.h` and `firmware-c/whimsy_esoteric.c` containing exact C ports of the seven esoteric VM engines and hash algorithms, verified against canonical golden test vectors from JavaScript.
+2. Implemented `firmware-c/whimsy_fm1_synth.h` and `firmware-c/whimsy_fm1_synth.c` providing a 44.1 kHz, 128-frame signed Q23 stereo block renderer with precomputed MIDI note-to-phase-increment tables, 8-channel voice synthesis (LOLCODE lead, Brainfuck bass, Befunge chord organ, Fun Machine manual pad, FRACTRAN chimes), and a resonant SVF master filter.
+3. Guarded by `tests/firmware-c.test.mjs` verifying identical output to JS fixtures.
+
+**Consequences:**
+- Zero floating-point library or external runtime dependencies required for synthesis.
+- Complete algorithmic parity between the web toy and embedded C firmware.
+
+## D-074 Apparition Vitrine 240×240 RGB565 TFT Screen Renderer (2026-10-25, status: accepted)
+
+**Context:** The M-VAVE FM-1 features a 1.54″ 240×240 color TFT LCD driven by an ST7789 controller over SPI with DMA. The Apparition Vitrine UI (12-step tracker ribbon, specimen silhouette bell jar, and Tonnetz harmonic compass) needed to be ported to RGB565 embedded graphics.
+
+**Decision:**
+1. Implemented `firmware-c/whimsy_fm1_ui.h` and `firmware-c/whimsy_fm1_ui.c` using the Victorian parlor palette: Obsidian soot (`0x0841`), Parchment (`0xef5a`), Bright brass (`0xdd8d`), Oxblood mahogany (`0x6905`), Verdigris patina (`0x3acb`), and Cyan amulet (`0x07ff`).
+2. Precomputed static integer geometry (such as `BELL_JAR_ARCH`) to completely eliminate runtime trigonometric and floating-point calls.
+3. Designed framed transfers compatible with 16-row DMA bands (`FM1_SCREEN_DMA_PIXELS = 3840`), ensuring flicker-free LCD refresh without starving audio interrupts.
+
+**Consequences:**
+- The visual identity of The Whimsy Machine renders faithfully on the FM-1's miniature color display.
+- Memory footprint is bounded and fits within available SRAM.
+
+## D-075 Native JieLi PI32v2 `.fwsc` Container Packaging and `fm1-emu` Integration (2026-10-26, status: accepted)
+
+**Context:** Users without physical FM-1 hardware need to emulate and test the firmware in Joakim Eriksson's browser/Wasm-based hardware emulator (`fm1-emu`, [https://joakimeriksson.github.io/fm1-emu/](https://joakimeriksson.github.io/fm1-emu/)). The emulator loads encrypted `.fwsc` firmware containers (JieLi UFW/JLFS scrambled packages).
+
+**Decision:**
+1. Created `firmware-c/whimsy_fm1_app.h` and `firmware-c/whimsy_fm1_app.c` tying together the esoteric engine, synthesis renderer, front-panel controls (27 keys, 5 encoders, master pot, 41 LEDs), and banded TFT display transfers.
+2. Built a zero-dependency pure Python build orchestrator and JLFS/UFW packager in `tools/build_fm1_firmware.py` that cross-compiles with JieLi `clang` (`-target pi32v2 -mcpu=r3`), links with `libfm1_engine.a`, extracts ELF sections (`.text`, `.data`, `.ram0_data`, `.cache_ram_data`), and packages them into valid `.fwsc` firmware containers with CRC-16 keystream encryption.
+3. Added an automated Node test `tests/fm1-firmware.test.mjs` running headless inside `fm1-emu`'s WebAssembly core, verifying successful boot (`fm1_boot_fwsc == 0`), 3 seconds of emulated 44.1 kHz stereo audio (132,224 frames, `halted == 0`), all 6 Victorian palette colors rendered to the 240×240 LCD, and MIDI note-on responsiveness.
+
+**Consequences:**
+- Users can build and run `whimsy-machine.fwsc` directly in the `fm1-emu` emulator or flash it to physical hardware via `tools/flash_fm1.html`.
+- Full end-to-end testing of the compiled RISC binary is automated.
+
 ## Open questions
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)

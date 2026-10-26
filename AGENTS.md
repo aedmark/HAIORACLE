@@ -122,6 +122,7 @@ Never force-push or rewrite shared history.
 | `.github/workflows/release.yml` | Multi-platform GitHub Actions release workflow for Linux, Windows, and macOS (D-066) |
 | `manual.html` | Standalone explorable 3x technical manual |
 | `docs/manual.json` | 3x documentation scheme manual source of truth |
+| `firmware-c/` | Standalone C reference implementation and native M-VAVE FM-1 firmware application (D-073, D-074, D-075) |
 | `tests/` | Dependency-free Node tests |
 | `ROADMAP.md` | Planned work with stable IDs |
 | `docs/` | Architecture, decisions, tests, risks, and current state |
@@ -130,6 +131,8 @@ Never force-push or rewrite shared history.
 | `tools/build_desktop.sh` | Builds the standalone desktop application binary with Tauri v2 and Cargo |
 | `tools/stage_tauri_dist.mjs` | Stages static frontend assets into `src-tauri/dist/` for Tauri bundling |
 | `tools/stage_neocities.py` | Stages static deployment bundle for Neocities with .txt fallbacks (D-065) |
+| `tools/build_fm1_firmware.py` | Builds and packages the standalone M-VAVE FM-1 firmware container (.fwsc) (D-075) |
+| `tools/flash_fm1.html` | Standalone Web MIDI firmware flasher for M-VAVE FM-1 (P7-05) |
 | `tools/freeze_rulebooks.mjs` | One-time freezer for the Kapellmeister rulebook golden fixture (P5-23) |
 | `tools/freeze_variations.mjs` | Freezes sample creatures' varied progressions into `tests/fixtures/variations-golden.json` (D-043) |
 | `tools/stamp_assets.mjs` | Restamps `ASSET_VERSION` in `index.html` from a hash of `src/` (D-035) |

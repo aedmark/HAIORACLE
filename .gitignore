@@ -14,6 +14,11 @@ target/
 dist-neocities/
 dist-desktop/
 firmware-c/test_whimsy
+firmware-c/*.fwsc
+firmware-c/*.bin
+firmware-c/*.elf
+firmware-c/*.o
+firmware-c/*.obj
 
 # IDE & OS junk
 .idea/

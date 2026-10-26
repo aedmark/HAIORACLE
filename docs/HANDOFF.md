@@ -9,16 +9,16 @@ _Last updated: 2026-10-25, session 80, on `main`._
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
 - D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
-- Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) established in `ROADMAP.md` (P7-01 through P7-05, D-072). P7-01 complete: M-VAVE FM-1 hardware controller profile. P7-02 complete: C core port in `firmware-c/`. P7-03 complete: FM-1 native audio synthesis engine in `firmware-c/whimsy_fm1_synth.c`. P7-04 complete: FM-1 240×240 color TFT UI renderer in `firmware-c/whimsy_fm1_ui.c`. P7-05 complete: standalone Web MIDI firmware flasher in `tools/flash_fm1.html`.
-- Next: Hands-on testing of M-VAVE FM-1 hardware over USB/Bluetooth MIDI.
+- Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) established in `ROADMAP.md` (P7-01 through P7-06, D-072–D-075). P7-01 complete: M-VAVE FM-1 hardware controller profile. P7-02 complete: C core port in `firmware-c/`. P7-03 complete: FM-1 native audio synthesis engine in `firmware-c/whimsy_fm1_synth.c`. P7-04 complete: FM-1 240×240 color TFT UI renderer in `firmware-c/whimsy_fm1_ui.c`. P7-05 complete: standalone Web MIDI firmware flasher in `tools/flash_fm1.html`. P7-06 complete: native JieLi PI32v2 `.fwsc` firmware container build pipeline (`tools/build_fm1_firmware.py`) and verified emulation under Joakim Eriksson's `fm1-emu` (`tests/fm1-firmware.test.mjs`).
+- Next: Hands-on testing of M-VAVE FM-1 hardware over USB/Bluetooth MIDI or by loading `.fwsc` directly into `fm1-emu`.
 
-**Where things stand:** P1–P7 are fully implemented, verified, and complete across all roadmap items! Semantic version 1.1.0. Phase 7 complete for M-VAVE FM-1 pocket synthesizer companion mode, standalone C core port, audio engine, 240×240 TFT renderer, and Web MIDI flasher. Zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and official multi-platform desktop release (Linux, Windows, macOS) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066).
+**Where things stand:** P1–P7 are fully implemented, verified, and complete across all roadmap items! Semantic version 1.1.0. Phase 7 complete for M-VAVE FM-1 pocket synthesizer companion mode, standalone C core port, audio engine, 240×240 TFT renderer, Web MIDI flasher, and native `.fwsc` firmware container verified in the `fm1-emu` hardware emulator. Zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and official multi-platform desktop release (Linux, Windows, macOS) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066).
 
-**Verified** (2026-10-25, session 80, local Linux environment)
+**Verified** (2026-10-26, session 81, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **224/224 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **225/225 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 39 entries, 0 errors, 0 warnings** |
 
