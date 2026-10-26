@@ -14,11 +14,15 @@ import { CREATURE_GENRE, genreCodes } from "./conductor.mjs";
 import { SLOT_VOICES, SongError, emptySong, validateSong } from "./looper.mjs";
 import { DEFAULT_VOICE_ID } from "./voices.mjs";
 import { MIXER_CHANNEL_IDS } from "./mixer.mjs";
+import { DEFAULT_REFERENCE_PITCH, MAX_REFERENCE_PITCH, MIN_REFERENCE_PITCH } from "./tuning.mjs";
+import { ENGINE_VERSION } from "./version.mjs";
 
 export const SESSION_FORMAT = "whimsy-session";
 // Version 2 (D-028) replaced the Fun Machine's mode and chord quality with an
 // accompaniment style. Version 1 files still open and are upgraded on read.
-export const SESSION_VERSION = 6;
+// Version 7 (P8-03, P8-04, D-077, D-078) adds engineVersion and optional
+// rootOverride, scaleOverride, referencePitch, and barLock.
+export const SESSION_VERSION = 7;
 export const SESSION_FILE_EXTENSION = "fun";
 export const MAX_SESSION_BYTES = 64 * 1024;
 export const MAX_PHRASE_LENGTH = 72;
@@ -106,10 +110,15 @@ export function validateSession(raw) {
     "acoustics", "funMachine", "plates", "mixer",
   ];
   // The version decides which keys belong, so an unknown version is named first.
-  if (isPlainObject(raw) && ![1, 2, 3, 4, 5, SESSION_VERSION].includes(raw.version)) {
+  if (isPlainObject(raw) && ![1, 2, 3, 4, 5, 6, SESSION_VERSION].includes(raw.version)) {
     throw new SessionError("session.version", `must be 1 to ${SESSION_VERSION}`);
   }
-  const versionKeys = [...keys, ...(raw?.version >= 4 ? ["song"] : []), ...(raw?.version >= 6 ? ["varied"] : [])];
+  const versionKeys = [
+    ...keys,
+    ...(raw?.version >= 4 ? ["song"] : []),
+    ...(raw?.version >= 6 ? ["varied"] : []),
+    ...(raw?.version >= 7 ? ["engineVersion", "rootOverride", "scaleOverride", "referencePitch", "barLock"] : []),
+  ];
   expectKeys(raw, "session", versionKeys);
   if (raw.format !== SESSION_FORMAT) throw new SessionError("session.format", `must be "${SESSION_FORMAT}"`);
 
@@ -197,9 +206,23 @@ export function validateSession(raw) {
     });
   }
 
+  const engineVersion = raw.version >= 7
+    ? expectInt(raw.engineVersion, "session.engineVersion", 1, 999)
+    : ENGINE_VERSION;
+  const rootOverride = raw.version >= 7 && raw.rootOverride !== null
+    ? expectInt(raw.rootOverride, "session.rootOverride", 0, 11)
+    : null;
+  const scaleOverride = raw.version >= 7 && raw.scaleOverride !== null
+    ? expectInt(raw.scaleOverride, "session.scaleOverride", 0, 7)
+    : null;
+  const referencePitch = raw.version >= 7
+    ? expectInt(raw.referencePitch, "session.referencePitch", MIN_REFERENCE_PITCH, MAX_REFERENCE_PITCH)
+    : DEFAULT_REFERENCE_PITCH;
+
   return Object.freeze({
     format: SESSION_FORMAT,
     version: SESSION_VERSION,
+    engineVersion,
     phrase: expectPhrase(raw.phrase, "session.phrase"),
     tempo: expectInt(raw.tempo, "session.tempo", 36, 208),
     volume: expectInt(raw.volume, "session.volume", 0, 100),
@@ -209,6 +232,11 @@ export function validateSession(raw) {
     genre: expectEnum(raw.genre, "session.genre", [CREATURE_GENRE, ...genreCodes()]),
     strictness: expectInt(raw.strictness, "session.strictness", 3, 14),
     varied: raw.version >= 6 ? expectBool(raw.varied, "session.varied") : false,
+    rootOverride,
+    scaleOverride,
+    referencePitch,
+    // 4/4 BAR LOCK (P8-05, D-079): each 12-step pass fills one 4/4 bar.
+    barLock: raw.version >= 7 ? expectBool(raw.barLock, "session.barLock") : false,
     acoustics,
     funMachine,
     plates: Object.freeze(plates),

@@ -4,6 +4,7 @@
 // creates and wires nodes, which keeps it testable with a fake context in Node.
 
 import { MIXER_CHANNELS } from "./mixer.mjs";
+import { midiToFrequency } from "./tuning.mjs";
 
 export const MIX_LEVEL = 0.28;
 export const SILENT_GAIN = 0.0001;
@@ -132,10 +133,6 @@ export function droneFrequencies(score, chordRoot) {
   return DRONE_INTERVALS.map((interval) => midiToFrequency(score.root + shift + interval));
 }
 
-function midiToFrequency(note) {
-  return 440 * (2 ** ((note - 69) / 12));
-}
-
 /**
  * Builds and connects the ensemble graph on `context`.
  *
@@ -160,6 +157,9 @@ export function buildEnsembleGraph(context, score, {
   impulseBuffer = null,
   crackleBuffer = null,
   rhythmIndex = undefined,
+  // Dry stem exports (P8-01, D-076) bypass the master compressor so the stems
+  // stay linear and sum to the dry mix; a unity gain takes its place.
+  masterDynamics = true,
 } = {}) {
   const now = start;
   const mix = context.createGain();
@@ -172,7 +172,7 @@ export function buildEnsembleGraph(context, score, {
   const funBus = context.createGain();
   const filter = context.createBiquadFilter();
   const panner = typeof context.createStereoPanner === "function" ? context.createStereoPanner() : null;
-  const compressor = context.createDynamicsCompressor();
+  const compressor = masterDynamics ? context.createDynamicsCompressor() : context.createGain();
   const delay = context.createDelay(1.5);
   const feedback = context.createGain();
   const output = context.createGain();
@@ -194,9 +194,11 @@ export function buildEnsembleGraph(context, score, {
   filter.type = creature.type;
   filter.frequency.value = creature.cutoff;
   filter.Q.value = creature.q;
-  compressor.threshold.value = -18;
-  compressor.knee.value = 18;
-  compressor.ratio.value = 5;
+  if (masterDynamics) {
+    compressor.threshold.value = -18;
+    compressor.knee.value = 18;
+    compressor.ratio.value = 5;
+  }
   delay.delayTime.value = delayTimeFor(score, 60 / (unit * 2), rhythmIndex);
   feedback.gain.value = 0.14 + score.bloom / 650;
   output.gain.value = outputGain;

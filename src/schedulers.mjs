@@ -2,12 +2,12 @@ import { GM_DRUMS } from "./midi.mjs";
 import { myceliumEvents } from "./mycelium.mjs";
 import { foldIntoRange, leadOctaveShift } from "./ensemble.mjs";
 import { interaction, mulberry32 } from "./vitrine-canvas.mjs";
+import { midiToFrequency } from "./tuning.mjs";
 
 export const LEAD_DUCK_GAIN = 10 ** (-10 / 20);
 
-export function midiToFrequency(note) {
-  return 440 * (2 ** ((note - 69) / 12));
-}
+// Concert pitch lives in tuning.mjs (P8-04), shared by every synth path.
+export { midiToFrequency };
 
 export function harmonicField() {
   const radius = Math.min(1, Math.hypot(interaction.smoothX, interaction.smoothY)) * interaction.hold;

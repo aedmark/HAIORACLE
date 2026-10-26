@@ -311,6 +311,11 @@ test("Audit Dimension 7 & 8: Session serialization, STORED ZIP, and SMF Type 1 M
   const mockState = {
     format: SESSION_FORMAT,
     version: SESSION_VERSION,
+    engineVersion: 1,
+    rootOverride: null,
+    scaleOverride: null,
+    referencePitch: 440,
+    barLock: false,
     phrase: "audit specimen",
     tempo: 120,
     volume: 80,

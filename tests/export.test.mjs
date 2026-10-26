@@ -10,8 +10,10 @@ import {
   funVoiceTracks,
   buildMidiFile,
   encodeVlq,
+  keySignatureBytes,
   loopSafeNotes,
   ticksForSeconds,
+  timeSignatureBytes,
   velocitiesFor,
 } from "../src/midi.mjs";
 import { crc32, createStoredZip } from "../src/zip.mjs";
@@ -296,4 +298,34 @@ test("Clean DAW mode options strip program changes, markers, and flatten channel
       assert.equal(event.channel, 0, "flattened to channel 0");
     }
   }
+});
+
+test("P8-02 MIDI exports key signature, time signature, and preserves GM drum channel 9 even when flattening", () => {
+  // D Dorian (rootMidi = 62, scaleIndex = 0 -> minor family -> 1 flat = -1 = 0xff)
+  assert.deepEqual(keySignatureBytes(62, 0), [0xff, 0x59, 0x02, 0xff, 1]);
+  // G Major Pentatonic (rootMidi = 55, scaleIndex = 1 -> major family -> 1 sharp)
+  assert.deepEqual(keySignatureBytes(55, 1), [0xff, 0x59, 0x02, 1, 0]);
+  assert.deepEqual(timeSignatureBytes(3, 4), [0xff, 0x58, 0x04, 3, 2, 24, 8]);
+
+  const midi = parseMidi(buildMidiFile({
+    bpm: 96,
+    lengthTicks: 1920,
+    rootMidi: 62,
+    scaleIndex: 0,
+    timeSignature: [3, 4],
+    flattenChannels: true,
+    stripPrograms: true,
+    tracks: [
+      { name: "LEAD", channel: 2, program: 80, notes: [{ tick: 0, duration: 240, midi: 62, velocity: 100 }] },
+      { name: "PULSE", channel: DRUM_CHANNEL, program: null, notes: [{ tick: 0, duration: 120, midi: GM_DRUMS.kick, velocity: 120 }] },
+    ],
+  }));
+
+  const keySig = midi.tracks[0].find((e) => e.meta === 0x59);
+  assert.deepEqual(keySig?.data, [0xff, 1], "conductor track carries D minor key signature");
+  const timeSig = midi.tracks[0].find((e) => e.meta === 0x58);
+  assert.deepEqual(timeSig?.data, [3, 2, 24, 8], "conductor track carries 3/4 time signature");
+
+  assert.equal(midi.tracks[1].find((e) => e.type === "on").channel, 0, "pitched tracks flatten to channel 0");
+  assert.equal(midi.tracks[2].find((e) => e.type === "on").channel, DRUM_CHANNEL, "drum track stays on GM drum channel 9");
 });

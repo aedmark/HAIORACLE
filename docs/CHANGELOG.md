@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0] - 2026-10-26
+
+### Added
+
+- Studio-Grade Audio Export (`P8-01`, `D-076`): Pure audio export engine (`src/audio-export.mjs`) supporting 16-bit PCM (with phrase-seeded TPDF dither for byte-reproducible renders), 24-bit PCM, and 32-bit float WAV across 44.1, 48, and 96 kHz.
+- Loop-Perfect Tail Folding & Sampler Metadata (`P8-01`, `D-076`): Beat one anchored at sample zero; loop-perfect export folds decay tails back into the loop start for seamless DAW repetition. Embedded `smpl` loop points, `acid` chunk (tempo, beat count, root note), and `LIST/INFO` chunk (specimen name, engine version, key, A4 reference).
+- Dry Stem Multi-Track Rendering (`P8-01`, `D-076`): Dry stem export mode bypasses master compression and chamber reverb (`masterDynamics: false`), rendering uncompressed linear channel stems that sum cleanly to the mix, bounded by a shared −1 dBFS sample-peak ceiling.
+- DAW-Ready MIDI Enhancements (`P8-02`): Conductor track transmits Key Signature (`0xFF 0x59`) and Time Signature (`0xFF 0x58`) meta events; General MIDI drum channel 9 is preserved when channel flattening is enabled.
+- Engine Versioning & Integrity Guard (`P8-03`, `D-077`): Defined `ENGINE_VERSION` and `ENGINE_FINGERPRINT` over esoteric scores and golden fixtures (`src/version.mjs`, `tests/engine-version.test.mjs`), with session format v7 telemetry warnings on version mismatch.
+- Key, Mode, and Concert Pitch Retuning (`P8-04`, `D-078`): Real-time host controls for key override ($C\dots B$), scale override (8 mode families), and concert pitch reference A4 ($415\dots 466\text{ Hz}$ with Baroque, Verdi, Standard, and Orchestral presets), routed through `src/tuning.mjs` across all audio synthesis paths without violating the deterministic phrase-to-creature score contract.
+- 4/4 Bar-Aligned Metre Lock (`P8-05`, `D-079`): Master transport `4/4 BAR LOCK` (`#transport-bar-lock`) scales 12-step passes via `stepUnitSeconds()` to fit exactly one 4/4 bar (4 quarter-beats) at the stated BPM, ensuring exported loops and live playback lock to standard DAW grid boundaries.
+
 ## [1.2.0] - 2026-10-26
 
 ### Added

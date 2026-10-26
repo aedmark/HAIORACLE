@@ -1611,3 +1611,56 @@ Investigation showed two root causes:
 
 - **Q-001** Which static host and public domain should carry the first release? (asked 2026-10-17; answered 2026-10-25 by D-065: Neocities; blocks P6-01)
 
+
+## D-076 Studio-grade audio export: formats, loop folding, dry stems, and sampler metadata (2026-10-26, status: accepted)
+
+**Context:** Musicians asked whether The Whimsy Machine could be a real production tool (P8-01). Exports were 16-bit 44.1 kHz WAV only, started 40 ms before beat one, carried a 1.35 s tail that made loops drift on a DAW grid, printed every stem through the master compressor and chamber reverb, and named files without tempo or key.
+
+**Decision:**
+1. A pure module, `src/audio-export.mjs`, encodes 16-bit PCM (TPDF dither from a generator seeded by the phrase, so exports stay byte-reproducible), 24-bit PCM, and 32-bit float WAV at 44.1, 48, or 96 kHz. The default is 24-bit / 48 kHz.
+2. Beat one is always at sample zero. LOOP-PERFECT (the default) cuts each file to exactly one loop (or the whole harmonic cycle or song), adding everything past the loop end back onto its start, as a repeating loop would sound. To stop sustained sources sounding twice, drones and wax crackle stop at the loop end in that mode. ONE-SHOT keeps the tail.
+3. DRY stems (the default) skip the chamber reverb and the master compressor (`buildEnsembleGraph({ masterDynamics: false })`), so the channel stems are linear and sum to the dry mix. PRINTED stems keep the old behaviour.
+4. Exports are only ever turned down, never up, to keep sample peaks under −1 dBFS. Stems share one gain so their balance holds.
+5. Every WAV carries a `smpl` loop, an `acid` chunk (tempo, beats, root note, loop or one-shot), and ASCII `LIST/INFO` (creature, engine version, key, A4). Filenames read `whimsy-<name>-<seed>-<bpm>bpm-<Key>-<mode>[-<suffix>].wav`.
+
+**Consequences:**
+- Loops drop onto a DAW grid at the stated tempo, and samplers read the loop points and root note.
+- `audioBufferToWavBlob()` in `src/share.mjs` stays for compatibility but the export desk no longer uses it.
+- Not yet verified in a DAW (P8-12).
+
+## D-077 Engine version in sessions and exports (2026-10-26, status: accepted)
+
+**Context:** A producer must be able to reopen a project and hear the same thing. Updates have deliberately changed how phrases sound (D-005, D-013, D-014, D-016), and nothing recorded which engine a session was made with. On 2026-10-26 the maintainer waived compatibility with older projects, because nobody uses them yet.
+
+**Decision:** `src/version.mjs` holds `APP_VERSION` and an integer `ENGINE_VERSION`, bumped whenever a phrase or a saved session would sound different. Sessions are format v7 and record `engineVersion`. Loading one from another engine version opens it with a visible warning. WAV `LIST/INFO` and the stem README name the engine. `ENGINE_FINGERPRINT` hashes the score programs and golden fixtures, and `tests/engine-version.test.mjs` fails when they change, as a reminder to bump.
+
+**Consequences:** Every change to the sound now has a visible version. The fingerprint cannot see changes to JavaScript synthesis, so those need the bump by hand. Older engine versions are not kept runnable. If they ever need to be, that will take a new decision.
+
+## D-078 Key, mode, and concert-pitch overrides as host state (2026-10-26, status: accepted)
+
+**Context:** The phrase picks a creature's root and scale, so a musician could not fit a creature to a song in a given key or tuning (P8-04).
+
+**Decision:**
+1. `applyScoreOverrides()` in `src/tuning.mjs` derives a performance score from the creature's score, moving the root to a chosen pitch class by the shortest route within the score's 30–65 range, and optionally replacing the scale. The phrase-to-creature contract (D-003) is unchanged: the creature's own score stays intact in `baseScore`, and the visuals and name do not move.
+2. All three synth paths (ensemble, schedulers, voices) get frequencies from `midiToFrequency()` in `src/tuning.mjs`, so one A4 setting (415–466 Hz, with presets) retunes the whole band, live and in exports. MIDI output stays at MIDI note numbers. Tuning is not sent as pitch bend.
+3. Sessions v7 save `rootOverride`, `scaleOverride`, and `referencePitch`. Recorded loops transpose with the root.
+
+**Consequences:** Exports, MIDI key signatures, and filenames follow the overridden key. THE CREATURE'S OWN rulebook is rewritten from the overridden scale.
+
+## D-079 Bar-aligned metre: a 4/4 bar lock now, native 16-step generation later (2026-10-26, status: accepted)
+
+**Context:** Every voice is generated on a 12-step bar. At the stated BPM, each step is an eighth note, so most rhythm templates make a pass of 6 beats (1.5 bars of 4/4) and the Charleston and Habanera templates 4 beats. Loops therefore fell off a 4/4 DAW grid. Full 16-step generation touches the spell, six VMs, the conductor, the looper, the accompanist, the inspector, the C core, and every golden fixture (about 57 bar-math sites in `src/app.mjs` alone). The maintainer delegated this decision on 2026-10-26.
+
+**Decision:**
+1. Phase 1 (done): the transport's **4/4 BAR LOCK** scales the step unit (`stepUnitSeconds()` in `src/tuning.mjs`) so that each 12-step pass fills exactly one 4/4 bar at the stated BPM, whatever the rhythm template. Steps become triplet-eighth-based and the swing ratios are kept. It is off by default and saved in sessions (`barLock`). Live playback, WAV, stems, and MIDI all follow it.
+2. Phase 2 (planned): native 16-step generation, with the step count as a parameter rather than a constant, introduced voice by voice behind golden fixtures, with a bump to `ENGINE_VERSION` (D-077).
+
+**Consequences:** DAW alignment works now without destabilizing the engine. In MIDI clock slave mode, the clock still sets one step per 12 ticks (an eighth note), which overrides the bar lock. Making those two agree is part of Phase 2.
+
+## D-080 CLAP plugin from the C core, isolated like the desktop wrapper (2026-10-26, status: accepted)
+
+**Context:** Running inside a DAW is the strongest sign of a real production tool (P8-13). The C core in `firmware-c/` already ports the hash, VMs, conductor, and a fixed-point synth. The maintainer delegated this decision on 2026-10-26.
+
+**Decision:** Target CLAP first. Its MIT-licensed C headers need no SDK agreement, it is plain C like the core, and Bitwig, REAPER, FL Studio, and others host it natively. VST3 and AU come later through the MIT-licensed `clap-wrapper`. The plugin lives in its own directory (`plugin-clap/`), built with its own toolchain like `src-tauri/` (D-064), and adds no runtime or build dependency to the web app. Its first milestone is a MIDI-in instrument that renders one phrase's ensemble in sync with host transport and tempo, with the phrase as a plugin parameter saved in host state.
+
+**Consequences:** The zero-dependency browser boundary (D-001) is unchanged. The plugin build vendors the CLAP headers, which is a build-time dependency of that isolated directory only, accepted here. The C synth sounds simpler than the Web Audio graph, so the plugin is a sibling, not a bit-exact twin, until the C renderer catches up. Ableton Link is a separate question (P8-09), because of its GPL or commercial licensing.

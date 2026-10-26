@@ -78,6 +78,33 @@ function metaText(type, text) {
   return [0xff, type, ...encodeVlq(bytes.length), ...bytes];
 }
 
+// Key signature accidentals (-7 flats..+7 sharps) for each pitch class (0=C..11=B)
+const MAJOR_ACCIDENTALS = Object.freeze([0, -5, 2, -3, 4, -1, 6, 1, -4, 3, -2, 5]);
+const MINOR_ACCIDENTALS = Object.freeze([-3, 4, -1, -6, 1, -4, 3, -2, 5, 0, -5, 2]);
+// Minor-family scales in SCALE_NAMES (0: Dorian, 2: Double Harmonic, 3: Blues, 5: Phrygian, 6: Ukrainian Dorian)
+const MINOR_SCALES = new Set([0, 2, 3, 5, 6]);
+
+/**
+ * Returns the SMF Key Signature meta event `[0xff, 0x59, 0x02, sf, mi]` for a
+ * root MIDI note and scale index (`mi`: 0 = major, 1 = minor).
+ */
+export function keySignatureBytes(rootMidi = 60, scaleIndex = 0) {
+  const pitchClass = ((Math.round(rootMidi) % 12) + 12) % 12;
+  const isMinor = MINOR_SCALES.has(scaleIndex) ? 1 : 0;
+  const sf = isMinor ? MINOR_ACCIDENTALS[pitchClass] : MAJOR_ACCIDENTALS[pitchClass];
+  return [0xff, 0x59, 0x02, sf & 0xff, isMinor];
+}
+
+/**
+ * Returns the SMF Time Signature meta event `[0xff, 0x58, 0x04, nn, dd, cc, bb]`.
+ * `denominator` must be a power of 2 (default 4).
+ */
+export function timeSignatureBytes(numerator = 4, denominator = 4) {
+  const nn = clampByte(numerator, 1, 32);
+  const dd = Math.max(0, Math.min(7, Math.round(Math.log2(Math.max(1, denominator)))));
+  return [0xff, 0x58, 0x04, nn, dd, 24, 8];
+}
+
 function chunk(type, data) {
   const length = data.length;
   return [
@@ -145,14 +172,20 @@ export function buildMidiFile({
   stripPrograms = false,
   stripMarkers = false,
   flattenChannels = false,
+  preserveDrumChannel = true,
+  rootMidi = null,
+  scaleIndex = 0,
+  timeSignature = [4, 4],
 }) {
   if (!(bpm > 0)) throw new RangeError("MIDI tempo must be positive");
   const microsPerQuarter = Math.round(60_000_000 / bpm);
   const activeMarkers = stripMarkers ? [] : markers;
+  const [tsNum, tsDen] = Array.isArray(timeSignature) && timeSignature.length >= 2 ? timeSignature : [4, 4];
   const conductor = [
     { tick: 0, order: 0, bytes: metaText(0x03, title || "CONDUCTOR") },
     { tick: 0, order: 1, bytes: [0xff, 0x51, 0x03, (microsPerQuarter >>> 16) & 0xff, (microsPerQuarter >>> 8) & 0xff, microsPerQuarter & 0xff] },
-    { tick: 0, order: 2, bytes: [0xff, 0x58, 0x04, 4, 2, 24, 8] },
+    { tick: 0, order: 2, bytes: timeSignatureBytes(tsNum, tsDen) },
+    ...(Number.isFinite(rootMidi) ? [{ tick: 0, order: 2, bytes: keySignatureBytes(rootMidi, scaleIndex) }] : []),
     ...activeMarkers
       .filter((marker) => marker.tick >= 0 && marker.tick < lengthTicks)
       .map((marker) => ({ tick: Math.round(marker.tick), order: 3, bytes: metaText(0x06, marker.text) })),
@@ -160,7 +193,10 @@ export function buildMidiFile({
   const chunks = [chunk("MTrk", trackData(conductor, lengthTicks))];
 
   for (const track of tracks) {
-    const channel = flattenChannels ? 0 : clampByte(track.channel, 0, 15);
+    const rawChannel = clampByte(track.channel, 0, 15);
+    const channel = flattenChannels
+      ? (preserveDrumChannel && rawChannel === DRUM_CHANNEL ? DRUM_CHANNEL : 0)
+      : rawChannel;
     const events = [{ tick: 0, order: 0, bytes: metaText(0x03, track.name) }];
     if (!stripPrograms && Number.isInteger(track.program)) {
       events.push({ tick: 0, order: 1, bytes: [0xc0 | channel, clampByte(track.program)] });

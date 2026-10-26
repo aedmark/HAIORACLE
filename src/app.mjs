@@ -65,7 +65,19 @@ import {
 import { buildCreatureBook } from "./creature-rulebook.mjs";
 import { myceliumEvents } from "./mycelium.mjs";
 import { CREATURE_VOICE_ID, creatureVoice, creatureVoiceLabel, scheduleVoiceLead, scheduleVoicePad, scheduleVoicePluck, voiceById } from "./voices.mjs";
-import { audioBufferToWavBlob, buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
+import { buildShareUrl, decodeOmenHash, encodeOmenHash, specimenFilenameFor } from "./share.mjs";
+import {
+  PEAK_CEILING_DB,
+  applyPeakCeiling,
+  beatsIn,
+  cutRender,
+  encodeWav,
+  exportFilename,
+  keyLabelFor,
+  normalizeExportSettings,
+} from "./audio-export.mjs";
+import { APP_VERSION, ENGINE_VERSION } from "./version.mjs";
+import { applyScoreOverrides, referencePitch, setReferencePitch, stepUnitSeconds } from "./tuning.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
 import {
@@ -310,11 +322,16 @@ const elements = {
   exportStems: document.querySelector("#export-stems"),
   exportMidi: document.querySelector("#export-midi"),
   exportMidiFormat: document.querySelector("#export-midi-format"),
+  exportBitDepth: document.querySelector("#export-bit-depth"),
+  exportSampleRate: document.querySelector("#export-sample-rate"),
+  exportLoopMode: document.querySelector("#export-loop-mode"),
+  exportStemMode: document.querySelector("#export-stem-mode"),
   sound: document.querySelector("#sound-toggle"),
   transportDeck: document.querySelector("#transport-deck"),
   transportPlay: document.querySelector("#transport-play"),
   transportPause: document.querySelector("#transport-pause"),
   transportStop: document.querySelector("#transport-stop"),
+  transportBarLock: document.querySelector("#transport-bar-lock"),
   transportPosition: document.querySelector("#transport-position"),
   transportSection: document.querySelector("#transport-section"),
   mixerStrips: document.querySelector("#mixer-strips"),
@@ -400,6 +417,9 @@ const elements = {
   manuscriptRestoreBtn: document.querySelector("#manuscript-restore-btn"),
   manuscriptDiagnostic: document.querySelector("#manuscript-diagnostic"),
   kapellmeisterGenre: document.querySelector("#kapellmeister-genre"),
+  kapellmeisterKeyOverride: document.querySelector("#kapellmeister-key-override"),
+  kapellmeisterScaleOverride: document.querySelector("#kapellmeister-scale-override"),
+  kapellmeisterTuningA4: document.querySelector("#kapellmeister-tuning-a4"),
   kapellmeisterTelemetry: document.querySelector("#kapellmeister-telemetry"),
   kapellmeisterStrictness: document.querySelector("#kapellmeister-strictness"),
   kapellmeisterStrictnessVal: document.querySelector("#kapellmeister-strictness-val"),
@@ -438,7 +458,11 @@ let fractranSource = "";
 let chantSource = "";
 let conductorSource = "";
 let canonicalRulebooksSource = "";
+let baseScore = null;
 let currentScore = null;
+let rootOverride = null;
+let scaleOverride = null;
+let barLock44 = false;
 // The moves this creature made on its genre's changes (D-043), for the readout,
 // and whether it may make them: AS WRITTEN plays the rulebook's own changes.
 let currentVariation = Object.freeze([]);
@@ -1538,7 +1562,7 @@ const FUN_PAD_LEVEL = Object.freeze({
 
 function loopStepDuration(score, step) {
   const rhythm = RHYTHMS[effectiveRhythmIndex(score, activeGenre)];
-  return (60 / (activeTempoBpm || score.pulse) / 2) * rhythm[((step % rhythm.length) + rhythm.length) % rhythm.length];
+  return stepUnitSeconds(activeTempoBpm || score.pulse, rhythm, barLock44) * rhythm[((step % rhythm.length) + rhythm.length) % rhythm.length];
 }
 
 function funKeyLabel(semitone) {
@@ -1876,7 +1900,8 @@ async function playScore(score, { cursor = 0 } = {}) {
   stopCurrentSound();
   const now = context.currentTime + 0.045;
   const initialPulse = activeTempoBpm || score.pulse;
-  const initialUnit = 60 / initialPulse / 2;
+  const initialRhythm = RHYTHMS[effectiveRhythmIndex(score, activeGenre)];
+  const initialUnit = stepUnitSeconds(initialPulse, initialRhythm, barLock44);
   const graph = buildEnsembleGraph(context, score, ensembleGraphOptions(context, {
     start: now,
     unit: initialUnit,
@@ -1906,7 +1931,7 @@ async function playScore(score, { cursor = 0 } = {}) {
     while (transport.nextNoteTime < context.currentTime + 0.28) {
       if (casioOutroEnding) break;
       const livePulse = activeTempoBpm || score.pulse;
-      const unit = 60 / livePulse / 2;
+      const unit = stepUnitSeconds(livePulse, rhythm, barLock44);
       const currentStep = transport.step;
       const lengthMultiplier = rhythm[currentStep % rhythm.length];
       const stepDuration = unit * lengthMultiplier;
@@ -2316,7 +2341,9 @@ function applyEnsembleConductor() {
   highlightBeatStep(activeBeatStep);
 }
 
-function showScore(score) {
+function showScore(rawScore) {
+  baseScore = rawScore;
+  const score = applyScoreOverrides(baseScore, { rootOverride, scaleOverride });
   currentScore = score;
   // A new creature starts its harmonic cycle at home (D-044).
   currentHarmonicPass = 0;
@@ -2435,7 +2462,8 @@ async function summon(phrase, { playAudio = true } = {}) {
   try {
     const score = composeScore(oracleSource, phrase);
     if (currentScore && song.loops.length) {
-      song = transposeSectionLoops(song, currentScore.root, score.root);
+      // Loops follow the key the band will actually play, overrides included (P8-04).
+      song = transposeSectionLoops(song, currentScore.root, applyScoreOverrides(score, { rootOverride, scaleOverride }).root);
     }
     showScore(score);
     if (playAudio) {
@@ -2605,12 +2633,15 @@ async function renderEnsembleLoop(score, {
   engageAll = false,
   captureNotes = false,
   render = true,
+  sampleRate = 44100,
+  loopMode = "oneshot",
+  masterDynamics = true,
 } = {}) {
   const OfflineAudioCtx = offlineAudioConstructor();
   const bpm = activeTempoBpm || score.pulse;
-  const unit = 60 / bpm / 2;
   const rhythmIndex = effectiveRhythmIndex(score, activeGenre);
   const rhythm = RHYTHMS[rhythmIndex];
+  const unit = stepUnitSeconds(bpm, rhythm, barLock44);
   // With a loop-machine song the render is the whole song (D-039), at most
   // MAX_SONG_PASSES passes; without one it is the whole harmonic cycle, four
   // loops, so the file holds the full progression and still loops (D-044).
@@ -2621,10 +2652,14 @@ async function renderEnsembleLoop(score, {
   for (let step = 0; step < stepsCount; step += 1) {
     loopDuration += unit * rhythm[step % rhythm.length];
   }
-  const totalDuration = loopDuration + LOOP_TAIL_SECONDS;
-  const sampleRate = 44100;
+  const totalDuration = LOOP_START_OFFSET + loopDuration + LOOP_TAIL_SECONDS;
   const offlineCtx = new OfflineAudioCtx(2, Math.ceil(totalDuration * sampleRate), sampleRate);
-  const options = ensembleGraphOptions(offlineCtx, { start: 0, stop: totalDuration, unit, fadeIn: false, rhythmIndex });
+  // A loop-perfect export folds the tail back onto the start (D-076), so the
+  // continuous sources (drones, wax crackle) stop at the loop end; otherwise
+  // they would sound twice over the first second of the folded file.
+  const sustainStop = loopMode === "loop" ? LOOP_START_OFFSET + loopDuration : totalDuration;
+  const options = ensembleGraphOptions(offlineCtx, { start: 0, stop: sustainStop, unit, fadeIn: false, rhythmIndex });
+  options.masterDynamics = masterDynamics;
   if (channels) options.channels = channels;
   if (parlor) options.parlor = parlor;
   const graph = buildEnsembleGraph(offlineCtx, score, options);
@@ -2671,7 +2706,18 @@ async function renderEnsembleLoop(score, {
   restoreLiveConducting();
 
   const buffer = render ? await offlineCtx.startRendering() : null;
-  return { buffer, noteLog: offlineTransport.noteLog || [], bpm, loopDuration, stepStarts, stepChords, passes };
+  return {
+    buffer,
+    noteLog: offlineTransport.noteLog || [],
+    bpm,
+    loopDuration,
+    stepStarts,
+    stepChords,
+    passes,
+    sampleRate,
+    loopStartFrame: Math.round(LOOP_START_OFFSET * sampleRate),
+    loopFrames: Math.round(loopDuration * sampleRate),
+  };
 }
 
 function restoreLiveConducting() {
@@ -2680,9 +2726,46 @@ function restoreLiveConducting() {
   if (currentTransport) currentTransport.followedSlot = activeHeldFunKey !== null ? "live" : null;
 }
 
+function currentExportSettings() {
+  return normalizeExportSettings({
+    bitDepth: elements.exportBitDepth?.value,
+    sampleRate: elements.exportSampleRate?.value,
+    loopMode: elements.exportLoopMode?.value,
+    stemMode: elements.exportStemMode?.value,
+  });
+}
+
+function bufferChannels(buffer) {
+  return Array.from({ length: buffer.numberOfChannels }, (_, channel) => buffer.getChannelData(channel));
+}
+
+// Every WAV the export desk writes carries the same studio metadata (D-076).
+function encodeExportWav(channels, score, settings, render, { title, oneShot }) {
+  const key = keyLabelFor(score.root, score.scale);
+  const frames = channels[0]?.length ?? 0;
+  return encodeWav(channels, settings.sampleRate, {
+    bitDepth: settings.bitDepth,
+    seed: score.seed,
+    loop: oneShot ? null : { start: 0, end: frames },
+    acid: { bpm: render.bpm, beats: beatsIn(render.loopDuration, render.bpm), rootNote: key.rootNote, oneShot },
+    info: {
+      name: title,
+      software: `The Whimsy Machine ${APP_VERSION} (engine ${ENGINE_VERSION})`,
+      comment: `${score.name} - seed 0x${(score.seed >>> 0).toString(16).padStart(8, "0")} - ${render.bpm} BPM - ${key.display} - A4 ${referencePitch()} Hz`,
+      keywords: `${render.bpm} bpm; ${key.display}; whimsy machine`,
+    },
+  });
+}
+
+function exportFormatLine(settings) {
+  const depth = settings.bitDepth === "32f" ? "32-bit float" : `${settings.bitDepth}-bit PCM${settings.bitDepth === "16" ? " (TPDF dither)" : ""}`;
+  return `${depth} WAV, ${(settings.sampleRate / 1000).toFixed(1)} kHz stereo`;
+}
+
 async function exportSpecimenWav() {
   if (!currentScore) return;
   const score = currentScore;
+  const settings = currentExportSettings();
   elements.status.textContent = "RECORDING WAV LOOP...";
   await runExport(elements.exportWav, {
     idleHtml: 'RECORD WAV LOOP <span aria-hidden="true">☊</span>',
@@ -2690,22 +2773,28 @@ async function exportSpecimenWav() {
     doneText: "WAV RECORDED ✦",
     failStatus: "WAV EXPORT FAILED",
   }, async () => {
-    const { buffer } = await renderEnsembleLoop(score);
-    downloadBlob(audioBufferToWavBlob(buffer), specimenFilenameFor(score, "wav"));
-    elements.status.textContent = "SPECIMEN AUDIO RECORDED (WAV)";
+    const render = await renderEnsembleLoop(score, { sampleRate: settings.sampleRate, loopMode: settings.loopMode });
+    const channels = cutRender(bufferChannels(render.buffer), { start: render.loopStartFrame, length: render.loopFrames, mode: settings.loopMode });
+    const { gain } = applyPeakCeiling([channels]);
+    const key = keyLabelFor(score.root, score.scale);
+    const oneShot = settings.loopMode === "oneshot";
+    const bytes = encodeExportWav(channels, score, settings, render, { title: `${score.name} - ${key.display}`, oneShot });
+    downloadBlob(new Blob([bytes], { type: "audio/wav" }), exportFilename(score, { bpm: render.bpm, keyAscii: key.ascii, suffix: oneShot ? "oneshot" : "loop" }));
+    const trim = gain < 1 ? ` · TRIMMED ${(20 * Math.log10(gain)).toFixed(1)} dB` : "";
+    elements.status.textContent = `SPECIMEN AUDIO RECORDED · ${settings.bitDepth === "32f" ? "32F" : settings.bitDepth}-BIT ${settings.sampleRate / 1000} kHz · ${oneShot ? "ONE-SHOT" : "LOOP-PERFECT"}${trim}`;
   });
 }
 
-async function wavBytes(buffer) {
-  return new Uint8Array(await audioBufferToWavBlob(buffer).arrayBuffer());
-}
-
 // Nine stems: each console channel rendered alone at its fader and pan (mute
-// and solo ignored) with its own chamber reverb, plus the parlor room's crackle
-// and clockwork on their own. All stems share one start time and length.
+// and solo ignored), plus the parlor room's crackle and clockwork on their
+// own. All stems share one start (beat one at sample zero) and one length.
+// DRY stems skip the chamber reverb and the master compressor, so they sum to
+// the dry mix; PRINTED stems keep the room reverb and the compressor (D-076).
 async function exportSpecimenStems() {
   if (!currentScore) return;
   const score = currentScore;
+  const settings = currentExportSettings();
+  const dry = settings.stemMode === "dry";
   await runExport(elements.exportStems, {
     idleHtml: 'EXPORT 9 STEMS (ZIP) <span aria-hidden="true">⧉</span>',
     busyText: "RENDERING STEMS... ✦",
@@ -2718,26 +2807,35 @@ async function exportSpecimenStems() {
       crackleEnabled: parlorCrackleEnabled,
       level: parlorAcousticsLevel,
     });
-    const entries = [];
-    let loopDuration = 0;
-    let bpm = 0;
-    let stepStarts = [];
-    let passes = 1;
+    const common = { sampleRate: settings.sampleRate, loopMode: settings.loopMode, masterDynamics: !dry };
+    const cut = (render) => cutRender(bufferChannels(render.buffer), { start: render.loopStartFrame, length: render.loopFrames, mode: settings.loopMode });
+    const stems = [];
+    let render = null;
     for (const [index, [id, file]] of STEM_FILES.entries()) {
       elements.status.textContent = `RENDERING STEM ${index + 1}/9 · ${file.slice(3).toUpperCase()}`;
-      const result = await renderEnsembleLoop(score, {
+      render = await renderEnsembleLoop(score, {
+        ...common,
         channels: stemSettings(mixerState, id),
-        parlor: { reverb: room.reverb, crackle: SILENT_GAIN },
+        parlor: { reverb: dry ? SILENT_GAIN : room.reverb, crackle: SILENT_GAIN },
         clockTicks: false,
         engageAll: true,
       });
-      ({ loopDuration, bpm, stepStarts, passes } = result);
-      entries.push({ name: `${file}.wav`, data: await wavBytes(result.buffer) });
+      stems.push({ file, channels: cut(render) });
     }
     elements.status.textContent = "RENDERING STEM 9/9 · PARLOR ROOM";
-    const roomRender = await renderEnsembleLoop(score, { channels: silentSettings(mixerState), parlor: room });
-    entries.push({ name: "09-parlor-room.wav", data: await wavBytes(roomRender.buffer) });
+    const roomRender = await renderEnsembleLoop(score, { ...common, channels: silentSettings(mixerState), parlor: room });
+    stems.push({ file: "09-parlor-room", channels: cut(roomRender) });
+    const { gain } = applyPeakCeiling(stems.map((stem) => stem.channels));
+
+    const key = keyLabelFor(score.root, score.scale);
+    const oneShot = settings.loopMode === "oneshot";
+    const stemName = (file) => exportFilename(score, { bpm: render.bpm, keyAscii: key.ascii, suffix: file });
+    const entries = stems.map(({ file, channels }) => ({
+      name: stemName(file),
+      data: encodeExportWav(channels, score, settings, render, { title: `${score.name} - ${file.slice(3).toUpperCase()} - ${key.display}`, oneShot }),
+    }));
     const seedHex = (score.seed >>> 0).toString(16).padStart(8, "0");
+    const { bpm, loopDuration, stepStarts, passes } = render;
     entries.push({
       name: "README.txt",
       data: [
@@ -2746,23 +2844,29 @@ async function exportSpecimenStems() {
         `Specimen: ${score.name}`,
         `Folio: ${score.folioId ?? "FOLIO I"} · ${score.curiosaClass ?? ""} · ${score.bellJar ?? "BELL JAR Nº 01"}`,
         `Seed: 0x${seedHex}`,
-        `Tempo: ${bpm} BPM · ${passes > 1 ? `a song of ${passes} passes (12 steps each)` : "one 12-step loop"} lasting ${loopDuration.toFixed(3)} s plus a ${LOOP_TAIL_SECONDS} s tail`,
-        `Format: 16-bit PCM WAV, 44.1 kHz stereo. Every stem starts at 0 s; the loop begins at ${LOOP_START_OFFSET} s.`,
+        `Engine: ${ENGINE_VERSION} (The Whimsy Machine ${APP_VERSION})`,
+        `Key: ${key.display} · A4 = ${referencePitch()} Hz`,
+        `Tempo: ${bpm} BPM · ${beatsIn(loopDuration, bpm)} beats · ${passes > 1 ? `a song of ${passes} passes (12 steps each)` : "one 12-step loop"} lasting ${loopDuration.toFixed(3)} s`,
+        `Format: ${exportFormatLine(settings)}. Beat one is at sample 0 in every file.`,
+        oneShot
+          ? `Mode: ONE-SHOT · each file runs the loop once and keeps its ${LOOP_TAIL_SECONDS} s decay.`
+          : "Mode: LOOP-PERFECT · each file is exactly one loop long; the decay past the loop end is folded back onto its start, so the files repeat seamlessly. smpl and acid chunks carry the loop, tempo, and root note.",
+        dry
+          ? "Stems: DRY · no chamber reverb and no master compressor, so the channel stems sum to the dry mix. Add your own room."
+          : "Stems: PRINTED · each stem has its own chamber reverb and its own pass through the master compressor, so the stems sum close to, but not exactly to, the full mix.",
+        gain < 1 ? `Level: every file was turned down ${(20 * Math.log10(gain)).toFixed(2)} dB together to keep peaks under ${PEAK_CEILING_DB} dBFS.` : `Level: peaks are under ${PEAK_CEILING_DB} dBFS; nothing was changed.`,
         "",
-        ...STEM_FILES.map(([, file, label]) => `${file}.wav  ${label}`),
-        "09-parlor-room.wav  PARLOR ROOM · wax-cylinder crackle and clockwork escapement",
+        ...stems.map(({ file }, index) => `${stemName(file)}  ${index < STEM_FILES.length ? STEM_FILES[index][2] : "PARLOR ROOM · wax-cylinder crackle and clockwork escapement"}`),
         "",
         ...arrangementReadme(stepStarts),
         "Each channel stem is rendered alone through the full chain at its console fader",
-        "and pan, ignoring mute and solo, with its own chamber reverb. The master",
-        "compressor reacts to each stem separately, so the stems sum close to, but not",
-        "exactly to, the full mix.",
+        "and pan, ignoring mute and solo.",
         "",
       ].join("\n"),
     });
     const zip = createStoredZip(entries);
-    downloadBlob(new Blob([zip], { type: "application/zip" }), specimenFilenameFor(score, "zip").replace(/\.zip$/, "-stems.zip"));
-    elements.status.textContent = "NINE STEMS EXPORTED (ZIP)";
+    downloadBlob(new Blob([zip], { type: "application/zip" }), exportFilename(score, { bpm, keyAscii: key.ascii, suffix: "stems", extension: "zip" }));
+    elements.status.textContent = `NINE ${dry ? "DRY" : "PRINTED"} STEMS EXPORTED (ZIP)`;
   });
 }
 
@@ -2861,8 +2965,11 @@ async function exportSpecimenMidi() {
       stripPrograms,
       stripMarkers,
       flattenChannels,
+      rootMidi: score.root,
+      scaleIndex: score.scale,
       markers });
-    downloadBlob(new Blob([bytes], { type: "audio/midi" }), specimenFilenameFor(score, "mid"));
+    const key = keyLabelFor(score.root, score.scale);
+    downloadBlob(new Blob([bytes], { type: "audio/midi" }), exportFilename(score, { bpm, keyAscii: key.ascii, extension: "mid" }));
     elements.status.textContent = `MIDI SCORE WRITTEN · ${noteLog.length} NOTES (${format.toUpperCase()})`;
   });
 }
@@ -3657,11 +3764,16 @@ function captureSession() {
   return {
     format: SESSION_FORMAT,
     version: SESSION_VERSION,
+    engineVersion: ENGINE_VERSION,
     phrase: currentScore.phrase,
     tempo: activeTempoBpm,
     volume: Math.round(masterVolume),
     genre: activeGenre,
     strictness: activeStrictness,
+    rootOverride,
+    scaleOverride,
+    referencePitch: referencePitch(),
+    barLock: barLock44,
     acoustics: {
       enabled: parlorAcousticsEnabled,
       level: Math.round(parlorAcousticsLevel * 100),
@@ -3685,6 +3797,17 @@ function captureSession() {
 
 function syncSessionControls() {
   if (elements.kapellmeisterGenre) elements.kapellmeisterGenre.value = activeGenre;
+  if (elements.kapellmeisterKeyOverride) {
+    elements.kapellmeisterKeyOverride.value = rootOverride === null ? "native" : String(rootOverride);
+  }
+  if (elements.kapellmeisterScaleOverride) {
+    elements.kapellmeisterScaleOverride.value = scaleOverride === null ? "native" : String(scaleOverride);
+  }
+  if (elements.kapellmeisterTuningA4) {
+    elements.kapellmeisterTuningA4.value = String(referencePitch());
+  }
+  elements.transportBarLock?.setAttribute("aria-pressed", String(barLock44));
+  elements.transportBarLock?.classList.toggle("is-active", barLock44);
   if (elements.kapellmeisterStrictness) {
     elements.kapellmeisterStrictness.value = String(activeStrictness);
     elements.kapellmeisterStrictness.dispatchEvent(new Event("input"));
@@ -3711,6 +3834,10 @@ function applySession(session) {
   const score = composeScore(oracleSource, session.phrase);
   activeGenre = session.genre;
   activeStrictness = session.strictness;
+  rootOverride = session.rootOverride ?? null;
+  scaleOverride = session.scaleOverride ?? null;
+  setReferencePitch(session.referencePitch ?? 440);
+  barLock44 = Boolean(session.barLock);
   funMachineStyle = session.funMachine.style;
   funVoiceId = session.funMachine.voice;
   // Files from before variation existed open AS WRITTEN (D-043).
@@ -3852,7 +3979,10 @@ elements.sessionLoadPreset?.addEventListener("click", () => {
   }
   try {
     applySession(preset.session);
-    setSessionTelemetry(`PRESET LOADED · ${preset.name.toUpperCase()}`);
+    const engineWarning = preset.session.engineVersion !== ENGINE_VERSION
+      ? ` · WARNING: ENGINE v${preset.session.engineVersion} ≠ CURRENT v${ENGINE_VERSION}`
+      : "";
+    setSessionTelemetry(`PRESET LOADED · ${preset.name.toUpperCase()}${engineWarning}`);
   } catch (error) {
     console.error(error);
     setSessionTelemetry("PRESET COULD NOT BE LOADED");
@@ -3893,8 +4023,12 @@ elements.sessionFileInput?.addEventListener("change", async () => {
     return;
   }
   try {
-    applySession(parseSession(await file.text()));
-    setSessionTelemetry("SESSION RESTORED FROM .FUN FILE");
+    const parsed = parseSession(await file.text());
+    applySession(parsed);
+    const engineWarning = parsed.engineVersion !== ENGINE_VERSION
+      ? ` · WARNING: ENGINE v${parsed.engineVersion} ≠ CURRENT v${ENGINE_VERSION}`
+      : "";
+    setSessionTelemetry(`SESSION RESTORED FROM .FUN FILE${engineWarning}`);
   } catch (error) {
     if (error?.name !== "SessionError") console.error(error);
     setSessionTelemetry(`SESSION REJECTED · ${describeSessionError(error)}`);
@@ -5111,6 +5245,48 @@ elements.chipTick?.addEventListener("click", () => {
   updateAcousticsStatus();
 });
 
+function refreshScoreOverrides() {
+  if (!baseScore) return;
+  const previousRoot = currentScore ? currentScore.root : baseScore.root;
+  currentScore = applyScoreOverrides(baseScore, { rootOverride, scaleOverride });
+  if (song.loops.length && previousRoot !== currentScore.root) {
+    song = transposeSectionLoops(song, previousRoot, currentScore.root);
+    renderLooper();
+  }
+  if (rulebooksInstalled()) installCreatureBook(buildCreatureBook(currentScore, compiledRulebooks()));
+  applyEnsembleConductor();
+  if (currentTransport && audioContext) {
+    const chordRoot = currentConductedSpine?.[currentTransport.audibleStep ?? 0]?.root ?? 0;
+    const freqs = droneFrequencies(currentScore, chordRoot);
+    currentTransport.drones.forEach((drone, index) => {
+      drone.frequency.setTargetAtTime(freqs[index], audioContext.currentTime, 0.04);
+    });
+  }
+  updateKapellmeisterUI();
+  updateBassGrid();
+  updateHarmonyGrid();
+  updateChimeGrid();
+  updateChantGrid();
+  updateFunKeyboardChordLabels();
+}
+
+elements.kapellmeisterKeyOverride?.addEventListener("change", (e) => {
+  const val = e.target.value;
+  rootOverride = val === "native" ? null : Number(val);
+  refreshScoreOverrides();
+});
+
+elements.kapellmeisterScaleOverride?.addEventListener("change", (e) => {
+  const val = e.target.value;
+  scaleOverride = val === "native" ? null : Number(val);
+  refreshScoreOverrides();
+});
+
+elements.kapellmeisterTuningA4?.addEventListener("change", (e) => {
+  setReferencePitch(Number(e.target.value));
+  refreshScoreOverrides();
+});
+
 elements.kapellmeisterGenre?.addEventListener("change", (e) => {
   activeGenre = e.target.value;
   if (currentTransport && audioContext && currentScore) {
@@ -5419,6 +5595,20 @@ elements.transportPause?.addEventListener("click", () => {
 
 elements.transportStop?.addEventListener("click", () => {
   runTransportCommand("stop");
+});
+
+elements.transportBarLock?.addEventListener("click", () => {
+  barLock44 = !barLock44;
+  elements.transportBarLock.setAttribute("aria-pressed", String(barLock44));
+  elements.transportBarLock.classList.toggle("is-active", barLock44);
+  if (currentTransport && audioContext && currentScore) {
+    const rhythm = RHYTHMS[effectiveRhythmIndex(currentScore, activeGenre)];
+    const unit = stepUnitSeconds(activeTempoBpm || currentScore.pulse, rhythm, barLock44);
+    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, 60 / (unit * 2), effectiveRhythmIndex(currentScore, activeGenre)), audioContext.currentTime, 0.08);
+  }
+  elements.status.textContent = barLock44
+    ? "4/4 BAR LOCK ENGAGED · EACH 12-STEP PASS FITS ONE 4/4 BAR"
+    : "4/4 BAR LOCK RELEASED · NATIVE PARLOR PULSE";
 });
 
 elements.shareLink?.addEventListener("click", () => {

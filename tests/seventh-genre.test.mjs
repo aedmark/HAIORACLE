@@ -87,6 +87,7 @@ test("the conductor plays the new genre's changes, bass walk, organ voicing, mel
 test("saved sessions accept the new genre, and still refuse genres no rulebook names", () => {
   const session = {
     format: SESSION_FORMAT, version: SESSION_VERSION, phrase: "a barbershop tag", tempo: 96, volume: 70, genre: CODE, strictness: 8, varied: true,
+    engineVersion: 1, rootOverride: null, scaleOverride: null, referencePitch: 440, barLock: false,
     acoustics: { enabled: true, level: 55, crackle: true, reverb: true, ticks: true },
     funMachine: { style: "progression", voice: "creature" },
     plates: Object.fromEntries(["beat", "bass", "harmony", "chime", "chant"].map((id) => [id, { mutation: 0, cellCycles: Array(12).fill(0) }])),

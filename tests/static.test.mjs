@@ -609,7 +609,8 @@ test("the session ledger saves presets on-device and .fun files through the vali
   assert.match(html, /id="session-file-input" type="file" accept="\.fun,application\/json" hidden/);
   assert.match(app, /function captureSession\(\)/);
   assert.match(app, /function applySession\(session\)/);
-  assert.match(app, /applySession\(parseSession\(await file\.text\(\)\)\)/);
+  // Files pass the validator before they reach applySession (P8-03 warns on engine mismatch).
+  assert.match(app, /const parsed = parseSession\(await file\.text\(\)\);\s*applySession\(parsed\)/);
   assert.match(app, /file\.size > MAX_SESSION_BYTES/);
   // Every storage access is guarded.
   const storageCalls = app.match(/window\.localStorage\.\w+/g) || [];

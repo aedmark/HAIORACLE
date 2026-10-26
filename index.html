@@ -141,6 +141,9 @@
           <button class="transport-button" id="replay" type="button" disabled>
             <span class="transport-glyph" aria-hidden="true">↻</span> RESTART THE MELODY
           </button>
+          <button class="transport-button" id="transport-bar-lock" type="button" aria-pressed="false" title="Fit each 12-step pass to one 4/4 bar (4 beats) at the stated BPM so loops land on a DAW 4/4 grid">
+            4/4 BAR LOCK
+          </button>
           <output class="transport-position" id="transport-position" aria-live="off">STEP -- / 12</output>
           <output class="transport-section" id="transport-section" aria-live="off" title="The INTERCAL conductor's section for the current step"></output>
         </div>
@@ -322,6 +325,49 @@
               <label for="kapellmeister-genre" class="kapellmeister-label">RULEBOOK</label>
               <!-- Options come from the genres in src/rulebooks.ni once it loads (D-033). -->
               <select id="kapellmeister-genre" class="kapellmeister-select" aria-label="Select Kapellmeister music-theory genre rulebook" aria-describedby="kapellmeister-genre-motto" disabled></select>
+            </div>
+            <div class="kapellmeister-select-wrap">
+              <label for="kapellmeister-key-override" class="kapellmeister-label">KEY</label>
+              <select id="kapellmeister-key-override" class="kapellmeister-select" aria-label="Override creature tonic key">
+                <option value="native" selected>CREATURE'S KEY</option>
+                <option value="0">C</option>
+                <option value="1">C♯</option>
+                <option value="2">D</option>
+                <option value="3">E♭</option>
+                <option value="4">E</option>
+                <option value="5">F</option>
+                <option value="6">F♯</option>
+                <option value="7">G</option>
+                <option value="8">A♭</option>
+                <option value="9">A</option>
+                <option value="10">B♭</option>
+                <option value="11">B</option>
+              </select>
+            </div>
+            <div class="kapellmeister-select-wrap">
+              <label for="kapellmeister-scale-override" class="kapellmeister-label">MODE</label>
+              <select id="kapellmeister-scale-override" class="kapellmeister-select" aria-label="Override creature scale or mode">
+                <option value="native" selected>CREATURE'S MODE</option>
+                <option value="0">DORIAN</option>
+                <option value="1">MAJOR PENTATONIC</option>
+                <option value="2">DOUBLE HARMONIC</option>
+                <option value="3">BLUES</option>
+                <option value="4">WHOLE TONE</option>
+                <option value="5">PHRYGIAN</option>
+                <option value="6">UKRAINIAN DORIAN</option>
+                <option value="7">MAJOR NINTH</option>
+              </select>
+            </div>
+            <div class="kapellmeister-select-wrap">
+              <label for="kapellmeister-tuning-a4" class="kapellmeister-label">A4</label>
+              <select id="kapellmeister-tuning-a4" class="kapellmeister-select" aria-label="Concert pitch A4 reference in Hertz">
+                <option value="415">415 Hz (BAROQUE)</option>
+                <option value="432">432 Hz (VERDI)</option>
+                <option value="440" selected>440 Hz (STANDARD)</option>
+                <option value="442">442 Hz (ORCHESTRAL)</option>
+                <option value="444">444 Hz (BRIGHT)</option>
+                <option value="466">466 Hz (CHORTON)</option>
+              </select>
             </div>
             <button class="fun-chip kapellmeister-as-written" id="kapellmeister-as-written" type="button" aria-pressed="false" aria-describedby="kapellmeister-variation" title="Play the genre exactly as its rulebook wrote it, without this creature's variation">AS WRITTEN</button>
             <button class="fun-chip kapellmeister-manuscript-toggle" id="kapellmeister-manuscript-toggle" type="button" aria-expanded="false" aria-controls="kapellmeister-manuscript" title="Open the Kapellmeister's Manuscript live Inform 7 rulebook sandbox">MANUSCRIPT <span aria-hidden="true">✎</span></button>
@@ -702,6 +748,29 @@
           </div>
         </div>
         <div class="session-body export-body">
+          <div class="session-field" role="group" aria-labelledby="export-format-label">
+            <span class="session-files-label" id="export-format-label">STUDIO FORMAT</span>
+            <div class="session-row">
+              <select id="export-bit-depth" class="kapellmeister-select" aria-label="WAV bit depth">
+                <option value="16">16-BIT (DITHERED)</option>
+                <option value="24" selected>24-BIT</option>
+                <option value="32f">32-BIT FLOAT</option>
+              </select>
+              <select id="export-sample-rate" class="kapellmeister-select" aria-label="WAV sample rate">
+                <option value="44100">44.1 kHz</option>
+                <option value="48000" selected>48 kHz</option>
+                <option value="96000">96 kHz</option>
+              </select>
+              <select id="export-loop-mode" class="kapellmeister-select" aria-label="Loop or one-shot export">
+                <option value="loop" selected>LOOP-PERFECT (TAIL FOLDED)</option>
+                <option value="oneshot">ONE-SHOT (TAIL KEPT)</option>
+              </select>
+              <select id="export-stem-mode" class="kapellmeister-select" aria-label="Stem processing">
+                <option value="dry" selected>DRY STEMS (NO ROOM, NO COMPRESSOR)</option>
+                <option value="printed">PRINTED STEMS (AS HEARD)</option>
+              </select>
+            </div>
+          </div>
           <div class="session-field" role="group" aria-labelledby="export-audio-label">
             <span class="session-files-label" id="export-audio-label">AUDIO FOR ANY DAW</span>
             <div class="session-row">
@@ -864,12 +933,12 @@
     // a cached old one. Restamp with `node tools/stamp_assets.mjs`; the tests
     // fail when the stamp or this module list falls behind src/.
     (() => {
-      const ASSET_VERSION = "e440b20b22c1";
+      const ASSET_VERSION = "099f713435af";
       const MODULES = [
-        "accompaniment.mjs", "app.mjs", "befunge.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
+        "accompaniment.mjs", "app.mjs", "audio-export.mjs", "befunge.mjs", "brainfuck.mjs", "broadsheet.mjs", "cabinet.mjs", "conductor.mjs", "creature-rulebook.mjs",
         "ensemble.mjs", "fractran.mjs", "herbarium.mjs", "inform.mjs", "inspector.mjs", "intercal.mjs", "lolcode.mjs", "looper.mjs",
         "malbolge.mjs", "manuscript.mjs", "midi-io.mjs", "midi.mjs", "mixer.mjs", "music.mjs", "mycelium.mjs", "schedulers.mjs", "score.mjs",
-        "session.mjs", "shakespeare.mjs", "share.mjs", "transport.mjs", "variation.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
+        "session.mjs", "shakespeare.mjs", "share.mjs", "transport.mjs", "tuning.mjs", "variation.mjs", "version.mjs", "vitrine-canvas.mjs", "voices.mjs", "zip.mjs",
       ];
       const imports = {};
       for (const name of MODULES) imports[`./src/${name}`] = `./src/${name}?v=${ASSET_VERSION}`;

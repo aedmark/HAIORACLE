@@ -4,6 +4,8 @@
 // with the CPU or the speakers. The schedulers below turn a patch into Web
 // Audio nodes; src/app.mjs owns note logging and live pad release.
 
+import { midiToFrequency } from "./tuning.mjs";
+
 export const OSCILLATOR_TYPES = Object.freeze(["sine", "triangle", "sawtooth", "square"]);
 const SIDES = Object.freeze(["center", "left", "right"]);
 // Per note, so a four-note pad is at most 12 oscillators plus one LFO.
@@ -553,7 +555,6 @@ export function voiceById(id) {
 // Schedulers. Each takes the context, a destination, a validated voice, and
 // times already clamped by the caller; `hold` is the vitrine press (0..1).
 
-const midiToFrequency = (midi) => 440 * 2 ** ((midi - 69) / 12);
 
 // Routes `source` (the part's filter) to `env`, through formants when the part
 // has them. Returns nothing; the formant nodes live as long as the filter.

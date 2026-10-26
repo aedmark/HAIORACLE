@@ -1780,14 +1780,31 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
    - Prevented post-outro scheduling bleed using `casioOutroEnding` break in the look-ahead loop; when step 11 of the outro finishes sounding, transport cleanly halts and rewinds.
    - Synchronized button UI states: `.is-cued` pulsing while pending/scheduled ahead, transitioning to `.is-active` once audible, and clearing upon step 11 completion.
    - Added Casio progress reporting to `looperReadoutText()`.
-   - Restamped `ASSET_VERSION` to `698d822fb894`.
+   - Restamped `ASSET_VERSION` to `698d822fb894`.### Session 70: 2026-10-23: Hardware console alignment, whitespace harmony, and double-padding elimination (D-057)
 
+**Contributor:** Antigravity with maintainer direction
 
+**Goal:** Resolve inconsistent whitespace, wrapping, and padding across Wing 1 following the Korg R3-inspired layout pivot: eliminate the excessive top pad over master volume/tempo sliders, tighten the dead space between the One-Finger Accompanist title and its controls, and eliminate the double-padding misalignment that pushed rulebook headers far to the left of the readout and compass.
 
+**Done:** All parts implemented and verified. All 184 behavioral, structural, and audit checks pass.
 
-
-
-
+**Changed:**
+1. `styles.css`:
+   - `.transport-deck`: changed from `align-items: center` to `align-items: flex-start`, aligning the transport buttons, step counter, volume and tempo sliders, and keyboard hint along the exact same top padding guide.
+   - `.transport-position`: updated padding to `0.72rem 0.75rem`, matching transport button height (~36px).
+   - `.transport-hint`: added `align-self: flex-start; padding-top: 0.65rem;` to align its baseline with the transport keys.
+   - `#fun-machine-heading`: separated from `#kapellmeister-heading` and reduced from `height: 2.5em` to `height: 1.25em`.
+   - `.fun-machine-engine`: tightened gap to `0.5rem`.
+   - `.fun-machine-body`: set `padding: 0.25rem 0 0.5rem` (0 inline padding), shrinking dead space between heading and style bar from ~47px down to a crisp ~11px.
+   - `.looper`: set `margin-top: 0`, using the uniform `0.75rem` body gap between the keyboard and sequencer.
+   - `.kapellmeister-body`: set `padding: 0.35rem 0 0.5rem` (0 inline padding), eliminating the double-indentation bug where body readouts and compass were shifted 42px inwards relative to the title and motto.
+   - `.acoustics-body`: set `padding: 0.35rem 0 0.5rem` (0 inline padding), aligning acoustics controls with the engine header.
+   - `.kapellmeister-engine .beat-header`: changed from `align-items: end` to `align-items: flex-start`, aligning the Rulebook select dropdown with the top title row.
+   - Sliders: unified dimensions and brass accent across `#master-volume`, `#tempo-bpm`, `#kapellmeister-strictness`, and `#parlor-acoustics-level`.
+2. `tests/static.test.mjs`:
+   - Line 321: updated fixed line box assertions for `#kapellmeister-heading` (`2.5em`) and `#fun-machine-heading` (`1.25em`).
+3. `docs/DECISIONS.md`:
+   - Logged D-057.
 
 
 

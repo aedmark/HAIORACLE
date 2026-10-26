@@ -25,6 +25,7 @@ import {
   validateSession,
   writePresetStoreTo,
 } from "../src/session.mjs";
+import { applyScoreOverrides, midiToFrequency, referencePitch, setReferencePitch } from "../src/tuning.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -40,12 +41,17 @@ function sampleSession(overrides = {}) {
   return {
     format: SESSION_FORMAT,
     version: SESSION_VERSION,
+    engineVersion: 1,
     phrase: "the moon owes me five dollars",
     tempo: 96,
     volume: 70,
     genre: "smoky_jazz",
     strictness: 10,
     varied: true,
+    rootOverride: null,
+    scaleOverride: null,
+    referencePitch: 440,
+    barLock: false,
     acoustics: { enabled: true, level: 40, crackle: false, reverb: true, ticks: true },
     funMachine: { style: "arpeggio", voice: "glass_harmonica" },
     plates,
@@ -55,15 +61,26 @@ function sampleSession(overrides = {}) {
   };
 }
 
-// An older-format sample: versions before 5 carry no voices, and versions
-// before 4 no song.
+// An older-format sample: versions before 7 carry no engineVersion/overrides,
+// versions before 5 carry no voices, and versions before 4 no song.
 function olderSession(version, overrides = {}) {
+  const stripV7 = (s) => {
+    delete s.engineVersion;
+    delete s.rootOverride;
+    delete s.scaleOverride;
+    delete s.referencePitch;
+    delete s.barLock;
+    return s;
+  };
+  if (version === 6) {
+    return stripV7(sampleSession({ version, ...overrides }));
+  }
   if (version === 5) {
-    const session = sampleSession({ version, ...overrides });
+    const session = stripV7(sampleSession({ version, ...overrides }));
     delete session.varied;
     return session;
   }
-  const session = sampleSession({ version, funMachine: { style: "arpeggio" }, ...overrides });
+  const session = stripV7(sampleSession({ version, funMachine: { style: "arpeggio" }, ...overrides }));
   delete session.varied;
   if (version === 4) {
     session.song = { loops: session.song.loops.map((loop) => ({ ...loop, layers: loop.layers.map((take) => take.map((slot) => slot && { key: slot.key, style: slot.style })) })) };
@@ -91,7 +108,11 @@ test("session validation rejects anything outside the allowlist, naming the fiel
   delete missing.tempo;
   rejectsAt(missing, "session.tempo");
   rejectsAt(sampleSession({ format: "something-else" }), "session.format");
-  rejectsAt(sampleSession({ version: 7 }), "session.version");
+  rejectsAt(sampleSession({ version: 8 }), "session.version");
+  rejectsAt(sampleSession({ rootOverride: 12 }), "session.rootOverride");
+  rejectsAt(sampleSession({ scaleOverride: 8 }), "session.scaleOverride");
+  rejectsAt(sampleSession({ referencePitch: 400 }), "session.referencePitch");
+  rejectsAt(sampleSession({ engineVersion: 0 }), "session.engineVersion");
   rejectsAt(sampleSession({ song: { loops: [{ repeats: 9, layers: [[{ key: 0, style: "swell" }, ...Array(11).fill(null)]] }] } }), "session.song.loops[0].repeats");
   rejectsAt(sampleSession({ song: { loops: [{ repeats: 1, layers: [[{ key: 0, style: "organ", voice: "velvet_pad" }, ...Array(11).fill(null)]] }] } }), "session.song.loops[0].layers[0][0].style");
   const noSong = sampleSession();
@@ -344,5 +365,40 @@ test("preset storage handles mid-write QuotaExceededError by evicting oldest pre
   // Clearing an empty store removes the key cleanly.
   assert.equal(writePresetStoreTo(mockStorage, emptyPresetStore()), true);
   assert.deepEqual(readPresetStoreFrom(mockStorage), emptyPresetStore());
+});
+
+test("P8-03 and P8-04 v7 sessions record engineVersion, rootOverride, scaleOverride, and referencePitch; v6 upgrades cleanly", () => {
+  const v6 = olderSession(6);
+  const upgraded = validateSession(v6);
+  assert.equal(upgraded.version, SESSION_VERSION);
+  assert.equal(upgraded.engineVersion, 1);
+  assert.equal(upgraded.rootOverride, null);
+  assert.equal(upgraded.scaleOverride, null);
+  assert.equal(upgraded.referencePitch, 440);
+  assert.equal(upgraded.barLock, false);
+  rejectsAt(sampleSession({ barLock: "yes" }), "session.barLock");
+
+  const custom = validateSession(sampleSession({
+    engineVersion: 2,
+    rootOverride: 2, // D
+    scaleOverride: 5, // Phrygian
+    referencePitch: 432,
+  }));
+  assert.equal(custom.engineVersion, 2);
+  assert.equal(custom.rootOverride, 2);
+  assert.equal(custom.scaleOverride, 5);
+  assert.equal(custom.referencePitch, 432);
+
+  const mockScore = Object.freeze({ root: 48, scale: 0, name: "Specimen" });
+  const overridden = applyScoreOverrides(mockScore, { rootOverride: 2, scaleOverride: 5 });
+  assert.equal(overridden.root % 12, 2, "transposed to pitch class D");
+  assert.ok(overridden.root >= 30 && overridden.root <= 65, "stays within valid score root range");
+  assert.equal(overridden.scale, 5, "scale overridden to Phrygian");
+
+  setReferencePitch(432);
+  assert.equal(referencePitch(), 432);
+  assert.equal(midiToFrequency(69), 432);
+  setReferencePitch(440);
+  assert.equal(midiToFrequency(69), 440);
 });
 

@@ -4,23 +4,23 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-25, session 80, on `main`._
+_Last updated: 2026-10-26, session 82, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
 - D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
-- Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) established in `ROADMAP.md` (P7-01 through P7-06, D-072–D-075). P7-01 complete: M-VAVE FM-1 hardware controller profile. P7-02 complete: C core port in `firmware-c/`. P7-03 complete: FM-1 native audio synthesis engine in `firmware-c/whimsy_fm1_synth.c`. P7-04 complete: FM-1 240×240 color TFT UI renderer in `firmware-c/whimsy_fm1_ui.c`. P7-05 complete: standalone Web MIDI firmware flasher in `tools/flash_fm1.html`. P7-06 complete: native JieLi PI32v2 `.fwsc` firmware container build pipeline (`tools/build_fm1_firmware.py`) and verified emulation under Joakim Eriksson's `fm1-emu` (`tests/fm1-firmware.test.mjs`).
-- Next: Hands-on testing of M-VAVE FM-1 hardware over USB/Bluetooth MIDI or by loading `.fwsc` directly into `fm1-emu`.
+- Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
+- Phase 8: Studio Credibility (P8-01 through P8-05 complete, D-076–D-080). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock transport mode fitting 12-step passes to 4/4 DAW grid.
 
-**Where things stand:** P1–P7 are fully implemented, verified, and complete across all roadmap items! Semantic version 1.1.0. Phase 7 complete for M-VAVE FM-1 pocket synthesizer companion mode, standalone C core port, audio engine, 240×240 TFT renderer, Web MIDI flasher, and native `.fwsc` firmware container verified in the `fm1-emu` hardware emulator. Zero-dependency web app ready for Neocities deployment (`tools/stage_neocities.py`, D-065) and official multi-platform desktop release (Linux, Windows, macOS) via `.github/workflows/release.yml` and `tools/build_desktop.sh` (D-064, D-066).
+**Where things stand:** P1–P7 and P8-01 through P8-05 are fully implemented, verified, and passing across all suites! Version 1.3.0. 235/235 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-26, session 81, local Linux environment)
+**Verified** (2026-10-26, session 82, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **225/225 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **235/235 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 39 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 40 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -90,6 +90,40 @@ _Last updated: 2026-10-25, session 80, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 82 (2026-10-26): Phase 8 Studio Credibility: 16/24/32f WAV, Tail Folding, Dry Stems, DAW MIDI, Engine Version, Tuning/Key Overrides, 4/4 Bar Lock (D-076–D-080)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Establish Phase 8 in `ROADMAP.md` and deliver production-grade studio tools: high-resolution multi-format WAV export with seamless loop tail folding, dry stem exports, embedded DAW sampler metadata (`smpl`, `acid`, `LIST/INFO`), MIDI key/time signature meta events, engine version integrity guards, host-level key/scale/concert pitch overrides, and a 4/4 Bar Lock transport mode fitting 12-step passes to standard DAW grids.
+
+**Done:** All planned items (P8-01 through P8-05) implemented and verified. 235/235 automated tests pass.
+
+**Changed:**
+1. Studio Audio Export (`src/audio-export.mjs`, `P8-01`, `D-076`):
+   - Created pure audio export module supporting 16-bit PCM (TPDF phrase-seeded dither), 24-bit PCM, and 32-bit float WAV across 44.1, 48, and 96 kHz.
+   - Implemented `cutRender` with sample 0 beat-one alignment, loop-perfect tail folding (decay tails folded into loop start), and one-shot decay modes.
+   - Added `applyPeakCeiling` enforcing a shared −1 dBFS ceiling across stems and master renders.
+   - Encoded RIFF `smpl` loop points, `acid` tempo/beat/root slices, and `LIST/INFO` metadata chunks.
+   - Added export selectors for bit depth, sample rate, loop mode, and stem mode (`#export-bit-depth`, `#export-sample-rate`, `#export-loop-mode`, `#export-stem-mode`) in Wing IV (`index.html`, `src/app.mjs`).
+2. Dry Stems & Linear Mixing (`src/ensemble.mjs`, `src/app.mjs`, `D-076`):
+   - Added `masterDynamics` toggle to `buildEnsembleGraph` allowing stem renders to bypass compressor and reverb for linear, additive multi-track stems.
+3. DAW-Ready MIDI (`src/midi.mjs`, `P8-02`):
+   - Transmit SMF Key Signature (`0xFF 0x59`) and Time Signature (`0xFF 0x58`) meta events on the conductor track.
+   - Guaranteed preservation of General MIDI drum channel 9 when `flattenChannels` is active in Clean DAW export mode.
+4. Engine Versioning (`src/version.mjs`, `P8-03`, `D-077`):
+   - Defined `APP_VERSION`, `ENGINE_VERSION`, and `ENGINE_FINGERPRINT` over esoteric scores and golden fixtures, verified by `tests/engine-version.test.mjs`.
+   - Updated session schema to v7 recording `engineVersion`; telemetry alerts user if session engine version differs from host engine version.
+5. Key, Scale, and Tuning Retuning (`src/tuning.mjs`, `P8-04`, `D-078`):
+   - Pure tuning module providing `midiToFrequency()`, `referencePitch()`, `setReferencePitch()` ($415\dots 466\text{ Hz}$), and `applyScoreOverrides()`.
+   - Wired live key override ($C\dots B$), scale override, and A4 tuning dropdowns in Kapellmeister console (`#kapellmeister-key-override`, `#kapellmeister-scale-override`, `#kapellmeister-tuning-a4`).
+6. 4/4 Bar-Aligned Metre Lock (`src/tuning.mjs`, `src/app.mjs`, `P8-05`, `D-079`):
+   - Implemented `stepUnitSeconds` scaling 12-step passes to fit exactly 4 quarter-beats at the stated BPM.
+   - Added `4/4 BAR LOCK` toggle button (`#transport-bar-lock`) to the Master Transport deck; persisted in v7 sessions (`session.barLock`).
+7. Architecture & Decisions:
+   - Logged D-076 through D-080 in `docs/DECISIONS.md`.
+   - Updated repository maps in `AGENTS.md` and `docs/ARCHITECTURE.md`.
+   - Updated `ROADMAP.md` and `docs/CHANGELOG.md`.
 
 ### Session 79 (2026-10-25): Cross-Platform Application Icon & Official v1.0.0 Release (D-066, P6-01)
 
@@ -381,31 +415,5 @@ _Last updated: 2026-10-25, session 80, on `main`._
    - Recorded ADR D-058 in `docs/DECISIONS.md`.
    - Updated page shell map and invariants in `docs/ARCHITECTURE.md`.
    - Updated `docs/HANDOFF.md`.
-
-### Session 70: 2026-10-23: Hardware console alignment, whitespace harmony, and double-padding elimination (D-057)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Resolve inconsistent whitespace, wrapping, and padding across Wing 1 following the Korg R3-inspired layout pivot: eliminate the excessive top pad over master volume/tempo sliders, tighten the dead space between the One-Finger Accompanist title and its controls, and eliminate the double-padding misalignment that pushed rulebook headers far to the left of the readout and compass.
-
-**Done:** All parts implemented and verified. All 184 behavioral, structural, and audit checks pass.
-
-**Changed:**
-1. `styles.css`:
-   - `.transport-deck`: changed from `align-items: center` to `align-items: flex-start`, aligning the transport buttons, step counter, volume and tempo sliders, and keyboard hint along the exact same top padding guide.
-   - `.transport-position`: updated padding to `0.72rem 0.75rem`, matching transport button height (~36px).
-   - `.transport-hint`: added `align-self: flex-start; padding-top: 0.65rem;` to align its baseline with the transport keys.
-   - `#fun-machine-heading`: separated from `#kapellmeister-heading` and reduced from `height: 2.5em` to `height: 1.25em`.
-   - `.fun-machine-engine`: tightened gap to `0.5rem`.
-   - `.fun-machine-body`: set `padding: 0.25rem 0 0.5rem` (0 inline padding), shrinking dead space between heading and style bar from ~47px down to a crisp ~11px.
-   - `.looper`: set `margin-top: 0`, using the uniform `0.75rem` body gap between the keyboard and sequencer.
-   - `.kapellmeister-body`: set `padding: 0.35rem 0 0.5rem` (0 inline padding), eliminating the double-indentation bug where body readouts and compass were shifted 42px inwards relative to the title and motto.
-   - `.acoustics-body`: set `padding: 0.35rem 0 0.5rem` (0 inline padding), aligning acoustics controls with the engine header.
-   - `.kapellmeister-engine .beat-header`: changed from `align-items: end` to `align-items: flex-start`, aligning the Rulebook select dropdown with the top title row.
-   - Sliders: unified dimensions and brass accent across `#master-volume`, `#tempo-bpm`, `#kapellmeister-strictness`, and `#parlor-acoustics-level`.
-2. `tests/static.test.mjs`:
-   - Line 321: updated fixed line box assertions for `#kapellmeister-heading` (`2.5em`) and `#fun-machine-heading` (`1.25em`).
-3. `docs/DECISIONS.md`:
-   - Logged D-057.
 
 
