@@ -4,21 +4,21 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-26, session 82, on `main`._
+_Last updated: 2026-10-26, session 83, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
 - D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
 - Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
-- Phase 8: Studio Credibility (P8-01 through P8-05 complete, D-076–D-080). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock transport mode fitting 12-step passes to 4/4 DAW grid.
+- Phase 8: Studio Credibility (P8-01 through P8-05 complete, D-076–D-080). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle.
 
-**Where things stand:** P1–P7 and P8-01 through P8-05 are fully implemented, verified, and passing across all suites! Version 1.3.0. 235/235 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7 and P8-01 through P8-05 are fully implemented, verified, and passing across all suites! Version 1.3.0. 240/240 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-26, session 82, local Linux environment)
+**Verified** (2026-10-26, session 83, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **235/235 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **240/240 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 40 entries, 0 errors, 0 warnings** |
 
@@ -90,6 +90,43 @@ _Last updated: 2026-10-26, session 82, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 83 (2026-10-26): Phase 8 Studio Credibility: Native 16-Step Straight Grid Metre (P8-05, D-079)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Phase 2 of P8-05 (D-079) — native 16-step straight grid metre (4 beats $\times$ 4 sixteenth notes in 4/4 time) alongside the vintage 12-step shuffle/triplet grid, parameterized across all 5 esoteric band generators (Malbolge, Brainfuck, Befunge, FRACTRAN/Piet, Shakespeare), INTERCAL dynamic arrangement conductor, Neo-Riemannian Tonnetz, Fun Machine accompanist, Loop Machine sequencer, and session format v7.
+
+**Done:** All parts implemented and verified. 239/239 automated tests pass.
+
+**Changed:**
+1. `src/tuning.mjs`:
+   - Exported `GRID_STEPS_OPTIONS = Object.freeze([12, 16])` and `DEFAULT_GRID_STEPS = 16`.
+   - Updated `stepUnitSeconds(bpm, rhythmTemplate, barLock44, stepsCount = 12)` so that 16-step mode naturally fills exactly one 4/4 bar (`(60 / bpm) * 4 / unitsInPass`).
+2. Esoteric VM Generators:
+   - Parameterized `composeBeat(source, score, mutation, stepsCount = 12)` in `src/malbolge.mjs` for 16-step ternary drum composition.
+   - Parameterized `composeBass(source, score, mutation, stepsCount = 12)` in `src/brainfuck.mjs` with 16 steps, half-bar octave interval anchors, and looping cells.
+   - Parameterized `composeHarmony(source, score, mutation, stepsCount = 12)` in `src/befunge.mjs` for 16 chord voicings.
+   - Parameterized `composeChimes(pietSource, fractranSource, score, mutation, stepsCount = 12)` in `src/fractran.mjs` executing up to `Math.max(12, stepsCount)` states.
+   - Parameterized `composeChant(source, score, mutation, stepsCount = 12)` in `src/shakespeare.mjs` for 16 dramatic vowel formant cues.
+3. Orchestration & Composition:
+   - Parameterized `melodyFor(score, stepsCount = 12)` in `src/music.mjs` generating 16 melody offsets with octave shifting on steps 12..15.
+   - Parameterized `composeArrangement(source, score, stepsCount = 12)` and `arrangementSectionAt()` in `src/intercal.mjs` for 4 sections $\times$ 4 steps = 16 steps, with turnaround at step 14/15.
+   - Parameterized `buildTonnetzSpine`, `buildRawChaosSpine`, `buildGenreSpine`, `passSpine`, and `conductEnsemble` in `src/conductor.mjs` supporting `stepsCount = 12` or `16` (4 harmonic regions $\times$ 4 steps each; Euclidean rhythm pulse counts scaled to 9 and 7).
+   - Parameterized `buildPerformance(..., stepsCount = 12)` in `src/accompaniment.mjs`.
+4. Loop Machine & Inspector:
+   - Parameterized `emptyTake(steps = LOOP_STEPS)` and `songPosition(song, absoluteStep, stepsPerPass = LOOP_STEPS)` in `src/looper.mjs`.
+   - Allowed 12- or 16-step takes in `validateSong()`, and indexed slots with `step % take.length`.
+   - Updated `src/inspector.mjs` (`normalizeStep(stepIndex, totalSteps = 12)`) and all five plate inspectors to display `STEP ss/16` when in 16-step mode.
+5. Session Format v7:
+   - Added optional `gridSteps` (`12` or `16`) in `src/session.mjs`, supporting plate cell cycles of either 12 or 16 counts while preserving backwards compatibility.
+6. UI & Styling:
+   - Added `#transport-grid-steps` toggle button on Master Transport deck (`index.html`) displaying `16 STEPS (4/4)` or `12 STEPS (TRIPLET)`.
+   - Added `.is-16-steps` CSS grid rules (`repeat(16, minmax(0, 1fr))` desktop, `repeat(8, minmax(0, 1fr))` mobile) for `.looper-steps` and `.beat-grid` in `styles.css`.
+   - Wired live switching in `src/app.mjs`: recomposes plates, re-renders plate step grids and looper ribbon, re-conducts ensemble, and persists `gridSteps` in session captures.
+7. Verification & Tests:
+   - Added `tests/metre.test.mjs` testing step durations, 16-step generation across all 5 esoteric band generators, Tonnetz + INTERCAL 16-step orchestration, and looper + session serialization.
+   - Updated `tests/session.test.mjs`, `tests/static.test.mjs`, `tests/audit.test.mjs`.
 
 ### Session 82 (2026-10-26): Phase 8 Studio Credibility: 16/24/32f WAV, Tail Folding, Dry Stems, DAW MIDI, Engine Version, Tuning/Key Overrides, 4/4 Bar Lock (D-076–D-080)
 
@@ -389,31 +426,5 @@ _Last updated: 2026-10-26, session 82, on `main`._
 - Documentation check passes with 0 errors and 0 warnings (`python3 tools/check_docs.py`).
 - Manual check passes with 0 errors and 0 warnings (`python3 tools/manual.py check docs/manual.json`).
 
-### Session 71: 2026-10-23: Swap Wings III (The Band) and IV (Keep) for hardware console workflow (D-058)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Swap Wings III and IV so that The Band (the five esoteric VM machines, Plates I–V) immediately follows Wing II (Mix), while Wing IV (Keep: Session Ledger and Engraver's DAW export desk) forms the bottom rear utility panel of the instrument console.
-
-**Done:** All parts implemented and verified. All 184 checks pass.
-
-**Changed:**
-1. `index.html`:
-   - Swapped `#wing-band` and `#wing-keep`.
-   - Updated `#wing-band` numeral to `WING III` and `#wing-keep` numeral to `WING IV`.
-   - Restored `#fun-machine-telemetry` span.
-2. `src/cabinet.mjs`:
-   - Updated `DRAWERS` sequence to `kapellmeister` → `mix` → `band` → `keep` in page order.
-3. Assets:
-   - Restamped `ASSET_VERSION` to `10f729ec27f8` (`tools/stamp_assets.mjs`).
-4. `styles.css`:
-   - Updated `.drawer-body[hidden]` to `display: none !important;` and scoped the desktop layout rule to `#drawer-body-keep:not([hidden])`, fixing a CSS specificity override where ID `#drawer-body-keep` kept the Keep drawer permanently open on viewports $\ge 1180$px.
-5. Tests:
-   - `tests/cabinet.test.mjs`: updated `DRAWERS.map` page order assertion.
-   - `tests/static.test.mjs`: updated wing order assertions in D-027 test, session engine placement assertion, and added `.drawer-body[hidden]` regression assertions.
-6. Documentation:
-   - Recorded ADR D-058 in `docs/DECISIONS.md`.
-   - Updated page shell map and invariants in `docs/ARCHITECTURE.md`.
-   - Updated `docs/HANDOFF.md`.
 
 

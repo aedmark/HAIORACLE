@@ -77,7 +77,7 @@ import {
   normalizeExportSettings,
 } from "./audio-export.mjs";
 import { APP_VERSION, ENGINE_VERSION } from "./version.mjs";
-import { applyScoreOverrides, referencePitch, setReferencePitch, stepUnitSeconds } from "./tuning.mjs";
+import { DEFAULT_GRID_STEPS, GRID_STEPS_OPTIONS, applyScoreOverrides, referencePitch, setReferencePitch, stepUnitSeconds } from "./tuning.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
 import {
@@ -332,6 +332,7 @@ const elements = {
   transportPause: document.querySelector("#transport-pause"),
   transportStop: document.querySelector("#transport-stop"),
   transportBarLock: document.querySelector("#transport-bar-lock"),
+  transportGridSteps: document.querySelector("#transport-grid-steps"),
   transportPosition: document.querySelector("#transport-position"),
   transportSection: document.querySelector("#transport-section"),
   mixerStrips: document.querySelector("#mixer-strips"),
@@ -463,6 +464,7 @@ let currentScore = null;
 let rootOverride = null;
 let scaleOverride = null;
 let barLock44 = false;
+let activeGridSteps = DEFAULT_GRID_STEPS;
 // The moves this creature made on its genre's changes (D-043), for the readout,
 // and whether it may make them: AS WRITTEN plays the rulebook's own changes.
 let currentVariation = Object.freeze([]);
@@ -1191,33 +1193,33 @@ function plateMutation(id) {
 // edits, and refreshes its telemetry line.
 function recomposePlate(id) {
   if (!currentScore) return;
-  plateCellCycles[id] = Array(12).fill(0);
+  plateCellCycles[id] = Array(activeGridSteps).fill(0);
   if (id === "beat" && beatSource) {
-    rawBeat = composeBeat(beatSource, currentScore, beatMutation);
+    rawBeat = composeBeat(beatSource, currentScore, beatMutation, activeGridSteps);
     currentBeat = rawBeat;
     if (elements.beatTelemetry && beatMutation > 0) {
       elements.beatTelemetry.textContent = `3¹⁰ TAPE · ${currentBeat.stepsExecuted} OPS · MUTATION #${beatMutation}`;
     }
   } else if (id === "bass" && bassSource) {
-    rawBass = composeBass(bassSource, currentScore, bassMutation);
+    rawBass = composeBass(bassSource, currentScore, bassMutation, activeGridSteps);
     currentBass = rawBass;
     if (elements.bassTelemetry && bassMutation > 0) {
       elements.bassTelemetry.textContent = `256-CELL TAPE · ${currentBass.stepsExecuted} OPS · SHIFT #${bassMutation}`;
     }
   } else if (id === "harmony" && harmonySource) {
-    rawHarmony = composeHarmony(harmonySource, currentScore, harmonyMutation);
+    rawHarmony = composeHarmony(harmonySource, currentScore, harmonyMutation, activeGridSteps);
     currentHarmony = rawHarmony;
     if (elements.harmonyTelemetry && harmonyMutation > 0) {
       elements.harmonyTelemetry.textContent = `2D TORUS · ${currentHarmony.stepsExecuted} OPS · DEFLECTION #${harmonyMutation}`;
     }
   } else if (id === "chime" && pietSource && fractranSource) {
-    rawChimes = composeChimes(pietSource, fractranSource, currentScore, chimeMutation);
+    rawChimes = composeChimes(pietSource, fractranSource, currentScore, chimeMutation, activeGridSteps);
     currentChimes = rawChimes;
     if (elements.chimeTelemetry && chimeMutation > 0) {
       elements.chimeTelemetry.textContent = `${currentChimes.pietStepsExecuted} CODELS · ${currentChimes.fractranStepsExecuted} RATIOS · REFRACTION #${chimeMutation}`;
     }
   } else if (id === "chant" && chantSource) {
-    rawChant = composeChant(chantSource, currentScore, chantMutation);
+    rawChant = composeChant(chantSource, currentScore, chantMutation, activeGridSteps);
     currentChant = rawChant;
     if (elements.chantTelemetry && chantMutation > 0) {
       elements.chantTelemetry.textContent = `3 ACTS · ${currentChant.statementsExecuted} CUES · RECAST #${chantMutation}`;
@@ -1248,8 +1250,9 @@ function updateBeatGrid() {
 
 function renderBeatGrid() {
   if (!elements.beatGrid) return;
+  elements.beatGrid.classList.toggle("is-16-steps", activeGridSteps === 16);
   elements.beatGrid.innerHTML = "";
-  for (let index = 0; index < 12; index += 1) {
+  for (let index = 0; index < activeGridSteps; index += 1) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "beat-step";
@@ -1304,8 +1307,9 @@ function updateBassGrid() {
 
 function renderBassGrid() {
   if (!elements.bassGrid) return;
+  elements.bassGrid.classList.toggle("is-16-steps", activeGridSteps === 16);
   elements.bassGrid.innerHTML = "";
-  for (let index = 0; index < 12; index += 1) {
+  for (let index = 0; index < activeGridSteps; index += 1) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "beat-step bass-step";
@@ -1361,8 +1365,9 @@ function updateHarmonyGrid() {
 
 function renderHarmonyGrid() {
   if (!elements.harmonyGrid) return;
+  elements.harmonyGrid.classList.toggle("is-16-steps", activeGridSteps === 16);
   elements.harmonyGrid.innerHTML = "";
-  for (let index = 0; index < 12; index += 1) {
+  for (let index = 0; index < activeGridSteps; index += 1) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "beat-step harmony-step";
@@ -1434,8 +1439,9 @@ function updateChimeGrid() {
 
 function renderChimeGrid() {
   if (!elements.chimeGrid) return;
+  elements.chimeGrid.classList.toggle("is-16-steps", activeGridSteps === 16);
   elements.chimeGrid.innerHTML = "";
-  for (let index = 0; index < 12; index += 1) {
+  for (let index = 0; index < activeGridSteps; index += 1) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "beat-step chime-step";
@@ -1499,8 +1505,9 @@ function updateChantGrid() {
 
 function renderChantGrid() {
   if (!elements.chantGrid) return;
+  elements.chantGrid.classList.toggle("is-16-steps", activeGridSteps === 16);
   elements.chantGrid.innerHTML = "";
-  for (let index = 0; index < 12; index += 1) {
+  for (let index = 0; index < activeGridSteps; index += 1) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "beat-step chant-step";
@@ -1608,15 +1615,15 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   unlockDrawer("held-key");
 
   if (currentTransport?.activeTakeLanding) {
-    const audible = ((currentTransport.audibleStep % 12) + 12) % 12;
+    const audible = ((currentTransport.audibleStep % activeGridSteps) + activeGridSteps) % activeGridSteps;
     const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId);
     const { loopIndex, layerIndex } = currentTransport.activeTakeLanding;
     song = setLoopSlot(song, loopIndex, layerIndex, audible, liveSlot);
     renderLooper();
   } else if (recorder.mode === "recording" && currentTransport) {
-    const audible = ((currentTransport.audibleStep % 12) + 12) % 12;
-    // Downbeat anticipation grace: if audible step is 11 and take[0] is still empty, latch onto step 0
-    const curStep = (audible === 11 && recorder.take && recorder.take[0] === null) ? 0 : audible;
+    const audible = ((currentTransport.audibleStep % activeGridSteps) + activeGridSteps) % activeGridSteps;
+    // Downbeat anticipation grace: if audible step is the last step and take[0] is still empty, latch onto step 0
+    const curStep = (audible === activeGridSteps - 1 && recorder.take && recorder.take[0] === null) ? 0 : audible;
     const liveSlot = makeSlot(normSemi, funMachineStyle, funVoiceId);
     recorder = recorderReduce(recorder, { type: "slot", step: curStep, slot: liveSlot }).recorder;
     renderLooper();
@@ -1632,7 +1639,7 @@ async function triggerFunKey(semitone, isKeyDown = true) {
     if (selectedLoop === null) selectedLoop = 0;
     const noteName = FUN_KEY_MAP[normSemi]?.note ?? normSemi;
     if (isStepRecActive) {
-      const advancedStep = (selectedStepIndex + 1) % 12;
+      const advancedStep = (selectedStepIndex + 1) % activeGridSteps;
       announceLooper(`STEP ${selectedStepIndex + 1}: ${noteName} SET · ADVANCED TO STEP ${advancedStep + 1}`);
       selectedStepIndex = advancedStep;
     } else {
@@ -1663,13 +1670,13 @@ async function triggerFunKey(semitone, isKeyDown = true) {
   const level = FUN_PAD_LEVEL[performance.style];
   if (transport?.funBus && currentScore) {
     const nextStep = transport.step;
-    const nextIndex = nextStep % 12;
+    const nextIndex = nextStep % activeGridSteps;
     const stepsUntilRegion = performance.steps[nextIndex].isRegionStart ? 0 : strikeLength(performance, nextIndex);
     let regionStart = transport.nextNoteTime;
     for (let k = 0; k < stepsUntilRegion; k += 1) regionStart += loopStepDuration(currentScore, nextStep + k);
     const bridge = regionStart - context.currentTime;
     if (bridge > 0.12) {
-      const currentAudibleIndex = Math.max(0, transport.audibleStep % 12);
+      const currentAudibleIndex = Math.max(0, transport.audibleStep % activeGridSteps);
       const chord = performance.steps[currentAudibleIndex].chord;
       const voice = liveVoiceOf(transport);
       voice.voicing = padVoicing(chord, voice.voicing, performance.lift);
@@ -1730,7 +1737,7 @@ function activeArrangement() {
 }
 
 function arrangementPlays(channel, step) {
-  const mask = activeArrangement()?.channelMasks[((step % 12) + 12) % 12];
+  const mask = activeArrangement()?.channelMasks[((step % activeGridSteps) + activeGridSteps) % activeGridSteps];
   return !mask || mask[channel];
 }
 
@@ -1739,7 +1746,7 @@ function arrangementPlays(channel, step) {
 // in the live scheduler. The INTERCAL 1972 dynamic arrangement mask controls
 // channel breathing across Exposition, Antiphony, Tutti, and Breakdown.
 function scheduleEnsembleStep(context, transport, score, step, at, stepDuration, soundingDuration) {
-  const mask = activeArrangement()?.channelMasks[step % 12];
+  const mask = activeArrangement()?.channelMasks[step % activeGridSteps];
   const bypassArrangement = !mask;
 
   if (bypassArrangement || mask.lead) {
@@ -1800,12 +1807,12 @@ function playSongLayers(context, transport, score, absoluteStep, loop, timing) {
 // to hold one note at one level for the whole loop (the "stuck note").
 function shapeDrones(transport, score, absoluteStep, at) {
   if (!transport.droneEnvelopes) return;
-  const stepIndex = absoluteStep % 12;
-  const prevStepIndex = (stepIndex + 11) % 12;
+  const stepIndex = absoluteStep % activeGridSteps;
+  const prevStepIndex = (stepIndex + (activeGridSteps - 1)) % activeGridSteps;
   const chord = currentConductedSpine?.[stepIndex];
   const prevChord = currentConductedSpine?.[prevStepIndex];
   const isChordChange = chord !== prevChord;
-  const isQuarter = absoluteStep % 3 === 0;
+  const isQuarter = absoluteStep % (activeGridSteps === 16 ? 4 : 3) === 0;
   if (!isChordChange && !isQuarter) return;
 
   const chordRoot = chord && chord.quality !== "raw" ? chord.root : 0;
@@ -1931,7 +1938,7 @@ async function playScore(score, { cursor = 0 } = {}) {
     while (transport.nextNoteTime < context.currentTime + 0.28) {
       if (casioOutroEnding) break;
       const livePulse = activeTempoBpm || score.pulse;
-      const unit = stepUnitSeconds(livePulse, rhythm, barLock44);
+      const unit = stepUnitSeconds(livePulse, rhythm, barLock44, activeGridSteps);
       const currentStep = transport.step;
       const lengthMultiplier = rhythm[currentStep % rhythm.length];
       const stepDuration = unit * lengthMultiplier;
@@ -1940,11 +1947,11 @@ async function playScore(score, { cursor = 0 } = {}) {
       // Fun Machine and loop machine (D-039): record what is held, let the band
       // follow a live key or else the newest recorded layer, then play the band,
       // the live accompanist, and every recorded layer on this step.
-      const stepIndex = currentStep % 12;
-      const stepPass = Math.floor(currentStep / 12);
+      const stepIndex = currentStep % activeGridSteps;
+      const stepPass = Math.floor(currentStep / activeGridSteps);
       const at = transport.nextNoteTime;
       const liveSlot = activeHeldFunKey !== null && activeFunPerformance ? makeSlot(activeHeldFunKey, funMachineStyle, funVoiceId) : null;
-      const position = songPosition(song, currentStep);
+      const position = songPosition(song, currentStep, activeGridSteps);
       const loop = position ? song.loops[position.loopIndex] : null;
       transport.songPosition = position;
       // The harmony moves on at the loop's downbeat (D-044).
@@ -1971,14 +1978,14 @@ async function playScore(score, { cursor = 0 } = {}) {
           scheduledCasio.role,
           activeGenre,
           currentScore ? currentScore.root : 0,
-          { pass: casioSectionPass, score: currentScore, varied: genreVaried }
+          { pass: casioSectionPass, score: currentScore, varied: genreVaried, stepsCount: activeGridSteps }
         );
       }
-      const isLastCasioStep = isCasioStep && casioSectionPass === (scheduledCasio.passes - 1) && stepIndex === 11;
+      const isLastCasioStep = isCasioStep && casioSectionPass === (scheduledCasio.passes - 1) && stepIndex === activeGridSteps - 1;
       const isLastSongOutroStep = !isCasioStep && position && position.role === "outro"
         && position.loopIndex === (song.loops.length - 1)
         && (position.repeat === (loop?.repeats ?? 1) - 1)
-        && stepIndex === 11;
+        && stepIndex === activeGridSteps - 1;
       if ((isLastCasioStep && scheduledCasio.role === "outro") || isLastSongOutroStep) {
         casioOutroEnding = true;
       }
@@ -2026,9 +2033,9 @@ async function playScore(score, { cursor = 0 } = {}) {
         audibleCasioSection = stepCasioRole;
         audibleCasioKey = stepCasioKey;
         audibleCasioPerformance = stepCasioPerf;
-        if (currentStep % 12 === 11) noteLoopHeard();
-        if (currentStep % 12 === 0) {
-          transport.audiblePosition = songPosition(song, currentStep);
+        if (currentStep % activeGridSteps === activeGridSteps - 1) noteLoopHeard();
+        if (currentStep % activeGridSteps === 0) {
+          transport.audiblePosition = songPosition(song, currentStep, activeGridSteps);
           updateCasioUI();
         }
         if ((stepIsLast && stepCasioRole !== null) || stepIsLastSongOutro) {
@@ -2058,12 +2065,12 @@ async function playScore(score, { cursor = 0 } = {}) {
         if (transport.activeTakeLanding && activeHeldFunKey !== null && activeFunPerformance) {
           const heldSlot = makeSlot(activeHeldFunKey, funMachineStyle, funVoiceId);
           const { loopIndex, layerIndex } = transport.activeTakeLanding;
-          song = setLoopSlot(song, loopIndex, layerIndex, currentStep % 12, heldSlot);
+          song = setLoopSlot(song, loopIndex, layerIndex, currentStep % activeGridSteps, heldSlot);
         } else if (recorder.mode === "recording" && activeHeldFunKey !== null && activeFunPerformance) {
           const heldSlot = makeSlot(activeHeldFunKey, funMachineStyle, funVoiceId);
-          recorder = recorderReduce(recorder, { type: "slot", step: currentStep % 12, slot: heldSlot }).recorder;
+          recorder = recorderReduce(recorder, { type: "slot", step: currentStep % activeGridSteps, slot: heldSlot }).recorder;
         }
-        if (transport.activeTakeLanding && currentStep % 12 === 11) {
+        if (transport.activeTakeLanding && currentStep % activeGridSteps === activeGridSteps - 1) {
           transport.activeTakeLanding = null;
         }
         renderLooper();
@@ -2100,7 +2107,7 @@ async function playScore(score, { cursor = 0 } = {}) {
 function updateTransportPosition(step) {
   const stopped = step === null || step < 0;
   if (elements.transportPosition) {
-    elements.transportPosition.value = stopped ? "STEP -- / 12" : `STEP ${String((step % 12) + 1).padStart(2, "0")} / 12`;
+    elements.transportPosition.value = stopped ? `STEP -- / ${activeGridSteps}` : `STEP ${String((step % activeGridSteps) + 1).padStart(2, "0")} / ${activeGridSteps}`;
   }
   updateArrangementDisplay(stopped ? null : step);
 }
@@ -2641,13 +2648,13 @@ async function renderEnsembleLoop(score, {
   const bpm = activeTempoBpm || score.pulse;
   const rhythmIndex = effectiveRhythmIndex(score, activeGenre);
   const rhythm = RHYTHMS[rhythmIndex];
-  const unit = stepUnitSeconds(bpm, rhythm, barLock44);
+  const unit = stepUnitSeconds(bpm, rhythm, barLock44, activeGridSteps);
   // With a loop-machine song the render is the whole song (D-039), at most
   // MAX_SONG_PASSES passes; without one it is the whole harmonic cycle, four
   // loops, so the file holds the full progression and still loops (D-044).
   const passes = songPasses(song) || HARMONIC_PASSES;
   const livePass = currentHarmonicPass;
-  const stepsCount = 12 * passes;
+  const stepsCount = activeGridSteps * passes;
   let loopDuration = 0;
   for (let step = 0; step < stepsCount; step += 1) {
     loopDuration += unit * rhythm[step % rhythm.length];
@@ -2665,7 +2672,7 @@ async function renderEnsembleLoop(score, {
   const graph = buildEnsembleGraph(offlineCtx, score, options);
   const offlineTransport = {
     ...graph,
-    melody: currentConductedMelody || melodyFor(score),
+    melody: currentConductedMelody || melodyFor(score, activeGridSteps),
     engageAll,
     clockTicks,
     noteLog: captureNotes ? [] : undefined,
@@ -2680,22 +2687,22 @@ async function renderEnsembleLoop(score, {
     const stepDuration = unit * rhythm[step % rhythm.length];
     const gateRatio = Math.min(0.94, score.gate / 100);
     const soundingDuration = Math.max(0.06, stepDuration * gateRatio);
-    const position = songPosition(song, step);
+    const position = songPosition(song, step, activeGridSteps);
     const loop = position ? song.loops[position.loopIndex] : null;
     offlineTransport.songPosition = position;
     // Each loop boundary moves the band to its pass of the harmonic cycle.
-    if (step % 12 === 0 && harmonicPassAt(step) !== currentHarmonicPass) {
+    if (step % activeGridSteps === 0 && harmonicPassAt(step) !== currentHarmonicPass) {
       currentHarmonicPass = harmonicPassAt(step);
       offlineTransport.followedSlot = "harmonic-pass";
       if (!song.loops.length) applyEnsembleConductor();
     }
-    if (song.loops.length) followSong(offlineTransport, loop, step % 12, null);
+    if (song.loops.length) followSong(offlineTransport, loop, step % activeGridSteps, null);
     offlineTransport.melody = currentConductedMelody || offlineTransport.melody;
-    stepChords.push(currentConductedSpine?.[step % 12] ?? null);
+    stepChords.push(currentConductedSpine?.[step % activeGridSteps] ?? null);
     scheduleEnsembleStep(offlineCtx, offlineTransport, score, step, stepTime, stepDuration, soundingDuration);
     shapeDrones(offlineTransport, score, step, stepTime);
-    if (loop && arrangementPlays("fun", step % 12)) {
-      playSongLayers(offlineCtx, offlineTransport, score, step, loop, { stepIndex: step % 12, absoluteStep: step, at: stepTime, stepDuration, soundingDuration });
+    if (loop && arrangementPlays("fun", step % activeGridSteps)) {
+      playSongLayers(offlineCtx, offlineTransport, score, step, loop, { stepIndex: step % activeGridSteps, absoluteStep: step, at: stepTime, stepDuration, soundingDuration });
     }
     stepTime += stepDuration;
   }
@@ -3774,6 +3781,7 @@ function captureSession() {
     scaleOverride,
     referencePitch: referencePitch(),
     barLock: barLock44,
+    gridSteps: activeGridSteps,
     acoustics: {
       enabled: parlorAcousticsEnabled,
       level: Math.round(parlorAcousticsLevel * 100),
@@ -3808,6 +3816,10 @@ function syncSessionControls() {
   }
   elements.transportBarLock?.setAttribute("aria-pressed", String(barLock44));
   elements.transportBarLock?.classList.toggle("is-active", barLock44);
+  elements.transportGridSteps?.setAttribute("aria-pressed", String(activeGridSteps === 16));
+  if (elements.transportGridSteps) {
+    elements.transportGridSteps.textContent = activeGridSteps === 16 ? "16 STEPS (4/4)" : "12 STEPS (TRIPLET)";
+  }
   if (elements.kapellmeisterStrictness) {
     elements.kapellmeisterStrictness.value = String(activeStrictness);
     elements.kapellmeisterStrictness.dispatchEvent(new Event("input"));
@@ -3838,6 +3850,9 @@ function applySession(session) {
   scaleOverride = session.scaleOverride ?? null;
   setReferencePitch(session.referencePitch ?? 440);
   barLock44 = Boolean(session.barLock);
+  if (session.gridSteps === 12 || session.gridSteps === 16) {
+    activeGridSteps = session.gridSteps;
+  }
   funMachineStyle = session.funMachine.style;
   funVoiceId = session.funMachine.voice;
   // Files from before variation existed open AS WRITTEN (D-043).
@@ -4434,18 +4449,20 @@ function performanceFor(slot, pass = null, position = currentTransport?.songPosi
  * A key's performance on this pass of the harmonic cycle (D-044), varied by
  * this creature unless AS WRITTEN is pressed (D-043).
  */
-function performanceOf(key, style, pass = null) {
+function performanceOf(key, style, pass = null, steps = activeGridSteps) {
   if (pass !== null) {
     return buildPerformance(key, style, activeGenre, currentScore ? currentScore.root : 0, {
       pass,
       score: currentScore,
       varied: genreVaried,
+      stepsCount: steps,
     });
   }
   return buildPerformance(key, style, activeGenre, currentScore ? currentScore.root : 0, {
     pass: currentHarmonicPass,
     score: currentScore,
     varied: genreVaried,
+    stepsCount: steps,
   });
 }
 
@@ -4453,14 +4470,14 @@ function performanceOf(key, style, pass = null) {
  * Which pass of the harmonic cycle (D-044) an absolute step falls in. A song
  * restarts the cycle with itself, so its first loop always opens on home.
  */
-function harmonicPassAt(absoluteStep) {
-  const pos = songPosition(song, absoluteStep);
+function harmonicPassAt(absoluteStep, steps = activeGridSteps) {
+  const pos = songPosition(song, absoluteStep, steps);
   if (pos) {
     const secPass = sectionPassForLoop(song, pos.loopIndex, pos.repeat);
     if (secPass !== null) return secPass;
   }
   const passes = songPasses(song);
-  const pass = Math.floor(absoluteStep / 12);
+  const pass = Math.floor(absoluteStep / steps);
   const cycle = Math.max(passes || 0, HARMONIC_PASSES);
   return ((pass % cycle) % HARMONIC_PASSES + HARMONIC_PASSES) % HARMONIC_PASSES;
 }
@@ -4868,7 +4885,7 @@ function handleRestStep() {
   if (selectedStepIndex === null) return;
   song = setLoopSlot(song, selectedLoop ?? 0, null, selectedStepIndex, null);
   if (isStepRecActive) {
-    const nextStep = (selectedStepIndex + 1) % 12;
+    const nextStep = (selectedStepIndex + 1) % activeGridSteps;
     announceLooper(`STEP ${selectedStepIndex + 1}: REST · ADVANCED TO STEP ${nextStep + 1}`);
     selectedStepIndex = nextStep;
   } else {
@@ -4880,8 +4897,9 @@ function handleRestStep() {
 function renderLooperSteps() {
   const container = document.querySelector("#looper-steps");
   if (!container) return;
-  if (container.children.length !== 12) {
-    container.replaceChildren(...Array.from({ length: 12 }, (_, i) => {
+  container.classList.toggle("is-16-steps", activeGridSteps === 16);
+  if (container.children.length !== activeGridSteps) {
+    container.replaceChildren(...Array.from({ length: activeGridSteps }, (_, i) => {
       const cell = document.createElement("button");
       cell.type = "button";
       cell.className = "looper-step";
@@ -4900,14 +4918,14 @@ function renderLooperSteps() {
   }
 
   const audible = currentTransport && transportState.state === TRANSPORT_STATES.PLAYING
-    ? ((currentTransport.audibleStep % 12) + 12) % 12
+    ? ((currentTransport.audibleStep % activeGridSteps) + activeGridSteps) % activeGridSteps
     : null;
 
   const currentLoop = selectedLoop !== null ? song.loops[selectedLoop] : null;
   const recordedSlots = currentLoop ? currentLoop.layers[currentLoop.layers.length - 1] : null;
   const activeTake = recorder.mode === "recording" ? recorder.take : null;
 
-  for (let i = 0; i < 12; i += 1) {
+  for (let i = 0; i < activeGridSteps; i += 1) {
     const cell = container.children[i];
     const val = cell.querySelector(".looper-step-val");
     const isAudible = audible === i;
@@ -5603,12 +5621,38 @@ elements.transportBarLock?.addEventListener("click", () => {
   elements.transportBarLock.classList.toggle("is-active", barLock44);
   if (currentTransport && audioContext && currentScore) {
     const rhythm = RHYTHMS[effectiveRhythmIndex(currentScore, activeGenre)];
-    const unit = stepUnitSeconds(activeTempoBpm || currentScore.pulse, rhythm, barLock44);
+    const unit = stepUnitSeconds(activeTempoBpm || currentScore.pulse, rhythm, barLock44, activeGridSteps);
     currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, 60 / (unit * 2), effectiveRhythmIndex(currentScore, activeGenre)), audioContext.currentTime, 0.08);
   }
   elements.status.textContent = barLock44
     ? "4/4 BAR LOCK ENGAGED · EACH 12-STEP PASS FITS ONE 4/4 BAR"
     : "4/4 BAR LOCK RELEASED · NATIVE PARLOR PULSE";
+});
+
+elements.transportGridSteps?.addEventListener("click", () => {
+  activeGridSteps = activeGridSteps === 16 ? 12 : 16;
+  elements.transportGridSteps.setAttribute("aria-pressed", String(activeGridSteps === 16));
+  elements.transportGridSteps.textContent = activeGridSteps === 16 ? "16 STEPS (4/4)" : "12 STEPS (TRIPLET)";
+  updateTransportPosition(currentTransport?.audibleStep ?? null);
+  if (currentScore) {
+    for (const id of ["beat", "bass", "harmony", "chime", "chant"]) recomposePlate(id);
+    if (conductorSource) currentArrangement = composeArrangement(conductorSource, currentScore, activeGridSteps);
+    renderLooper();
+    renderBeatGrid();
+    renderBassGrid();
+    renderHarmonyGrid();
+    renderChimeGrid();
+    renderChantGrid();
+    applyEnsembleConductor();
+  }
+  if (currentTransport && audioContext && currentScore) {
+    const rhythm = RHYTHMS[effectiveRhythmIndex(currentScore, activeGenre)];
+    const unit = stepUnitSeconds(activeTempoBpm || currentScore.pulse, rhythm, barLock44, activeGridSteps);
+    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, 60 / (unit * 2), effectiveRhythmIndex(currentScore, activeGenre)), audioContext.currentTime, 0.08);
+  }
+  elements.status.textContent = activeGridSteps === 16
+    ? "16-STEP GRID ENGAGED · 4/4 STRAIGHT SIXTEENTH NOTES"
+    : "12-STEP GRID ENGAGED · VINTAGE PARLOR SHUFFLE";
 });
 
 elements.shareLink?.addEventListener("click", () => {

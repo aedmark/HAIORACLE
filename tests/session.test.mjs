@@ -52,6 +52,7 @@ function sampleSession(overrides = {}) {
     scaleOverride: null,
     referencePitch: 440,
     barLock: false,
+    gridSteps: 12,
     acoustics: { enabled: true, level: 40, crackle: false, reverb: true, ticks: true },
     funMachine: { style: "arpeggio", voice: "glass_harmonica" },
     plates,
@@ -70,6 +71,7 @@ function olderSession(version, overrides = {}) {
     delete s.scaleOverride;
     delete s.referencePitch;
     delete s.barLock;
+    delete s.gridSteps;
     return s;
   };
   if (version === 6) {

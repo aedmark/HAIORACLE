@@ -295,7 +295,7 @@ export function cycleHarmonyCell(step, score) {
   });
 }
 
-export function composeHarmony(source, score, mutation = 0) {
+export function composeHarmony(source, score, mutation = 0, stepsCount = 12) {
   const harmonyMode = (score.harmonyMode ?? ((score.seed >>> 5) % 8)) & 7;
   const harmonyStrum = score.harmonyStrum ?? 48;
   const input = harmonySeedBytesFor(score.seed >>> 0, harmonyMode, harmonyStrum, mutation);
@@ -304,12 +304,12 @@ export function composeHarmony(source, score, mutation = 0) {
     throw new Error(`Befunge harmony spell emitted ${output.length} voicings; expected at least 12`);
   }
 
-  const melody = melodyFor(score);
+  const melody = melodyFor(score, stepsCount);
   const gateTemplate = ORGAN_GATES[harmonyMode];
 
-  const steps = Array.from({ length: 12 }, (_, index) => {
-    const raw = output[index] & 0xff;
-    let gate = gateTemplate[index];
+  const steps = Array.from({ length: stepsCount }, (_, index) => {
+    const raw = output[index % output.length] & 0xff;
+    let gate = gateTemplate[index % gateTemplate.length];
     if (index === 0) {
       gate = Math.max(1, gate);
     } else if (gate === 0 && (raw % 9 === 0)) {

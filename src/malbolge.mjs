@@ -247,7 +247,7 @@ export function cycleBeatStep(step) {
   return Object.freeze(updated);
 }
 
-export function composeBeat(source, score, mutation = 0) {
+export function composeBeat(source, score, mutation = 0, stepsCount = 12) {
   const beatMode = (score.beatMode ?? (score.seed % 8)) & 7;
   const beatDensity = score.beatDensity ?? 68;
   const input = seedBytesFor(score.seed >>> 0, beatMode, beatDensity, mutation);
@@ -258,13 +258,14 @@ export function composeBeat(source, score, mutation = 0) {
 
   const mask = CADENCE_MASKS[beatMode];
   const densityThreshold = Math.max(0.25, Math.min(0.95, beatDensity / 100));
+  const isAccentStep = (idx) => (stepsCount === 16 ? idx % 4 === 0 : idx % 3 === 0);
 
-  const steps = Array.from({ length: 12 }, (_, index) => {
-    const raw = output[index] & 0xff;
+  const steps = Array.from({ length: stepsCount }, (_, index) => {
+    const raw = output[index % output.length] & 0xff;
     const trit0 = raw % 3;
     const trit1 = Math.floor(raw / 3) % 3;
     const trit2 = Math.floor(raw / 9) % 3;
-    const [maskKick, maskSnare, maskHat] = mask[index];
+    const [maskKick, maskSnare, maskHat] = mask[index % mask.length];
 
     const activity = ((raw ^ (index * 37)) & 0xff) / 255;
     let kick = maskKick;
@@ -275,7 +276,7 @@ export function composeBeat(source, score, mutation = 0) {
       kick = 2;
       hat = Math.max(1, trit2);
     } else if (activity <= densityThreshold) {
-      kick = Math.max(maskKick, trit0 === 2 && index % 3 === 0 ? 1 : 0);
+      kick = Math.max(maskKick, trit0 === 2 && isAccentStep(index) ? 1 : 0);
       snare = Math.max(maskSnare, trit1 === 2 && index % 2 === 1 ? 1 : 0);
       hat = Math.max(maskHat, trit2 > 0 ? 1 : 0);
     } else {

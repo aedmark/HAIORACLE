@@ -390,7 +390,7 @@ function initialQualityForScore(score) {
 
 // The Tonnetz walk: start on the score's tonic triad and apply one walk of
 // P/L/R moves (from the genre's Table of Tonnetz Walks) region by region.
-export function buildTonnetzSpine(score, mutation = 0, walks = genreBook(null).spine.walks) {
+export function buildTonnetzSpine(score, mutation = 0, walks = genreBook(null).spine.walks, stepsCount = 12) {
   const pathIndex = ((score.harmonyMode ?? 0) + (score.scale ?? 0) + mutation) % walks.length;
   const ops = walks[pathIndex];
   const tonicQuality = initialQualityForScore(score);
@@ -398,11 +398,11 @@ export function buildTonnetzSpine(score, mutation = 0, walks = genreBook(null).s
   for (const op of ops) {
     chords.push(applyTonnetzOperation(chords[chords.length - 1], op));
   }
-  // 12 steps grouped into 4 harmonic regions of 3 steps each
-  return Object.freeze(Array.from({ length: 12 }, (_, stepIndex) => chords[Math.floor(stepIndex / 3) % 4]));
+  const stepsPerRegion = Math.max(1, Math.floor(stepsCount / 4));
+  return Object.freeze(Array.from({ length: stepsCount }, (_, stepIndex) => chords[Math.floor(stepIndex / stepsPerRegion) % 4]));
 }
 
-export function buildRawChaosSpine(score) {
+export function buildRawChaosSpine(score, stepsCount = 12) {
   const rawChord = Object.freeze({
     root: 0,
     quality: "raw",
@@ -413,13 +413,19 @@ export function buildRawChaosSpine(score) {
     ninth: 2,
     pitchClasses: Object.freeze([]),
   });
-  return Object.freeze(Array(12).fill(rawChord));
+  return Object.freeze(Array(stepsCount).fill(rawChord));
 }
 
-export function buildGenreSpine(genre, score, mutation = 0) {
+export function buildGenreSpine(genre, score, mutation = 0, stepsCount = 12) {
   const book = genreBook(genre);
-  if (book.spine.method === "unfettered") return buildRawChaosSpine(score);
-  if (book.spine.method === "tonnetz") return buildTonnetzSpine(score, mutation, book.spine.walks);
+  if (book.spine.method === "unfettered") return buildRawChaosSpine(score, stepsCount);
+  if (book.spine.method === "tonnetz") return buildTonnetzSpine(score, mutation, book.spine.walks, stepsCount);
+  if (stepsCount === 16 && book.spine.steps.length === 12) {
+    return Object.freeze(Array.from({ length: 16 }, (_, i) => {
+      const step = book.spine.steps[Math.floor(i / 4) * 3];
+      return buildTriad(step.degree, step.quality, step.label, step.tones.map((tone) => step.degree + tone));
+    }));
+  }
   return Object.freeze(book.spine.steps.map((step) => (
     buildTriad(step.degree, step.quality, step.label, step.tones.map((tone) => step.degree + tone))
   )));
@@ -526,10 +532,12 @@ const UNISON_OVERTONE = Object.freeze({ ratio: "1/1", value: 1 });
 // a four-chord progression spans four passes.
 export const HARMONIC_PASSES = 4;
 
-/** The twelve chords the band plays on pass `pass` (0..3) of the harmonic cycle. */
-export function passSpine(spine, pass) {
+/** The chords the band plays on pass `pass` (0..3) of the harmonic cycle. */
+export function passSpine(spine, pass, stepsCount = (spine?.length || 12)) {
   const p = ((Math.trunc(pass) % HARMONIC_PASSES) + HARMONIC_PASSES) % HARMONIC_PASSES;
-  return Object.freeze(Array.from({ length: 12 }, (_, step) => spine[p * 3 + Math.floor(step / 4)]));
+  const count = stepsCount || spine?.length || 12;
+  const stride = count === 16 ? 4 : 3;
+  return Object.freeze(Array.from({ length: count }, (_, step) => spine[(p * stride + Math.floor(step / 4)) % spine.length]));
 }
 
 /**
@@ -585,13 +593,14 @@ export function conductEnsemble({
   varied = false,
   harmonicPass = null,
   creatureBook: explicitCreatureBook = null,
+  stepsCount = (melody?.length || 12),
 }) {
   if (explicitCreatureBook) installCreatureBook(explicitCreatureBook);
   const book = genreBook(genre);
   const activeGenre = book.code;
 
   if (book.unfettered && !customSpine) {
-    const spine = buildRawChaosSpine(score);
+    const spine = buildRawChaosSpine(score, stepsCount);
     return Object.freeze({
       spine,
       melody: Object.freeze([...melody]),
@@ -611,25 +620,26 @@ export function conductEnsemble({
   // `varied` lets the creature vary its genre's changes by the moves the
   // rulebook permits (D-043); without it the genre plays as written, which is
   // what the golden fixture guards. A held key's chords are never varied.
-  const writtenSpine = buildGenreSpine(activeGenre, score, mutation);
+  const writtenSpine = buildGenreSpine(activeGenre, score, mutation, stepsCount);
   const variation = varied && !customSpine
     ? varySpine(writtenSpine, score, book.variation, buildTriad)
     : { spine: writtenSpine, moves: Object.freeze([]) };
   // With `harmonicPass` the band plays that pass of the harmonic cycle (D-044);
   // without it, the whole spine in one loop, as the golden fixture records.
   const cycleSpine = variation.spine;
-  const baseSpine = harmonicPass === null ? cycleSpine : passSpine(cycleSpine, harmonicPass);
+  const baseSpine = harmonicPass === null ? cycleSpine : passSpine(cycleSpine, harmonicPass, stepsCount);
   const spine = customSpine
     ? Object.freeze(baseSpine.map((chord, i) => customSpine[i] || chord))
     : baseSpine;
-  const leadMask = bjorklund(7, 12, score.melodyTurn % 12);
-  const chimeHocketMask = bjorklund(5, 12, (score.melodyTurn + 2) % 12);
+  const leadMask = bjorklund(stepsCount === 16 ? 9 : 7, stepsCount, score.melodyTurn % stepsCount);
+  const chimeHocketMask = bjorklund(stepsCount === 16 ? 7 : 5, stepsCount, (score.melodyTurn + 2) % stepsCount);
+  const regionStepStride = stepsCount === 16 ? 4 : 3;
 
   // 1. Harmonize LOLCODE Lead Melody
   const conductedMelody = Object.freeze(
     melody.map((rawOffset, stepIndex) => {
       const chord = spine[stepIndex];
-      const isStrongBeat = stepIndex % 3 === 0;
+      const isStrongBeat = stepIndex % regionStepStride === 0;
       return projectConsonantPitch(rawOffset, chord, !isStrongBeat, consonanceStrictness, activeGenre);
     }),
   );
@@ -642,7 +652,7 @@ export function conductEnsemble({
         bass.steps.map((step, stepIndex) => {
           const chord = spine[stepIndex];
           const beatStep = beat?.steps?.[stepIndex];
-          const isRegionStart = stepIndex % 3 === 0;
+          const isRegionStart = stepIndex % regionStepStride === 0;
           const kickActive = (beatStep?.kick ?? 0) > 0;
           let harmonizedInterval = chord.root;
 
@@ -749,7 +759,7 @@ export function conductEnsemble({
           const fitting = chordOvertones(ratios, chord, book.melody.extensions ?? []);
           const chosen = fitting[(step.hueIndex + step.exponents.e2 + step.exponents.e3 + stepIndex) % fitting.length];
           const chordRootFactor = Math.pow(2, chord.root / 12);
-          const hocketGate = step.gate > 0 && (chimeHocketMask[stepIndex] === 1 || leadMask[stepIndex] === 0 || stepIndex % 3 === 0)
+          const hocketGate = step.gate > 0 && (chimeHocketMask[stepIndex] === 1 || leadMask[stepIndex] === 0 || stepIndex % regionStepStride === 0)
             ? step.gate
             : (step.gate === 2 ? 1 : 0);
           return Object.freeze({
@@ -778,7 +788,7 @@ export function conductEnsemble({
             OPH: (chord.third + 12) % 24,
           };
           const targetInterval = personaHarmonyMap[step.personaShort] ?? chord.root;
-          const phraseGate = stepIndex % 3 === 1 && step.gate === 1 ? 0 : step.gate;
+          const phraseGate = stepIndex % regionStepStride === 1 && step.gate === 1 ? 0 : step.gate;
           const chantPitchName = PITCH_NAMES[(((score.root + targetInterval) % 12) + 12) % 12];
           const chantLabel = phraseGate === 0 ? "SILENT" : `${step.personaShort}·${chantPitchName}`;
           return Object.freeze({

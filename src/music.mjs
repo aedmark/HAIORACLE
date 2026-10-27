@@ -51,17 +51,19 @@ export const MELODY_NAMES = Object.freeze([
   "GLASS LADDER",
 ]);
 
-export function melodyFor(score) {
+export function melodyFor(score, stepsCount = 12) {
   if (score.melodyMode === 0) {
     const scale = SCALES[score.scale];
-    return Object.freeze(score.steps.map((scaleStep, index) => (
-      scale[scaleStep] + (index >= 8 ? 12 : 0)
-    )));
+    return Object.freeze(Array.from({ length: stepsCount }, (_, index) => {
+      const scaleStep = score.steps[index % score.steps.length];
+      const octaveShift = stepsCount === 16 ? (index >= 12 ? 12 : 0) : (index >= 8 ? 12 : 0);
+      return scale[scaleStep] + octaveShift;
+    }));
   }
 
   const motif = MOTIFS[score.melodyMode];
   if (!motif) throw new RangeError("Unknown melody mode");
-  return Object.freeze(Array.from({ length: 12 }, (_, index) => (
+  return Object.freeze(Array.from({ length: stepsCount }, (_, index) => (
     motif[(index + score.melodyTurn) % motif.length]
   )));
 }

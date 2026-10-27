@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
@@ -52,6 +53,18 @@ test("the static entry points exist", async () => {
     "docs/manual.json",
     "tools/manual.py",
   ].map((path) => access(new URL(path, root))));
+});
+
+test("all JavaScript modules under src/ have valid syntax", async () => {
+  const files = await readdir(new URL("src/", root));
+  const mjsFiles = files.filter((f) => f.endsWith(".mjs"));
+  assert.ok(mjsFiles.length >= 20, "expected at least 20 modules");
+  for (const file of mjsFiles) {
+    const fullPath = new URL(`src/${file}`, root).pathname;
+    assert.doesNotThrow(() => {
+      execFileSync(process.execPath, ["--check", fullPath], { stdio: "pipe" });
+    }, `Syntax check failed for ${file}`);
+  }
 });
 
 test("the page exposes one labeled text input and its core controls", async () => {
@@ -468,18 +481,18 @@ test("the Esoteric Fun Machine accompanist is wired up, and the removed loop seq
   // Phase 5: exports render the whole song with the same layer playback and follow rule.
   // Without a song an export renders the whole harmonic cycle (D-044).
   assert.match(app, /const passes = songPasses\(song\) \|\| HARMONIC_PASSES;/);
-  assert.match(app, /const stepsCount = 12 \* passes;/);
+  assert.match(app, /const stepsCount = (?:12|activeGridSteps) \* passes;/);
   // The harmony moves on at each loop's downbeat, live and offline (D-044).
   assert.match(app, /if \(stepIndex === 0\) enterHarmonicPass\(transport, harmonicPassAt\(currentStep\)\);/);
-  assert.match(app, /if \(step % 12 === 0 && harmonicPassAt\(step\) !== currentHarmonicPass\)/);
+  assert.match(app, /if \(step % (?:12|activeGridSteps) === 0 && harmonicPassAt\(step\) !== currentHarmonicPass\)/);
   assert.match(app, /harmonicPass: currentHarmonicPass,/);
   // MIDI markers name every chord change; sessions keep AS WRITTEN (D-043).
   assert.match(app, /\.\.\.arrangementMarkers\(stepStarts\), \.\.\.chordMarkers\(stepStarts, stepChords, score\)/);
-  assert.match(app, /stepChords\.push\(currentConductedSpine\?\.\[step % 12\] \?\? null\);/);
+  assert.match(app, /stepChords\.push\(currentConductedSpine\?\.\[step % (?:12|activeGridSteps)\] \?\? null\);/);
   assert.match(app, /    varied: genreVaried,\n    funMachine: \{/);
   assert.match(app, /genreVaried = session\.varied;/);
   assert.match(app, /activeGenre = CREATURE_GENRE;/, "a fresh creature plays its own rulebook (D-043)");
-  assert.match(app, /followSong\(offlineTransport, loop, step % 12, null\);/);
+  assert.match(app, /followSong\(offlineTransport, loop, step % (?:12|activeGridSteps), null\);/);
   assert.match(app, /playSongLayers\(offlineCtx, offlineTransport, score, step, loop,/);
   assert.match(app, /currentHarmonicPass = livePass;\n  restoreLiveConducting\(\);/, "the render hands the band back to the live loop");
   // Each recorded layer plays in the voice it was recorded in (D-040).
@@ -623,7 +636,7 @@ test("the session ledger saves presets on-device and .fun files through the vali
   assert.doesNotMatch(app, /sessionStorage|indexedDB|document\.cookie/);
   // Discovery (D-037): the four drawers unlock from the app's own moments.
   assert.match(app, /unlockDrawer\("held-key"\)/);
-  assert.match(app, /if \(currentStep % 12 === 11\) noteLoopHeard\(\);/);
+  assert.match(app, /if \(currentStep % (?:12|activeGridSteps) === (?:11|activeGridSteps - 1)\) noteLoopHeard\(\);/);
   assert.match(app, /if \(target\.closest\(KEEPSAKE_AREAS\)\) unlockDrawer\("change"\);/);
   assert.match(app, /unlockDrawer\("band"\)/);
   assert.match(html, /<div class="cabinet-switch" id="cabinet-switch" hidden>/, "the switch appears only once the script runs");

@@ -404,7 +404,7 @@ export function cycleChantCell(step, score) {
   });
 }
 
-export function composeChant(source, score, mutation = 0) {
+export function composeChant(source, score, mutation = 0, stepsCount = 12) {
   const chantMode = (score.chantMode ?? ((score.seed >>> 7) % 8)) & 7;
   const chantFormant = score.chantFormant ?? 62;
   const input = chantSeedBytesFor(score.seed >>> 0, chantMode, chantFormant, mutation);
@@ -414,12 +414,12 @@ export function composeChant(source, score, mutation = 0) {
     throw new Error(`Shakespeare play emitted ${output.length} cues; expected at least 12`);
   }
 
-  const melody = melodyFor(score);
+  const melody = melodyFor(score, stepsCount);
   const gateTemplate = CHANT_GATES[chantMode];
 
-  const steps = Array.from({ length: 12 }, (_, index) => {
-    const raw = output[index] & 0xff;
-    const cue = cues[index] || {
+  const steps = Array.from({ length: stepsCount }, (_, index) => {
+    const raw = output[index % output.length] & 0xff;
+    const cue = cues[index % cues.length] || {
       act: "ACT I",
       scene: `SCENE ${index + 1}`,
       speaker: "HAMLET",
@@ -430,7 +430,7 @@ export function composeChant(source, score, mutation = 0) {
     const vowel = FORMANT_VOWELS[vowelIndex];
     const interval = melody[(index + (raw % 5)) % melody.length] % 12;
 
-    let gate = gateTemplate[index];
+    let gate = gateTemplate[index % gateTemplate.length];
     if (index === 0) {
       gate = Math.max(1, gate);
     } else if (gate === 0 && (raw % 8 === 0)) {

@@ -175,6 +175,10 @@ select:focus-visible {
   margin: 0.2rem 0 0.35rem;
 }
 
+.looper-steps.is-16-steps {
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+}
+
 .looper-step {
   display: flex;
   flex-direction: column;
@@ -1796,6 +1800,10 @@ h1 em {
   gap: 0.42rem;
 }
 
+.beat-grid.is-16-steps {
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+}
+
 .beat-step {
   display: grid;
   justify-items: center;
@@ -2814,6 +2822,11 @@ noscript {
   .beat-grid,
   .looper-steps {
     grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .beat-grid.is-16-steps,
+  .looper-steps.is-16-steps {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 
   .mixer-strips {

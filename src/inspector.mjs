@@ -46,13 +46,15 @@ export function toTernary10(word) {
   return `0t${digits.join("")}`;
 }
 
-function normalizeStep(stepIndex) {
+function normalizeStep(stepIndex, totalSteps = 12) {
+  const count = totalSteps || 12;
   const n = Number.isFinite(stepIndex) && stepIndex >= 0 ? Math.trunc(stepIndex) : 0;
-  return ((n % 12) + 12) % 12;
+  return ((n % count) + count) % count;
 }
 
 export function inspectBeatStep(beat, stepIndex = 0) {
-  const s = normalizeStep(stepIndex);
+  const total = beat?.steps?.length || 12;
+  const s = normalizeStep(stepIndex, total);
   const step = beat?.steps?.[s];
   if (!beat || !step) {
     return {
@@ -71,14 +73,15 @@ export function inspectBeatStep(beat, stepIndex = 0) {
   return {
     plate: "beat",
     stepIndex: s,
-    headline: `STEP ${String(s + 1).padStart(2, "0")}/12 · ${beat.modeName} · ${beat.stepsExecuted} VM OPS`,
+    headline: `STEP ${String(s + 1).padStart(2, "0")}/${total} · ${beat.modeName} · ${beat.stepsExecuted} VM OPS`,
     registers: `A=0x${rawHex} (${toTernary10(raw)}) · ROTR=${toTernary10(rotated)} · CRAZY=${toTernary10(crazed)}`,
     detail: `TRITS [${step.trits}] · KICK=${step.kick} SNARE=${step.snare} HAT=${step.hat} · DENSITY ${beat.density}% · MUTATION #${beat.mutation}`,
   };
 }
 
 export function inspectBassStep(bass, stepIndex = 0) {
-  const s = normalizeStep(stepIndex);
+  const total = bass?.steps?.length || 12;
+  const s = normalizeStep(stepIndex, total);
   const step = bass?.steps?.[s];
   if (!bass || !step) {
     return {
@@ -101,14 +104,15 @@ export function inspectBassStep(bass, stepIndex = 0) {
   return {
     plate: "bass",
     stepIndex: s,
-    headline: `STEP ${String(s + 1).padStart(2, "0")}/12 · ${bass.modeName} · ${bass.stepsExecuted} TAPE OPS`,
+    headline: `STEP ${String(s + 1).padStart(2, "0")}/${total} · ${bass.modeName} · ${bass.stepsExecuted} TAPE OPS`,
     registers: `PTR=*${String(s).padStart(2, "0")} [0x${cellHex}=${cell}] · SHUTTLE [->+<] · TAPE ${tapeRibbon}`,
     detail: `NOTE=${step.label} · GATE=${step.gate} · INT=+${step.interval}st · REG=${step.register} · SLIDE=${step.slide ? "ON" : "OFF"} · ACCENT=${step.accent ? "ON" : "OFF"}`,
   };
 }
 
 export function inspectHarmonyStep(harmony, stepIndex = 0) {
-  const s = normalizeStep(stepIndex);
+  const total = harmony?.steps?.length || 12;
+  const s = normalizeStep(stepIndex, total);
   const step = harmony?.steps?.[s];
   if (!harmony || !step) {
     return {
@@ -129,14 +133,15 @@ export function inspectHarmonyStep(harmony, stepIndex = 0) {
   return {
     plate: "harmony",
     stepIndex: s,
-    headline: `STEP ${String(s + 1).padStart(2, "0")}/12 · ${harmony.modeName} · ${harmony.stepsExecuted} TORUS OPS`,
+    headline: `STEP ${String(s + 1).padStart(2, "0")}/${total} · ${harmony.modeName} · ${harmony.stepsExecuted} TORUS OPS`,
     registers: `IP=(${ipX},${ipY}) DIR=${dirArrow} · MIRROR '${step.mirror}' (${harmony.mirrorsHit} HIT) · STACK=0x${rawHex}`,
     detail: `CHORD=${step.label} · TRIAD=[${chordArr}]st · STRUM=${step.strumMs}ms · GATE=${step.gate}`,
   };
 }
 
 export function inspectChimeStep(chimes, stepIndex = 0) {
-  const s = normalizeStep(stepIndex);
+  const total = chimes?.steps?.length || 12;
+  const s = normalizeStep(stepIndex, total);
   const step = chimes?.steps?.[s];
   if (!chimes || !step) {
     return {
@@ -157,14 +162,15 @@ export function inspectChimeStep(chimes, stepIndex = 0) {
   return {
     plate: "chime",
     stepIndex: s,
-    headline: `STEP ${String(s + 1).padStart(2, "0")}/12 · ${chimes.modeName} · ${chimes.pietStepsExecuted} CODELS / ${chimes.fractranStepsExecuted} FRACTIONS`,
+    headline: `STEP ${String(s + 1).padStart(2, "0")}/${total} · ${chimes.modeName} · ${chimes.pietStepsExecuted} CODELS / ${chimes.fractranStepsExecuted} FRACTIONS`,
     registers: `PIET CODEL=${step.codelCode} (${step.codelName}, 0x${byteHex}) · FRACTRAN=${fracStr} ➔ ${expStr}`,
     detail: `JI RATIO=${step.ratioLabel} (${Number(step.ratioValue || 1).toFixed(4)}× · ${step.primeTag}) · GATE=${step.gate} · SHIMMER=${step.shimmer}%`,
   };
 }
 
 export function inspectChantStep(chant, stepIndex = 0) {
-  const s = normalizeStep(stepIndex);
+  const total = chant?.steps?.length || 12;
+  const s = normalizeStep(stepIndex, total);
   const step = chant?.steps?.[s];
   if (!chant || !step) {
     return {
@@ -178,7 +184,7 @@ export function inspectChantStep(chant, stepIndex = 0) {
   return {
     plate: "chant",
     stepIndex: s,
-    headline: `STEP ${String(s + 1).padStart(2, "0")}/12 · ${chant.modeName} · ${chant.statementsExecuted} DRAMATIC CUES`,
+    headline: `STEP ${String(s + 1).padStart(2, "0")}/${total} · ${chant.modeName} · ${chant.statementsExecuted} DRAMATIC CUES`,
     registers: `${step.act} · ${step.scene} · [${step.speaker} ➔ ${step.addressee}] (${step.voiceType}, ${step.vibratoHz}Hz VIB)`,
     detail: `VOWEL=${step.vowelIpa} (${step.label}) · FORMANTS F1=${step.f1}Hz F2=${step.f2}Hz F3=${step.f3}Hz · INT=+${step.interval}st`,
   };

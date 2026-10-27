@@ -38,8 +38,8 @@ export function emptySong() {
   return freezeSong([]);
 }
 
-export function emptyTake() {
-  return Object.freeze(Array(LOOP_STEPS).fill(null));
+export function emptyTake(steps = LOOP_STEPS) {
+  return Object.freeze(Array(steps || LOOP_STEPS).fill(null));
 }
 
 export function makeSlot(key, style, voice = DEFAULT_VOICE_ID) {
@@ -269,11 +269,12 @@ export function clampSelection(song, index) {
  * step): the loop, which of its repeats, and the step within the loop. The song
  * starts over after its last pass. Returns null for an empty song.
  */
-export function songPosition(song, absoluteStep) {
+export function songPosition(song, absoluteStep, stepsPerPass = LOOP_STEPS) {
   const passes = songPasses(song);
   if (passes === 0) return null;
-  const step = ((Math.trunc(absoluteStep) % LOOP_STEPS) + LOOP_STEPS) % LOOP_STEPS;
-  const rawPass = Math.floor(absoluteStep / LOOP_STEPS);
+  const loopSteps = stepsPerPass || LOOP_STEPS;
+  const step = ((Math.trunc(absoluteStep) % loopSteps) + loopSteps) % loopSteps;
+  const rawPass = Math.floor(absoluteStep / loopSteps);
   if (rawPass < 0) return null;
 
   let p = ((rawPass % passes) + passes) % passes;
@@ -288,7 +289,7 @@ export function songPosition(song, absoluteStep) {
 /** Every layer's slot at a step of a loop, oldest first (empty slots left out). */
 export function slotsAt(loop, step) {
   return loop.layers
-    .map((take, layerIndex) => ({ layerIndex, slot: take[step] }))
+    .map((take, layerIndex) => ({ layerIndex, slot: take[step % take.length] }))
     .filter((entry) => entry.slot !== null);
 }
 
@@ -431,7 +432,7 @@ export function validateSong(raw, path = "song", { legacy = false } = {}) {
     }
     const layers = loop.layers.map((take, layerIndex) => {
       const takePath = `${loopPath}.layers[${layerIndex}]`;
-      if (!Array.isArray(take) || take.length !== LOOP_STEPS) throw new SongError(takePath, `must list exactly ${LOOP_STEPS} steps`);
+      if (!Array.isArray(take) || (take.length !== 12 && take.length !== 16)) throw new SongError(takePath, `must list 12 or 16 steps`);
       const slots = take.map((slot, step) => {
         const slotPath = `${takePath}[${step}]`;
         if (slot === null) return null;

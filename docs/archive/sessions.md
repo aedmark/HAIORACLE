@@ -1780,7 +1780,9 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
    - Prevented post-outro scheduling bleed using `casioOutroEnding` break in the look-ahead loop; when step 11 of the outro finishes sounding, transport cleanly halts and rewinds.
    - Synchronized button UI states: `.is-cued` pulsing while pending/scheduled ahead, transitioning to `.is-active` once audible, and clearing upon step 11 completion.
    - Added Casio progress reporting to `looperReadoutText()`.
-   - Restamped `ASSET_VERSION` to `698d822fb894`.### Session 70: 2026-10-23: Hardware console alignment, whitespace harmony, and double-padding elimination (D-057)
+   - Restamped `ASSET_VERSION` to `698d822fb894`.
+
+### Session 70: 2026-10-23: Hardware console alignment, whitespace harmony, and double-padding elimination (D-057)
 
 **Contributor:** Antigravity with maintainer direction
 
@@ -1806,5 +1808,31 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 3. `docs/DECISIONS.md`:
    - Logged D-057.
 
+### Session 71: 2026-10-23: Swap Wings III (The Band) and IV (Keep) for hardware console workflow (D-058)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Swap Wings III and IV so that The Band (the five esoteric VM machines, Plates I–V) immediately follows Wing II (Mix), while Wing IV (Keep: Session Ledger and Engraver's DAW export desk) forms the bottom rear utility panel of the instrument console.
+
+**Done:** All parts implemented and verified. All 184 checks pass.
+
+**Changed:**
+1. `index.html`:
+   - Swapped `#wing-band` and `#wing-keep`.
+   - Updated `#wing-band` numeral to `WING III` and `#wing-keep` numeral to `WING IV`.
+   - Restored `#fun-machine-telemetry` span.
+2. `src/cabinet.mjs`:
+   - Updated `DRAWERS` sequence to `kapellmeister` → `mix` → `band` → `keep` in page order.
+3. Assets:
+   - Restamped `ASSET_VERSION` to `10f729ec27f8` (`tools/stamp_assets.mjs`).
+4. `styles.css`:
+   - Updated `.drawer-body[hidden]` to `display: none !important;` and scoped the desktop layout rule to `#drawer-body-keep:not([hidden])`, fixing a CSS specificity override where ID `#drawer-body-keep` kept the Keep drawer permanently open on viewports $\ge 1180$px.
+5. Tests:
+   - `tests/cabinet.test.mjs`: updated `DRAWERS.map` page order assertion.
+   - `tests/static.test.mjs`: updated wing order assertions in D-027 test, session engine placement assertion, and added `.drawer-body[hidden]` regression assertions.
+6. Documentation:
+   - Recorded ADR D-058 in `docs/DECISIONS.md`.
+   - Updated page shell map and invariants in `docs/ARCHITECTURE.md`.
+   - Updated `docs/HANDOFF.md`.
 
 

@@ -209,7 +209,7 @@ export function cycleBassCell(step, melody = [0, 4, 7, 12]) {
   });
 }
 
-export function composeBass(source, score, mutation = 0) {
+export function composeBass(source, score, mutation = 0, stepsCount = 12) {
   const bassMode = (score.bassMode ?? ((score.seed >>> 3) % 8)) & 7;
   const bassGlide = score.bassGlide ?? 58;
   const input = bassSeedBytesFor(score.seed >>> 0, bassMode, bassGlide, mutation);
@@ -218,7 +218,7 @@ export function composeBass(source, score, mutation = 0) {
     throw new Error(`Brainfuck bass spell emitted ${output.length} cells; expected at least 12`);
   }
 
-  const melody = melodyFor(score);
+  const melody = melodyFor(score, stepsCount);
   const groove = GROOVE_TEMPLATES[bassMode];
   const consonantPool = [
     0,
@@ -226,14 +226,14 @@ export function composeBass(source, score, mutation = 0) {
     melody[0] % 12,
     7,
     5,
-    melody[3] % 12,
-    melody[6] % 12,
+    melody[3 % melody.length] % 12,
+    melody[6 % melody.length] % 12,
     12,
   ];
 
-  const steps = Array.from({ length: 12 }, (_, index) => {
-    const cell = output[index] & 0xff;
-    const [templateGate, templateAccent, templateReg, templateSlide] = groove[index];
+  const steps = Array.from({ length: stepsCount }, (_, index) => {
+    const cell = output[index % output.length] & 0xff;
+    const [templateGate, templateAccent, templateReg, templateSlide] = groove[index % groove.length];
 
     let gate = templateGate;
     if (index === 0) {
@@ -242,9 +242,10 @@ export function composeBass(source, score, mutation = 0) {
       gate = 1;
     }
 
+    const isHalfBar = stepsCount === 16 ? index % 8 === 0 : index % 6 === 0;
     const interval = index === 0
       ? 0
-      : (index % 6 === 0 ? (cell % 2 === 0 ? 0 : 7) : consonantPool[(cell + index) % consonantPool.length]);
+      : (isHalfBar ? (cell % 2 === 0 ? 0 : 7) : consonantPool[(cell + index) % consonantPool.length]);
     const register = index === 0 ? 0 : (templateReg || (cell % 5 === 0 ? 1 : 0));
     const slide = gate > 0 && (templateSlide || ((cell & 3) === 3 && bassGlide >= 50)) ? 1 : 0;
     const accent = gate > 0 && (templateAccent || (cell % 4 === 0)) ? 1 : 0;

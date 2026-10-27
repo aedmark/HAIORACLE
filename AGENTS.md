@@ -114,7 +114,7 @@ Never force-push or rewrite shared history.
 | `src/broadsheet.mjs` | 1200×1520 engraved specimen broadsheet PNG Canvas renderer (D-067) |
 | `src/schedulers.mjs` | Per-step Web Audio voice schedulers, vitrine percussion, and parlor acoustic buffers (D-067) |
 | `src/audio-export.mjs` | Studio-grade 16/24/32f WAV encoder, tail folding, dither, and sampler metadata (P8-01, D-076) |
-| `src/tuning.mjs` | Concert pitch A4 tuning reference, score key/mode overrides, and 4/4 bar lock step timing (P8-04, P8-05, D-078, D-079) |
+| `src/tuning.mjs` | Concert pitch A4 tuning reference, score key/mode overrides, 4/4 bar lock, and native 16-step straight grid metre (P8-04, P8-05, D-078, D-079) |
 | `src/version.mjs` | Product application version, engine versioning, and score/fixture fingerprint (P8-03, D-077) |
 | `src/inspector.mjs` | "Under the Parlor Glass" live esoteric VM step inspector for Plates I–V in Wing III (P5-34, D-069) |
 | `src/herbarium.mjs` | "The Naturalist's Herbarium" on-device curio gallery, miniature SVG portrait geometry, and side-by-side trait comparator (P5-35, D-070) |

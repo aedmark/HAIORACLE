@@ -723,7 +723,7 @@ test("Audit Dimension 10: Race conditions, audio param ramps, and acoustic confl
   // 1. Looper real-time take preservation (no dropped steps during look-ahead boundary)
   assert.match(app, /currentTransport\.activeTakeLanding = \{/, "records pending take landing state when lookahead finishes step 11");
   assert.match(app, /if \(currentTransport\?\.activeTakeLanding\) \{/, "allows user live strikes during audible step 11 to update landed take");
-  assert.match(app, /if \(transport\.activeTakeLanding && currentStep % 12 === 11\)/, "cleans up activeTakeLanding when audible step 11 completes");
+  assert.match(app, /if \(transport\.activeTakeLanding && currentStep % (?:12|activeGridSteps) === (?:11|activeGridSteps - 1)\)/, "cleans up activeTakeLanding when audible step completes");
 
   // 2. Timeout tracking and transport isolation
   assert.match(app, /timeouts:\s*new Set\(\)/, "transport tracks its active timeouts");

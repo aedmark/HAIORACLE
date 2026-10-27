@@ -1647,15 +1647,15 @@ Investigation showed two root causes:
 
 **Consequences:** Exports, MIDI key signatures, and filenames follow the overridden key. THE CREATURE'S OWN rulebook is rewritten from the overridden scale.
 
-## D-079 Bar-aligned metre: a 4/4 bar lock now, native 16-step generation later (2026-10-26, status: accepted)
+## D-079 Bar-aligned metre: 4/4 bar lock and native 16-step straight grid (2026-10-26, status: accepted)
 
-**Context:** Every voice is generated on a 12-step bar. At the stated BPM, each step is an eighth note, so most rhythm templates make a pass of 6 beats (1.5 bars of 4/4) and the Charleston and Habanera templates 4 beats. Loops therefore fell off a 4/4 DAW grid. Full 16-step generation touches the spell, six VMs, the conductor, the looper, the accompanist, the inspector, the C core, and every golden fixture (about 57 bar-math sites in `src/app.mjs` alone). The maintainer delegated this decision on 2026-10-26.
+**Context:** Every voice was originally generated on a 12-step bar. At the stated BPM, each step was an eighth note, so most rhythm templates made a pass of 6 beats (1.5 bars of 4/4) and the Charleston and Habanera templates 4 beats. Loops therefore fell off a standard 4/4 DAW grid unless aligned. Full 16-step generation allows standard 4/4 straight sixteenth-note sequencing alongside the vintage 12-step shuffle. The maintainer authorized this metre decision on 2026-10-26 ("I authorize the 16-step metre and plugin decisions; your judgment is better than mine in this realm", "do not worry about older projects. Nobody is using this, yet").
 
 **Decision:**
-1. Phase 1 (done): the transport's **4/4 BAR LOCK** scales the step unit (`stepUnitSeconds()` in `src/tuning.mjs`) so that each 12-step pass fills exactly one 4/4 bar at the stated BPM, whatever the rhythm template. Steps become triplet-eighth-based and the swing ratios are kept. It is off by default and saved in sessions (`barLock`). Live playback, WAV, stems, and MIDI all follow it.
-2. Phase 2 (planned): native 16-step generation, with the step count as a parameter rather than a constant, introduced voice by voice behind golden fixtures, with a bump to `ENGINE_VERSION` (D-077).
+1. Phase 1: the transport's **4/4 BAR LOCK** (`#transport-bar-lock`) scales the step unit (`stepUnitSeconds()` in `src/tuning.mjs`) so that each 12-step pass fills exactly one 4/4 bar at the stated BPM, whatever the rhythm template. Steps become triplet-eighth-based and the swing ratios are kept. Saved in session format v7 (`session.barLock`).
+2. Phase 2: native 16-step generation (`GRID_STEPS_OPTIONS = [12, 16]`, default 16), parameterized with `stepsCount = 12` default to preserve golden fixture invariants. Parameterized composition across all 5 esoteric band generators (Malbolge, Brainfuck, Befunge-93, Piet/FRACTRAN, Shakespeare), the Euler Tonnetz harmonic spine (4 regions $\times$ 4 steps), the INTERCAL dynamic orchestrator (4 sections $\times$ 4 steps), the Fun Machine accompanist, and the Loop Machine sequencer. The Master Transport deck provides an interactive toggle button (`#transport-grid-steps`: `16 STEPS (4/4)` / `12 STEPS (TRIPLET)`). Session format v7 serializes `gridSteps`.
 
-**Consequences:** DAW alignment works now without destabilizing the engine. In MIDI clock slave mode, the clock still sets one step per 12 ticks (an eighth note), which overrides the bar lock. Making those two agree is part of Phase 2.
+**Consequences:** Musicians can sequence and export in either native 4/4 straight metre or vintage triplet shuffle. Golden fixtures, legacy 12-step sessions, and default backward compatibility remain intact.
 
 ## D-080 CLAP plugin from the C core, isolated like the desktop wrapper (2026-10-26, status: accepted)
 

@@ -12,6 +12,9 @@ export const MAX_REFERENCE_PITCH = 466;
 // the high historic pitch. Any whole number in range is accepted from files.
 export const REFERENCE_PITCH_PRESETS = Object.freeze([415, 432, 440, 442, 444, 466]);
 
+export const GRID_STEPS_OPTIONS = Object.freeze([12, 16]);
+export const DEFAULT_GRID_STEPS = 16;
+
 let reference = DEFAULT_REFERENCE_PITCH;
 
 export function isReferencePitch(value) {
@@ -60,20 +63,30 @@ export function applyScoreOverrides(score, { rootOverride = null, scaleOverride 
 
 /**
  * Base step unit duration in seconds.
- * - With `barLock44 = false` (native parlor feel): each step unit is an eighth
- *   note (`60 / bpm / 2`), so a 12-step pass takes 6 quarter-beats (one 6/4 bar
- *   or two 3/4 bars).
- * - With `barLock44 = true` (P8-05, D-079 Phase 1): a 12-step pass is locked to
- *   exactly one 4/4 bar (4 quarter-beats = `240 / bpm`), so every pass and loop
- *   lands squarely on a DAW's 4/4 barlines at the stated BPM.
+ * - In 16-step mode (`stepsCount === 16`, P8-05 Phase 2): each step is a straight
+ *   sixteenth note filling exactly one 4/4 bar (4 quarter-beats = `240 / bpm`).
+ * - In 12-step mode (`stepsCount === 12`):
+ *   - With `barLock44 = false` (native parlor feel): each step unit is an eighth
+ *     note (`60 / bpm / 2`), so a 12-step pass takes 6 quarter-beats (one 6/4 bar
+ *     or two 3/4 bars).
+ *   - With `barLock44 = true` (P8-05, D-079 Phase 1): a 12-step pass is locked to
+ *     exactly one 4/4 bar (4 quarter-beats = `240 / bpm`), so every pass and loop
+ *     lands squarely on a DAW's 4/4 barlines at the stated BPM.
  */
-export function stepUnitSeconds(bpm, rhythmTemplate = [1, 1, 1, 1], barLock44 = false) {
+export function stepUnitSeconds(bpm, rhythmTemplate = [1, 1, 1, 1], barLock44 = false, stepsCount = 12) {
   const safeBpm = Number(bpm) > 0 ? Number(bpm) : 108;
+  const barSeconds = (60 / safeBpm) * 4;
+  if (stepsCount === 16) {
+    let unitsInPass = 0;
+    for (let s = 0; s < 16; s += 1) {
+      unitsInPass += rhythmTemplate[s % rhythmTemplate.length];
+    }
+    return barSeconds / (unitsInPass || 16);
+  }
   if (!barLock44) return 60 / safeBpm / 2;
   let unitsInPass = 0;
   for (let s = 0; s < 12; s += 1) {
     unitsInPass += rhythmTemplate[s % rhythmTemplate.length];
   }
-  const barSeconds = (60 / safeBpm) * 4;
   return barSeconds / (unitsInPass || 12);
 }

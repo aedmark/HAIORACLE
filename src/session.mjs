@@ -117,7 +117,7 @@ export function validateSession(raw) {
     ...keys,
     ...(raw?.version >= 4 ? ["song"] : []),
     ...(raw?.version >= 6 ? ["varied"] : []),
-    ...(raw?.version >= 7 ? ["engineVersion", "rootOverride", "scaleOverride", "referencePitch", "barLock"] : []),
+    ...(raw?.version >= 7 ? ["engineVersion", "rootOverride", "scaleOverride", "referencePitch", "barLock", ...(raw.gridSteps !== undefined ? ["gridSteps"] : [])] : []),
   ];
   expectKeys(raw, "session", versionKeys);
   if (raw.format !== SESSION_FORMAT) throw new SessionError("session.format", `must be "${SESSION_FORMAT}"`);
@@ -184,8 +184,8 @@ export function validateSession(raw) {
     const path = `session.plates.${id}`;
     expectKeys(raw.plates[id], path, ["mutation", "cellCycles"]);
     const { cellCycles } = raw.plates[id];
-    if (!Array.isArray(cellCycles) || cellCycles.length !== 12) {
-      throw new SessionError(`${path}.cellCycles`, "must list exactly 12 counts");
+    if (!Array.isArray(cellCycles) || (cellCycles.length !== 12 && cellCycles.length !== 16)) {
+      throw new SessionError(`${path}.cellCycles`, "must list 12 or 16 counts");
     }
     plates[id] = Object.freeze({
       mutation: expectInt(raw.plates[id].mutation, `${path}.mutation`, 0, MAX_MUTATION),
@@ -237,6 +237,8 @@ export function validateSession(raw) {
     referencePitch,
     // 4/4 BAR LOCK (P8-05, D-079): each 12-step pass fills one 4/4 bar.
     barLock: raw.version >= 7 ? expectBool(raw.barLock, "session.barLock") : false,
+    // Metric grid step count (P8-05 Phase 2): 12 or 16 steps per pass.
+    gridSteps: raw.version >= 7 && raw.gridSteps !== undefined ? expectEnum(raw.gridSteps, "session.gridSteps", [12, 16]) : 12,
     acoustics,
     funMachine,
     plates: Object.freeze(plates),

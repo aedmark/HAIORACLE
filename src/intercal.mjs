@@ -290,7 +290,7 @@ export function arrangementWordFor(score) {
  * from the program's registers, so editing src/conductor.i re-arranges the
  * band; malformed form is rejected. The same phrase always gets the same form.
  */
-export function composeArrangement(source, score) {
+export function composeArrangement(source, score, stepsCount = 12) {
   const word = arrangementWordFor(score);
   const exec = runIntercal(source, [word, word ^ 0xffff]);
   if (!exec.gaveUp) throw new RangeError("INTERCAL conductor: the score must end with GIVE UP");
@@ -322,17 +322,19 @@ export function composeArrangement(source, score) {
     throw new RangeError(`INTERCAL conductor: expected 4 sections and a turnaround, found ${regionalMasks.length} sections`);
   }
   const turnaroundMask = channelMask(exec.vars32, "GIVE UP");
+  const stepsPerSec = stepsCount === 16 ? 4 : STEPS_PER_SECTION;
+  const scaledTurnaround = stepsCount === 16 ? (turnaroundStep === 11 ? 15 : 14) : turnaroundStep;
 
-  const channelMasks = Array.from({ length: SECTION_COUNT * STEPS_PER_SECTION }, (_, step) => (
-    step >= turnaroundStep
+  const channelMasks = Array.from({ length: SECTION_COUNT * stepsPerSec }, (_, step) => (
+    step >= scaledTurnaround
       ? Object.freeze({ ...turnaroundMask, isTurnaround: true })
-      : Object.freeze({ ...regionalMasks[Math.floor(step / STEPS_PER_SECTION)], isTurnaround: false })
+      : Object.freeze({ ...regionalMasks[Math.floor(step / stepsPerSec)], isTurnaround: false })
   ));
 
   const sections = INTERCAL_SECTION_NAMES.map((name, idx) => Object.freeze({
     index: idx,
     name,
-    steps: Object.freeze([idx * 3, idx * 3 + 1, idx * 3 + 2]),
+    steps: Object.freeze(Array.from({ length: stepsPerSec }, (_, s) => idx * stepsPerSec + s)),
     mask: regionalMasks[idx],
   }));
 
@@ -345,14 +347,16 @@ export function composeArrangement(source, score) {
     politeness: exec.politenessRatio,
     politenessPercentage: `${politenessPct}%`,
     statementsExecuted: exec.stepsExecuted,
-    turnaroundStep,
+    turnaroundStep: scaledTurnaround,
     summary,
   });
 }
 
 /** The section a loop step belongs to, and whether it is the turnaround. */
 export function arrangementSectionAt(arrangement, step) {
-  const index = ((Math.trunc(step) % 12) + 12) % 12;
-  const section = arrangement.sections[Math.floor(index / STEPS_PER_SECTION)];
+  const totalSteps = arrangement?.channelMasks?.length || 12;
+  const index = ((Math.trunc(step) % totalSteps) + totalSteps) % totalSteps;
+  const stepsPerSec = totalSteps === 16 ? 4 : STEPS_PER_SECTION;
+  const section = arrangement.sections[Math.floor(index / stepsPerSec)];
   return Object.freeze({ section, isTurnaround: index >= arrangement.turnaroundStep, mask: arrangement.channelMasks[index] });
 }

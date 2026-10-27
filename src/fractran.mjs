@@ -473,7 +473,7 @@ export function cycleChimeCell(step) {
   });
 }
 
-export function composeChimes(pietSource, fractranSource, score, mutation = 0) {
+export function composeChimes(pietSource, fractranSource, score, mutation = 0, stepsCount = 12) {
   const chimeMode = (score.chimeMode ?? ((score.seed >>> 6) % 8)) & 7;
   const chimeShimmer = score.chimeShimmer ?? 58;
   const { bytes, initialFractranState } = chimeSeedFor(score.seed >>> 0, chimeMode, chimeShimmer, mutation);
@@ -483,20 +483,20 @@ export function composeChimes(pietSource, fractranSource, score, mutation = 0) {
     throw new Error(`Piet chorus canvas emitted ${pietResult.output.length} codel states; expected at least 12`);
   }
 
-  const fractranResult = runFractran(fractranSource, initialFractranState, 12);
+  const fractranResult = runFractran(fractranSource, initialFractranState, Math.max(12, stepsCount));
   if (fractranResult.states.length < 12) {
     throw new Error(`FRACTRAN chime spell halted after ${fractranResult.states.length} states; expected 12`);
   }
 
   const gateTemplate = CHIME_GATES[chimeMode];
-  const steps = Array.from({ length: 12 }, (_, index) => {
-    const pietByte = pietResult.output[index] & 0xff;
-    const codel = pietResult.visitedCodels[index] || { code: "LC", hue: index % 6, lightness: index % 3 };
-    const fracState = fractranResult.states[index];
+  const steps = Array.from({ length: stepsCount }, (_, index) => {
+    const pietByte = pietResult.output[index % pietResult.output.length] & 0xff;
+    const codel = pietResult.visitedCodels[index % pietResult.visitedCodels.length] || { code: "LC", hue: index % 6, lightness: index % 3 };
+    const fracState = fractranResult.states[index % fractranResult.states.length];
     const ratioIndex = selectJiRatioIndex(fracState.exponents, pietByte, index, chimeMode);
     const ratio = JI_RATIOS[ratioIndex];
 
-    let gate = gateTemplate[index];
+    let gate = gateTemplate[index % gateTemplate.length];
     if (index === 0) {
       gate = Math.max(1, gate);
     } else if (gate === 0 && (pietByte % 7 === 0)) {

@@ -76,13 +76,13 @@ export function soundingPitchClasses(chord) {
  * step has `chord`, `regionIndex`, `isRegionStart`, and `leadPitch` (semitones
  * above C4, already lifted, or null when the style has no lead line).
  */
-export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pass = null, score = null, varied = false } = {}) {
+export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pass = null, score = null, varied = false, stepsCount = 12 } = {}) {
   if (!ACCOMPANIMENT_STYLES.includes(style)) throw new RangeError(`Unknown accompaniment style: ${style}`);
   const position = Math.max(0, Math.min(12, Math.trunc(keySemitone) || 0));
   const key = position % 12;
   const lift = position;
   let chords;
-  let leadPitches = Array(12).fill(null);
+  let leadPitches = Array(stepsCount).fill(null);
   let summary;
   let sectionMoves = Object.freeze([]);
   if (style === "progression") {
@@ -108,11 +108,12 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
   if (pass !== null && style === "progression") {
     const regionIndex = ((Math.trunc(pass) % 4) + 4) % 4;
     const { spine, moves } = varied && score ? varyProgression(chords, key, genre, score) : { spine: chords.flatMap((chord) => [chord, chord, chord]), moves: [] };
-    const steps = Array.from({ length: 12 }, (_, index) => {
-      const entry = regionIndex * 3 + Math.floor(index / 4);
-      const chord = spine[entry];
-      const previous = index > 0 ? spine[regionIndex * 3 + Math.floor((index - 1) / 4)] : null;
-      let leadPitch = index % 4 === 0 ? leadPitches[entry] : null;
+    const stride = stepsCount === 16 ? 4 : 3;
+    const steps = Array.from({ length: stepsCount }, (_, index) => {
+      const entry = (regionIndex * stride + Math.floor(index / 4)) % spine.length;
+      const chord = spine[entry] || chords[regionIndex];
+      const previous = index > 0 ? (spine[(regionIndex * stride + Math.floor((index - 1) / 4)) % spine.length] || chords[regionIndex]) : null;
+      let leadPitch = index % 4 === 0 ? leadPitches[entry % leadPitches.length] : null;
       // A note written for the old chord moves to the new chord's nearest tone.
       // Minor-second clashes against the root in sustained lead notes resolve to the nearest clean tone.
       if (leadPitch !== null && (chord !== chords[regionIndex] || ((leadPitch - chord.rootPc + 12) % 12) === 1)) {
@@ -122,13 +123,13 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
     });
     const shown = spine.map(chordText).filter((text, index, all) => index === 0 || text !== all[index - 1]);
     return Object.freeze({
-      style, key, lift, chords: Object.freeze([...chords]), steps: Object.freeze(steps), regionSteps: 12,
+      style, key, lift, chords: Object.freeze([...chords]), steps: Object.freeze(steps), regionSteps: stepsCount,
       summary: moves.length ? shown.join(" → ") : summary, variation: Object.freeze([...moves]),
     });
   }
 
   // Section loops (intro, bridge, outro) breathe across 4 passes (48 steps):
-  // 1 pass (12 steps) per chord with spacious 4-step lead phrasing, pickup notes,
+  // 1 pass (12 or 16 steps) per chord with spacious 4-step lead phrasing, pickup notes,
   // breathing rests, and natural cadential resolution into adjoining loops.
   if (pass !== null && (style === "intro" || style === "bridge" || style === "outro")) {
     const sectionPass = ((Math.trunc(pass) % 4) + 4) % 4;
@@ -136,7 +137,7 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
     const regionIndex = sectionPass;
     const baseNoteIdx = sectionPass * 3;
 
-    const steps = Array.from({ length: 12 }, (_, index) => {
+    const steps = Array.from({ length: stepsCount }, (_, index) => {
       const isRegionStart = index === 0;
       let leadPitch = null;
       let leadSteps = 4;
@@ -144,26 +145,26 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
       if (style === "outro" && sectionPass === 3) {
         // Final outro pass: resolve to home tonic on step 0 and ring out across the bar
         if (index === 0) {
-          leadPitch = leadPitches[9] ?? (position - key);
-          leadSteps = 12;
+          leadPitch = leadPitches[9 % leadPitches.length] ?? (position - key);
+          leadSteps = stepsCount;
         }
       } else if ((style === "intro" || style === "bridge") && sectionPass === 3) {
         // Final turnaround pass: steps 0 and 4 play turnaround motifs; step 8 plays the
         // pickup leading-tone into the downbeat; steps 10 & 11 rest as a breath before
         // the adjoining loop drops on the downbeat.
         if (index === 0) {
-          leadPitch = leadPitches[baseNoteIdx];
+          leadPitch = leadPitches[baseNoteIdx % leadPitches.length];
         } else if (index === 4) {
-          leadPitch = leadPitches[baseNoteIdx + 1];
+          leadPitch = leadPitches[(baseNoteIdx + 1) % leadPitches.length];
         } else if (index === 8) {
-          leadPitch = leadPitches[baseNoteIdx + 2];
+          leadPitch = leadPitches[(baseNoteIdx + 2) % leadPitches.length];
           leadSteps = 2; // holds steps 8..9, leaving steps 10 & 11 to rest
         }
       } else {
         // Standard pass: 3 notes spaced evenly on steps 0, 4, 8 (4 steps each)
-        if (index === 0) leadPitch = leadPitches[baseNoteIdx];
-        else if (index === 4) leadPitch = leadPitches[baseNoteIdx + 1];
-        else if (index === 8) leadPitch = leadPitches[baseNoteIdx + 2];
+        if (index === 0) leadPitch = leadPitches[baseNoteIdx % leadPitches.length];
+        else if (index === 4) leadPitch = leadPitches[(baseNoteIdx + 1) % leadPitches.length];
+        else if (index === 8) leadPitch = leadPitches[(baseNoteIdx + 2) % leadPitches.length];
         if (leadPitch !== null && ((leadPitch - chord.rootPc + 12) % 12) === 1) {
           leadPitch = nearestChordTone(leadPitch, chord);
         }
@@ -185,17 +186,18 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
       chords: Object.freeze([...chords]),
       steps: Object.freeze(steps),
       summary: `${summary} (Part ${sectionPass + 1}/4)`,
-      regionSteps: 12,
+      regionSteps: stepsCount,
       variation: sectionMoves,
     });
   }
-  const steps = Array.from({ length: 12 }, (_, index) => {
-    const regionIndex = Math.floor(index / 3);
+  const stepsPerRegion = stepsCount === 16 ? 4 : 3;
+  const steps = Array.from({ length: stepsCount }, (_, index) => {
+    const regionIndex = Math.floor(index / stepsPerRegion);
     return Object.freeze({
       chord: chords[regionIndex],
       regionIndex,
-      isRegionStart: index % 3 === 0,
-      leadPitch: leadPitches[index],
+      isRegionStart: index % stepsPerRegion === 0,
+      leadPitch: leadPitches[index % leadPitches.length],
       leadSteps: 1,
     });
   });
