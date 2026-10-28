@@ -4,22 +4,22 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-27, session 86, on `main`._
+_Last updated: 2026-10-27, session 87, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
 - D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
 - Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
-- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084, D-085). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle. P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085).
+- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-086). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle. P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085); Plates I–V archetype synthesis overhaul across Malbolge beats, Brainfuck bass, Befunge harmony organ, Piet/FRACTRAN chimes, and Shakespeare formant choir (D-086).
 - Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stage 1), and Phase 9 (P9-01 through P9-03) are fully implemented, verified, and passing across all suites! Version 1.4.2. 254/254 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), and Phase 9 (P9-01 through P9-03) are fully implemented, verified, and passing across all suites! Version 1.4.2. 255/255 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-27, session 86, local Linux environment)
+**Verified** (2026-10-27, session 87, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **254/254 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **255/255 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 44 entries, 0 errors, 0 warnings** |
 
@@ -91,6 +91,54 @@ _Last updated: 2026-10-27, session 86, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 87 (2026-10-27): Ensemble Timbral Expansion Stage 2 — Plates I–V Archetype Synthesis Overhaul (P8-18, D-086)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Stage 2 of the ensemble timbral expansion (P8-18, D-086) per maintainer direction, overhauling the per-step Web Audio schedulers for Plates I–V in `src/schedulers.mjs` to unlock rich tonal, timbral, and acoustic variance across all eight respective archetypes.
+
+**Done:** All Stage 2 plate archetypes implemented, tested, and verified under D-086. 255/255 automated tests passing.
+
+**Changed:**
+1. Malbolge Beat Machine (`src/schedulers.mjs`, D-086):
+   - Implemented 8 distinct kick, snare, and transient profiles driven by `score.beatMode` and `score.beatDensity`.
+   - Added triangle transient click oscillator (1450 Hz -> 120 Hz) for Automaton March (mode 0), Ossuary Polyrhythm (mode 3), and Telegram Clatter (mode 4).
+   - Added deep cavernous sub boom (28 Hz with 0.32s decay) and warm 780 Hz snare bandpass (Q 1.8) for Seance Waltz (mode 1).
+   - Added punchy triangle kick drop with tight 0.14s decay and 2200 Hz woodblock snare (Q 3.6) for Pendulum Galop (mode 2).
+   - Added ultra-snappy 3400 Hz metallic snare crack (Q 5.2, 42 ms decay) for Telegram Clatter (mode 4).
+   - Added heavy 350 ms bell kick drop (startFreq 1.6x base) with lower resonant snare body for Bell-Tower Toll (mode 5).
+   - Added step-modulated undulating snare bandpass filter center (950 +/- 350 Hz) for Ectoplasm Shuffle (mode 6).
+2. Brainfuck Walking Bass (`src/schedulers.mjs`, D-086):
+   - Synthesized 8 bass archetype characters driven by `score.bassMode`.
+   - Added upright double-bass fingerboard acoustic pluck transient (sine at 3.5x freq decaying in 20 ms) for Walking Cellar (mode 0).
+   - Added 303 resonant saw sweep with high filter Q (3.8 normal, 5.2 accented) and aggressive cutoff opening up to 3200 Hz for Acid Catacomb (mode 1).
+   - Added sub unison upper oscillator (`freq * 1`) and gentle 1.2 Q lowpass clamped below 420 Hz for clean room rumble in Subterranean Dub (mode 2).
+   - Added snappy plucky filter bite with fast 0.38x step duration and quick attack for Crypt Arpeggiator (mode 4).
+   - Added slow-attack bowed envelope (45 ms) with rich saw upper partials for Ghost Bow (mode 6).
+3. Befunge-93 Harmony Organ (`src/schedulers.mjs`, D-086):
+   - Mapped 8 organ stop timbres and registrations driven by `score.harmonyMode` across triangle, sawtooth, square, and sine waveforms.
+   - Added bright sawtooth lead voice with snappy 6 ms attack for Harpsichord Pinball (mode 1).
+   - Added slow 55 ms swell attack and scheduled an added 4' pipe stop oscillator at the upper octave (`freq * 2`) for Cathedral Swell (mode 2).
+   - Added fast 6 ms plucked attack and scheduled a crystalline inharmonic stop oscillator at `freq * 2.76` for Clockwork Celesta (mode 3).
+   - Configured hollow square/triangle registration for Phantom Calliope (mode 4) and ethereal pure sine triad for Glass Harmonica (mode 5).
+4. Piet/FRACTRAN Chimes & Pad (`src/schedulers.mjs`, D-086):
+   - Expanded 8 chime and pad modes driven by `score.chimeMode`.
+   - Scheduled inharmonic overtone oscillator at `1.52 * bellFreq` with heavy metallic peak gain (0.45x) for Balinese Gamelan (mode 5).
+   - Scaled pad filter cutoff dynamically with `score.chimeShimmer` (`shimmerBoost = (score.chimeShimmer - 50) * 4`), opening the spectral pad up to 3200 Hz.
+5. Shakespeare Formant Choir (`src/schedulers.mjs`, D-086):
+   - Modeled 8 dramatic vocal archetypes driven by `score.chantMode`.
+   - Scheduled pink noise buffer source through a breath gain envelope connected into the glottal mix for aspirated air turbulence in Witches' Coven (mode 1) and Ariel's Spirit (mode 2).
+   - Elevated formant frequencies by 1.25x (`formantShift * 1.25`) to model an ethereal high soprano vocal tract for Ariel's Spirit (mode 2).
+   - Drove sawtooth glottal source oscillator up to 0.65 gain for VODER Synthesizer (mode 4).
+   - Modulated formant filter Q dynamically with `score.chantFormant` (`resonanceBoost = (score.chantFormant - 25) * 0.04`).
+6. Automated Verification (`tests/utterance-coherence.test.mjs`):
+   - Added unit tests verifying distinct kick/snare frequency and decay profiles for beat modes 0, 1, 2, and transient clickers.
+   - Verified bass modes 0, 1, 2 for upright plucks, 303 acid resonant sweeps, and sub dub weight.
+   - Verified harmony modes 2 and 3 for cathedral 4' stops and celesta inharmonic overtone stops.
+   - Verified chime mode 5 for gamelan inharmonic overtones and shimmer modulation.
+   - Verified chant modes 1 and 2 for breath noise and soprano formant shift, plus formant resonance boost.
+   - Suite total increased from 254 to 255 tests, all passing cleanly.
 
 ### Session 86 (2026-10-27): Ensemble Timbral Expansion Stage 1 — Lead Register Elevation & Mycelium Physical Modeling (P8-18, D-085)
 
@@ -386,39 +434,6 @@ _Last updated: 2026-10-27, session 86, on `main`._
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
-### Session 75 (2026-10-24): Clean DAW MIDI Export, ALSA Loopback Reflection Suppression & Local Audio Mute (D-062)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Implement musician feedback on MIDI exports (suppressing VST patch overwriting Program Changes, timeline marker clutter, and channel flattening), resolve ALSA `Midi Through Port-0` loopback reflection dissonances, and add a local control audio mute toggle.
-
-**Done:** All parts implemented and verified under D-062. 195/195 tests pass.
-
-**Changed:**
-1. `src/midi.mjs`:
-   - Added `stripPrograms`, `stripMarkers`, and `flattenChannels` flags to `buildMidiFile()`.
-   - When `stripPrograms` is true, omits `0xC0` Program Change bytes at tick 0, protecting VST synth presets from being overwritten.
-   - When `stripMarkers` is true, omits `0x06` Marker meta events on the conductor track, preventing DAWs from auto-warping or stretching imported sessions.
-   - When `flattenChannels` is true, remaps track events to Channel 1 (byte 0) for instant response on single-channel VST instruments.
-2. `src/app.mjs`:
-   - Registered `broadcastEchoFilter` ring buffer: outbound broadcast note keys `(ch << 8) | pitch` are tracked with timestamps, and incoming echo reflections within 300 ms on ALSA `Midi Through Port-0` loopback are discarded.
-   - Added `inboundMidiChannel` filter, defaulting to `1` (Manual Organ) and configurable via `#studio-midi-ch`.
-   - Added `setLocalControl(enabled)` and `#studio-local-control-btn`: zeroes browser master audio gain (`0.0001`) when muted while generative MIDI broadcast and scheduler operations continue at full rate.
-   - Added `#export-midi-format` dropdown with `CLEAN DAW` (default), `DAW WITH CHORD MARKERS`, and `FULL ARCHIVE`.
-3. `index.html` & `styles.css`:
-   - Added `#export-midi-format` select control to the Export Desk.
-   - Added `#studio-local-control-btn` to the Studio Deck.
-4. `tests/export.test.mjs`:
-   - Added comprehensive unit test asserting program change stripping, marker stripping, channel flattening, and combined Clean DAW export mode.
-5. Assets & Documentation:
-   - Stamped `ASSET_VERSION` to `97ce639b8f7b`.
-   - Recorded D-062 in `docs/DECISIONS.md`.
-   - Updated `docs/CHANGELOG.md`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 195/195 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
 
 

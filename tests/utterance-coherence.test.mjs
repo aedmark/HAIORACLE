@@ -14,7 +14,15 @@ import { composeChant } from "../src/shakespeare.mjs";
 import { melodyFor } from "../src/music.mjs";
 import { myceliumEvents } from "../src/mycelium.mjs";
 import { composeScore } from "../src/score.mjs";
-import { scheduleNote, voiceStack } from "../src/schedulers.mjs";
+import {
+  scheduleBassStep,
+  scheduleBeatStep,
+  scheduleChantStep,
+  scheduleChimeStep,
+  scheduleHarmonyStep,
+  scheduleNote,
+  voiceStack,
+} from "../src/schedulers.mjs";
 import { effectiveRhythmTemplate, stepUnitSeconds } from "../src/tuning.mjs";
 
 const root = new URL("../", import.meta.url);
@@ -226,5 +234,261 @@ test("mycelium bio-acoustic harmonic grounding and physical modeling", () => {
       assert.ok(ev.decay >= 0.016 && ev.decay <= 0.36, `form ${form} decay in bounds: ${ev.decay}`);
       assert.ok(ev.peak > 0 && ev.peak <= 0.1, `form ${form} peak in bounds: ${ev.peak}`);
     }
+  }
+});
+
+test("Plates I–V synthesis timbre, tone, and archetype variance (P8-18)", () => {
+  const scoreC = { ...composeScore(oracleSrc, "botanical expedition into the cellar"), root: 48 };
+
+  function createInspectorAudioContext() {
+    const nodes = [];
+    function makeParam(initial = 0) {
+      const param = {
+        value: initial,
+        events: [],
+        setValueAtTime(val, time) {
+          param.value = val;
+          param.events.push({ type: "setValueAtTime", val, time });
+        },
+        exponentialRampToValueAtTime(val, time) {
+          param.value = val;
+          param.events.push({ type: "exponentialRampToValueAtTime", val, time });
+        },
+        linearRampToValueAtTime(val, time) {
+          param.value = val;
+          param.events.push({ type: "linearRampToValueAtTime", val, time });
+        },
+        setTargetAtTime(val, time, constant) {
+          param.value = val;
+          param.events.push({ type: "setTargetAtTime", val, time, constant });
+        },
+      };
+      return param;
+    }
+
+    function makeNode(kind, extra = {}) {
+      const n = {
+        kind,
+        connect(target) { return target; },
+        start() {},
+        stop() {},
+        ...extra,
+      };
+      nodes.push(n);
+      return n;
+    }
+
+    return {
+      currentTime: 0,
+      sampleRate: 8000,
+      nodes,
+      createGain: () => makeNode("gain", { gain: makeParam(1) }),
+      createOscillator: () => makeNode("oscillator", { type: "sine", frequency: makeParam(440), detune: makeParam(0) }),
+      createBiquadFilter: () => makeNode("biquad", { type: "lowpass", frequency: makeParam(350), Q: makeParam(1) }),
+      createBufferSource: () => makeNode("bufferSource", { buffer: null }),
+      createBuffer: (channels, frames, sampleRate) => ({
+        numberOfChannels: channels,
+        length: frames,
+        sampleRate,
+        getChannelData: () => new Float32Array(frames),
+      }),
+    };
+  }
+
+  // 1. Plate I: Malbolge Beat Machine
+  const testBeat = {
+    steps: [
+      { kick: 2, snare: 1, hat: 1 },
+      { kick: 0, snare: 2, hat: 0 },
+    ],
+  };
+
+  // beatMode 0 (Automaton March) schedules click transient on kick
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { beatBus: bus };
+    scheduleBeatStep(ctx, transport, { ...scoreC, beatMode: 0 }, 0, 1.0, 0.25, { currentBeat: testBeat });
+    const clickOsc = ctx.nodes.find((n) => n.kind === "oscillator" && n.type === "triangle" && n.frequency.events.some((e) => e.val === 1450));
+    assert.ok(clickOsc, "beatMode 0 schedules high-frequency click transient");
+  }
+
+  // beatMode 1 (Seance Waltz) has deep sub boom kick and lower snare bandpass center
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { beatBus: bus };
+    scheduleBeatStep(ctx, transport, { ...scoreC, beatMode: 1 }, 0, 1.0, 0.25, { currentBeat: testBeat });
+    const snareFilter = ctx.nodes.find((n) => n.kind === "biquad" && n.type === "bandpass");
+    assert.equal(snareFilter.frequency.value, 780, "beatMode 1 uses 780 Hz snare bandpass center");
+    assert.equal(snareFilter.Q.value, 1.8, "beatMode 1 uses 1.8 snare filter Q");
+    const kickOsc = ctx.nodes.find((n) => n.kind === "oscillator" && n.type === "sine");
+    const endRamp = kickOsc.frequency.events.find((e) => e.type === "exponentialRampToValueAtTime");
+    assert.equal(endRamp.val, 28, "beatMode 1 kick ramps down to 28 Hz sub boom");
+  }
+
+  // beatMode 2 (Pendulum Galop) has triangle kick and high snare bandpass center
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { beatBus: bus };
+    scheduleBeatStep(ctx, transport, { ...scoreC, beatMode: 2 }, 0, 1.0, 0.25, { currentBeat: testBeat });
+    const snareFilter = ctx.nodes.find((n) => n.kind === "biquad" && n.type === "bandpass");
+    assert.equal(snareFilter.frequency.value, 2200, "beatMode 2 uses 2200 Hz snare bandpass center");
+    assert.equal(snareFilter.Q.value, 3.6, "beatMode 2 uses 3.6 snare filter Q");
+    const kickOsc = ctx.nodes.find((n) => n.kind === "oscillator" && n.type === "triangle");
+    assert.ok(kickOsc, "beatMode 2 uses triangle kick wave");
+  }
+
+  // 2. Plate II: Brainfuck Walking Bass
+  const testBass = {
+    steps: [
+      { gate: 1, register: 0, interval: 0, accent: false, slide: false },
+      { gate: 2, register: 1, interval: 4, accent: true, slide: true },
+    ],
+  };
+
+  // bassMode 0 (Walking Cellar) schedules upright fingerboard pluck transient
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { bassBus: bus };
+    scheduleBassStep(ctx, transport, { ...scoreC, bassMode: 0 }, 0, 1.0, 0.25, { currentBass: testBass });
+    const pluckOsc = ctx.nodes.find((n) => n.kind === "oscillator" && n.frequency.events.some((e) => e.val > 200 && e.time === 1.0));
+    assert.ok(pluckOsc, "bassMode 0 schedules upright fingerboard pluck transient");
+  }
+
+  // bassMode 1 (Acid Catacomb) uses sawtooth upper osc and resonant 303 filter sweep
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { bassBus: bus };
+    scheduleBassStep(ctx, transport, { ...scoreC, bassMode: 1 }, 0, 1.0, 0.25, { currentBass: testBass });
+    const upperOsc = ctx.nodes.find((n) => n.kind === "oscillator" && n.type === "sawtooth");
+    assert.ok(upperOsc, "bassMode 1 uses sawtooth upper oscillator");
+    const bassFilter = ctx.nodes.find((n) => n.kind === "biquad" && n.type === "lowpass");
+    assert.equal(bassFilter.Q.value, 3.8, "bassMode 1 has resonant Q of 3.8");
+  }
+
+  // bassMode 2 (Subterranean Dub) uses sub unison and lower cutoff
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { bassBus: bus };
+    scheduleBassStep(ctx, transport, { ...scoreC, bassMode: 2 }, 0, 1.0, 0.25, { currentBass: testBass });
+    const bassFilter = ctx.nodes.find((n) => n.kind === "biquad" && n.type === "lowpass");
+    assert.equal(bassFilter.Q.value, 1.2, "bassMode 2 has gentle lowpass Q of 1.2");
+    assert.ok(bassFilter.frequency.value <= 420, "bassMode 2 clamps cutoff <= 420 Hz for deep sub weight");
+  }
+
+  // 3. Plate III: Befunge-93 Harmony Organ
+  const testHarmony = {
+    steps: [
+      { gate: 1, chord: [0, 4, 7], strumMs: 20, mirror: "/" },
+      { gate: 2, chord: [0, 3, 7], strumMs: 30, mirror: "\\" },
+    ],
+  };
+
+  // harmonyMode 2 (Cathedral Swell) schedules octave stopOsc (freq * 2)
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { harmonyBus: bus };
+    scheduleHarmonyStep(ctx, transport, { ...scoreC, harmonyMode: 2 }, 0, 1.0, 0.25, { currentHarmony: testHarmony });
+    const oscs = ctx.nodes.filter((n) => n.kind === "oscillator");
+    assert.ok(oscs.length >= 4, "harmonyMode 2 schedules 3 chord voices + 4' stop oscillator");
+  }
+
+  // harmonyMode 3 (Clockwork Celesta) schedules crystalline inharmonic stopOsc (freq * 2.76)
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { harmonyBus: bus };
+    scheduleHarmonyStep(ctx, transport, { ...scoreC, harmonyMode: 3 }, 0, 1.0, 0.25, { currentHarmony: testHarmony });
+    const oscs = ctx.nodes.filter((n) => n.kind === "oscillator");
+    assert.ok(oscs.length >= 4, "harmonyMode 3 schedules stop oscillator");
+    const celestaOsc = oscs.find((o) => {
+      const f = o.frequency.value;
+      const rootFreq = 440 * (2 ** ((48 - 69) / 12));
+      return Math.abs(f - rootFreq * 2.76) < 1.0;
+    });
+    assert.ok(celestaOsc, "harmonyMode 3 schedules inharmonic celesta overtone at 2.76x");
+  }
+
+  // 4. Plate IV: Piet/FRACTRAN Chimes & Pad
+  const testChimes = {
+    steps: [
+      { gate: 1, ratioValue: 1.5, lightnessIndex: 0, hueIndex: 2, exponents: { e3: 1 } },
+      { gate: 2, ratioValue: 2.0, lightnessIndex: 1, hueIndex: 4, exponents: { e3: 2 } },
+    ],
+  };
+
+  // chimeMode 5 (Balinese Gamelan) schedules inharmonic overtone (1.52x)
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { chimeBus: bus };
+    scheduleChimeStep(ctx, transport, { ...scoreC, chimeMode: 5 }, 0, 1.0, 0.25, { currentChimes: testChimes });
+    const oscs = ctx.nodes.filter((n) => n.kind === "oscillator");
+    assert.ok(oscs.length >= 3, "chimeMode 5 schedules overtone oscillator for gamelan resonance");
+  }
+
+  // chimeShimmer modulates pad filter frequency
+  {
+    const ctxLo = createInspectorAudioContext();
+    const busLo = ctxLo.createGain();
+    scheduleChimeStep(ctxLo, { chimeBus: busLo }, { ...scoreC, chimeShimmer: 10 }, 0, 1.0, 0.25, { currentChimes: testChimes });
+    const filterLo = ctxLo.nodes.find((n) => n.kind === "biquad" && n.type === "lowpass");
+
+    const ctxHi = createInspectorAudioContext();
+    const busHi = ctxHi.createGain();
+    scheduleChimeStep(ctxHi, { chimeBus: busHi }, { ...scoreC, chimeShimmer: 90 }, 0, 1.0, 0.25, { currentChimes: testChimes });
+    const filterHi = ctxHi.nodes.find((n) => n.kind === "biquad" && n.type === "lowpass");
+
+    assert.ok(filterHi.frequency.value > filterLo.frequency.value, "chimeShimmer increases pad filter cutoff");
+  }
+
+  // 5. Plate V: Shakespeare Formant Choir
+  const testChant = {
+    steps: [
+      { gate: 1, registerOffset: 0, interval: 0, f1: 500, f2: 1500, f3: 2500, vibratoHz: 5.2 },
+      { gate: 2, registerOffset: 12, interval: 4, f1: 650, f2: 1750, f3: 2850, vibratoHz: 5.8 },
+    ],
+  };
+
+  // chantMode 1 (Witches' Coven) schedules breath air noise buffer source
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { chantBus: bus };
+    scheduleChantStep(ctx, transport, { ...scoreC, chantMode: 1 }, 0, 1.0, 0.25, { currentChant: testChant });
+    const breathNode = ctx.nodes.find((n) => n.kind === "bufferSource");
+    assert.ok(breathNode, "chantMode 1 schedules breath air noise buffer source");
+  }
+
+  // chantMode 2 (Ariel) schedules breath noise and lifts formantShift by 1.25
+  {
+    const ctx = createInspectorAudioContext();
+    const bus = ctx.createGain();
+    const transport = { chantBus: bus };
+    scheduleChantStep(ctx, transport, { ...scoreC, chantMode: 2 }, 0, 1.0, 0.25, { currentChant: testChant });
+    const filters = ctx.nodes.filter((n) => n.kind === "biquad" && n.type === "bandpass");
+    assert.equal(filters.length, 3, "schedules 3 formant filters");
+    assert.equal(filters[0].frequency.value, 500 * 1.25, "chantMode 2 lifts formant frequency by 1.25x for soprano register");
+  }
+
+  // chantFormant modulates formant resonance Q
+  {
+    const ctxLo = createInspectorAudioContext();
+    const busLo = ctxLo.createGain();
+    scheduleChantStep(ctxLo, { chantBus: busLo }, { ...scoreC, chantFormant: 25 }, 0, 1.0, 0.25, { currentChant: testChant });
+    const filterLo = ctxLo.nodes.find((n) => n.kind === "biquad" && n.type === "bandpass");
+
+    const ctxHi = createInspectorAudioContext();
+    const busHi = ctxHi.createGain();
+    scheduleChantStep(ctxHi, { chantBus: busHi }, { ...scoreC, chantFormant: 95 }, 0, 1.0, 0.25, { currentChant: testChant });
+    const filterHi = ctxHi.nodes.find((n) => n.kind === "biquad" && n.type === "bandpass");
+
+    assert.ok(filterHi.Q.value > filterLo.Q.value, "chantFormant increases formant resonance Q");
   }
 });

@@ -548,24 +548,62 @@ export function scheduleBeatStep(context, transport, score, stepIndex, at, stepD
   if (!step) return;
 
   const holdLift = 1 + interaction.hold * 0.18;
+  const beatMode = (score.beatMode ?? 0) % 8;
+  const densityNorm = ((score.beatDensity ?? 65) - 35) / (100 - 35);
 
   if (step.kick > 0) {
     const kickOsc = context.createOscillator();
     const kickGain = context.createGain();
-    const startFreq = midiToFrequency(score.root - 5);
-    const endFreq = Math.max(34, midiToFrequency(score.root - 24));
-    const peak = (step.kick === 2 ? 0.24 : 0.13) * holdLift;
+    const rootBase = midiToFrequency(score.root - 5);
+    let startFreq = rootBase;
+    let endFreq = Math.max(32, midiToFrequency(score.root - 24));
+    let decay = Math.min(0.24, Math.max(0.09, stepDuration * (0.55 + densityNorm * 0.25)));
+    let kickWave = "sine";
+
+    if (beatMode === 1) { // SEANCE WALTZ: deep cavernous sub boom
+      startFreq = rootBase * 0.85;
+      endFreq = 28;
+      decay = Math.min(0.32, stepDuration * 0.85);
+    } else if (beatMode === 2) { // PENDULUM GALOP: snappy wooden box click
+      startFreq = rootBase * 1.35;
+      endFreq = 48;
+      decay = Math.min(0.14, stepDuration * 0.45);
+      kickWave = "triangle";
+    } else if (beatMode === 5) { // BELL-TOWER TOLL: heavy bell drop
+      startFreq = rootBase * 1.6;
+      endFreq = 30;
+      decay = Math.min(0.35, stepDuration * 0.9);
+    } else if (beatMode === 7) { // INFERNAL HABANERA: punchy acoustic box
+      startFreq = rootBase * 1.15;
+      endFreq = 42;
+      decay = Math.min(0.16, stepDuration * 0.5);
+    }
+
+    const peak = (step.kick === 2 ? 0.26 : 0.14) * holdLift;
     logNote(transport, "beat", GM_DRUMS.kick, at, 0.1, peak);
-    const decay = Math.min(0.2, Math.max(0.11, stepDuration * 0.68));
-    kickOsc.type = "sine";
+    kickOsc.type = kickWave;
     kickOsc.frequency.setValueAtTime(startFreq, at);
     kickOsc.frequency.exponentialRampToValueAtTime(endFreq, at + decay);
     kickGain.gain.setValueAtTime(0.0001, at);
-    kickGain.gain.exponentialRampToValueAtTime(peak, at + 0.008);
+    kickGain.gain.exponentialRampToValueAtTime(peak, at + 0.007);
     kickGain.gain.exponentialRampToValueAtTime(0.0001, at + decay + 0.02);
     kickOsc.connect(kickGain).connect(transport.beatBus);
     kickOsc.start(at);
     kickOsc.stop(at + decay + 0.04);
+
+    if (beatMode === 0 || beatMode === 3 || beatMode === 4) {
+      const clickOsc = context.createOscillator();
+      const clickGain = context.createGain();
+      clickOsc.type = "triangle";
+      clickOsc.frequency.setValueAtTime(1450, at);
+      clickOsc.frequency.exponentialRampToValueAtTime(120, at + 0.012);
+      clickGain.gain.setValueAtTime(0.0001, at);
+      clickGain.gain.exponentialRampToValueAtTime(peak * 0.5, at + 0.002);
+      clickGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.014);
+      clickOsc.connect(clickGain).connect(transport.beatBus);
+      clickOsc.start(at);
+      clickOsc.stop(at + 0.02);
+    }
   }
 
   if (step.snare > 0) {
@@ -576,33 +614,56 @@ export function scheduleBeatStep(context, transport, score, stepIndex, at, stepD
     snareFilter.type = "bandpass";
     const totalSteps = currentBeat.steps?.length || 12;
     const snareCycle = totalSteps === 16 ? 4 : 3;
-    snareFilter.frequency.setValueAtTime(1180 + (stepIndex % snareCycle) * 160, at);
-    snareFilter.Q.setValueAtTime(2.6, at);
-    const peak = (step.snare === 2 ? 0.14 : 0.065) * holdLift;
+
+    let centerFreq = 1180 + (stepIndex % snareCycle) * 160;
+    let filterQ = 2.6;
+    let snareDecay = step.snare === 2 ? 0.12 : 0.068;
+
+    if (beatMode === 1) { // SEANCE WALTZ
+      centerFreq = 780;
+      filterQ = 1.8;
+      snareDecay = step.snare === 2 ? 0.16 : 0.09;
+    } else if (beatMode === 2) { // PENDULUM GALOP
+      centerFreq = 2200;
+      filterQ = 3.6;
+      snareDecay = 0.055;
+    } else if (beatMode === 4) { // TELEGRAM CLATTER
+      centerFreq = 3400;
+      filterQ = 5.2;
+      snareDecay = 0.042;
+    } else if (beatMode === 6) { // ECTOPLASM SHUFFLE
+      centerFreq = 950 + Math.sin(stepIndex) * 350;
+      filterQ = 2.2;
+    }
+
+    snareFilter.frequency.setValueAtTime(centerFreq, at);
+    snareFilter.Q.setValueAtTime(filterQ, at);
+    const peak = (step.snare === 2 ? 0.15 : 0.072) * holdLift;
     logNote(transport, "beat", GM_DRUMS.snare, at, 0.1, peak);
-    const decay = step.snare === 2 ? 0.11 : 0.065;
     snareGain.gain.setValueAtTime(0.0001, at);
-    snareGain.gain.exponentialRampToValueAtTime(peak, at + 0.005);
-    snareGain.gain.exponentialRampToValueAtTime(0.0001, at + decay);
+    snareGain.gain.exponentialRampToValueAtTime(peak, at + 0.004);
+    snareGain.gain.exponentialRampToValueAtTime(0.0001, at + snareDecay);
     noise.connect(snareFilter).connect(snareGain).connect(transport.beatBus);
     noise.start(at);
-    noise.stop(at + decay + 0.02);
+    noise.stop(at + snareDecay + 0.02);
 
     const bodyOsc = context.createOscillator();
     const bodyGain = context.createGain();
     bodyOsc.type = "triangle";
-    bodyOsc.frequency.setValueAtTime(midiToFrequency(score.root - 7), at);
-    bodyOsc.frequency.exponentialRampToValueAtTime(midiToFrequency(score.root - 14), at + 0.055);
+    const bodyStartFreq = midiToFrequency(score.root - (beatMode === 5 ? 2 : 7));
+    const bodyEndFreq = midiToFrequency(score.root - (beatMode === 5 ? 8 : 14));
+    bodyOsc.frequency.setValueAtTime(bodyStartFreq, at);
+    bodyOsc.frequency.exponentialRampToValueAtTime(bodyEndFreq, at + 0.055);
     bodyGain.gain.setValueAtTime(0.0001, at);
-    bodyGain.gain.exponentialRampToValueAtTime(peak * 0.55, at + 0.005);
-    bodyGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.06);
+    bodyGain.gain.exponentialRampToValueAtTime(peak * 0.55, at + 0.004);
+    bodyGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.065);
     bodyOsc.connect(bodyGain).connect(transport.beatBus);
     bodyOsc.start(at);
-    bodyOsc.stop(at + 0.075);
+    bodyOsc.stop(at + 0.08);
   }
 
   if (step.hat > 0) {
-    const baseHatFreq = midiToFrequency(score.root + 19);
+    const baseHatFreq = midiToFrequency(score.root + (beatMode === 4 ? 26 : 19));
     const ratios = step.hat === 2 ? [1, 1.5] : [1];
     logNote(transport, "beat", step.hat === 2 ? GM_DRUMS.openHat : GM_DRUMS.hat, at, 0.08, step.hat === 2 ? 0.068 : 0.036);
     for (const [idx, ratio] of ratios.entries()) {
@@ -610,10 +671,10 @@ export function scheduleBeatStep(context, transport, score, stepIndex, at, stepD
       const hatGain = context.createGain();
       hatOsc.type = idx === 0 ? "triangle" : "sine";
       hatOsc.frequency.setValueAtTime(baseHatFreq * ratio, at);
-      const decay = step.hat === 2 ? 0.13 : 0.048;
+      const decay = (step.hat === 2 ? 0.13 : 0.048) * (0.8 + densityNorm * 0.4);
       const peak = (step.hat === 2 ? 0.068 : 0.036) * (idx === 0 ? 1 : 0.6) * holdLift;
       hatGain.gain.setValueAtTime(0.0001, at);
-      hatGain.gain.exponentialRampToValueAtTime(peak, at + 0.004);
+      hatGain.gain.exponentialRampToValueAtTime(peak, at + 0.003);
       hatGain.gain.exponentialRampToValueAtTime(0.0001, at + decay);
       hatOsc.connect(hatGain).connect(transport.beatBus);
       hatOsc.start(at);
@@ -638,10 +699,11 @@ export function scheduleBassStep(context, transport, score, stepIndex, at, stepD
   const freq = midiToFrequency(baseMidi);
   const glideFreq = midiToFrequency(nextMidi);
 
-  const duration = Math.max(0.08, stepDuration * (step.gate === 2 ? 0.88 : 0.46));
+  const bassMode = (score.bassMode ?? 0) % 8;
+  const duration = Math.max(0.08, stepDuration * (step.gate === 2 ? 0.88 : (bassMode === 4 ? 0.38 : 0.48)));
   logNote(transport, "bass", baseMidi, at, duration, step.gate === 2 ? 1 : 0.7);
   const holdBoost = 1 + interaction.hold * 0.16;
-  const peak = (step.accent ? 0.21 : 0.145) * holdBoost;
+  const peak = (step.accent ? 0.22 : 0.15) * holdBoost;
 
   const subOsc = context.createOscillator();
   const upperOsc = context.createOscillator();
@@ -650,29 +712,45 @@ export function scheduleBassStep(context, transport, score, stepIndex, at, stepD
   const amp = context.createGain();
 
   subOsc.type = "sine";
-  upperOsc.type = "triangle";
+  upperOsc.type = (bassMode === 1 || bassMode === 6) ? "sawtooth" : "triangle";
   subOsc.frequency.setValueAtTime(freq, at);
-  upperOsc.frequency.setValueAtTime(freq * 2, at);
+  upperOsc.frequency.setValueAtTime(freq * (bassMode === 2 ? 1 : 2), at);
 
   if (step.slide && nextStep && nextStep.gate > 0) {
-    const glideStart = at + duration * 0.45;
+    const glideStart = at + duration * (0.35 + (score.bassGlide || 55) * 0.002);
     subOsc.frequency.setValueAtTime(freq, glideStart);
     subOsc.frequency.exponentialRampToValueAtTime(glideFreq, at + duration);
-    upperOsc.frequency.setValueAtTime(freq * 2, glideStart);
-    upperOsc.frequency.exponentialRampToValueAtTime(glideFreq * 2, at + duration);
+    upperOsc.frequency.setValueAtTime(freq * (bassMode === 2 ? 1 : 2), glideStart);
+    upperOsc.frequency.exponentialRampToValueAtTime(glideFreq * (bassMode === 2 ? 1 : 2), at + duration);
   }
 
-  upperGain.gain.value = step.accent ? 0.34 : 0.22;
+  upperGain.gain.value = (bassMode === 1) ? 0.45 : (step.accent ? 0.34 : 0.22);
   bassFilter.type = "lowpass";
   const cutoffMod = 1 + interaction.pitchBend * 0.35 + interaction.hold * 0.15;
-  const startCutoff = Math.min(1850, freq * (step.accent ? 5.2 : 3.4) * Math.max(0.5, cutoffMod) + (score.bassGlide || 55) * 3);
-  const endCutoff = Math.max(85, freq * 1.5);
+  let filterQ = step.accent ? 2.8 : 1.6;
+  let startCutoff = Math.min(1850, freq * (step.accent ? 5.2 : 3.4) * Math.max(0.5, cutoffMod) + (score.bassGlide || 55) * 3);
+  let endCutoff = Math.max(85, freq * 1.5);
+
+  if (bassMode === 1) { // ACID CATACOMB: 303 resonant acid sweep
+    filterQ = step.accent ? 5.2 : 3.8;
+    startCutoff = Math.min(3200, freq * (step.accent ? 8.5 : 5.6) * cutoffMod);
+    endCutoff = Math.max(110, freq * 1.8);
+  } else if (bassMode === 2) { // SUBTERRANEAN PEDAL: deep sub weight
+    filterQ = 1.2;
+    startCutoff = Math.min(420, freq * 2.2);
+    endCutoff = Math.max(65, freq * 1.1);
+  } else if (bassMode === 4) { // CRYPT ARPEGGIATOR: snappy plucky filter bite
+    filterQ = 3.2;
+    startCutoff = Math.min(2400, freq * 6.2);
+    endCutoff = Math.max(90, freq * 1.4);
+  }
+
   bassFilter.frequency.setValueAtTime(startCutoff, at);
   bassFilter.frequency.exponentialRampToValueAtTime(endCutoff, at + duration);
-  bassFilter.Q.value = step.accent ? 2.8 : 1.6;
+  bassFilter.Q.value = filterQ;
 
   amp.gain.setValueAtTime(0.0001, at);
-  amp.gain.exponentialRampToValueAtTime(peak, at + 0.012);
+  amp.gain.exponentialRampToValueAtTime(peak, at + (bassMode === 4 ? 0.006 : 0.012));
   amp.gain.exponentialRampToValueAtTime(0.0001, at + duration + 0.025);
 
   subOsc.connect(bassFilter);
@@ -683,6 +761,21 @@ export function scheduleBassStep(context, transport, score, stepIndex, at, stepD
   upperOsc.start(at);
   subOsc.stop(at + duration + 0.04);
   upperOsc.stop(at + duration + 0.04);
+
+  // Upright double bass fingerboard pluck transient (WALKING CELLAR: mode 0)
+  if (bassMode === 0) {
+    const pluckOsc = context.createOscillator();
+    const pluckGain = context.createGain();
+    pluckOsc.type = "sine";
+    pluckOsc.frequency.setValueAtTime(freq * 3.5, at);
+    pluckOsc.frequency.exponentialRampToValueAtTime(freq * 1.5, at + 0.02);
+    pluckGain.gain.setValueAtTime(0.0001, at);
+    pluckGain.gain.exponentialRampToValueAtTime(peak * 0.35, at + 0.003);
+    pluckGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.025);
+    pluckOsc.connect(pluckGain).connect(transport.bassBus);
+    pluckOsc.start(at);
+    pluckOsc.stop(at + 0.03);
+  }
 }
 
 export function scheduleHarmonyStep(context, transport, score, stepIndex, at, stepDuration, {
@@ -698,17 +791,23 @@ export function scheduleHarmonyStep(context, transport, score, stepIndex, at, st
   const stride = totalSteps === 16 ? 4 : 3;
   const isSustained = step.gate === 2;
   const isRegionBoundary = stepIndex % stride === (stride - 1);
+  const harmonyMode = (score.harmonyMode ?? 0) % 8;
   const duration = isRegionBoundary
     ? Math.min(stepDuration * 0.90, Math.max(0.08, stepDuration * 0.86))
-    : Math.max(0.12, stepDuration * (isSustained ? 1.18 : 0.78));
-  const strumSec = (step.strumMs || 24) / 1000;
+    : Math.max(0.12, stepDuration * (isSustained ? 1.25 : 0.8));
+  const strumSec = ((score.harmonyStrum ?? 24) * 0.5 + (step.strumMs || 24) * 0.5) / 1000;
   const holdBoost = 1 + interaction.hold * 0.14;
-  const waveforms = [
+
+  const modeWaveforms = [
+    ["triangle", "sawtooth", "triangle"],
+    ["sawtooth", "triangle", "sawtooth"],
     ["triangle", "sine", "triangle"],
-    ["sine", "triangle", "sine"],
-    ["triangle", "sine", "sine"],
     ["sine", "sine", "triangle"],
-  ][score.harmonyMode % 4];
+    ["square", "triangle", "square"],
+    ["sine", "sine", "sine"],
+    ["triangle", "sawtooth", "sine"],
+    ["sine", "triangle", "sine"],
+  ][harmonyMode];
 
   const harmonyShift = interaction.pitchBend > 0.35 ? 7 : (interaction.pitchBend < -0.35 ? -5 : 0);
   for (const [voiceIndex, interval] of step.chord.entries()) {
@@ -720,12 +819,13 @@ export function scheduleHarmonyStep(context, transport, score, stepIndex, at, st
     const osc = context.createOscillator();
     const voiceGain = context.createGain();
 
-    osc.type = waveforms[voiceIndex % waveforms.length];
+    osc.type = modeWaveforms[voiceIndex % modeWaveforms.length];
     osc.frequency.setValueAtTime(freq, noteStart);
-    osc.detune.setValueAtTime((voiceIndex - 1) * 1.8 * (step.mirror === "/" ? 1 : -1), noteStart);
+    osc.detune.setValueAtTime((voiceIndex - 1) * 2.2 * (step.mirror === "/" ? 1 : -1), noteStart);
 
-    const peak = (isSustained ? 0.056 : 0.044) * (1 - voiceIndex * 0.14) * holdBoost;
-    const attack = isSustained ? 0.045 : 0.018;
+    const isPlucked = harmonyMode === 1 || harmonyMode === 3;
+    const attack = isPlucked ? 0.006 : (isSustained ? 0.055 : 0.022);
+    const peak = (isSustained ? 0.058 : 0.046) * (1 - voiceIndex * 0.13) * holdBoost;
     voiceGain.gain.setValueAtTime(0.0001, noteStart);
     voiceGain.gain.exponentialRampToValueAtTime(peak, noteStart + attack);
     voiceGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + voiceDuration);
@@ -733,6 +833,19 @@ export function scheduleHarmonyStep(context, transport, score, stepIndex, at, st
     osc.connect(voiceGain).connect(transport.harmonyBus);
     osc.start(noteStart);
     osc.stop(noteStart + voiceDuration + 0.04);
+
+    if ((harmonyMode === 2 || harmonyMode === 3) && voiceIndex === 0) {
+      const stopOsc = context.createOscillator();
+      const stopGain = context.createGain();
+      stopOsc.type = "sine";
+      stopOsc.frequency.setValueAtTime(freq * (harmonyMode === 2 ? 2 : 2.76), noteStart);
+      stopGain.gain.setValueAtTime(0.0001, noteStart);
+      stopGain.gain.exponentialRampToValueAtTime(peak * 0.4, noteStart + attack);
+      stopGain.gain.exponentialRampToValueAtTime(0.0001, noteStart + voiceDuration * 0.7);
+      stopOsc.connect(stopGain).connect(transport.harmonyBus);
+      stopOsc.start(noteStart);
+      stopOsc.stop(noteStart + voiceDuration * 0.7 + 0.03);
+    }
   }
 }
 
@@ -749,14 +862,15 @@ export function scheduleChimeStep(context, transport, score, stepIndex, at, step
   const stride = totalSteps === 16 ? 4 : 3;
   const isAccented = step.gate === 2;
   const isRegionBoundary = stepIndex % stride === (stride - 1);
+  const chimeMode = (score.chimeMode ?? 0) % 8;
   const chimeOctave = interaction.pitchBend > 0.4 ? 12 : (interaction.pitchBend < -0.4 ? -12 : 0);
   const rootMidi = Math.min(84, score.root + 12 + chimeOctave);
   const rootFreq = midiToFrequency(rootMidi);
   const bellFreq = rootFreq * step.ratioValue;
   const bellDuration = isRegionBoundary
     ? Math.min(stepDuration * 0.92, 0.42)
-    : Math.max(0.14, stepDuration * (isAccented ? 1.35 : 0.92));
-  // Just-intonation ratios round to the nearest equal-tempered MIDI note.
+    : Math.max(0.14, stepDuration * (isAccented ? 1.45 : 0.95));
+
   logNote(transport, "chime", rootMidi + 12 * Math.log2(step.ratioValue), at, bellDuration, isAccented ? 1 : 0.7);
   const holdBoost = 1 + interaction.hold * 0.16;
 
@@ -765,22 +879,22 @@ export function scheduleChimeStep(context, transport, score, stepIndex, at, step
   const bellGain = context.createGain();
   bellOsc.type = "sine";
   bellOsc.frequency.setValueAtTime(bellFreq, at);
-  const bellPeak = (isAccented ? 0.054 : 0.036) * holdBoost;
+  const bellPeak = (isAccented ? 0.056 : 0.038) * holdBoost;
   bellGain.gain.setValueAtTime(0.0001, at);
-  bellGain.gain.exponentialRampToValueAtTime(bellPeak, at + 0.008);
+  bellGain.gain.exponentialRampToValueAtTime(bellPeak, at + 0.006);
   bellGain.gain.exponentialRampToValueAtTime(0.0001, at + bellDuration);
   bellOsc.connect(bellGain).connect(transport.chimeBus);
   bellOsc.start(at);
   bellOsc.stop(at + bellDuration + 0.04);
 
-  if (isAccented) {
+  if (isAccented || chimeMode === 5 || chimeMode === 0) {
     const overtoneOsc = context.createOscillator();
     const overtoneGain = context.createGain();
-    const overtoneMult = step.exponents.e3 % 2 === 0 ? 2 : 1.5;
+    const overtoneMult = chimeMode === 5 ? 1.52 : (step.exponents.e3 % 2 === 0 ? 2 : 1.5);
     overtoneOsc.type = "sine";
-    overtoneOsc.frequency.setValueAtTime(Math.min(3600, bellFreq * overtoneMult), at);
+    overtoneOsc.frequency.setValueAtTime(Math.min(4800, bellFreq * overtoneMult), at);
     overtoneGain.gain.setValueAtTime(0.0001, at);
-    overtoneGain.gain.exponentialRampToValueAtTime(bellPeak * 0.3, at + 0.006);
+    overtoneGain.gain.exponentialRampToValueAtTime(bellPeak * (chimeMode === 5 ? 0.45 : 0.32), at + 0.005);
     overtoneGain.gain.exponentialRampToValueAtTime(0.0001, at + bellDuration * 0.65);
     overtoneOsc.connect(overtoneGain).connect(transport.chimeBus);
     overtoneOsc.start(at);
@@ -790,20 +904,21 @@ export function scheduleChimeStep(context, transport, score, stepIndex, at, step
   // 2. Piet Codel Synesthetic Spectral Pad
   const registerMult = [1.0, 0.5, 0.5][step.lightnessIndex % 3];
   const padFreq = bellFreq * registerMult;
-  const detuneCents = (step.hueIndex + 1) * 1.4;
-  const padDuration = Math.max(0.28, stepDuration * (isAccented ? 1.45 : 0.95));
+  const detuneCents = (step.hueIndex + 1) * 1.5;
+  const padDuration = Math.max(0.28, stepDuration * (isAccented ? 1.55 : 0.98));
   const padFilter = context.createBiquadFilter();
   padFilter.type = "lowpass";
+  const shimmerBoost = (score.chimeShimmer ?? 50) * 4;
   padFilter.frequency.setValueAtTime(
-    580 + step.hueIndex * 180 + (2 - step.lightnessIndex) * 260,
+    Math.min(3200, 580 + step.hueIndex * 180 + (2 - step.lightnessIndex) * 260 + shimmerBoost),
     at,
   );
-  padFilter.Q.setValueAtTime(1.4, at);
+  padFilter.Q.setValueAtTime(1.6, at);
 
   const padGain = context.createGain();
-  const padPeak = (isAccented ? 0.036 : 0.025) * holdBoost;
+  const padPeak = (isAccented ? 0.038 : 0.026) * holdBoost;
   padGain.gain.setValueAtTime(0.0001, at);
-  padGain.gain.exponentialRampToValueAtTime(padPeak, at + 0.06);
+  padGain.gain.exponentialRampToValueAtTime(padPeak, at + 0.05);
   padGain.gain.exponentialRampToValueAtTime(0.0001, at + padDuration);
 
   for (const sign of [-1, 1]) {
@@ -828,6 +943,7 @@ export function scheduleChantStep(context, transport, score, stepIndex, at, step
   if (!step || step.gate === 0) return;
 
   const isSoliloquy = step.gate === 2;
+  const chantMode = (score.chantMode ?? 0) % 8;
   const duration = Math.max(0.24, stepDuration * (isSoliloquy ? 1.65 : 1.15));
   const chantShift = interaction.pitchBend > 0.35 ? 7 : (interaction.pitchBend < -0.35 ? -5 : 0);
   const midi = foldIntoRange(score.root + step.registerOffset + step.interval + chantShift, 40, 82);
@@ -835,7 +951,6 @@ export function scheduleChantStep(context, transport, score, stepIndex, at, step
   logNote(transport, "chant", midi, at, duration, isSoliloquy ? 1 : 0.75);
   const holdBoost = 1 + interaction.hold * 0.14;
 
-  // Glottal source with gentle triangle-dominant blend and smooth vibrato
   const glottalMix = context.createGain();
   glottalMix.gain.setValueAtTime(1, at);
 
@@ -843,16 +958,17 @@ export function scheduleChantStep(context, transport, score, stepIndex, at, step
   const oscB = context.createOscillator();
   const oscBGain = context.createGain();
   oscA.type = "triangle";
-  oscB.type = "sawtooth";
-  oscBGain.gain.setValueAtTime(0.38, at);
+  oscB.type = (chantMode === 4) ? "sawtooth" : (chantMode === 1 ? "square" : "sawtooth");
+  oscBGain.gain.setValueAtTime(chantMode === 4 ? 0.65 : 0.38, at);
   oscA.frequency.setValueAtTime(baseFreq, at);
-  oscB.frequency.setValueAtTime(baseFreq * 1.0015, at);
+  oscB.frequency.setValueAtTime(baseFreq * 1.0018, at);
 
   const lfo = context.createOscillator();
   const lfoGain = context.createGain();
   lfo.type = "sine";
-  lfo.frequency.setValueAtTime(step.vibratoHz || 5.1, at);
-  lfoGain.gain.setValueAtTime(isSoliloquy ? 2.4 : 1.6, at);
+  lfo.frequency.setValueAtTime(step.vibratoHz || (chantMode === 5 ? 6.2 : 5.2), at);
+  lfoGain.gain.setValueAtTime(0.0001, at);
+  lfoGain.gain.setTargetAtTime(isSoliloquy ? 2.5 : 1.7, at + 0.08, 0.06);
   lfo.connect(lfoGain);
   lfoGain.connect(oscA.frequency);
   lfoGain.connect(oscB.frequency);
@@ -860,18 +976,30 @@ export function scheduleChantStep(context, transport, score, stepIndex, at, step
   oscA.connect(glottalMix);
   oscB.connect(oscBGain).connect(glottalMix);
 
-  // Parallel 3-formant vocal tract bandpass bank (F1, F2, F3)
+  if (chantMode === 1 || chantMode === 2) {
+    const breathSource = context.createBufferSource();
+    const breathGain = context.createGain();
+    breathSource.buffer = ensureNoiseBuffer(context);
+    breathGain.gain.setValueAtTime(0.0001, at);
+    breathGain.gain.exponentialRampToValueAtTime(0.08, at + 0.02);
+    breathGain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+    breathSource.connect(breathGain).connect(glottalMix);
+    breathSource.start(at);
+    breathSource.stop(at + duration + 0.02);
+  }
+
   const voiceAmp = context.createGain();
-  const peak = (isSoliloquy ? 0.068 : 0.048) * holdBoost;
+  const peak = (isSoliloquy ? 0.070 : 0.050) * holdBoost;
   voiceAmp.gain.setValueAtTime(0.0001, at);
-  voiceAmp.gain.exponentialRampToValueAtTime(peak, at + 0.055);
+  voiceAmp.gain.exponentialRampToValueAtTime(peak, at + 0.045);
   voiceAmp.gain.exponentialRampToValueAtTime(0.0001, at + duration);
 
-  const formantShift = 1 + interaction.pitchBend * 0.22 + interaction.hold * 0.08;
+  const formantShift = (1 + interaction.pitchBend * 0.22 + interaction.hold * 0.08) * (chantMode === 2 ? 1.25 : 1.0);
+  const resonanceBoost = ((score.chantFormant ?? 55) - 25) * 0.04;
   const formants = [
-    { freq: step.f1 * formantShift, q: 4.5 + (step.formantResonance || 55) * 0.025, weight: 1.0 },
-    { freq: step.f2 * formantShift, q: 5.8 + (step.formantResonance || 55) * 0.03, weight: 0.62 },
-    { freq: step.f3 * formantShift, q: 7.0 + (step.formantResonance || 55) * 0.035, weight: 0.28 },
+    { freq: step.f1 * formantShift, q: 4.5 + resonanceBoost, weight: 1.0 },
+    { freq: step.f2 * formantShift, q: 5.8 + resonanceBoost, weight: 0.65 },
+    { freq: step.f3 * formantShift, q: 7.0 + resonanceBoost, weight: 0.32 },
   ];
 
   for (const f of formants) {

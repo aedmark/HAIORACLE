@@ -1933,6 +1933,41 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
+### Session 75 (2026-10-24): Clean DAW MIDI Export, ALSA Loopback Reflection Suppression & Local Audio Mute (D-062)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement musician feedback on MIDI exports (suppressing VST patch overwriting Program Changes, timeline marker clutter, and channel flattening), resolve ALSA `Midi Through Port-0` loopback reflection dissonances, and add a local control audio mute toggle.
+
+**Done:** All parts implemented and verified under D-062. 195/195 tests pass.
+
+**Changed:**
+1. `src/midi.mjs`:
+   - Added `stripPrograms`, `stripMarkers`, and `flattenChannels` flags to `buildMidiFile()`.
+   - When `stripPrograms` is true, omits `0xC0` Program Change bytes at tick 0, protecting VST synth presets from being overwritten.
+   - When `stripMarkers` is true, omits `0x06` Marker meta events on the conductor track, preventing DAWs from auto-warping or stretching imported sessions.
+   - When `flattenChannels` is true, remaps track events to Channel 1 (byte 0) for instant response on single-channel VST instruments.
+2. `src/app.mjs`:
+   - Registered `broadcastEchoFilter` ring buffer: outbound broadcast note keys `(ch << 8) | pitch` are tracked with timestamps, and incoming echo reflections within 300 ms on ALSA `Midi Through Port-0` loopback are discarded.
+   - Added `inboundMidiChannel` filter, defaulting to `1` (Manual Organ) and configurable via `#studio-midi-ch`.
+   - Added `setLocalControl(enabled)` and `#studio-local-control-btn`: zeroes browser master audio gain (`0.0001`) when muted while generative MIDI broadcast and scheduler operations continue at full rate.
+   - Added `#export-midi-format` dropdown with `CLEAN DAW` (default), `DAW WITH CHORD MARKERS`, and `FULL ARCHIVE`.
+3. `index.html` & `styles.css`:
+   - Added `#export-midi-format` select control to the Export Desk.
+   - Added `#studio-local-control-btn` to the Studio Deck.
+4. `tests/export.test.mjs`:
+   - Added comprehensive unit test asserting program change stripping, marker stripping, channel flattening, and combined Clean DAW export mode.
+5. Assets & Documentation:
+   - Stamped `ASSET_VERSION` to `97ce639b8f7b`.
+   - Recorded D-062 in `docs/DECISIONS.md`.
+   - Updated `docs/CHANGELOG.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 195/195 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+
 
 
 

@@ -1788,3 +1788,49 @@ Investigation showed two root causes:
 - The LOLCODE lead sings with crisp articulation and expressive clarity across octaves 4 and 5, elevated above the drones and accompaniment.
 - The mycelium acquires organic physical presence and utterance-specific harmonic variety, sounding unique across different summoned creatures.
 - All 254 behavioral tests pass.
+
+## D-086 Ensemble Plates I–V Timbre, Tone, and Archetype Synthesis Overhaul (2026-10-27, status: accepted)
+
+**Context:** Following the targeted pass on lead register headroom and mycelium physical modeling (D-085), the five esoteric accompaniment plates (Plates I–V) in Wing III still exhibited limited timbral range across summoned creatures. While each esoteric interpreter compiled eight distinct rhythmic or harmonic matrices, the per-step Web Audio schedulers in `src/schedulers.mjs` routed mostly uniform oscillator waveforms, filter envelopes, and noise sources regardless of the active archetype or utterance:
+1. *Plate I (Malbolge Beat Machine):* Kick synthesis used an identical sine drop (root - 5 down to 34 Hz) and snare bandpass filter across all 8 cadence families, missing the cavernous sub bass of Seance Waltz, the snappy wooden click of Pendulum Galop, and the high-frequency relay clicks of Telegram Clatter.
+2. *Plate II (Brainfuck Walking Bass):* Ostinatos rendered identical sine/triangle layers with standard lowpass decay, lacking the resonant 303 acid squelch of Acid Catacomb, the upright double-bass fingerboard attack of Walking Cellar, and the sub-bass purity of Subterranean Dub.
+3. *Plate III (Befunge-93 Harmony Organ):* Chord steps used a static waveform across all 8 mirror archetypes, lacking the majestic slow pipe swell of Cathedral Swell, the crystalline inharmonic tines of Clockwork Celesta, and the fast plucked transients of Harpsichord Pinball.
+4. *Plate IV (Piet/FRACTRAN Chimes & Pad):* Chimes scheduled basic sine partials without the metallic inharmonic ratios characteristic of Balinese Gamelan or antique music boxes, and the synesthetic codel pad filter did not respond dynamically to the score's shimmer parameter.
+5. *Plate V (Shakespeare Formant Choir):* Vocal formants passed a static triangle/saw glottal source without breath air turbulence modeling, soprano register formant shifts for Ariel's Spirit, or driven saw saturation for VODER electronic voices.
+
+**Decision:**
+1. In `scheduleBeatStep()` (`src/schedulers.mjs`), implement 8 distinct kick, snare, and transient profiles driven by `score.beatMode` and `score.beatDensity`:
+   - Automaton March (mode 0), Ossuary Polyrhythm (mode 3), Telegram Clatter (mode 4): add high-frequency triangle transient click oscillator (1450 Hz -> 120 Hz in 12 ms).
+   - Seance Waltz (mode 1): deep cavernous sub boom (down to 28 Hz with extended 0.32s decay) and warm 780 Hz snare bandpass (Q 1.8).
+   - Pendulum Galop (mode 2): punchy triangle kick drop with tight 0.14s decay and high 2200 Hz woodblock snare (Q 3.6).
+   - Telegram Clatter (mode 4): ultra-snappy 3400 Hz metallic snare crack (Q 5.2, 42 ms decay).
+   - Bell-Tower Toll (mode 5): heavy 350 ms bell kick drop (startFreq 1.6x base) with lower resonant snare body.
+   - Ectoplasm Shuffle (mode 6): step-modulated undulating snare bandpass filter center (950 +/- 350 Hz).
+   - Infernal Habanera (mode 7): punchy acoustic box kick with 160 ms decay.
+2. In `scheduleBassStep()` (`src/schedulers.mjs`), synthesize 8 bass archetype characters driven by `score.bassMode`:
+   - Walking Cellar (mode 0): schedule upright double-bass fingerboard acoustic pluck transient (sine at 3.5x freq decaying in 20 ms).
+   - Acid Catacomb (mode 1): 303 resonant saw sweep with high filter Q (3.8 normal, 5.2 accented) and aggressive cutoff opening up to 3200 Hz.
+   - Subterranean Dub (mode 2): sub unison upper oscillator (`freq * 1`) and gentle 1.2 Q lowpass clamped below 420 Hz for clean room rumble.
+   - Crypt Arpeggiator (mode 4): snappy plucky filter bite with fast 0.38x step duration and quick attack.
+   - Ghost Bow (mode 6): slow-attack bowed envelope (45 ms) with rich saw upper partials.
+3. In `scheduleHarmonyStep()` (`src/schedulers.mjs`), map 8 organ stop timbres and registrations driven by `score.harmonyMode`:
+   - Assign per-mode 3-voice waveform tuples (`modeWaveforms`) across triangle, sawtooth, square, and sine.
+   - Harpsichord Pinball (mode 1): bright sawtooth lead voice with snappy 6 ms attack.
+   - Cathedral Swell (mode 2): slow 55 ms swell attack and schedule an added 4' pipe stop oscillator at the upper octave (`freq * 2`).
+   - Clockwork Celesta (mode 3): fast 6 ms plucked attack and schedule a crystalline inharmonic stop oscillator at `freq * 2.76`.
+   - Phantom Calliope (mode 4): hollow square/triangle registration.
+   - Glass Harmonica (mode 5): ethereal pure sine triad with subtle detune.
+4. In `scheduleChimeStep()` (`src/schedulers.mjs`), expand 8 chime and pad modes driven by `score.chimeMode`:
+   - Balinese Gamelan (mode 5): schedule inharmonic overtone oscillator at `1.52 * bellFreq` with heavy metallic peak gain (0.45x).
+   - Scale pad filter cutoff dynamically with `score.chimeShimmer` (`shimmerBoost = (score.chimeShimmer - 50) * 4`), opening the spectral pad up to 3200 Hz.
+5. In `scheduleChantStep()` (`src/schedulers.mjs`), model 8 dramatic vocal archetypes driven by `score.chantMode`:
+   - Witches' Coven (mode 1) & Ariel's Spirit (mode 2): schedule a pink noise buffer source through a breath gain envelope connected directly into the glottal mix for aspirated air turbulence.
+   - Ariel's Spirit (mode 2): elevate formant frequencies by 1.25x (`formantShift * 1.25`) to model an ethereal high soprano vocal tract.
+   - VODER Synthesizer (mode 4): drive sawtooth glottal source oscillator up to 0.65 gain.
+   - Modulate formant filter Q dynamically with `score.chantFormant` (`resonanceBoost = (score.chantFormant - 25) * 0.04`).
+6. Verified by automated tests in `tests/utterance-coherence.test.mjs` and full test suite (255/255 passing).
+
+**Consequences:**
+- Every esoteric plate now exhibits pronounced, audible tonal and timbral variance across all eight archetypes.
+- Phrases summoning different modes and parameters no longer sound like generic synth presets playing different note patterns; they embody distinct acoustic instruments, vocal tracts, drum machinery, and organ pipe registrations.
+- All 255 behavioral and structural tests pass cleanly.

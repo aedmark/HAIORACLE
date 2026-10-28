@@ -12,6 +12,12 @@
 - Mycelium Bio-Acoustic Harmonic Grounding & Physical Modeling (`P8-18`, `D-085`):
   - Anchored fundamental droplet and spike frequencies to the creature's `score.root` pitch class (`rootAnchor = 2 ** (((score.root % 12) - 6) / 24)`), ensuring different phrases and musical keys summon distinct bio-acoustic registers while preserving bloom tilt invariants.
   - Implemented physical acoustic modeling in `scheduleFungalBioStep()`: added hollow resonant shelf thumps (85 Hz -> 45 Hz) for Bracket Conk (form 1), liquid surface-tension meniscus downward pitch chirps for falling guttation drops, and distinct acoustic decay envelopes across all eight sporophore forms.
+- Ensemble Plates I–V Timbre, Tone, and Archetype Variance (`P8-18`, `D-086`):
+  - Plate I (Malbolge Beat Machine): Differentiated kick and snare synthesis across 8 archetypes (Automaton March click transients, Seance Waltz cavernous sub booms down to 28 Hz with warm 780 Hz snare, Pendulum Galop snappy triangle kicks with 2200 Hz woodblock snare, Telegram Clatter 3400 Hz relay clicks, and Bell-Tower Toll 350 ms drops).
+  - Plate II (Brainfuck Walking Bass): Implemented 8 bass modes including Walking Cellar upright fingerboard acoustic plucks, Acid Catacomb 303 resonant saw sweeps (Q 3.8/5.2, cutoff up to 3200 Hz), Subterranean Dub pure sine sub-bass, and Crypt Arpeggiator snappy bites.
+  - Plate III (Befunge-93 Harmony Organ): Introduced 8 organ stops including Cathedral Swell 4' octave pipes (+12), Clockwork Celesta crystalline inharmonic tines (2.76x), Harpsichord Pinball fast plucked transients, and Glass Harmonica pure detuned sines.
+  - Plate IV (Piet/FRACTRAN Chimes & Pad): Expanded 8 chime modes with Balinese Gamelan inharmonic overtones (1.52x partials), Antique Music Box fast tines, Cathedral Carillon strikes, and `score.chimeShimmer` pad cutoff modulation.
+  - Plate V (Shakespeare Formant Choir): Added 8 chant modes featuring Witches' Coven & Ariel's Spirit breath air noise modeling, Ariel 1.25x high soprano formant shifts, VODER driven sawtooth glottal sources (0.65 gain), and `score.chantFormant` resonance boost.
 
 ## [1.4.1] - 2026-10-27
 
