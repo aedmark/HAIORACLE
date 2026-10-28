@@ -322,7 +322,7 @@ export function buildFunChord(rootSemitone, quality = "auto", genre = null, toni
   });
 }
 
-export function buildFunProgression(rootSemitone, quality = "auto", genre = null, tonicRoot = 0) {
+export function buildFunProgression(rootSemitone, quality = "auto", genre = null, tonicRoot = 0, stepsCount = 12) {
   const r = ((Math.trunc(rootSemitone) % 12) + 12) % 12;
   const relFromTonic = ((r - (Math.trunc(tonicRoot) % 12)) % 12 + 12) % 12;
   const books = rulebooks();
@@ -335,13 +335,14 @@ export function buildFunProgression(rootSemitone, quality = "auto", genre = null
 
   const chords = chordDefs.map((def) => buildFunChord(def.root, def.quality, genre, tonicRoot));
 
+  const stepsPerRegion = stepsCount === 16 ? 4 : 3;
   const steps = [];
-  for (let i = 0; i < 12; i += 1) {
-    const regionIdx = Math.floor(i / 3) % 4;
-    const subIdx = i % 3;
+  for (let i = 0; i < stepsCount; i += 1) {
+    const regionIdx = Math.floor(i / stepsPerRegion) % 4;
+    const subIdx = i % stepsPerRegion;
     const def = chordDefs[regionIdx];
     const chord = chords[regionIdx];
-    const offset = def.melodyOffsets[subIdx];
+    const offset = def.melodyOffsets[subIdx % def.melodyOffsets.length];
     const melodyPitch = r + offset;
     const melodyNote = PITCH_NAMES[melodyPitch % 12];
 

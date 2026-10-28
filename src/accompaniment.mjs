@@ -86,7 +86,7 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
   let summary;
   let sectionMoves = Object.freeze([]);
   if (style === "progression") {
-    const progression = buildFunProgression(key, "auto", genre, tonicRoot);
+    const progression = buildFunProgression(key, "auto", genre, tonicRoot, stepsCount);
     chords = progression.chords;
     // melodyPitch climbs from the key's pitch class; C' lifts it an octave.
     leadPitches = progression.steps.map((step) => step.melodyPitch + (position - key));
@@ -108,7 +108,7 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
   if (pass !== null && style === "progression") {
     const regionIndex = ((Math.trunc(pass) % 4) + 4) % 4;
     const stride = stepsCount === 16 ? 4 : 3;
-    const { spine, moves } = varied && score ? varyProgression(chords, key, genre, score) : { spine: chords.flatMap((chord) => Array(stride).fill(chord)), moves: [] };
+    const { spine, moves } = varied && score ? varyProgression(chords, key, genre, score, stride) : { spine: chords.flatMap((chord) => Array(stride).fill(chord)), moves: [] };
     const steps = Array.from({ length: stepsCount }, (_, index) => {
       const entry = (regionIndex * stride + Math.floor(index / 4)) % spine.length;
       const chord = spine[entry] || chords[regionIndex];
@@ -217,20 +217,20 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
  * The creature's variation on a Fun Machine progression (D-043), by the same
  * harmony fields and genre moves as the band, except rotation (the key you
  * hold always sounds first) and harmonic pace (the pad strikes on the clock).
- * Returns twelve absolute chords (three per region) and the moves made; an
+ * Returns absolute chords (stride per region, 12 or 16 total) and the moves made; an
  * unchanged entry is the original chord object.
  */
-function varyProgression(chords, key, genre, score) {
+function varyProgression(chords, key, genre, score, stride = 3) {
   const relative = chords.flatMap((chord) => {
     const root = (chord.rootPc - key + 12) % 12;
     const tones = chord.pitchClasses.map((pc) => (pc - key + 12) % 12);
     const triad = buildTriad(root, chord.quality, chord.op, tones);
-    return [triad, triad, triad];
+    return Array(stride).fill(triad);
   });
   const permitted = genreBook(genre).variation.filter((move) => move !== "rotation" && move !== "harmonic_pace");
   const { spine, moves } = varySpine(relative, score, permitted, buildTriad);
   const absolute = spine.map((chord, index) => (chord === relative[index]
-    ? chords[Math.floor(index / 3)]
+    ? chords[Math.floor(index / stride)]
     : buildTriad((chord.root + key) % 12, chord.quality, chord.op, chord.pitchClasses.map((pc) => (pc + key) % 12))));
   return { spine: absolute, moves };
 }
@@ -521,7 +521,8 @@ export function buildFunSectionProgression(key, section, genre, tonicRoot = 0, {
 /** Steps a chord struck at `stepIndex` holds before the performance strikes again. */
 export function strikeLength(performance, stepIndex) {
   let length = 1;
-  while (stepIndex + length < 12 && !performance.steps[stepIndex + length].isRegionStart) length += 1;
+  const maxSteps = performance?.steps?.length ?? 12;
+  while (stepIndex + length < maxSteps && !performance.steps[stepIndex + length].isRegionStart) length += 1;
   return length;
 }
 

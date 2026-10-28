@@ -61,6 +61,47 @@ export function applyScoreOverrides(score, { rootOverride = null, scaleOverride 
   return Object.freeze({ ...score, root, scale });
 }
 
+export const PARLOR_RHYTHMS_12 = Object.freeze([
+  Object.freeze([1, 1, 1, 1]),                   // 0: Steady quarter pulse (length 4)
+  Object.freeze([1.5, 0.5, 1, 1]),               // 1: Swing / shuffle (length 4)
+  Object.freeze([0.5, 1.5, 0.5, 1.5]),           // 2: Syncopated offbeat push (length 4)
+  Object.freeze([1, 0.5, 0.5, 1, 0.5, 0.5]),     // 3: Charleston / gallop (length 6)
+  Object.freeze([2, 0.5, 0.5, 1]),               // 4: Dotted stately downbeat (length 4)
+  Object.freeze([0.75, 0.75, 0.5, 1, 0.5, 0.5]), // 5: Ragtime / Habanera (length 6)
+  Object.freeze([1.4, 0.8, 0.8]),                // 6: Vaudeville / Viennese Waltz (length 3)
+]);
+
+export const RHYTHMS_16 = Object.freeze([
+  Object.freeze([1, 1, 1, 1]),                   // 0: Steady sixteenth pulse (4 steps per beat)
+  Object.freeze([1.3, 0.7, 1.3, 0.7]),           // 1: Sixteenth swing / shuffle (4 steps per beat)
+  Object.freeze([0.7, 1.3, 0.7, 1.3]),           // 2: Sixteenth offbeat push (4 steps per beat)
+  Object.freeze([1.25, 0.75, 0.75, 1.25]),       // 3: Sixteenth Charleston (4 steps per beat)
+  Object.freeze([1.5, 0.5, 1.0, 1.0]),           // 4: Sixteenth dotted downbeat (4 steps per beat)
+  Object.freeze([0.75, 1.25, 1.0, 1.0]),         // 5: Sixteenth Habanera (4 steps per beat)
+  Object.freeze([1, 1, 1, 1]),                   // 6: 4/4 Straight sixteenths (4 steps per beat)
+]);
+
+export const RHYTHMS_LOCKED_12 = Object.freeze([
+  Object.freeze([1, 1, 1]),                      // 0: Steady triplet pulse (3 steps per beat)
+  Object.freeze([1.4, 0.8, 0.8]),                // 1: Triplet swing (3 steps per beat)
+  Object.freeze([0.8, 1.4, 0.8]),                // 2: Triplet offbeat push (3 steps per beat)
+  Object.freeze([1.2, 0.9, 0.9]),                // 3: Triplet Charleston (3 steps per beat)
+  Object.freeze([1.5, 0.75, 0.75]),              // 4: Triplet dotted downbeat (3 steps per beat)
+  Object.freeze([0.9, 1.2, 0.9]),                // 5: Triplet Habanera (3 steps per beat)
+  Object.freeze([1.4, 0.8, 0.8]),                // 6: Triplet Waltz (3 steps per beat)
+]);
+
+export function effectiveRhythmTemplate(rhythmIndex, stepsCount = 12, barLock44 = false) {
+  const normIndex = ((Math.trunc(Number(rhythmIndex)) % 7) + 7) % 7 || 0;
+  if (stepsCount === 16) {
+    return RHYTHMS_16[normIndex];
+  }
+  if (barLock44) {
+    return RHYTHMS_LOCKED_12[normIndex];
+  }
+  return PARLOR_RHYTHMS_12[normIndex];
+}
+
 /**
  * Base step unit duration in seconds.
  * - In 16-step mode (`stepsCount === 16`, P8-05 Phase 2): each step is a straight

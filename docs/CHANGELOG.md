@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.4.1] - 2026-10-27
+
+### Fixed
+
+- 16-Step Metre Alignment & Chord Progression Temporal Synchronization (`P8-17`, `D-084`):
+  - Fixed pad truncation bug in `src/accompaniment.mjs` (`strikeLength`) where 16-step clock-synced chords cut off at step 12 (beat 3) instead of holding for all 16 steps of the bar, and un-clocked step 12 chords cut off after a single sixteenth note.
+  - Parameterized `buildFunProgression()` in `src/conductor.mjs` to generate 16 steps (4 steps per region) in 16-step mode, keeping lead melody offsets locked to region chord boundaries.
+  - Parameterized `varyProgression()` in `src/accompaniment.mjs` to generate a 16-chord spine in 16-step mode (`stride = 4`), preventing region chords from wrapping around into adjacent regions.
+  - Added `effectiveRhythmTemplate()` in `src/tuning.mjs` with length-4 symmetric beat templates (`RHYTHMS_16`) and length-3 triplet templates (`RHYTHMS_LOCKED_12`), guaranteeing equal quarter-note beat durations ($60 / \text{BPM}$ seconds) and zero metric loop drift across both 16-step straight time and 12-step bar-locked time.
+  - Retuned delay echo line across tempo, genre, bar lock, and grid changes using scaled step unit duration.
+
 ## [1.4.0] - 2026-10-27
 
 ### Added

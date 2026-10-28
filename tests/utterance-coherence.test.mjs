@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { buildPerformance } from "../src/accompaniment.mjs";
+import { buildPerformance, strikeLength } from "../src/accompaniment.mjs";
 import { buildGenreSpine, conductEnsemble, installRulebooks } from "../src/conductor.mjs";
 import { delayTimeFor } from "../src/ensemble.mjs";
 import { compileRulebooks } from "../src/inform.mjs";
@@ -14,7 +14,7 @@ import { composeChant } from "../src/shakespeare.mjs";
 import { melodyFor } from "../src/music.mjs";
 import { myceliumEvents } from "../src/mycelium.mjs";
 import { composeScore } from "../src/score.mjs";
-import { stepUnitSeconds } from "../src/tuning.mjs";
+import { effectiveRhythmTemplate, stepUnitSeconds } from "../src/tuning.mjs";
 
 const root = new URL("../", import.meta.url);
 
@@ -94,6 +94,18 @@ test("P8-15 Fun Machine progression in 16-step mode builds 16 steps across 4 reg
   // 4 regions of 4 steps each: region starts at 0, 4, 8, 12
   const regionStarts = perf16.steps.map((step, idx) => (step.isRegionStart ? idx : null)).filter((idx) => idx !== null);
   assert.deepEqual(regionStarts, [0, 4, 8, 12]);
+
+  // Strike length at each region start holds for 4 steps, never truncating early
+  assert.equal(strikeLength(perf16, 0), 4, "region 0 holds 4 steps");
+  assert.equal(strikeLength(perf16, 4), 4, "region 1 holds 4 steps");
+  assert.equal(strikeLength(perf16, 8), 4, "region 2 holds 4 steps");
+  assert.equal(strikeLength(perf16, 12), 4, "region 3 holds 4 steps");
+
+  // Clock-synced progression holds the region chord across all 16 steps of the pass
+  const clockPerf = buildPerformance(0, "progression", "victorian_tonnetz", 0, { pass: 0, stepsCount: 16 });
+  assert.equal(clockPerf.steps.length, 16);
+  assert.equal(strikeLength(clockPerf, 0), 16, "clock-synced 16-step pass pad holds full 16-step bar");
+  assert.equal(clockPerf.steps[12].chord.name, clockPerf.steps[0].chord.name, "beat 4 chord remains on region chord");
 });
 
 test("P8-15 delayTimeFor accounts for step unit duration when barLock44 or 16-step is active", () => {
@@ -112,4 +124,33 @@ test("P8-15 delayTimeFor accounts for step unit duration when barLock44 or 16-st
   const unit12 = stepUnitSeconds(bpm, flatRhythm, false, 12);
   const delaySec12 = delayTimeFor(score, bpm, 0, unit12);
   assert.equal(delaySec12, 0.25, "delay time follows 8th note unlocked step unit duration");
+});
+
+test("effectiveRhythmTemplate guarantees equal quarter-note beats in 16-step and 12-step 4/4 lock metre", () => {
+  const bpm = 120;
+  for (let idx = 0; idx < 7; idx += 1) {
+    // 1. 16-step mode: every template divides 16 evenly and has equal 4-step quarter-note beats
+    const r16 = effectiveRhythmTemplate(idx, 16);
+    assert.equal(16 % r16.length, 0, `16-step rhythm ${idx} divides 16`);
+    const beatSums16 = [0, 4, 8, 12].map((b) => {
+      let sum = 0;
+      for (let s = 0; s < 4; s += 1) sum += r16[(b + s) % r16.length];
+      return sum;
+    });
+    assert.deepEqual(beatSums16, [4, 4, 4, 4], `16-step rhythm ${idx} produces equal 4.0-unit quarter-note beats`);
+    const unit16 = stepUnitSeconds(bpm, r16, false, 16);
+    assert.equal(unit16 * 4, 0.5, `quarter note is exactly 0.5s at 120 BPM in 16-step mode`);
+
+    // 2. 12-step 4/4 lock mode: every template divides 12 evenly and has equal 3-step quarter-note beats
+    const r12 = effectiveRhythmTemplate(idx, 12, true);
+    assert.equal(12 % r12.length, 0, `12-step locked rhythm ${idx} divides 12`);
+    const beatSums12 = [0, 3, 6, 9].map((b) => {
+      let sum = 0;
+      for (let s = 0; s < 3; s += 1) sum += r12[(b + s) % r12.length];
+      return sum;
+    });
+    assert.deepEqual(beatSums12, [3, 3, 3, 3], `12-step locked rhythm ${idx} produces equal 3.0-unit quarter-note beats`);
+    const unit12 = stepUnitSeconds(bpm, r12, true, 12);
+    assert.ok(Math.abs(unit12 * 3 - 0.5) < 1e-9, `quarter note is approximately 0.5s at 120 BPM in 12-step locked mode`);
+  }
 });

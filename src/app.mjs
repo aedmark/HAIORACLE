@@ -77,7 +77,7 @@ import {
   normalizeExportSettings,
 } from "./audio-export.mjs";
 import { APP_VERSION, ENGINE_VERSION } from "./version.mjs";
-import { DEFAULT_GRID_STEPS, GRID_STEPS_OPTIONS, applyScoreOverrides, referencePitch, setReferencePitch, stepUnitSeconds } from "./tuning.mjs";
+import { DEFAULT_GRID_STEPS, GRID_STEPS_OPTIONS, applyScoreOverrides, effectiveRhythmTemplate, referencePitch, setReferencePitch, stepUnitSeconds } from "./tuning.mjs";
 import { CHANT_NAMES, composeChant, cycleChantCell } from "./shakespeare.mjs";
 import { arrangementSectionAt, composeArrangement } from "./intercal.mjs";
 import {
@@ -594,7 +594,10 @@ function setTempoBpm(value) {
   // pads, arpeggios, and lead feed it (D-029), a stale echo after a tempo
   // change made the accompaniment sound faster or slower than the setting.
   if (audioContext && currentTransport?.delay && currentScore) {
-    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, activeTempoBpm), audioContext.currentTime, 0.08);
+    const rhythm = effectiveRhythmTemplate(effectiveRhythmIndex(currentScore, activeGenre), activeGridSteps, barLock44);
+    const unit = stepUnitSeconds(activeTempoBpm, rhythm, barLock44, activeGridSteps);
+    const delayTime = delayTimeFor(currentScore, activeTempoBpm, effectiveRhythmIndex(currentScore, activeGenre), unit);
+    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, activeTempoBpm) && delayTime, audioContext.currentTime, 0.08);
   }
   if (midiClockMode === "master") updateMidiClockStatus();
 }
@@ -1569,7 +1572,7 @@ const FUN_PAD_LEVEL = Object.freeze({
 });
 
 function loopStepDuration(score, step) {
-  const rhythm = RHYTHMS[effectiveRhythmIndex(score, activeGenre)];
+  const rhythm = effectiveRhythmTemplate(effectiveRhythmIndex(score, activeGenre), activeGridSteps, barLock44);
   return stepUnitSeconds(activeTempoBpm || score.pulse, rhythm, barLock44, activeGridSteps) * rhythm[((step % rhythm.length) + rhythm.length) % rhythm.length];
 }
 
@@ -1908,7 +1911,7 @@ async function playScore(score, { cursor = 0 } = {}) {
   stopCurrentSound();
   const now = context.currentTime + 0.045;
   const initialPulse = activeTempoBpm || score.pulse;
-  const initialRhythm = RHYTHMS[effectiveRhythmIndex(score, activeGenre)];
+  const initialRhythm = effectiveRhythmTemplate(effectiveRhythmIndex(score, activeGenre), activeGridSteps, barLock44);
   const initialUnit = stepUnitSeconds(initialPulse, initialRhythm, barLock44, activeGridSteps);
   const graph = buildEnsembleGraph(context, score, ensembleGraphOptions(context, {
     start: now,
@@ -1935,7 +1938,7 @@ async function playScore(score, { cursor = 0 } = {}) {
   const scheduleAhead = () => {
     if (currentTransport !== transport) return;
     updateAudioInteraction();
-    const rhythm = RHYTHMS[effectiveRhythmIndex(score, activeGenre)];
+    const rhythm = effectiveRhythmTemplate(effectiveRhythmIndex(score, activeGenre), activeGridSteps, barLock44);
     while (transport.nextNoteTime < context.currentTime + 0.28) {
       if (casioOutroEnding) break;
       const livePulse = activeTempoBpm || score.pulse;
@@ -2649,7 +2652,7 @@ async function renderEnsembleLoop(score, {
   const OfflineAudioCtx = offlineAudioConstructor();
   const bpm = activeTempoBpm || score.pulse;
   const rhythmIndex = effectiveRhythmIndex(score, activeGenre);
-  const rhythm = RHYTHMS[rhythmIndex];
+  const rhythm = effectiveRhythmTemplate(rhythmIndex, activeGridSteps, barLock44);
   const unit = stepUnitSeconds(bpm, rhythm, barLock44, activeGridSteps);
   // With a loop-machine song the render is the whole song (D-039), at most
   // MAX_SONG_PASSES passes; without one it is the whole harmonic cycle, four
@@ -5360,7 +5363,9 @@ elements.kapellmeisterTuningA4?.addEventListener("change", (e) => {
 elements.kapellmeisterGenre?.addEventListener("change", (e) => {
   activeGenre = e.target.value;
   if (currentTransport && audioContext && currentScore) {
-    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, activeTempoBpm || currentScore.pulse, effectiveRhythmIndex(currentScore, activeGenre)), audioContext.currentTime, 0.08);
+    const rhythm = effectiveRhythmTemplate(effectiveRhythmIndex(currentScore, activeGenre), activeGridSteps, barLock44);
+    const unit = stepUnitSeconds(activeTempoBpm || currentScore.pulse, rhythm, barLock44, activeGridSteps);
+    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, activeTempoBpm || currentScore.pulse, effectiveRhythmIndex(currentScore, activeGenre), unit), audioContext.currentTime, 0.08);
   }
   updateKapellmeisterUI();
   applyEnsembleConductor();
@@ -5672,9 +5677,9 @@ elements.transportBarLock?.addEventListener("click", () => {
   elements.transportBarLock.setAttribute("aria-pressed", String(barLock44));
   elements.transportBarLock.classList.toggle("is-active", barLock44);
   if (currentTransport && audioContext && currentScore) {
-    const rhythm = RHYTHMS[effectiveRhythmIndex(currentScore, activeGenre)];
+    const rhythm = effectiveRhythmTemplate(effectiveRhythmIndex(currentScore, activeGenre), activeGridSteps, barLock44);
     const unit = stepUnitSeconds(activeTempoBpm || currentScore.pulse, rhythm, barLock44, activeGridSteps);
-    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, 60 / (unit * 2), effectiveRhythmIndex(currentScore, activeGenre)), audioContext.currentTime, 0.08);
+    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, 60 / (unit * 2), effectiveRhythmIndex(currentScore, activeGenre), unit), audioContext.currentTime, 0.08);
   }
   elements.status.textContent = barLock44
     ? "4/4 BAR LOCK ENGAGED · EACH 12-STEP PASS FITS ONE 4/4 BAR"
@@ -5699,7 +5704,7 @@ elements.transportGridSteps?.addEventListener("click", () => {
     applyEnsembleConductor();
   }
   if (currentTransport && audioContext && currentScore) {
-    const rhythm = RHYTHMS[effectiveRhythmIndex(currentScore, activeGenre)];
+    const rhythm = effectiveRhythmTemplate(effectiveRhythmIndex(currentScore, activeGenre), activeGridSteps, barLock44);
     const unit = stepUnitSeconds(activeTempoBpm || currentScore.pulse, rhythm, barLock44, activeGridSteps);
     currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, 60 / (unit * 2), effectiveRhythmIndex(currentScore, activeGenre), unit), audioContext.currentTime, 0.08);
   }

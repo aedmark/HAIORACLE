@@ -10,16 +10,16 @@ _Last updated: 2026-10-27, session 85, on `main`._
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
 - D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
 - Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
-- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15, P8-16 complete, D-076–D-082). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle. P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082).
+- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15, P8-16, P8-17 complete, D-076–D-082, D-084). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle. P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084).
 - Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15, P8-16, and Phase 9 (P9-01 through P9-03) are fully implemented, verified, and passing across all suites! Version 1.4.0. 251/251 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-17, and Phase 9 (P9-01 through P9-03) are fully implemented, verified, and passing across all suites! Version 1.4.1. 252/252 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
 **Verified** (2026-10-27, session 85, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **251/251 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **252/252 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 44 entries, 0 errors, 0 warnings** |
 
@@ -92,13 +92,13 @@ _Last updated: 2026-10-27, session 85, on `main`._
 
 ## Session log
 
-### Session 85 (2026-10-27): Phase 9 Autopoiesis & Fractal Dynamics: Project Navi Creative Determinant & Strange Attractor Morphogenesis (P9-01, P9-02, P9-03, D-083)
+### Session 85 (2026-10-27): Phase 9 Autopoiesis & Fractal Dynamics (P9-01, P9-02, P9-03, D-083) and 16-Step Progression & Metre Synchronization (P8-17, D-084)
 
 **Contributor:** Antigravity with maintainer direction
 
-**Goal:** Implement Phase 9 (P9-01, P9-02, P9-03, D-083) bringing autopoiesis and fractal dynamics to the Whimsy Machine: pure, zero-dependency discrete graph and 1D boundary solver for Project Navi's Creative Determinant (Nelson Spence's nonlinear elliptic boundary value problem $L\Phi = a\|\nabla\Phi\| + b\Phi - c(\Phi^+)^p$ modeling Coherence, Contradiction, and Care), Picard iteration steady-state solver, spectral viability check, Clifford/De Jong strange attractor generators, Apparition Vitrine glowing attractor dust and multi-octave Weierstrass fractal fluting, Tonnetz harmonic vitality fields, Fibonacci delay cascades, and self-similar fractal arpeggiation.
+**Goal:** Implement Phase 9 (P9-01, P9-02, P9-03, D-083) bringing autopoiesis and fractal dynamics to the Whimsy Machine: pure, zero-dependency discrete graph and 1D boundary solver for Project Navi's Creative Determinant (Nelson Spence's nonlinear elliptic boundary value problem $L\Phi = a\|\nabla\Phi\| + b\Phi - c(\Phi^+)^p$ modeling Coherence, Contradiction, and Care), Picard iteration steady-state solver, spectral viability check, Clifford/De Jong strange attractor generators, Apparition Vitrine glowing attractor dust and multi-octave Weierstrass fractal fluting, Tonnetz harmonic vitality fields, Fibonacci delay cascades, and self-similar fractal arpeggiation. Address maintainer feedback on 16-step mode and 4/4 bar lock tempo feel (P8-17, D-084), fixing Fun Machine one-finger chord progression pad truncation at step 12 and ensuring equal-duration quarter-note beats across all metres.
 
-**Done:** All parts implemented, documented, and verified. 251/251 automated tests pass.
+**Done:** All parts implemented, documented, and verified. 252/252 automated tests pass.
 
 **Changed:**
 1. Mathematical Foundation (`src/autopoiesis.mjs`, P9-01, D-083):
@@ -112,15 +112,20 @@ _Last updated: 2026-10-27, session 85, on `main`._
 2. Visual Morphogenesis (`src/vitrine-canvas.mjs`, P9-02, D-083):
    - Enhanced `fluxOffset` with multi-octave self-similar Weierstrass fractal fluting preserving topological radius clamping ($[0.38, 1.08]$).
    - Added `drawStrangeAttractorDust` rendering seed-deterministic Clifford strange attractor glowing particulate clouds inside `drawKineticCore`.
-3. System Integration & Verification:
+3. 16-Step Metre Alignment & Chord Progression Temporal Synchronization (P8-17, D-084):
+   - `src/accompaniment.mjs`: Updated `strikeLength(performance, stepIndex)` to bound to `performance?.steps?.length ?? 12`, resolving the pad truncation bug where 16-step clock-synced chords cut off at step 12 (beat 3) instead of holding for all 16 steps of the bar. Parameterized `varyProgression(chords, key, genre, score, stride)` with `stride = stepsCount === 16 ? 4 : 3` to build a 16-chord spine in 16-step mode, preventing region chord wrap-around.
+   - `src/conductor.mjs`: Parameterized `buildFunProgression(rootSemitone, quality, genre, tonicRoot, stepsCount = 12)` to generate 16 steps (4 steps per region) in 16-step mode, locking lead melody offsets to region chord boundaries.
+   - `src/tuning.mjs`: Added `effectiveRhythmTemplate(rhythmIndex, stepsCount = 12, barLock44 = false)` with length-4 symmetric beat templates (`RHYTHMS_16`) and length-3 triplet templates (`RHYTHMS_LOCKED_12`), guaranteeing equal quarter-note beat durations ($60 / \text{BPM}$ seconds) and zero metric loop drift across both 16-step straight time and 12-step bar-locked time.
+   - `src/app.mjs`: Retuned delay echo line across tempo, genre, bar lock, and grid changes using scaled step unit duration.
+4. System Integration & Verification:
    - Added `"autopoiesis.mjs"` to `MODULES` in `index.html`.
-   - Stamped asset version to `50a1b4ff3f10` via `tools/stamp_assets.mjs`.
-   - Created `tests/autopoiesis.test.mjs` with 7 rigorous test suites.
+   - Stamped asset version to `19e8cc68592b` via `tools/stamp_assets.mjs`.
+   - Created `tests/autopoiesis.test.mjs` with 7 rigorous test suites; extended `tests/utterance-coherence.test.mjs` with 16-step strike length and quarter-note beat symmetry tests (252/252 automated tests passing).
    - Added `autopoietic-fractal-dynamics` to `docs/manual.json` (44 entries, 0 warnings) and rebuilt `manual.html`.
-   - Recorded D-083 in `docs/DECISIONS.md`, updated `ROADMAP.md` (P9-01, P9-02, P9-03), `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/CHANGELOG.md` (v1.4.0), and archived Session 73 in `docs/archive/sessions.md`.
+   - Recorded D-083 and D-084 in `docs/DECISIONS.md`, updated `ROADMAP.md` (P9-01, P9-02, P9-03, P8-17), `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/CHANGELOG.md` (v1.4.0, v1.4.1), and archived Session 73 in `docs/archive/sessions.md`.
 
 **Verified:**
-- `node --test tests/*.test.mjs`: 251/251 checks passed.
+- `node --test tests/*.test.mjs`: 252/252 checks passed.
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
 

@@ -1732,3 +1732,30 @@ Investigation showed two root causes:
 **Consequences:**
 - The creature acquires mathematical autopoiesis and visual/sonic fractal depth while strictly preserving zero external runtime dependencies and deterministic phrase-to-score invariants.
 - All 251 tests pass.
+
+## D-084 16-step metre alignment & chord progression temporal synchronization (2026-10-27, status: accepted)
+
+**Context:** Following user feedback, an audit of 16-step mode and 4/4 bar lock revealed two interconnected timing and harmonic defects:
+1. *One-finger chord progression truncation and harmonic mismatch in 16-step mode:*
+   - `strikeLength()` in `src/accompaniment.mjs` checked `stepIndex + length < 12`, so in 16-step mode, clock-synced pads on step 0 only held for 12 steps (3 beats) instead of 16 steps (4 beats), cutting off at beat 4. In un-clocked play, step 12 chords returned `length = 1` and cut off after a single sixteenth note.
+   - `buildFunProgression()` in `src/conductor.mjs` hardcoded a 12-step loop (`for (let i = 0; i < 12; i += 1)`), generating only 3 notes per chord. When mapped into a 16-step performance, lead pitches shifted out of phase with chord boundaries.
+   - `varyProgression()` in `src/accompaniment.mjs` hardcoded 3 steps per region (`[triad, triad, triad]`), producing a 12-chord spine that wrapped around (`(regionIndex * 4) % 12`) during 16-step passes, clashing Region 0 into Region 1 on step 12 and causing Pass 3 to replay Pass 0.
+2. *Beat duration asymmetry under 16-step and 4/4 bar lock metres:*
+   - In 16-step mode (4 sixteenth notes per beat), rhythm templates of length 3 (waltz) and length 6 (charleston, habanera) did not divide 16 ($16 \bmod 3 = 1$, $16 \bmod 6 = 4$), causing the downbeat to rotate across successive bars and quarter-note beat durations to fluctuate ($4.4, 3.8, 3.8, 4.4$ units), producing a lurching tempo feel.
+   - In 12-step mode with 4/4 bar lock (3 triplet eighth notes per beat), length-4 rhythm templates did not divide 3, causing beat durations to fluctuate ($3.0, 3.0, 3.5, 2.5$ units) and disrupting metric stability.
+
+**Decision:**
+1. Parameterize `strikeLength()` to check `performance?.steps?.length ?? 12`, ensuring 16-step pads hold for the full 16 steps (4 beats).
+2. Parameterize `buildFunProgression(..., stepsCount = 12)` in `src/conductor.mjs` to generate 16 steps (4 steps per region) in 16-step mode.
+3. Parameterize `varyProgression(..., stride = 3)` in `src/accompaniment.mjs` with `stride = stepsCount === 16 ? 4 : 3` to build a 16-chord spine in 16-step mode, preventing chord wrap-around across region boundaries.
+4. Export `effectiveRhythmTemplate(rhythmIndex, stepsCount = 12, barLock44 = false)` from `src/tuning.mjs`:
+   - In 16-step mode, maps all 7 rhythm indices to length-4 symmetric beat templates (`RHYTHMS_16`) where $16 \bmod 4 = 0$ and every quarter-note beat sums to 4.0 units (exact $60 / \text{BPM}$ duration per beat).
+   - In 12-step locked mode, maps all 7 rhythm indices to length-3 symmetric triplet templates (`RHYTHMS_LOCKED_12`) where $12 \bmod 3 = 0$ and every quarter-note beat sums to 3.0 units (exact $60 / \text{BPM}$ duration per beat).
+   - In 12-step unlocked mode, retains the vintage parlor `PARLOR_RHYTHMS_12`.
+5. Retune delay line in `src/app.mjs` with scaled step unit during tempo, genre, bar lock, and grid changes.
+6. Verify via 252 automated tests in `tests/utterance-coherence.test.mjs`.
+
+**Consequences:**
+- The Fun Machine one-finger progression rings out smoothly across the entire 16-step bar, perfectly locked to the active tempo and downbeat.
+- Quarter-note beats under 16-step and 4/4 locked modes are mathematically identical in length ($60 / \text{BPM}$ seconds), eliminating tempo drift and lurching.
+- All 252 tests pass.
