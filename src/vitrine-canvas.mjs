@@ -1,3 +1,9 @@
+import {
+  cliffordAttractor,
+  generateAttractorPoints,
+  attractorParamsFromScore,
+} from "./autopoiesis.mjs";
+
 export const interaction = {
   active: false,
   pointerId: null,
@@ -105,7 +111,13 @@ export function fluxOffset(score, angle, elapsed) {
   const depth = (0.022 + score.kineticDepth / 100 * 0.095) * (1 + interaction.hold * 0.75 + interaction.dragSpeed * 0.6);
   const tapWave = Math.sin(angle * (score.symmetry + 5) - elapsed * 10.5) * interaction.tap * 0.068;
   const agitationWave = (interaction.agitation || 0) * Math.sin(angle * 13 + elapsed * 32) * 0.032;
-  const perturbation = tapWave + agitationWave;
+  // Autopoietic self-similar fractal fluting (Weierstrass fractal harmonics scaled by contradiction)
+  const fractalHarmonic = (
+    Math.sin(angle * (score.twist * 2 + 1) - time * 1.4) * 0.28 +
+    Math.sin(angle * (score.twist * 4 + 3) + time * 2.1) * 0.14 +
+    Math.sin(angle * (score.twist * 8 + 5) - time * 3.5) * 0.07
+  ) * depth * (1 + (interaction.agitation || 0) * 0.6);
+  const perturbation = tapWave + agitationWave + fractalHarmonic;
   switch (score.fluxMode) {
     case 0: return Math.sin(angle * score.twist - time) * depth + perturbation;
     case 1: return Math.sin(angle * score.symmetry + time) * Math.cos(angle * score.twist - time * 0.63) * depth + perturbation;
@@ -316,11 +328,36 @@ function drawCrystalNetwork(ctx, score, base, elapsed, colors) {
   }
 }
 
+export function drawStrangeAttractorDust(ctx, score, base, elapsed, colors) {
+  const params = attractorParamsFromScore(score);
+  const timeDrift = Math.sin(elapsed * 0.12) * 0.04;
+  const agitationDrift = (interaction.agitation || 0) * 0.08;
+  const effectiveParams = {
+    a: params.a + timeDrift,
+    b: params.b - timeDrift * 0.75,
+    c: params.c + agitationDrift,
+    d: params.d - agitationDrift * 0.5,
+  };
+  const pts = generateAttractorPoints(cliffordAttractor, effectiveParams, 420, 20);
+  const scale = base * 0.24;
+  const alpha = 0.3 + interaction.hold * 0.25 + (interaction.agitation || 0) * 0.3;
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = `hsla(${colors[0]} 100% 82% / ${Math.min(0.85, alpha)})`;
+  for (let i = 0; i < pts.length; i += 2) {
+    const px = pts[i] * scale;
+    const py = pts[i + 1] * scale;
+    ctx.fillRect(px, py, 1.25, 1.25);
+  }
+  ctx.restore();
+}
+
 export function drawKineticCore(ctx, score, base, elapsed, colors) {
   const coreElapsed = elapsed + interaction.morphPhase * 1.9;
   ctx.save();
   ctx.globalCompositeOperation = "screen";
   ctx.shadowBlur = 0;
+  drawStrangeAttractorDust(ctx, score, base, coreElapsed, colors);
   ctx.lineWidth = Math.max(0.7, base * (0.003 + score.kineticDepth / 32000) * (1 + interaction.hold * 0.55 + interaction.tap * 0.4));
   ctx.lineCap = "round";
   ctx.lineJoin = "round";

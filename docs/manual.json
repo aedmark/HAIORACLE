@@ -473,6 +473,54 @@
             "interactive-vitrine",
             "deterministic-wav-export"
           ]
+        },
+        {
+          "id": "autopoietic-fractal-dynamics",
+          "title": "Autopoietic Creative Determinant & Fractal Morphogenesis",
+          "summary": "Models the creature as a living autopoietic entity governed by Project Navi's Creative Determinant equation and multi-scale fractal dynamics.",
+          "tags": [
+            "autopoiesis",
+            "fractals",
+            "creative-determinant",
+            "strange-attractor",
+            "tonnetz"
+          ],
+          "what": "Integrates Nelson Spence's Creative Determinant (CD) field theory and fractal dynamics into the creature's visual morphogenesis and sonic behavior. The nonlinear elliptic equation (L Φ)_x = a ||∇Φ||_x + b Φ_x - c (Φ_x^+)^p balances Coherence (Laplacian diffusion), Contradiction (gradient transport), and Care (nonlinear boundary saturation).",
+          "how": {
+            "lead": "src/autopoiesis.mjs and src/vitrine-canvas.mjs implement discrete CD dynamics and fractal attractors:",
+            "points": [
+              "Solves the discrete CD equation on circular S^1 perimeter graphs and the 12-node Neo-Riemannian Tonnetz torus.",
+              "Checks spectral viability (λ_1(L - diag(b)) < 0) via power iteration on the shifted graph Laplacian operator.",
+              "Blends self-similar Weierstrass fractal fluting into perimeter radius calculations (fluxOffset), scaled by gestural agitation.",
+              "Renders deterministic Clifford strange attractor dust (drawStrangeAttractorDust) within the creature's glowing core.",
+              "Provides Golden-Ratio Fibonacci delay tap cascades and self-similar recursive arpeggiation for harmonic accompaniment."
+            ]
+          },
+          "why": "Elevates the summoned creature from a static procedural rendering into a genuinely autopoietic, self-maintaining organism that transforms under touch and harmonic exploration while preserving its topological identity within the vitrine (D-083).",
+          "evidence": [
+            {
+              "label": "Autopoiesis Engine",
+              "target": "src/autopoiesis.mjs"
+            },
+            {
+              "label": "Autopoiesis & Fractal Suite",
+              "target": "tests/autopoiesis.test.mjs"
+            },
+            {
+              "label": "Vitrine Canvas Renderer",
+              "target": "src/vitrine-canvas.mjs"
+            },
+            {
+              "label": "Architecture Decision Record D-083",
+              "target": "docs/DECISIONS.md"
+            }
+          ],
+          "related": [
+            "silhouette-flux",
+            "kinetic-cores",
+            "tonnetz-spine",
+            "interactive-vitrine"
+          ]
         }
       ]
     },

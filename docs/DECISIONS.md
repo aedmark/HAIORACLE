@@ -1711,3 +1711,24 @@ Investigation showed two root causes:
 - Wing IV presents a focused, unbloated interface where each deck receives dedicated focus.
 - The Kapellmeister controls flow cleanly on both desktop monitors and narrow mobile viewports without visual overlap or whitespace glitches.
 - No third-party UI framework or external styling libraries are introduced.
+
+## D-083 Discrete Creative Determinant Autopoietic Field Theory & Fractal Morphogenesis (2026-10-27, status: accepted)
+
+**Context:** The maintainer requested adding multi-scale fractals and integrating the Creative Determinant (CD) mathematics from Project Navi (`https://github.com/Project-Navi/navi-creative-determinant`, Nelson Spence 2026) to model the creature as an autopoietic, self-sustaining entity under transformation ("becoming while remaining").
+
+**Decision:**
+1. Implemented `src/autopoiesis.mjs` containing a zero-dependency discrete graph and 1D boundary solver for the nonlinear elliptic boundary value problem:
+   $$(L \Phi)_x = a(x) \|\nabla \Phi\|_x + b(x) \Phi(x) - c(x) (\Phi(x)^+)^p$$
+   modeling the three core forces:
+   - Coherence ($(L \Phi)$): Graph Laplacian diffusion preserving structural identity.
+   - Contradiction ($a \|\nabla \Phi\|$): Gradient transport and difference driving exploration.
+   - Care ($-c (\Phi^+)^p$): Nonlinear saturation enforcing safe finite containment.
+2. Implemented discrete Picard steady-state relaxation (`solveAutopoieticSteadyState`), dynamical flow (`stepAutopoiesis`), and spectral viability verification (`checkSpectralViability`: $\lambda_1(L - \text{diag}(b)) < 0$).
+3. Integrated self-similar Weierstrass fractal fluting into `fluxOffset` in `src/vitrine-canvas.mjs` to produce organic fractal boundary ripples scaled by touch contradiction.
+4. Implemented seed-deterministic Clifford and De Jong strange attractor fractal point generators (`drawStrangeAttractorDust`) inside `drawKineticCore` in `src/vitrine-canvas.mjs`, producing a shimmering autopoietic nuclear dust cloud within the apparition vitrine.
+5. Implemented Tonnetz harmonic field evaluation (`computeTonnetzHarmonicField`), Golden-Ratio Fibonacci fractal delay cascades (`fibonacciDelayTaps`), and self-similar fractal recursive arpeggiation (`fractalArpeggioSequence`) in `src/autopoiesis.mjs`.
+6. Verified by 7 automated tests in `tests/autopoiesis.test.mjs`.
+
+**Consequences:**
+- The creature acquires mathematical autopoiesis and visual/sonic fractal depth while strictly preserving zero external runtime dependencies and deterministic phrase-to-score invariants.
+- All 251 tests pass.

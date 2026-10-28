@@ -1864,5 +1864,40 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - Documentation check passes with 0 errors and 0 warnings (`python3 tools/check_docs.py`).
 - Manual check passes with 0 errors and 0 warnings (`python3 tools/manual.py check docs/manual.json`).
 
+### Session 73 (2026-10-23): Wave 3 of P5-29 (Rhythmic feel & 22-genre expansion, D-060)
+
+**Done:**
+- Wave 3 of P5-29 is implemented, documented under D-060, and verified with all 186 automated checks passing.
+
+**Changed:**
+1. Inform 7 Feel Property (`src/rulebooks.ni`, `src/inform.mjs`, `src/conductor.mjs`, `src/creature-rulebook.mjs`):
+   - Added `A genre has some text called the feel.` to Chapter 2 in `src/rulebooks.ni`.
+   - `compileRulebooks()` in `src/inform.mjs` parses `feel` (defaulting to `""`).
+   - Tagged existing rhythm-sensitive genres: `parlor_ragtime` ("habanera"), `doowop_ballad` ("swing"), `tango_habanera` ("habanera").
+   - `THE CREATURE'S OWN` explicitly defaults `feel: ""` to preserve phrase determinism (`score.rhythm`).
+   - Exported `RHYTHMIC_FEELS` and `effectiveRhythmIndex(score, genreCode)` in `src/conductor.mjs`.
+2. Three New Kapellmeister Genres (`src/rulebooks.ni`):
+   - Chapter 19: **Vaudeville Viennese Waltz** (`vaudeville_waltz`, feel: `"waltz"`). I · vi · ii · V7 changes, member snapping, `{rotation, relative substitution, authentic cadence}`.
+   - Chapter 20: **Swing-Era Savoy Ballroom** (`swing_ballroom`, feel: `"swing"`). I6 · vi7 · ii7 · V7 changes, guide-tone organ, `{rotation, relative substitution, tritone substitution, secondary dominants}`.
+   - Chapter 21: **Javanese Gamelan Pelog** (`gamelan_pelog`, feel: `"straight"`). i5 · iv5 · v5 · i5 fifth-and-second open sonorities `{0, 7, 2}`, pentatonic scale snapping `{0, 2, 5, 7, 9}`, `{rotation, phrygian cadence, harmonic pace}`.
+   - Raw Esoteric Chaos moved to Chapter 22 at the conclusion of Part 2.
+   - Three Fun Machine progression tables added to Part 3 (`Table of Viennese Whirl`, `Table of Savoy Stomp`, `Table of Court Slendro`).
+3. Rhythm Templates & Audio Graph Wiring (`src/app.mjs`, `src/ensemble.mjs`):
+   - Added 3/4 waltz template `[1.4, 0.8, 0.8]` at index 6 in `RHYTHMS` ($12 \bmod 3 = 0$, dividing 12 steps into 4 measures of 3 steps with zero loop drift).
+   - Extended `DELAY_MULTIPLIERS` to length 7 with index 6 at `0.75`.
+   - Wired `effectiveRhythmIndex` into `loopStepDuration`, `scheduleAhead`, `renderEnsembleLoop`, and `elements.kapellmeisterGenre` change listener.
+4. Fixtures, Tests & Assets:
+   - Re-froze `tests/fixtures/rulebooks-golden.json` and `tests/fixtures/variations-golden.json`.
+   - Updated genre count assertions to 22 across `tests/audit.test.mjs`, `tests/inform.test.mjs`, and `tests/oracle.test.mjs`.
+   - Updated `tests/clashes.test.mjs` and `tests/variation.test.mjs`.
+   - Re-stamped assets to `41c33f2f715c`.
+   - Rebuilt `manual.html` from `docs/manual.json`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 186/186 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
+
+
 
 

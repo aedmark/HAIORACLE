@@ -4,23 +4,24 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-27, session 84, on `main`._
+_Last updated: 2026-10-27, session 85, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
 - D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
 - Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
 - Phase 8: Studio Credibility (P8-01 through P8-05, P8-15, P8-16 complete, D-076–D-082). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle. P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082).
+- Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
 
-**Where things stand:** P1–P7 and P8-01 through P8-05, P8-15, and P8-16 are fully implemented, verified, and passing across all suites! Version 1.3.0. 244/244 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15, P8-16, and Phase 9 (P9-01 through P9-03) are fully implemented, verified, and passing across all suites! Version 1.4.0. 251/251 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-27, session 84, local Linux environment)
+**Verified** (2026-10-27, session 85, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **244/244 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **251/251 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 43 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 44 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -90,6 +91,38 @@ _Last updated: 2026-10-27, session 84, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 85 (2026-10-27): Phase 9 Autopoiesis & Fractal Dynamics: Project Navi Creative Determinant & Strange Attractor Morphogenesis (P9-01, P9-02, P9-03, D-083)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Phase 9 (P9-01, P9-02, P9-03, D-083) bringing autopoiesis and fractal dynamics to the Whimsy Machine: pure, zero-dependency discrete graph and 1D boundary solver for Project Navi's Creative Determinant (Nelson Spence's nonlinear elliptic boundary value problem $L\Phi = a\|\nabla\Phi\| + b\Phi - c(\Phi^+)^p$ modeling Coherence, Contradiction, and Care), Picard iteration steady-state solver, spectral viability check, Clifford/De Jong strange attractor generators, Apparition Vitrine glowing attractor dust and multi-octave Weierstrass fractal fluting, Tonnetz harmonic vitality fields, Fibonacci delay cascades, and self-similar fractal arpeggiation.
+
+**Done:** All parts implemented, documented, and verified. 251/251 automated tests pass.
+
+**Changed:**
+1. Mathematical Foundation (`src/autopoiesis.mjs`, P9-01, D-083):
+   - Pure zero-dependency discrete graph representations (`createRingGraph`, `createTonnetzGraph`, `buildGraph`, `isValidGraph`).
+   - Finite graph Laplacian $L$ with positive off-diagonals, symmetric adjacency, and boundary dissipation.
+   - Forward-difference gradient norm $\|\nabla\Phi\|_i$ and nonlinear reaction term $b\Phi - c(\Phi^+)^p$.
+   - Discrete Picard steady-state iteration with adaptive damping and convergence residual monitoring.
+   - Spectral viability verification via Gershgorin disc and Rayleigh quotient approximations checking $\lambda_1(L - \text{diag}(b)) < 0$.
+   - Clifford and De Jong strange attractor iteration with parameter derivation from phrase score (`attractorParamsFromScore`).
+   - Tonnetz harmonic vitality evaluation (`computeTonnetzHarmonicField`), Golden-Ratio Fibonacci fractal delay cascades (`fibonacciDelayTaps`), and self-similar recursive arpeggio sequence generation (`fractalArpeggioSequence`).
+2. Visual Morphogenesis (`src/vitrine-canvas.mjs`, P9-02, D-083):
+   - Enhanced `fluxOffset` with multi-octave self-similar Weierstrass fractal fluting preserving topological radius clamping ($[0.38, 1.08]$).
+   - Added `drawStrangeAttractorDust` rendering seed-deterministic Clifford strange attractor glowing particulate clouds inside `drawKineticCore`.
+3. System Integration & Verification:
+   - Added `"autopoiesis.mjs"` to `MODULES` in `index.html`.
+   - Stamped asset version to `50a1b4ff3f10` via `tools/stamp_assets.mjs`.
+   - Created `tests/autopoiesis.test.mjs` with 7 rigorous test suites.
+   - Added `autopoietic-fractal-dynamics` to `docs/manual.json` (44 entries, 0 warnings) and rebuilt `manual.html`.
+   - Recorded D-083 in `docs/DECISIONS.md`, updated `ROADMAP.md` (P9-01, P9-02, P9-03), `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/CHANGELOG.md` (v1.4.0), and archived Session 73 in `docs/archive/sessions.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 251/251 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 44 entries, 0 errors, 0 warnings.
 
 ### Session 84 (2026-10-27): Phase 8 Studio Credibility: Utterance Metre Synchronization & Keep Wing Ergonomic Polish (P8-15, P8-16, D-081, D-082)
 
@@ -395,39 +428,6 @@ _Last updated: 2026-10-27, session 84, on `main`._
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
-### Session 73 (2026-10-23): Wave 3 of P5-29 (Rhythmic feel & 22-genre expansion, D-060)
-
-**Done:**
-- Wave 3 of P5-29 is implemented, documented under D-060, and verified with all 186 automated checks passing.
-
-**Changed:**
-1. Inform 7 Feel Property (`src/rulebooks.ni`, `src/inform.mjs`, `src/conductor.mjs`, `src/creature-rulebook.mjs`):
-   - Added `A genre has some text called the feel.` to Chapter 2 in `src/rulebooks.ni`.
-   - `compileRulebooks()` in `src/inform.mjs` parses `feel` (defaulting to `""`).
-   - Tagged existing rhythm-sensitive genres: `parlor_ragtime` ("habanera"), `doowop_ballad` ("swing"), `tango_habanera` ("habanera").
-   - `THE CREATURE'S OWN` explicitly defaults `feel: ""` to preserve phrase determinism (`score.rhythm`).
-   - Exported `RHYTHMIC_FEELS` and `effectiveRhythmIndex(score, genreCode)` in `src/conductor.mjs`.
-2. Three New Kapellmeister Genres (`src/rulebooks.ni`):
-   - Chapter 19: **Vaudeville Viennese Waltz** (`vaudeville_waltz`, feel: `"waltz"`). I · vi · ii · V7 changes, member snapping, `{rotation, relative substitution, authentic cadence}`.
-   - Chapter 20: **Swing-Era Savoy Ballroom** (`swing_ballroom`, feel: `"swing"`). I6 · vi7 · ii7 · V7 changes, guide-tone organ, `{rotation, relative substitution, tritone substitution, secondary dominants}`.
-   - Chapter 21: **Javanese Gamelan Pelog** (`gamelan_pelog`, feel: `"straight"`). i5 · iv5 · v5 · i5 fifth-and-second open sonorities `{0, 7, 2}`, pentatonic scale snapping `{0, 2, 5, 7, 9}`, `{rotation, phrygian cadence, harmonic pace}`.
-   - Raw Esoteric Chaos moved to Chapter 22 at the conclusion of Part 2.
-   - Three Fun Machine progression tables added to Part 3 (`Table of Viennese Whirl`, `Table of Savoy Stomp`, `Table of Court Slendro`).
-3. Rhythm Templates & Audio Graph Wiring (`src/app.mjs`, `src/ensemble.mjs`):
-   - Added 3/4 waltz template `[1.4, 0.8, 0.8]` at index 6 in `RHYTHMS` ($12 \bmod 3 = 0$, dividing 12 steps into 4 measures of 3 steps with zero loop drift).
-   - Extended `DELAY_MULTIPLIERS` to length 7 with index 6 at `0.75`.
-   - Wired `effectiveRhythmIndex` into `loopStepDuration`, `scheduleAhead`, `renderEnsembleLoop`, and `elements.kapellmeisterGenre` change listener.
-4. Fixtures, Tests & Assets:
-   - Re-froze `tests/fixtures/rulebooks-golden.json` and `tests/fixtures/variations-golden.json`.
-   - Updated genre count assertions to 22 across `tests/audit.test.mjs`, `tests/inform.test.mjs`, and `tests/oracle.test.mjs`.
-   - Updated `tests/clashes.test.mjs` and `tests/variation.test.mjs`.
-   - Re-stamped assets to `41c33f2f715c`.
-   - Rebuilt `manual.html` from `docs/manual.json`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 186/186 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
 
 
 

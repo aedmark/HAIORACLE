@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0] - 2026-10-27
+
+### Added
+
+- Discrete Creative Determinant (CD) Field Solver (`P9-01`, `D-083`): Pure mathematical module (`src/autopoiesis.mjs`) implementing Nelson Spence's discrete nonlinear elliptic boundary value problem ($(L \Phi)_x = a \|\nabla \Phi\|_x + b \Phi_x - c (\Phi_x^+)^p$) across finite weighted graphs, circular $S^1$ vitrine perimeters, and the Neo-Riemannian Tonnetz, with Picard iteration steady-state solver and spectral viability verification ($\lambda_1(L - \text{diag}(b)) < 0$).
+- Autopoietic Fractal Vitrine Morphogenesis & Attractor Core (`P9-02`, `D-083`): Integrated Weierstrass self-similar fractal harmonic fluting into the creature perimeter flux in `src/vitrine-canvas.mjs`, and implemented deterministic Clifford and De Jong strange attractor fractal point rendering (`drawStrangeAttractorDust`) within the creature's glowing nucleus.
+- Tonnetz Autopoietic Field, Fibonacci Delay & Fractal Arpeggiation (`P9-03`, `D-083`): Evaluated harmonic vitality across chord progressions on the Tonnetz torus graph, implemented Golden-Ratio Fibonacci fractal delay cascades (`fibonacciDelayTaps`), and recursive self-similar fractal arpeggiation (`fractalArpeggioSequence`).
+
 ## [1.3.0] - 2026-10-26
 
 ### Added
