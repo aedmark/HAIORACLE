@@ -88,9 +88,9 @@ export function parlorSendLevels({ enabled, reverbEnabled, crackleEnabled, level
  * loop step (an eighth note), capped by the delay line. The live loop calls
  * this again whenever the tempo changes, so echoes stay on the beat.
  */
-export function delayTimeFor(score, bpm, rhythmOverride = undefined) {
-  const unit = 60 / bpm / 2;
+export function delayTimeFor(score, bpm, rhythmOverride = undefined, unitOverride = undefined) {
   const rhythmIndex = rhythmOverride !== undefined ? rhythmOverride : (score?.rhythm ?? 0);
+  const unit = typeof unitOverride === "number" && unitOverride > 0 ? unitOverride : (60 / bpm / 2);
   return Math.min(1.45, unit * (DELAY_MULTIPLIERS[rhythmIndex] ?? 1));
 }
 
@@ -199,7 +199,7 @@ export function buildEnsembleGraph(context, score, {
     compressor.knee.value = 18;
     compressor.ratio.value = 5;
   }
-  delay.delayTime.value = delayTimeFor(score, 60 / (unit * 2), rhythmIndex);
+  delay.delayTime.value = delayTimeFor(score, 60 / (unit * 2), rhythmIndex, unit);
   feedback.gain.value = 0.14 + score.bloom / 650;
   output.gain.value = outputGain;
 

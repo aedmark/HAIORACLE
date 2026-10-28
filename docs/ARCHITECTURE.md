@@ -8,13 +8,13 @@ Rationale lives in [DECISIONS.md](DECISIONS.md).
 
 | Area | Where | Entry point | Talks to |
 | --- | --- | --- | --- |
-| Page shell | `index.html`, `styles.css`: vitrine and calling slip, read-only reading strip, then the Perform, Mix, Band, and Keep wings (D-027) | document load | browser host |
+| Page shell | `index.html`, `styles.css`: vitrine and calling slip, read-only reading strip, then the Perform, Mix, Band, and Keep wings; segmented telegraph deck navigation in Keep Wing (Export, Session, Studio, Herbarium; D-082) and fluid rulebook/tuning groups in Kapellmeister | document load | browser host |
 | Browser host | `src/app.mjs` | form submission | score compiler, Canvas, Web Audio, share/PNG export |
 | Apparition Vitrine Canvas | `src/vitrine-canvas.mjs` | `OracleVision`, `paletteFor()`, `shapeRadius()`, `buildMycelialNetwork()` | `#vision` 2D Canvas, gesture physics (`interaction`), `src/app.mjs` (D-067) |
 | Specimen broadsheet engraver | `src/broadsheet.mjs` | `renderSpecimenBroadsheetCanvas()`, `wrapCanvasText()` | PNG export (`#export-png`) in `src/app.mjs` (D-067) |
 | Ensemble voice schedulers | `src/schedulers.mjs` | `scheduleNote()`, `scheduleBeatStep()`, `scheduleBassStep()`, `scheduleHarmonyStep()`, `scheduleChimeStep()`, `scheduleChantStep()`, `scheduleFungalBioStep()`, `scheduleClockworkTick()`, `ensureParlorImpulseResponse()`, `ensureWaxCrackleBuffer()` | live and offline step scheduling in `src/app.mjs` (D-067) |
 | Studio audio export | `src/audio-export.mjs` | `encodeWav()`, `cutRender()`, `applyPeakCeiling()`, `keyLabelFor()`, `exportFilename()` | 16/24/32f WAV encoder, tail folding, dither, and sampler metadata in `src/app.mjs` (P8-01, D-076) |
-| Tuning & metre | `src/tuning.mjs` | `midiToFrequency()`, `referencePitch()`, `setReferencePitch()`, `applyScoreOverrides()`, `stepUnitSeconds()`, `GRID_STEPS_OPTIONS`, `DEFAULT_GRID_STEPS` | concert pitch A4 reference, key/mode overrides, 4/4 bar lock, and native 16-step straight grid metre in `src/app.mjs`, `src/ensemble.mjs`, `src/schedulers.mjs`, `src/voices.mjs` (P8-04, P8-05, D-078, D-079) |
+| Tuning & metre | `src/tuning.mjs` | `midiToFrequency()`, `referencePitch()`, `setReferencePitch()`, `applyScoreOverrides()`, `stepUnitSeconds()`, `GRID_STEPS_OPTIONS`, `DEFAULT_GRID_STEPS` | concert pitch A4 reference, key/mode overrides, 4/4 bar lock, and native 16-step straight grid metre with unified utterance synchronization in `src/app.mjs`, `src/ensemble.mjs`, `src/schedulers.mjs`, `src/voices.mjs` (P8-04, P8-05, P8-15, D-078, D-079, D-081) |
 | Engine version & integrity | `src/version.mjs` | `APP_VERSION`, `ENGINE_VERSION`, `ENGINE_FINGERPRINT` | version telemetry and golden fixture integrity guard in `src/app.mjs`, `src/session.mjs` (P8-03, D-077) |
 | Esoteric VM inspector | `src/inspector.mjs` | `inspectPlateStep()`, `inspectBeatStep()`, `inspectBassStep()`, `inspectHarmonyStep()`, `inspectChimeStep()`, `inspectChantStep()`, `toTernary10()` | expandable "Under the Parlor Glass" VM step loupes on Plates I–V in `src/app.mjs` (P5-34, D-069) |
 | Phrase and score boundary | `src/score.mjs` | `composeScore()` | interpreter |
@@ -136,6 +136,8 @@ session state <-> captureSession() / applySession() <-> strict validator <-> loc
 - Summoned creature tempos fold into the musical groove pocket ($68\dots 144$ BPM) via 2:1 octave gears on summon and dblclick reset, while preserving the full $36\dots 208$ BPM manual slider and raw `score.pulse` LOLCODE determinism. Enforced by `tests/audit.test.mjs` (D-050).
 - The vertical anti-clash sieve resolves accidental semitone collisions between passing melody tones and active accompaniment voices down to 0.00% under `CREATURE_GENRE`, while region-boundary damping prevents chord tail bleed across 3-step transitions. Enforced by `tests/audit.test.mjs` and `tests/clashes.test.mjs` (D-050).
 - Voice envelope GainNodes initialize to `0.0001` at construction, pad releases cleanly anchor active gains via `cancelAndHoldAtTime` and cancel future look-ahead nodes before they sound, and legato key changes grace-window drone ducking to eliminate volume spikes. Enforced by `tests/voices.test.mjs` and `tests/audit.test.mjs` (D-051).
+- Every instrument, scheduler, and accompanist executes against the active step count ($S \in \{12, 16\}$). The harmonic spine, fungal mycelium events, delay reflection taps, parlor clockwork ticks, and voice filter modulations dynamically adapt to the barline and quarter-stride ($S/4$), guaranteeing zero metric drift or harmonic collision across all voices. Enforced by `tests/utterance-coherence.test.mjs` (D-081).
+- Wing IV (The Keep Wing) presents an unbloated single-deck view selectable via a telegraph deck switcher (`#keep-tab-export`, `#keep-tab-session`, `#keep-tab-studio`, `#keep-tab-herbarium`), persisting the active tab across visits in `localStorage` under `whimsy-machine.keep-deck` while keeping DOM order and accessibility intact. Enforced by `tests/static.test.mjs` (D-082).
 
 ## Boundaries
 
@@ -168,7 +170,8 @@ The visual system uses locally installed old-style and transitional book serifs 
 | Session presets | `localStorage` key `whimsy-machine.presets.v1` | SAVE PRESET | DELETE, or clearing site data | no |
 | Herbarium specimens | `localStorage` key `whimsy-machine.herbarium.v1` | PIN CURRENT SPECIMEN | UNPIN, or clearing site data | no |
 | Cabinet mode and drawers | `localStorage` key `whimsy-machine.cabinet.v1` | opening or closing drawers, the cabinet switch | clearing site data | no |
-| Static HTTP cache | browser-managed, keyed by `?v=<ASSET_VERSION>` URLs (D-035) | browser | a new stamp, or browser controls | no |
+| Active Keep Wing deck | `localStorage` key `whimsy-machine.keep-deck` | clicking deck navigation tabs (`initKeepDeckTabs()`) | clearing site data | no |
+| Static HTTP cache | `browser-managed, keyed by `?v=<ASSET_VERSION>` URLs (D-035) | browser | a new stamp, or browser controls | no |
 
 Because a file's content changes only together with its URL, the browser may keep any stamped module or source as long as it likes. Only `index.html`, which holds the stamp, should be revalidated: `tools/serve.py` does that locally with `Cache-Control: no-cache`, and a public host should do the same for the page (D-035).
 

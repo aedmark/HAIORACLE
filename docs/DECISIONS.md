@@ -1664,3 +1664,50 @@ Investigation showed two root causes:
 **Decision:** Target CLAP first. Its MIT-licensed C headers need no SDK agreement, it is plain C like the core, and Bitwig, REAPER, FL Studio, and others host it natively. VST3 and AU come later through the MIT-licensed `clap-wrapper`. The plugin lives in its own directory (`plugin-clap/`), built with its own toolchain like `src-tauri/` (D-064), and adds no runtime or build dependency to the web app. Its first milestone is a MIDI-in instrument that renders one phrase's ensemble in sync with host transport and tempo, with the phrase as a plugin parameter saved in host state.
 
 **Consequences:** The zero-dependency browser boundary (D-001) is unchanged. The plugin build vendors the CLAP headers, which is a build-time dependency of that isolated directory only, accepted here. The C synth sounds simpler than the Web Audio graph, so the plugin is a sibling, not a bit-exact twin, until the C renderer catches up. Ableton Link is a separate question (P8-09), because of its GPL or commercial licensing.
+
+## D-081 Unified Utterance Metre & Instrument Synchronization (2026-10-27, status: accepted)
+
+**Context:** Following the introduction of bar-aligned metre and native 16-step straight grids (D-079), a deep-level audit across the full ensemble revealed subtle metric drift, polyrhythmic clashing, and runtime crashes during 16-step playback:
+1. `applyEnsembleConductor()` called `conductEnsemble()` with default arguments, evaluating only 12 chord spine entries. When esoteric plates were generated with 16 steps, indexing `spine[12..15]` triggered an uncaught `TypeError: Cannot read properties of undefined (reading 'root')` at line 657 of `src/conductor.mjs`.
+2. `myceliumEvents()` wrapped events at step modulo 12 (`step % 12`), compressing 16-step rhythmic patterns and producing premature repeats on steps 12..15.
+3. The antique parlor escapement tick (`scheduleClockworkTick`) hardcoded quarter-note beats at step indices 0, 3, 6, 9 and half-bars at 0, 6, creating an unintended 3:4 polyrhythmic triplet tick against straight 16-step time.
+4. Voice schedulers (`scheduleNote`, `scheduleBeatStep`, `scheduleHarmonyStep`, `scheduleChimeStep`) cycled detune, filter modulations, and region damping on 3-step boundaries (`stepIndex % 3 === 2`) instead of adapting to the active measure stride (S / 4).
+5. The master delay line (`delayTimeFor`) calculated echo taps assuming unlocked 12-step pulse durations, drifting out of phase when 4/4 bar lock or 16-step straight metre was active.
+6. The Fun Machine accompanist constructed 16-step chord spines with only 3 steps per region (`[chord, chord, chord]`) instead of 4, causing harmonic mismatch.
+
+**Decision:**
+1. Parameterize `stepUnitSeconds(tempoBpm, barLock44, stepsCount)` in `src/tuning.mjs` to calculate step unit length accurately for both 12-step (12 * step = 4 * beat) and 16-step (16 * step = 4 * beat) bar alignment.
+2. Update `delayTimeFor(score, tempoBpm, unitOverride)` in `src/ensemble.mjs` to accept the actual step unit duration, ensuring delay reflections synchronize with the audible grid regardless of metre mode.
+3. Parameterize `myceliumEvents(form, step, bloomCount, stepsCount = 12)` in `src/mycelium.mjs`, correctly scaling fungal spore and hyphal trigger thresholds across the 16-step timeline.
+4. Parameterize `scheduleClockworkTick` in `src/schedulers.mjs` with `stepsCount`: pulses occur on true quarter notes (0, S/4, 2S/4, 3S/4) and half-bars (0, S/2).
+5. Dynamically adapt filter frequency modulations, detune sweeps, and region damping boundaries in `src/schedulers.mjs` to `stride = stepsCount / 4` (step indices 3, 7, 11, 15 in 16-step; 2, 5, 8, 11 in 12-step).
+6. Update `buildPerformance` in `src/accompaniment.mjs` to generate 4 chords per region (`Array(stride).fill(chord)`) with `regionSteps: stepsPerRegion` in 16-step mode.
+7. Ensure `applyEnsembleConductor` in `src/app.mjs` passes `melodyFor(currentScore, activeGridSteps)` and `stepsCount: activeGridSteps` to `conductEnsemble()`, guaranteeing full 16-chord spines and preventing runtime exceptions.
+8. Add regression tests in `tests/utterance-coherence.test.mjs` verifying 16-chord conductor spine generation, mycelium 16-step scaling, 16-step Fun Machine progression regions, and delay tap synchronization.
+
+**Consequences:**
+- All instruments and accompaniment voices speak the same coherent musical language per utterance without metric drift or polyrhythmic dissonance.
+- Golden fixtures for 12-step Inform 7 genre rulebooks and variations remain completely untouched and verified.
+- Full test suite passes (244/244).
+
+## D-082 Keep Wing Segmented Decks & Kapellmeister Ergonomic Layout (2026-10-27, status: accepted)
+
+**Context:** The Keep Wing (Wing IV) had accumulated four major feature engines (Export Engine, Session Ledger, Studio Engine, and The Naturalist's Herbarium), resulting in an overwhelming vertical stack and jagged multi-column grid overflow. Simultaneously, the Kapellmeister console suffered from cramped button crowding and line-wrapping artifacts between the genre/manuscript controls and the concert pitch/scale override selectors.
+
+**Decision:**
+1. Introduce a segmented telegraph deck navigation header (`.keep-deck-nav`, `.keep-deck-tabs`, `.keep-deck-tab`) in Wing IV (`#drawer-body-keep`) with four distinct panels:
+   - EXPORT (`#keep-tab-export` -> `#export-engine`)
+   - SESSION (`#keep-tab-session` -> `#session-engine`)
+   - STUDIO (`#keep-tab-studio` -> `#studio-engine`)
+   - HERBARIUM (`#keep-tab-herbarium` -> `#herbarium-engine`)
+2. Persist the selected Keep deck tab in `window.localStorage` under the key `whimsy-machine.keep-deck` via guarded helper functions (`readKeepDeck()`, `writeKeepDeck()`), defaulting to export.
+3. In `index.html`, segment Kapellmeister action controls into two semantic flex groups:
+   - `.kapellmeister-group-rulebook`: Genre selector (`#kapellmeister-genre`), As Written toggle (`#kapellmeister-as-written`), Manuscript scratchpad toggle (`#kapellmeister-manuscript-toggle`).
+   - `.kapellmeister-group-tuning`: Key override (`#kapellmeister-key-override`), Scale override (`#kapellmeister-scale-override`), Concert pitch reference (`#kapellmeister-tuning-a4`).
+4. Reorganize `#export-engine` format selectors into a balanced 2x2 grid (`.export-format-grid`) with explicit Victorian sublabels indicating Bit Depth, Sample Rate, Loop Tail Handling, and Stem Processing.
+5. In `styles.css`, enforce strict panel isolation for hidden Keep deck engines (`.wing-keep .beat-engine[hidden] { display: none !important; }`), clean responsive wrapping for Kapellmeister groups, and maintain accessible typography (0.6rem minimum font floor) and high-contrast colorways.
+
+**Consequences:**
+- Wing IV presents a focused, unbloated interface where each deck receives dedicated focus.
+- The Kapellmeister controls flow cleanly on both desktop monitors and narrow mobile viewports without visual overlap or whitespace glitches.
+- No third-party UI framework or external styling libraries are introduced.

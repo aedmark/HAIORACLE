@@ -72,22 +72,26 @@ export const FUNGAL_SOUNDS = Object.freeze([
   }),
 ]);
 
-const fires = (pattern, step, rotation) => pattern[(step + rotation) % 12] === "x";
+const fires = (pattern, step, rotation, stepsCount = 12) => {
+  const normStep = stepsCount === 16 ? Math.floor((step * pattern.length) / 16) : step;
+  return pattern[(normStep + rotation) % pattern.length] === "x";
+};
 
 /**
  * The mycelium's events for one loop step. `hold` is the vitrine press (0..1),
  * which brightens and lifts everything a little, as before.
  */
-export function myceliumEvents(score, stepIndex, hold = 0) {
+export function myceliumEvents(score, stepIndex, hold = 0, stepsCount = 12) {
   const sound = FUNGAL_SOUNDS[score.fungalForm] ?? FUNGAL_SOUNDS[0];
-  const step = ((stepIndex % 12) + 12) % 12;
+  const steps = stepsCount || 12;
+  const step = ((stepIndex % steps) + steps) % steps;
   const rotation = score.fungalHyphae % 12;
   const tilt = 2 ** ((score.fungalBloom - 55) / 90);
   const lift = 1 + hold * 0.2;
   const events = [];
 
   const { spikes, drops, puffs } = sound;
-  if (fires(spikes.pattern, step, rotation)) {
+  if (fires(spikes.pattern, step, rotation, steps)) {
     const [fewest, most] = spikes.count;
     const count = fewest + Math.round(((score.fungalHyphae - 10) / 90) * (most - fewest));
     for (let p = 0; p < count; p += 1) {
@@ -105,13 +109,13 @@ export function myceliumEvents(score, stepIndex, hold = 0) {
       });
     }
   }
-  if (fires(drops.pattern, step, rotation)) {
+  if (fires(drops.pattern, step, rotation, steps)) {
     const freq = drops.freq * tilt;
     events.push({ kind: "tone", at: 0.28, wave: drops.wave, freq, to: freq * drops.to, band: null, decay: drops.decay, peak: drops.peak * (0.75 + score.fungalBloom / 400) * lift, pan: 0.2 });
   }
   // Sparse spores puff only on their pattern; dense spores (over 60) also
   // puff a step later, so a spore-heavy creature hisses more often.
-  const puffNow = fires(puffs.pattern, step, rotation) || (score.fungalSpores > 60 && fires(puffs.pattern, step + 11, rotation));
+  const puffNow = fires(puffs.pattern, step, rotation, steps) || (score.fungalSpores > 60 && fires(puffs.pattern, step + (steps - 1), rotation, steps));
   if (puffNow && score.fungalSpores > 20) {
     events.push({ kind: "noise", at: 0.52, band: [puffs.band[0] * tilt, puffs.band[1]], decay: puffs.decay, peak: puffs.peak * (0.6 + score.fungalSpores / 150) * lift, pan: -0.2 });
   }

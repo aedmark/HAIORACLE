@@ -23,12 +23,12 @@
       "Shakespeare SPL",
       "Euler-Tonnetz"
     ],
-    "footer": "{{project.name}} {{project.version}} \u00b7 Built with the 3x Documentation Scheme"
+    "footer": "{{project.name}} {{project.version}} · Built with the 3x Documentation Scheme"
   },
   "theme": {
     "accent": "#b89249",
     "accent_secondary": "#6b1f28",
-    "icon": "\u2720"
+    "icon": "✠"
   },
   "sections": [
     {
@@ -531,7 +531,7 @@
             "keyboard",
             "accessibility"
           ],
-          "what": "A brass transport rail (`#transport-deck`) with PLAY, PAUSE, and STOP \u00b7 REWIND buttons, a loop position readout (`STEP 05 / 12`), and global hotkeys: `Space` toggles play/pause and `Esc` stops and rewinds to step one. Pause resumes on the next unheard step; mute silences without changing the transport state.",
+          "what": "A brass transport rail (`#transport-deck`) with PLAY, PAUSE, and STOP · REWIND buttons, a loop position readout (`STEP 05 / 12`), and global hotkeys: `Space` toggles play/pause and `Esc` stops and rewinds to step one. Pause resumes on the next unheard step; mute silences without changing the transport state.",
           "how": {
             "lead": "`src/transport.mjs` holds the pure state model; `runTransportCommand()` in `src/app.mjs` applies it to audio and the page:",
             "points": [
@@ -651,7 +651,7 @@
     },
     {
       "id": "esoteric-chamber-ensemble",
-      "title": "The Five Esoteric Accompaniment Plates (Plates I\u2013V)",
+      "title": "The Five Esoteric Accompaniment Plates (Plates I–V)",
       "description": "Authentic virtual machine execution across Malbolge, Brainfuck, Befunge-93, Piet, FRACTRAN, and Shakespeare Programming Language.",
       "entries": [
         {
@@ -708,7 +708,7 @@
             "brainfuck",
             "bass"
           ],
-          "what": "Executes `src/bass.bf` inside a 1993 Urban M\u00fcller Brainfuck interpreter (`src/brainfuck.mjs`). Uses pointer movement, cell addition/subtraction, and `[->+<]` transfer loops across 256 byte cells to generate a 12-cell bass ostinato across eight groove archetypes, featuring portamento slide, cell cycling, and tape-shift controls.",
+          "what": "Executes `src/bass.bf` inside a 1993 Urban Müller Brainfuck interpreter (`src/brainfuck.mjs`). Uses pointer movement, cell addition/subtraction, and `[->+<]` transfer loops across 256 byte cells to generate a 12-cell bass ostinato across eight groove archetypes, featuring portamento slide, cell cycling, and tape-shift controls.",
           "how": {
             "lead": "`runBrainfuck()` in `src/brainfuck.mjs` executes the 8-command language:",
             "points": [
@@ -752,7 +752,7 @@
             "befunge",
             "harmony"
           ],
-          "what": "Executes `src/harmony.bfg` inside an 80\u00d725 2D torus Befunge-93 interpreter (`src/befunge.mjs`). Employs directional arrows (`> < ^ v`), `#` bridges, arithmetic, and diagonal mirrors (`\\ / / \\`) to voice polyphonic 3-note reed-organ and glass-harp triads across eight organ archetypes, with live mirror cycling and deflection controls.",
+          "what": "Executes `src/harmony.bfg` inside an 80×25 2D torus Befunge-93 interpreter (`src/befunge.mjs`). Employs directional arrows (`> < ^ v`), `#` bridges, arithmetic, and diagonal mirrors (`\\ / / \\`) to voice polyphonic 3-note reed-organ and glass-harp triads across eight organ archetypes, with live mirror cycling and deflection controls.",
           "how": {
             "lead": "`runBefunge()` implements Chris Pressey's 1993 2D grid specifications:",
             "points": [
@@ -797,7 +797,7 @@
             "fractran",
             "just-intonation"
           ],
-          "what": "Executes a 49-step 25\u00d75 clockwise Piet 2001 codel canvas (`src/pad.piet`) across all 18 chromatic codels paired with a 12-step 1987 John Conway FRACTRAN prime-ratio program (`src/chimes.frac`) over $2^a 3^b 5^c 7^d 11^e 13^f$. Voices pure 5-limit and 7-limit Just Intonation overtone bells and synesthetic codel-filtered chorus pads across eight archetypes.",
+          "what": "Executes a 49-step 25×5 clockwise Piet 2001 codel canvas (`src/pad.piet`) across all 18 chromatic codels paired with a 12-step 1987 John Conway FRACTRAN prime-ratio program (`src/chimes.frac`) over $2^a 3^b 5^c 7^d 11^e 13^f$. Voices pure 5-limit and 7-limit Just Intonation overtone bells and synesthetic codel-filtered chorus pads across eight archetypes.",
           "how": {
             "lead": "`src/fractran.mjs` executes both esolangs deterministically:",
             "points": [
@@ -845,9 +845,9 @@
             "shakespeare-spl",
             "formant-synthesis"
           ],
-          "what": "Executes `src/chant.spl` (`The Oracular Tragedy of the Parlor Glass.`), a 3-Act, 12-Scene Elizabethan drama with four dramatis personae (Hamlet Tenor, Ophelia Soprano, Prospero Basso, Hecate Alto) inside an SPL interpreter (`src/shakespeare.mjs`). Drives a 3-formant ($F_1, F_2, F_3$) parallel bandpass vowel choir across six distinct vowels (`/\u0251/`, `/\u025b/`, `/i/`, `/o/`, `/u/`, `/\u00e6/`), with live scene cycling and recast mutation.",
+          "what": "Executes `src/chant.spl` (`The Oracular Tragedy of the Parlor Glass.`), a 3-Act, 12-Scene Elizabethan drama with four dramatis personae (Hamlet Tenor, Ophelia Soprano, Prospero Basso, Hecate Alto) inside an SPL interpreter (`src/shakespeare.mjs`). Drives a 3-formant ($F_1, F_2, F_3$) parallel bandpass vowel choir across six distinct vowels (`/ɑ/`, `/ɛ/`, `/i/`, `/o/`, `/u/`, `/æ/`), with live scene cycling and recast mutation.",
           "how": {
-            "lead": "`runShakespeare()` interprets the 2001 Jon \u00c5slund and Karl Hasselstr\u00f6m specification:",
+            "lead": "`runShakespeare()` interprets the 2001 Jon Åslund and Karl Hasselström specification:",
             "points": [
               "Parses character declarations, dramatic entrances/exits (`[Enter Hamlet and Ophelia]`, `[Exeunt]`), and dialogues.",
               "Computes positive and negative poetic valences from noun/adjective combinations (`a noble, charming prince`, `a vile, cursed toad`).",
@@ -941,7 +941,7 @@
             "points": [
               "Each bus routes through a 2-channel `GainNode` fader and a `StereoPannerNode`; upmixing first lets a centered pan pass mono voices at unity.",
               "`channelSettings()` turns faders, pans, mutes, and solos into per-strip gain and pan; any solo isolates the soloed channels, and an explicit mute still wins.",
-              "The fader taper is square-law `(v / 80)\u00b2` below unity and linear in dB above it, so 40 is \u221212 dB, 80 is unity, and 100 is +12 dB; changes ramp over a 20 ms time constant.",
+              "The fader taper is square-law `(v / 80)²` below unity and linear in dB above it, so 40 is −12 dB, 80 is unity, and 100 is +12 dB; changes ramp over a 20 ms time constant.",
               "Live strips carry a post-pan `AnalyserNode`; a `requestAnimationFrame` loop turns `meterReading()` RMS and peak into meter fills with fast attack, a slow fall, and a 0.9 s peak hold.",
               "Each strip opens with a fixed voicing trim from `CHANNEL_VOICING_DB` before its fader (lead +6 dB, choir +12 dB), so the default balance favors the melody and voices while every fader still reads 0.0 dB. A `Math.SQRT1_2` trim on the vitrine drag panner keeps its path at the pre-mixer level."
             ]
@@ -1120,17 +1120,17 @@
             "jazz",
             "tonnetz"
           ],
-          "what": "Allows the user to select and manipulate the harmonic rulebook governing the six-language esoteric ensemble (`#kapellmeister-engine`). Offers twenty-two rulebooks, grouped into families in the menu: Victorian Neo-Riemannian Tonnetz, 12-Bar Delta & Parlor Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Modal Drone, Parlor Ragtime & Cakewalk Strains (a Joplin-style strain with an oom-pah stride bass, added purely in Inform 7), Doo-Wop Parlor Ballad, Sacred Harp Shape-Note Hymnody, Andalusian Flamenco Cadence, Klezmer Freygish Dance, Sea Shanty & Hornpipe, Silent-Film Lydian Dream (the six of D-041 wave 1), Bossa Nova Salon, Baroque Chorale, Gothic Horror Organ, Gospel Shout & Revival, Tango Habanera, Neo-Soul Lo-Fi (the six of D-041 wave 2), Vaudeville Viennese Waltz, Swing-Era Savoy Ballroom, Javanese Gamelan Pelog (the three feel-driven genres of D-041 wave 3 / D-060), and Raw Esoteric Chaos. Each creature varies its genre's changes by the moves that genre's rulebook permits (rotation, relative and tritone substitutions, secondary dominants, modal borrowing, cadences, harmonic pace), chosen by the creature's own harmony fields (D-043), so no two creatures need share a progression. The VARIATION line names those moves, and AS WRITTEN switches them off. The harmony moves on a four-pass clock (D-044): each chord holds a whole loop and changes on its downbeat, the readout shows the step and the pass (05 / 12 \u00b7 3/4), and the compass lights the pass that is playing. THE CREATURE'S OWN, first in the menu and the rulebook a fresh creature opens in, is a rulebook each creature writes from its own scale through a functional grammar in Inform 7 (tonic, predominant, and dominant regions, and chord shapes tried in order), in the character of a genre it borrows. Displays active Step (01..12), Chord Name (e.g. C Maj, F7, Cmaj9), Harmonic Vector, and Euler Consonance score in real time alongside an interactive SVG Tonnetz compass.",
+          "what": "Allows the user to select and manipulate the harmonic rulebook governing the six-language esoteric ensemble (`#kapellmeister-engine`). Offers twenty-two rulebooks, grouped into families in the menu: Victorian Neo-Riemannian Tonnetz, 12-Bar Delta & Parlor Blues, Smoky Parlor Jazz, Palestrina Modal Counterpoint, Mystic Modal Drone, Parlor Ragtime & Cakewalk Strains (a Joplin-style strain with an oom-pah stride bass, added purely in Inform 7), Doo-Wop Parlor Ballad, Sacred Harp Shape-Note Hymnody, Andalusian Flamenco Cadence, Klezmer Freygish Dance, Sea Shanty & Hornpipe, Silent-Film Lydian Dream (the six of D-041 wave 1), Bossa Nova Salon, Baroque Chorale, Gothic Horror Organ, Gospel Shout & Revival, Tango Habanera, Neo-Soul Lo-Fi (the six of D-041 wave 2), Vaudeville Viennese Waltz, Swing-Era Savoy Ballroom, Javanese Gamelan Pelog (the three feel-driven genres of D-041 wave 3 / D-060), and Raw Esoteric Chaos. Each creature varies its genre's changes by the moves that genre's rulebook permits (rotation, relative and tritone substitutions, secondary dominants, modal borrowing, cadences, harmonic pace), chosen by the creature's own harmony fields (D-043), so no two creatures need share a progression. The VARIATION line names those moves, and AS WRITTEN switches them off. The harmony moves on a four-pass clock (D-044): each chord holds a whole loop and changes on its downbeat, the readout shows the step and the pass (05 / 12 · 3/4), and the compass lights the pass that is playing. THE CREATURE'S OWN, first in the menu and the rulebook a fresh creature opens in, is a rulebook each creature writes from its own scale through a functional grammar in Inform 7 (tonic, predominant, and dominant regions, and chord shapes tried in order), in the character of a genre it borrows. Displays active Step (01..12), Chord Name (e.g. C Maj, F7, Cmaj9), Harmonic Vector, and Euler Consonance score in real time alongside an interactive SVG Tonnetz compass.",
           "how": {
             "lead": "`src/rulebooks.ni` states the genres; `src/conductor.mjs` and `src/app.mjs` apply them and show harmonic telemetry:",
             "points": [
-              "Each genre is written in Inform 7 in `src/rulebooks.ni` (D-033): `buildGenreSpine()` reads its changes table (I7-IV7-V7, Imaj9-vi9-ii9-\u266dII7alt, suspensions with a Picardy third, root/fifth drone ladders) or walks the Tonnetz, and the menu, title, and motto are built from the same file.",
+              "Each genre is written in Inform 7 in `src/rulebooks.ni` (D-033): `buildGenreSpine()` reads its changes table (I7-IV7-V7, Imaj9-vi9-ii9-♭II7alt, suspensions with a Picardy third, root/fifth drone ladders) or walks the Tonnetz, and the menu, title, and motto are built from the same file.",
               "`projectConsonantPitch()` adapts to genre rules: blue-note sieve for blues, guide-tone approach for jazz, and stepwise conjunct motion for counterpoint.",
-              "The Euler consonance strictness slider modulates the maximum permissible Gradus threshold from strict (G \u2264 5) to permissive (G \u2264 14).",
+              "The Euler consonance strictness slider modulates the maximum permissible Gradus threshold from strict (G ≤ 5) to permissive (G ≤ 14).",
               "`highlightBeatStep()` updates the live readout on each 16th-note step and highlights the active region on the SVG Tonnetz compass."
             ]
           },
-          "why": "Different listeners enjoy different musical aesthetics\u2014from tight contrapuntal elegance to smoky blues to raw, unfiltered avant-garde noise. Exposing the Kapellmeister console puts harmonic mastery directly in the user's hands without destroying the genuine execution of the underlying esoteric programs (ADR D-019).",
+          "why": "Different listeners enjoy different musical aesthetics—from tight contrapuntal elegance to smoky blues to raw, unfiltered avant-garde noise. Exposing the Kapellmeister console puts harmonic mastery directly in the user's hands without destroying the genuine execution of the underlying esoteric programs (ADR D-019).",
           "evidence": [
             {
               "label": "Kapellmeister conductor engine",
@@ -1214,7 +1214,7 @@
             "points": [
               "Kinds, values, properties with defaults, either/or adjectives (`Delta Blues is an insistent voiced genre.`), globals that vary, tables with `--` blanks and `(continued)`, and genre-based rulebooks that produce values.",
               "Rules such as `Colouring rule for Smoky Parlor Jazz when the interval above the tonic is listed in {0, 5}: rule succeeds with result maj9.` fire in source order, first match wins (a documented departure from Inform's specificity ordering).",
-              "`compileRulebooks()` follows every rulebook over its whole domain (12 intervals, strictness 1\u201314), so playing never runs Inform. The true algorithms a genre names (Tonnetz walking, Euler sieving, contrary motion, cell choosing, inverted triads) stay in `src/conductor.mjs`.",
+              "`compileRulebooks()` follows every rulebook over its whole domain (12 intervals, strictness 1–14), so playing never runs Inform. The true algorithms a genre names (Tonnetz walking, Euler sieving, contrary motion, cell choosing, inverted triads) stay in `src/conductor.mjs`.",
               "The app installs the compiled rulebooks before anything reads a genre: the Kapellmeister menu, the Fun Machine's key colours, the conductor, and session presets.",
               "`tests/fixtures/rulebooks-golden.json` froze every genre decision before the migration, and the conductor still reproduces it exactly."
             ]
@@ -1269,8 +1269,8 @@
           "how": {
             "lead": "`src/app.mjs` procedurally generates the acoustic space using Web Audio API nodes:",
             "points": [
-              "`ensureWaxCrackleBuffer()` generates a 3.0s stereo buffer synthesizing acoustic recording horn resonance (350\u20133200 Hz bandpass), Poisson-distributed dust pops, and 78 RPM turntable groove rumble.",
-              "`ensureParlorImpulseResponse()` generates a 1.6s stereo impulse response modeling discrete early reflections (12\u201398 ms) and high-frequency velvet drape absorption for a Web Audio `ConvolverNode`. Every voice but the bass is heard in the room, post-fader (the pulse at half strength), sitting about 14\u201321 dB under the mix at the default ambience (D-034).",
+              "`ensureWaxCrackleBuffer()` generates a 3.0s stereo buffer synthesizing acoustic recording horn resonance (350–3200 Hz bandpass), Poisson-distributed dust pops, and 78 RPM turntable groove rumble.",
+              "`ensureParlorImpulseResponse()` generates a 1.6s stereo impulse response modeling discrete early reflections (12–98 ms) and high-frequency velvet drape absorption for a Web Audio `ConvolverNode`. Every voice but the bass is heard in the room, post-fader (the pulse at half strength), sitting about 14–21 dB under the mix at the default ambience (D-034).",
               "Levels per unit of the ambience slider live in `src/ensemble.mjs`: `PARLOR_REVERB_PER_LEVEL` (1.0) and `PARLOR_CRACKLE_PER_LEVEL` (0.21, halved after listening found the crackle overpowering).",
               "`scheduleClockworkTick()` synthesizes mechanical brass escapement clicks on quarter-beats (steps 0, 3, 6, 9) with high 'tick' (2600 Hz) and lower 'tock' (1800 Hz) transients and a wooden case knock, loud enough to read through the band (peaks near the mix's).",
               "`exportSpecimenWav()` incorporates the identical crackle, chamber convolution, and clockwork escapement ticks into rendered 16-bit PCM WAV loops."
@@ -1312,8 +1312,8 @@
           "how": {
             "lead": "`src/accompaniment.mjs` turns a key into a performance; `src/app.mjs` voices and schedules it on the band's grid:",
             "points": [
-              "`buildPerformance(key, style, genre, tonic)` returns four region chords and twelve steps; the genre colours each chord through `buildFunChord(key, \"auto\", \u2026)`.",
-              "`schedulePadChord()` plays the chord in the current voice: a validated patch from `src/voices.mjs` (D-040). By default that is THE CREATURE'S OWN: `creatureVoice()` takes the preset the spell's `fun_voice` names, tilts its filters by `fun_bright`, and spreads its detune and width by `fun_spread`. The VOICE chips also offer seven presets (VELVET PAD, HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, \u00c6THER CHOIR), whose patches may add a tremolo, formant bands, or a struck, rolled chord. The default, VELVET PAD, is two saws detuned \u00b18 cents and a triangle under a slowly opening lowpass, with an attack scaled to the chord's length and a release that crossfades into the next. `padVoicing()` voice-leads each change.",
+              "`buildPerformance(key, style, genre, tonic)` returns four region chords and twelve steps; the genre colours each chord through `buildFunChord(key, \"auto\", …)`.",
+              "`schedulePadChord()` plays the chord in the current voice: a validated patch from `src/voices.mjs` (D-040). By default that is THE CREATURE'S OWN: `creatureVoice()` takes the preset the spell's `fun_voice` names, tilts its filters by `fun_bright`, and spreads its detune and width by `fun_spread`. The VOICE chips also offer seven presets (VELVET PAD, HARMONIUM, GLASS HARMONICA, THEATRE ORGAN, STRING MACHINE, MUSIC BOX, ÆTHER CHOIR), whose patches may add a tremolo, formant bands, or a struck, rolled chord. The default, VELVET PAD, is two saws detuned ±8 cents and a triangle under a slowly opening lowpass, with an attack scaled to the chord's length and a release that crossfades into the next. `padVoicing()` voice-leads each change.",
               "`scheduleArpNote()` plucks `arpeggioNotes()` two per step in each step's real duration; `scheduleFunLeadNote()` glides between progression notes with late-arriving vibrato. The Fun Machine strip feeds the delay and chamber reverb.",
               "A held key calls `applyEnsembleConductor()` with the performance's chords converted by `toTonicRelative()`, so the band plays the pad's chord in the right key, and ducks the LOLCODE lead and drones by 10 dB until release.",
               "The Loop Machine (`src/looper.mjs`, `#looper`) records takes from held keys or step sequencing: arms with downbeat sync and anticipation latching, sounds an audible clockwork count-in, provides an interactive 12-step tracker ribbon with click-to-edit note placement and auto-advancing STEP REC mode, plays loops sequentially for their repeats, stacks layers with undo, and exports the full song across stems and MIDI."
@@ -1414,13 +1414,102 @@
             "kapellmeister-genre-console",
             "bandstand-console"
           ]
+        },
+        {
+          "id": "utterance-metre-synchronizer",
+          "title": "Utterance Metre & Multi-Instrument Synchronizer",
+          "summary": "Eliminates metric drift and vertical clashing by synchronizing all esoteric voices, schedulers, and delay reflections across 12-step and 16-step metres.",
+          "tags": [
+            "metre",
+            "synchronization",
+            "conduction",
+            "tempo-pocket",
+            "anti-clash"
+          ],
+          "what": "Unifies the metric division and harmonic alignment of all seven ensemble voices across both vintage 12-step compound shuffle and 16-step straight time. It scales step units, dynamic arrangement passes, fungal mycelium events, delay line taps, clockwork escapement clicks, and voice filter modulations to barline strides without polyrhythmic drift.",
+          "how": {
+            "lead": "src/tuning.mjs, src/ensemble.mjs, src/schedulers.mjs, src/mycelium.mjs, src/accompaniment.mjs, and src/conductor.mjs coordinate metric synchronization:",
+            "points": [
+              "stepUnitSeconds() in src/tuning.mjs calculates true step duration for both 12-step and 16-step bar-aligned playback.",
+              "delayTimeFor() in src/ensemble.mjs receives active step unit duration, locking echo reflection intervals to tempo and metre.",
+              "myceliumEvents() in src/mycelium.mjs parameterizes step count, scaling biological spore puffs and hyphal triggers cleanly across the entire bar.",
+              "scheduleClockworkTick() in src/schedulers.mjs pulses on true quarter notes and half-bars, eliminating triplet polyrhythms under straight time.",
+              "Conductor and Accompaniment engines generate 16-chord spines and 4-step region strides, avoiding out-of-bounds exceptions and aligning chord changes."
+            ]
+          },
+          "why": "When native 16-step straight metre was introduced alongside 12-step compound time, hardcoded assumptions produced metric drift, vertical harmonic clashes, and runtime indexing errors. Utterance-level synchronization ensures all voices speak a unified musical language in either metre (D-081).",
+          "evidence": [
+            {
+              "label": "Utterance Coherence Suite",
+              "target": "tests/utterance-coherence.test.mjs"
+            },
+            {
+              "label": "Metre and Bar Lock Engine",
+              "target": "src/tuning.mjs"
+            },
+            {
+              "label": "Harmonic Conductor",
+              "target": "src/conductor.mjs"
+            },
+            {
+              "label": "Architecture Decision Record D-081",
+              "target": "docs/DECISIONS.md"
+            }
+          ],
+          "related": [
+            "tonnetz-spine",
+            "euler-consonance-sieve",
+            "lookahead-scheduler"
+          ]
+        },
+        {
+          "id": "kapellmeister-fluid-layout",
+          "title": "Kapellmeister Fluid Grouped Layout & Ergonomics",
+          "summary": "Groups genre rulebook controls and concert tuning overrides into responsive flex containers to prevent visual overlap and whitespace glitches.",
+          "tags": [
+            "ui",
+            "kapellmeister",
+            "ergonomics",
+            "layout",
+            "responsive"
+          ],
+          "what": "Organizes the Kapellmeister console controls into two semantic functional groupings: rulebook genre/scratchpad controls and concert pitch/scale transposition tools. Responsive wrapping guarantees legible presentation across both expansive desktop displays and narrow mobile screens.",
+          "how": {
+            "lead": "index.html and styles.css structure the Kapellmeister action bar:",
+            "points": [
+              "Encapsulates genre selection, as-written toggle, and manuscript drawer toggle within .kapellmeister-group-rulebook.",
+              "Encapsulates root override, scale override, and A4 reference pitch within .kapellmeister-group-tuning.",
+              "Applies flex wrapping and responsive gap rules in styles.css to prevent rigid overflow and visual crowding.",
+              "Preserves strict typographic floors (0.6rem) and high-contrast parchment and brass Victorian aesthetics."
+            ]
+          },
+          "why": "Rapid addition of tuning overrides, scale selectors, and custom manuscript editors caused button crowding, awkward line wraps, and whitespace glitches. Semantic grouping ensures controls remain intuitive, uncluttered, and robust under varying window dimensions (D-082).",
+          "evidence": [
+            {
+              "label": "Workstation Shell Markup",
+              "target": "index.html"
+            },
+            {
+              "label": "Responsive Stylesheet",
+              "target": "styles.css"
+            },
+            {
+              "label": "Architecture Decision Record D-082",
+              "target": "docs/DECISIONS.md"
+            }
+          ],
+          "related": [
+            "kapellmeister-genre-console",
+            "kapellmeister-manuscript",
+            "keep-segmented-decks"
+          ]
         }
       ]
     },
     {
       "id": "sharing-and-export",
       "title": "Specimen Sharing & High-Resolution Broadsheets",
-      "description": "Privacy-preserving URL fragment sharing and 1200\u00d71520 engraved Victorian broadsheet PNG export.",
+      "description": "Privacy-preserving URL fragment sharing and 1200×1520 engraved Victorian broadsheet PNG export.",
       "entries": [
         {
           "id": "client-url-sharing",
@@ -1465,7 +1554,7 @@
         },
         {
           "id": "broadsheet-png-export",
-          "title": "1200\u00d71520 Engraved Broadsheet Specimen PNG Export",
+          "title": "1200×1520 Engraved Broadsheet Specimen PNG Export",
           "summary": "Renders an archival Victorian specimen plate combining live portrait capture, phrase, and ensemble telemetry.",
           "tags": [
             "export",
@@ -1473,7 +1562,7 @@
             "canvas",
             "broadsheet"
           ],
-          "what": "Composites an archival 1200\u00d71520 pixel engraved Victorian specimen broadsheet on an offscreen `<canvas>` (`ENGRAVE PNG PLATE`). Downloads the image as `hai-oracle-<name>-<seed>.png`, featuring the live apparition portrait, specimen name, confided phrase, hexadecimal seed, and six-language ensemble telemetry ledger.",
+          "what": "Composites an archival 1200×1520 pixel engraved Victorian specimen broadsheet on an offscreen `<canvas>` (`ENGRAVE PNG PLATE`). Downloads the image as `hai-oracle-<name>-<seed>.png`, featuring the live apparition portrait, specimen name, confided phrase, hexadecimal seed, and six-language ensemble telemetry ledger.",
           "how": {
             "lead": "`renderSpecimenBroadsheetCanvas()` in `src/app.mjs` builds the plate from vector primitives:",
             "points": [
@@ -1484,7 +1573,7 @@
               "`exportSpecimenPng()` triggers an immediate browser file download via a temporary data anchor."
             ]
           },
-          "why": "Users love collecting and saving their discoveries. Rather than downloading a generic square icon, generating a high-resolution 1200\u00d71520 Victorian natural history broadsheet turns every summoned creature into a framed work of art suitable for printing or archival collection (ADR D-015).",
+          "why": "Users love collecting and saving their discoveries. Rather than downloading a generic square icon, generating a high-resolution 1200×1520 Victorian natural history broadsheet turns every summoned creature into a framed work of art suitable for printing or archival collection (ADR D-015).",
           "evidence": [
             {
               "label": "Broadsheet canvas renderer",
@@ -1567,7 +1656,7 @@
             "midi",
             "daw"
           ],
-          "what": "`EXPORT 9 STEMS (ZIP)` downloads `\u2026-stems.zip` holding eight channel stems (lead, manual, pulse, bass, organ, chimes, choir, mycelium), a parlor-room stem of crackle and clockwork, and a README with tempo and loop length. `WRITE MIDI SCORE` downloads a Standard MIDI File (Type 1) with a tempo track and seven named instrument tracks, ready to drop into any DAW.",
+          "what": "`EXPORT 9 STEMS (ZIP)` downloads `…-stems.zip` holding eight channel stems (lead, manual, pulse, bass, organ, chimes, choir, mycelium), a parlor-room stem of crackle and clockwork, and a README with tempo and loop length. `WRITE MIDI SCORE` downloads a Standard MIDI File (Type 1) with a tempo track and seven named instrument tracks, ready to drop into any DAW.",
           "how": {
             "lead": "`renderEnsembleLoop()` in `src/app.mjs` drives both exports through the shared graph; `src/zip.mjs` and `src/midi.mjs` write the files:",
             "points": [
@@ -1709,7 +1798,7 @@
         {
           "id": "esoteric-vm-inspector",
           "title": "Under the Parlor Glass: Live Esoteric VM Step Inspector",
-          "summary": "Exposes real-time virtual-machine registers, tape windows, 2D torus coordinates, prime exponents, and dramatic cues across Plates I\u2013V.",
+          "summary": "Exposes real-time virtual-machine registers, tape windows, 2D torus coordinates, prime exponents, and dramatic cues across Plates I–V.",
           "tags": [
             "inspector",
             "esoteric",
@@ -1720,7 +1809,7 @@
             "fractran",
             "shakespeare"
           ],
-          "what": "Each of the five esoteric accompaniment plates in Wing III offers an expandable `INSPECT VM \u2315` loupe (`.vm-inspector`) that displays the exact virtual-machine state of the active step during playback or when any step cell is clicked: Malbolge 10-trit `rotr`/`crazy` words, Brainfuck 6-cell tape windows and `[->+<]` shuttles, Befunge-93 2D torus `(x, y)` coordinates and `/` vs. `\\` mirror deflections, Piet codel transitions and FRACTRAN prime-exponent registers, and Shakespeare Act/Scene `[SPEAKER \u2794 ADDRESSEE]` dialogue cues and formant bandpass frequencies.",
+          "what": "Each of the five esoteric accompaniment plates in Wing III offers an expandable `INSPECT VM ⌕` loupe (`.vm-inspector`) that displays the exact virtual-machine state of the active step during playback or when any step cell is clicked: Malbolge 10-trit `rotr`/`crazy` words, Brainfuck 6-cell tape windows and `[->+<]` shuttles, Befunge-93 2D torus `(x, y)` coordinates and `/` vs. `\\` mirror deflections, Piet codel transitions and FRACTRAN prime-exponent registers, and Shakespeare Act/Scene `[SPEAKER ➔ ADDRESSEE]` dialogue cues and formant bandpass frequencies.",
           "how": {
             "lead": "`src/inspector.mjs` formats pure per-step VM telemetry without mutating interpreter state:",
             "points": [
@@ -1805,7 +1894,7 @@
             "sandbox",
             "compiler"
           ],
-          "what": "The Kapellmeister's Manuscript (`#kapellmeister-manuscript` inside `#kapellmeister-engine`) opens a collapsible Inform 7 rulebook editor preloaded with a complete custom genre (`\"celestial_music_box\"` / `\"CELESTIAL MUSIC BOX\"`). Pressing `COMPILE & CONDUCT \u2726` compiles the custom Inform 7 source alongside `src/rulebooks.ni`, reports 1-based manuscript line diagnostics on syntax or semantic errors, adds the new genre to the RULEBOOK menu, and immediately re-conducts the ensemble.",
+          "what": "The Kapellmeister's Manuscript (`#kapellmeister-manuscript` inside `#kapellmeister-engine`) opens a collapsible Inform 7 rulebook editor preloaded with a complete custom genre (`\"celestial_music_box\"` / `\"CELESTIAL MUSIC BOX\"`). Pressing `COMPILE & CONDUCT ✦` compiles the custom Inform 7 source alongside `src/rulebooks.ni`, reports 1-based manuscript line diagnostics on syntax or semantic errors, adds the new genre to the RULEBOOK menu, and immediately re-conducts the ensemble.",
           "how": {
             "lead": "`src/manuscript.mjs` wraps `compileRulebooks()` (`src/inform.mjs`) with canonical-genre immutability guards and line-number translation:",
             "points": [
@@ -1856,13 +1945,13 @@
           "how": {
             "lead": "The integration spans zero-dependency Web MIDI routing, pure C reference ports, fixed-point synthesis, and UFW/JLFS firmware container packaging:",
             "points": [
-              "`src/midi-io.mjs` detects FM-1 ports via `isFm1Port()` and maps lower keys ($F_3\\dots B_3$) to Casio section/style triggers and upper keys ($C_4\\dots G_5$) to the manual, while CC 70\u201373 bind to mixer faders, CC 2/74 to filter cutoff, and CC 75 to Euler strictness (D-072).",
+              "`src/midi-io.mjs` detects FM-1 ports via `isFm1Port()` and maps lower keys ($F_3\\dots B_3$) to Casio section/style triggers and upper keys ($C_4\\dots G_5$) to the manual, while CC 70–73 bind to mixer faders, CC 2/74 to filter cutoff, and CC 75 to Euler strictness (D-072).",
               "`firmware-c/whimsy_esoteric.c` ports FNV-1a, Euler Gradus Suavitatis, and all 7 esoteric VMs to pure C, while `firmware-c/whimsy_fm1_synth.c` renders 44.1 kHz 128-frame Q23 stereo audio with precomputed phase tables and zero libm floating point (D-073).",
-              "`firmware-c/whimsy_fm1_ui.c` renders the 240\u00d7240 RGB565 Vitrine (bell jar arch, specimen silhouette, tracker ribbon) via 16-row DMA banded transfers (D-074).",
+              "`firmware-c/whimsy_fm1_ui.c` renders the 240×240 RGB565 Vitrine (bell jar arch, specimen silhouette, tracker ribbon) via 16-row DMA banded transfers (D-074).",
               "`tools/build_fm1_firmware.py` compiles the RISC ELF image using JieLi clang (`-target pi32v2 -mcpu=r3`) and packages `whimsy-machine.fwsc` with CRC-16 keystream encryption, verified under `fm1-emu` in `tests/fm1-firmware.test.mjs` (D-075)."
             ]
           },
-          "why": "Physical instruments provide tactile immediacy that glass touchscreens cannot replicate. Pairing an out-of-the-box Web MIDI controller profile with an authentic standalone embedded firmware container achieves the best of both worlds: zero-install browser playability and true off-grid pocket synth hardware (roadmap P7-01\u2013P7-06, ADRs D-072\u2013D-075).",
+          "why": "Physical instruments provide tactile immediacy that glass touchscreens cannot replicate. Pairing an out-of-the-box Web MIDI controller profile with an authentic standalone embedded firmware container achieves the best of both worlds: zero-install browser playability and true off-grid pocket synth hardware (roadmap P7-01–P7-06, ADRs D-072–D-075).",
           "evidence": [
             {
               "label": "FM-1 Web MIDI Controller Profile",
@@ -1877,7 +1966,7 @@
               "target": "firmware-c/whimsy_fm1_synth.c"
             },
             {
-              "label": "FM-1 240\u00d7240 color TFT UI renderer",
+              "label": "FM-1 240×240 color TFT UI renderer",
               "target": "firmware-c/whimsy_fm1_ui.c"
             },
             {
@@ -1889,7 +1978,7 @@
               "target": "tests/fm1-firmware.test.mjs"
             },
             {
-              "label": "Architecture Records D-072\u2013D-075",
+              "label": "Architecture Records D-072–D-075",
               "target": "docs/DECISIONS.md"
             }
           ],
@@ -1897,6 +1986,54 @@
             "studio-deck-and-daw-routing",
             "esoteric-vm-inspector",
             "client-url-sharing"
+          ]
+        },
+        {
+          "id": "keep-segmented-decks",
+          "title": "The Keep Wing Segmented Telegraph Decks",
+          "summary": "Eliminates vertical bloat and jagged multi-column wrapping in Wing IV by providing a tabbed telegraph selector across Export, Session, Studio, and Herbarium.",
+          "tags": [
+            "ui",
+            "keep-wing",
+            "telegraph-deck",
+            "ergonomics",
+            "persistence"
+          ],
+          "what": "Refactors Wing IV (The Keep Wing) into a segmented deck architecture featuring four dedicated operator views: Specimen Audio/PNG Export, Session Ledger, Studio DAW Routing, and The Naturalist's Herbarium. An interactive telegraph selector toggles the active deck while persisting the user's choice locally.",
+          "how": {
+            "lead": "index.html, styles.css, and src/app.mjs orchestrate the segmented deck interface:",
+            "points": [
+              "Renders .keep-deck-nav with four accessible tab buttons (#keep-tab-export, #keep-tab-session, #keep-tab-studio, #keep-tab-herbarium).",
+              "Controls visibility of #export-engine, #session-engine, #studio-engine, and #herbarium-engine via the HTML hidden attribute.",
+              "Applies display: none !important to hidden engines in styles.css to eliminate dangling borders and grid reflow artifacts.",
+              "Persists the active tab in window.localStorage under whimsy-machine.keep-deck through guarded helpers (readKeepDeck(), writeKeepDeck()).",
+              "Formats studio WAV parameters into a cohesive 2x2 grid (.export-format-grid) with explicit sublabels for bit depth, sample rate, loop mode, and stem processing."
+            ]
+          },
+          "why": "Wing IV had accumulated multiple complex sub-engines into a single scrolling container, resulting in overwhelming vertical bloat and awkward CSS grid breaks. Segmented decks provide focused, purposeful workspaces while maintaining document outline order and instant keyboard accessibility (D-082).",
+          "evidence": [
+            {
+              "label": "Keep Wing Shell Markup",
+              "target": "index.html"
+            },
+            {
+              "label": "Desktop & Responsive Stylesheet",
+              "target": "styles.css"
+            },
+            {
+              "label": "Host Application Controller",
+              "target": "src/app.mjs"
+            },
+            {
+              "label": "Architecture Decision Record D-082",
+              "target": "docs/DECISIONS.md"
+            }
+          ],
+          "related": [
+            "broadsheet-png-export",
+            "deterministic-wav-export",
+            "naturalists-herbarium",
+            "studio-deck-and-daw-routing"
           ]
         }
       ]

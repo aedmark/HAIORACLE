@@ -413,10 +413,12 @@ export function scheduleClockworkTick(context, destination, at, stepIndex, level
   parlorAcousticsEnabled = true,
   parlorTickEnabled = true,
   looperNeedsTick = false,
+  stepsCount = 12,
 } = {}) {
   if ((!parlorAcousticsEnabled || !parlorTickEnabled) && !looperNeedsTick) return;
-  const isQuarter = stepIndex % 3 === 0;
-  const isHighTick = stepIndex === 0 || stepIndex === 6;
+  const stride = stepsCount === 16 ? 4 : 3;
+  const isQuarter = stepIndex % stride === 0;
+  const isHighTick = stepsCount === 16 ? (stepIndex === 0 || stepIndex === 8) : (stepIndex === 0 || stepIndex === 6);
   const effLevel = Math.max(0, Math.min(1, looperNeedsTick ? Math.max(level, 0.65) : level));
 
   if (isQuarter) {
@@ -517,7 +519,9 @@ export function scheduleNote(context, transport, score, step, at, duration, {
       const liveDetuneMod = transport === currentTransport
         ? (Math.sin(at * 32) * ((interaction.agitation || 0) * 45)) - ((interaction.retaliationPitchDrop || 0) * 360) + ((interaction.sulk || 0) * -25)
         : 0;
-      oscillator.detune.value = voice.detune * 0.45 + layer.detuneOffset + (step % 3 - 1) * score.twist * 0.14 + liveDetuneMod;
+      const totalSteps = transport.melody?.length || 12;
+      const cycle = totalSteps === 16 ? 4 : 3;
+      oscillator.detune.value = voice.detune * 0.45 + layer.detuneOffset + ((step % cycle) - Math.floor(cycle / 2)) * score.twist * 0.14 + liveDetuneMod;
       const level = context.createGain();
       level.gain.value = voice.gain * layer.weight;
       oscillator.connect(level).connect(envelope);
@@ -563,7 +567,9 @@ export function scheduleBeatStep(context, transport, score, stepIndex, at, stepD
     const snareGain = context.createGain();
     noise.buffer = ensureNoiseBuffer(context);
     snareFilter.type = "bandpass";
-    snareFilter.frequency.setValueAtTime(1180 + (stepIndex % 3) * 160, at);
+    const totalSteps = currentBeat.steps?.length || 12;
+    const snareCycle = totalSteps === 16 ? 4 : 3;
+    snareFilter.frequency.setValueAtTime(1180 + (stepIndex % snareCycle) * 160, at);
     snareFilter.Q.setValueAtTime(2.6, at);
     const peak = (step.snare === 2 ? 0.14 : 0.065) * holdLift;
     logNote(transport, "beat", GM_DRUMS.snare, at, 0.1, peak);
@@ -681,8 +687,10 @@ export function scheduleHarmonyStep(context, transport, score, stepIndex, at, st
   const step = currentHarmony.steps[stepIndex % currentHarmony.steps.length];
   if (!step || step.gate === 0) return;
 
+  const totalSteps = currentHarmony.steps?.length || 12;
+  const stride = totalSteps === 16 ? 4 : 3;
   const isSustained = step.gate === 2;
-  const isRegionBoundary = stepIndex % 3 === 2;
+  const isRegionBoundary = stepIndex % stride === (stride - 1);
   const duration = isRegionBoundary
     ? Math.min(stepDuration * 0.90, Math.max(0.08, stepDuration * 0.86))
     : Math.max(0.12, stepDuration * (isSustained ? 1.18 : 0.78));
@@ -730,8 +738,10 @@ export function scheduleChimeStep(context, transport, score, stepIndex, at, step
   const step = currentChimes.steps[stepIndex % currentChimes.steps.length];
   if (!step || step.gate === 0) return;
 
+  const totalSteps = currentChimes.steps?.length || 12;
+  const stride = totalSteps === 16 ? 4 : 3;
   const isAccented = step.gate === 2;
-  const isRegionBoundary = stepIndex % 3 === 2;
+  const isRegionBoundary = stepIndex % stride === (stride - 1);
   const chimeOctave = interaction.pitchBend > 0.4 ? 12 : (interaction.pitchBend < -0.4 ? -12 : 0);
   const rootMidi = Math.min(84, score.root + 12 + chimeOctave);
   const rootFreq = midiToFrequency(rootMidi);
@@ -880,10 +890,11 @@ export function scheduleChantStep(context, transport, score, stepIndex, at, step
 // own sound (src/mycelium.mjs, D-042).
 export function scheduleFungalBioStep(context, transport, score, stepIndex, at, stepDuration, {
   logNote = () => {},
+  stepsCount = (transport?.melody?.length || 12),
 } = {}) {
   if (!transport.fungalBus) return;
   const bus = transport.fungalBus;
-  for (const event of myceliumEvents(score, stepIndex, interaction.hold)) {
+  for (const event of myceliumEvents(score, stepIndex, interaction.hold, stepsCount)) {
     const start = at + event.at * stepDuration;
     const end = start + event.decay;
     const gain = context.createGain();

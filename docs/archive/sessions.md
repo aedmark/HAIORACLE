@@ -1835,4 +1835,34 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
    - Updated page shell map and invariants in `docs/ARCHITECTURE.md`.
    - Updated `docs/HANDOFF.md`.
 
+### Session 72: 2026-10-23: raw instrumentation 48-step base groove loops in the Loop Machine (D-059)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Enable using the creature's raw 48-step base groove (4 passes of 12 steps) as loops in the Loop Machine so mixes longer than 5 seconds / 12 steps can be created and exported across WAV, Stems, and MIDI.
+
+**Done:** D-059 is accepted and verified. 185/185 checks pass.
+
+**Changed:**
+1. `src/looper.mjs`:
+   - `sectionPassForLoop(song, loopIndex, repeat)` now resolves pass 0..3 across contiguous `main` groove loops.
+   - `validateSong(raw, path)` permits empty takes (`slots.every(s => s === null)`) when `loop.role === "main"`. Non-main roles (`intro`, `bridge`, `outro`) still require keys.
+2. `index.html` & `styles.css`:
+   - Added `<button class="beat-button looper-button looper-section-button" id="looper-insert-groove" type="button">+ GROOVE</button>` between `+ INTRO` and `+ BRIDGE`.
+   - Added emerald/verdigris border accent `.looper-tile[data-role="main"]`.
+3. `src/app.mjs`:
+   - `insertSectionLoops("main")` inserts 4 loops of `emptyTake()` with `role: "main"` when no key is held on the manual (raw band without organ ducking), or Fun Machine progression takes when a key is held.
+   - `harmonicPassAt(absoluteStep)` queries `sectionPassForLoop` for the active loop, ensuring groove loops walk passes 0..3.
+   - `followSong(transport, loop, stepIndex, liveSlot)` tracks `raw:${currentHarmonicPass}` when `lead` is null, seamlessly re-conducting the band to the current pass of the harmonic cycle at each groove loop boundary.
+   - Readout and tiles display `L1 [GROOVE 1/4]`, `L2 [GROOVE 2/4]`, etc.
+4. Tests & documentation:
+   - Updated `tests/looper.test.mjs` with test coverage for raw groove loops and pass resolution.
+   - Stamped asset version (`node tools/stamp_assets.mjs`).
+
+**Verified:**
+- 185/185 automated tests pass (`node --test tests/*.test.mjs`).
+- Documentation check passes with 0 errors and 0 warnings (`python3 tools/check_docs.py`).
+- Manual check passes with 0 errors and 0 warnings (`python3 tools/manual.py check docs/manual.json`).
+
+
 

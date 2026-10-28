@@ -816,11 +816,12 @@ function scheduleNote(context, transport, score, step, at, duration) {
   });
 }
 
-function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55) {
+function scheduleClockworkTick(context, destination, at, stepIndex, level = 0.55, stepsCount = activeGridSteps) {
   scheduleParlorClockworkTick(context, destination, at, stepIndex, level, {
     parlorAcousticsEnabled,
     parlorTickEnabled,
     looperNeedsTick: recorder.mode !== "idle",
+    stepsCount,
   });
 }
 
@@ -1569,7 +1570,7 @@ const FUN_PAD_LEVEL = Object.freeze({
 
 function loopStepDuration(score, step) {
   const rhythm = RHYTHMS[effectiveRhythmIndex(score, activeGenre)];
-  return stepUnitSeconds(activeTempoBpm || score.pulse, rhythm, barLock44) * rhythm[((step % rhythm.length) + rhythm.length) % rhythm.length];
+  return stepUnitSeconds(activeTempoBpm || score.pulse, rhythm, barLock44, activeGridSteps) * rhythm[((step % rhythm.length) + rhythm.length) % rhythm.length];
 }
 
 function funKeyLabel(semitone) {
@@ -1771,7 +1772,7 @@ function scheduleEnsembleStep(context, transport, score, step, at, stepDuration,
     scheduleFungalBioStep(context, transport, score, step, at, stepDuration);
   }
   if (transport.clockTicks ?? ((parlorAcousticsEnabled && parlorTickEnabled) || recorder.mode !== "idle")) {
-    scheduleClockworkTick(context, transport.output, at, step, parlorAcousticsLevel);
+    scheduleClockworkTick(context, transport.output, at, step, parlorAcousticsLevel, activeGridSteps);
   }
 }
 
@@ -1790,7 +1791,7 @@ function playSongLayers(context, transport, score, absoluteStep, loop, timing) {
     let padSteps = 0;
     if (starts) {
       do padSteps += 1;
-      while (stepIndex + padSteps < 12 && !performance.steps[stepIndex + padSteps].isRegionStart && sameSlot(take[stepIndex + padSteps], slot));
+      while (stepIndex + padSteps < activeGridSteps && !performance.steps[stepIndex + padSteps].isRegionStart && sameSlot(take[stepIndex + padSteps], slot));
     }
     transport.layerVoices[layerIndex] ??= { voicing: null, leadMidi: null };
     playPerformanceStep(context, transport, transport.layerVoices[layerIndex], performanceFor(slot), {
@@ -1819,7 +1820,7 @@ function shapeDrones(transport, score, absoluteStep, at) {
   const frequencies = droneFrequencies(score, chordRoot);
   transport.drones.forEach((drone, index) => drone.frequency.setTargetAtTime(frequencies[index], at, 0.06));
   const resting = !arrangementPlays("lead", stepIndex);
-  const region = padStepsDuration(score, absoluteStep, 3);
+  const region = padStepsDuration(score, absoluteStep, activeGridSteps === 16 ? 4 : 3);
   for (const envelope of transport.droneEnvelopes) {
     if (typeof envelope.gain.cancelAndHoldAtTime === "function") {
       envelope.gain.cancelAndHoldAtTime(at);
@@ -1908,7 +1909,7 @@ async function playScore(score, { cursor = 0 } = {}) {
   const now = context.currentTime + 0.045;
   const initialPulse = activeTempoBpm || score.pulse;
   const initialRhythm = RHYTHMS[effectiveRhythmIndex(score, activeGenre)];
-  const initialUnit = stepUnitSeconds(initialPulse, initialRhythm, barLock44);
+  const initialUnit = stepUnitSeconds(initialPulse, initialRhythm, barLock44, activeGridSteps);
   const graph = buildEnsembleGraph(context, score, ensembleGraphOptions(context, {
     start: now,
     unit: initialUnit,
@@ -1918,7 +1919,7 @@ async function playScore(score, { cursor = 0 } = {}) {
   }));
   const transport = {
     ...graph,
-    melody: currentConductedMelody || melodyFor(score),
+    melody: currentConductedMelody || melodyFor(score, activeGridSteps),
     timer: 0,
     timeouts: new Set(),
     activeTakeLanding: null,
@@ -2284,19 +2285,19 @@ function applyEnsembleConductor() {
       activeFunPerformance = performanceOf(activeHeldFunKey, funMachineStyle);
       overrideProgression = activeFunPerformance.steps.map((step) => step.chord);
     } else if (scheduledCasio !== null) {
-      const stepPass = currentTransport && typeof currentTransport.step === "number" ? Math.floor(currentTransport.step / 12) : scheduledCasio.startPass;
+      const stepPass = currentTransport && typeof currentTransport.step === "number" ? Math.floor(currentTransport.step / activeGridSteps) : scheduledCasio.startPass;
       const casioPass = Math.max(0, Math.min(3, stepPass - scheduledCasio.startPass));
       scheduledCasio.performance = buildPerformance(
         scheduledCasio.key,
         scheduledCasio.role,
         activeGenre,
         currentScore.root,
-        { pass: casioPass, score: currentScore, varied: genreVaried }
+        { pass: casioPass, score: currentScore, varied: genreVaried, stepsCount: activeGridSteps }
       );
       overrideProgression = scheduledCasio.performance.steps.map((step) => step.chord);
     } else if (currentTransport && song.loops.length > 0 && !(recorder.mode === "recording" && recorder.kind === "new")) {
       const curStep = currentTransport.audibleStep >= 0 ? currentTransport.audibleStep : currentTransport.step;
-      const pos = songPosition(song, Math.max(0, curStep));
+      const pos = songPosition(song, Math.max(0, curStep), activeGridSteps);
       const loop = pos ? song.loops[pos.loopIndex] : null;
       const lead = leadSlotAt(loop, pos ? pos.step : 0);
       if (lead) {
@@ -2314,7 +2315,7 @@ function applyEnsembleConductor() {
     : null;
   const conducted = conductEnsemble({
     score: currentScore,
-    melody: melodyFor(currentScore),
+    melody: melodyFor(currentScore, activeGridSteps),
     beat: rawBeat || currentBeat,
     bass: rawBass || currentBass,
     harmony: rawHarmony || currentHarmony,
@@ -2328,6 +2329,7 @@ function applyEnsembleConductor() {
     // unless AS WRITTEN is pressed.
     varied: genreVaried,
     harmonicPass: currentHarmonicPass,
+    stepsCount: activeGridSteps,
   });
   currentConductedSpine = conducted.spine;
   if (!spineToUse) currentCycleSpine = conducted.cycleSpine;
@@ -2362,9 +2364,9 @@ function showScore(rawScore) {
   harmonyMutation = 0;
   chimeMutation = 0;
   chantMutation = 0;
-  for (const id of Object.keys(plateCellCycles)) plateCellCycles[id] = Array(12).fill(0);
+  for (const id of Object.keys(plateCellCycles)) plateCellCycles[id] = Array(activeGridSteps).fill(0);
   if (beatSource) {
-    rawBeat = composeBeat(beatSource, score, beatMutation);
+    rawBeat = composeBeat(beatSource, score, beatMutation, activeGridSteps);
     currentBeat = rawBeat;
     if (elements.beatName) elements.beatName.textContent = currentBeat.modeName;
     if (elements.beatTelemetry) {
@@ -2375,7 +2377,7 @@ function showScore(rawScore) {
     elements.beatName.textContent = BEAT_NAMES[score.beatMode];
   }
   if (bassSource) {
-    rawBass = composeBass(bassSource, score, bassMutation);
+    rawBass = composeBass(bassSource, score, bassMutation, activeGridSteps);
     currentBass = rawBass;
     if (elements.bassName) elements.bassName.textContent = currentBass.modeName;
     if (elements.bassTelemetry) {
@@ -2386,7 +2388,7 @@ function showScore(rawScore) {
     elements.bassName.textContent = BASS_NAMES[score.bassMode];
   }
   if (harmonySource) {
-    rawHarmony = composeHarmony(harmonySource, score, harmonyMutation);
+    rawHarmony = composeHarmony(harmonySource, score, harmonyMutation, activeGridSteps);
     currentHarmony = rawHarmony;
     if (elements.harmonyName) elements.harmonyName.textContent = currentHarmony.modeName;
     if (elements.harmonyTelemetry) {
@@ -2397,7 +2399,7 @@ function showScore(rawScore) {
     elements.harmonyName.textContent = HARMONY_NAMES[score.harmonyMode];
   }
   if (pietSource && fractranSource) {
-    rawChimes = composeChimes(pietSource, fractranSource, score, chimeMutation);
+    rawChimes = composeChimes(pietSource, fractranSource, score, chimeMutation, activeGridSteps);
     currentChimes = rawChimes;
     if (elements.chimeName) elements.chimeName.textContent = currentChimes.modeName;
     if (elements.chimeTelemetry) {
@@ -2408,7 +2410,7 @@ function showScore(rawScore) {
     elements.chimeName.textContent = CHIME_NAMES[score.chimeMode];
   }
   if (chantSource) {
-    rawChant = composeChant(chantSource, score, chantMutation);
+    rawChant = composeChant(chantSource, score, chantMutation, activeGridSteps);
     currentChant = rawChant;
     if (elements.chantName) elements.chantName.textContent = currentChant.modeName;
     if (elements.chantTelemetry) {
@@ -2419,7 +2421,7 @@ function showScore(rawScore) {
     elements.chantName.textContent = CHANT_NAMES[score.chantMode];
   }
   if (conductorSource) {
-    currentArrangement = composeArrangement(conductorSource, score);
+    currentArrangement = composeArrangement(conductorSource, score, activeGridSteps);
   }
   updateArrangementDisplay(currentTransport?.audibleStep ?? null);
   applyEnsembleConductor();
@@ -2884,11 +2886,11 @@ async function exportSpecimenStems() {
 // marker names its loop (and repeat), and loops are marked even under Raw Chaos.
 function arrangementMarkers(stepStarts) {
   const arrangement = activeArrangement();
-  const passes = Math.floor(stepStarts.length / 12);
+  const passes = Math.floor(stepStarts.length / activeGridSteps);
   const markers = [];
   for (let pass = 0; pass < passes; pass += 1) {
-    const base = pass * 12;
-    const position = songPosition(song, base);
+    const base = pass * activeGridSteps;
+    const position = songPosition(song, base, activeGridSteps);
     const repeats = position ? song.loops[position.loopIndex].repeats : 1;
     const roleTag = position?.role && position.role !== "main" ? ` [${position.role.toUpperCase()}]` : "";
     const loopLabel = position ? `LOOP ${position.loopIndex + 1}${roleTag}${repeats > 1 ? ` (${position.repeat + 1}/${repeats})` : ""}` : null;
@@ -4052,6 +4054,56 @@ elements.sessionFileInput?.addEventListener("change", async () => {
 
 syncSessionButtons();
 
+// --- Keep Wing Segmented Decks (P8-16, D-082) -------------------------------
+
+function readKeepDeck() {
+  try {
+    return window.localStorage.getItem("whimsy-machine.keep-deck");
+  } catch {
+    return null;
+  }
+}
+
+function writeKeepDeck(deckId) {
+  try {
+    window.localStorage.setItem("whimsy-machine.keep-deck", deckId);
+  } catch {
+    // Local storage disabled or quota full
+  }
+}
+
+function initKeepDeckTabs() {
+  const tabs = [
+    { id: "export", tab: document.getElementById("keep-tab-export"), engine: document.getElementById("export-engine") },
+    { id: "session", tab: document.getElementById("keep-tab-session"), engine: document.getElementById("session-engine") },
+    { id: "studio", tab: document.getElementById("keep-tab-studio"), engine: document.getElementById("studio-engine") },
+    { id: "herbarium", tab: document.getElementById("keep-tab-herbarium"), engine: document.getElementById("herbarium-engine") },
+  ];
+  let activeDeck = "export";
+  const saved = readKeepDeck();
+  if (saved && tabs.some((t) => t.id === saved)) activeDeck = saved;
+
+  function selectDeck(deckId) {
+    activeDeck = deckId;
+    writeKeepDeck(deckId);
+    for (const { id, tab, engine } of tabs) {
+      if (!tab || !engine) continue;
+      const isMatch = id === deckId;
+      tab.classList.toggle("is-active", isMatch);
+      tab.setAttribute("aria-selected", String(isMatch));
+      engine.hidden = !isMatch;
+    }
+  }
+
+  for (const { id, tab } of tabs) {
+    if (!tab) continue;
+    tab.addEventListener("click", () => selectDeck(id));
+  }
+  selectDeck(activeDeck);
+}
+
+initKeepDeckTabs();
+
 // --- The Naturalist's Herbarium curio gallery (P5-35, D-070) ----------------
 
 function readHerbariumStore() {
@@ -4440,8 +4492,8 @@ function performanceFor(slot, pass = null, position = currentTransport?.songPosi
   const isSection = slot.style === "intro" || slot.style === "bridge" || slot.style === "outro";
   const sectionPass = isSection && pass === null ? sectionPassForLoop(song, position?.loopIndex, position?.repeat) : null;
   const effectivePass = pass !== null ? pass : (sectionPass !== null ? sectionPass : currentHarmonicPass);
-  const key = `${slot.key}:${slot.style}:${activeGenre}:${tonic}:${effectivePass}:${genreVaried}:${currentScore?.seed}`;
-  if (!performanceCache.has(key)) performanceCache.set(key, performanceOf(slot.key, slot.style, effectivePass));
+  const key = `${slot.key}:${slot.style}:${activeGenre}:${tonic}:${effectivePass}:${genreVaried}:${currentScore?.seed}:${activeGridSteps}`;
+  if (!performanceCache.has(key)) performanceCache.set(key, performanceOf(slot.key, slot.style, effectivePass, activeGridSteps));
   return performanceCache.get(key);
 }
 
@@ -5634,6 +5686,7 @@ elements.transportGridSteps?.addEventListener("click", () => {
   elements.transportGridSteps.setAttribute("aria-pressed", String(activeGridSteps === 16));
   elements.transportGridSteps.textContent = activeGridSteps === 16 ? "16 STEPS (4/4)" : "12 STEPS (TRIPLET)";
   updateTransportPosition(currentTransport?.audibleStep ?? null);
+  performanceCache.clear();
   if (currentScore) {
     for (const id of ["beat", "bass", "harmony", "chime", "chant"]) recomposePlate(id);
     if (conductorSource) currentArrangement = composeArrangement(conductorSource, currentScore, activeGridSteps);
@@ -5648,7 +5701,7 @@ elements.transportGridSteps?.addEventListener("click", () => {
   if (currentTransport && audioContext && currentScore) {
     const rhythm = RHYTHMS[effectiveRhythmIndex(currentScore, activeGenre)];
     const unit = stepUnitSeconds(activeTempoBpm || currentScore.pulse, rhythm, barLock44, activeGridSteps);
-    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, 60 / (unit * 2), effectiveRhythmIndex(currentScore, activeGenre)), audioContext.currentTime, 0.08);
+    currentTransport.delay.delayTime.setTargetAtTime(delayTimeFor(currentScore, 60 / (unit * 2), effectiveRhythmIndex(currentScore, activeGenre), unit), audioContext.currentTime, 0.08);
   }
   elements.status.textContent = activeGridSteps === 16
     ? "16-STEP GRID ENGAGED · 4/4 STRAIGHT SIXTEENTH NOTES"

@@ -4,23 +4,23 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-26, session 83, on `main`._
+_Last updated: 2026-10-27, session 84, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
 - D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
 - Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
-- Phase 8: Studio Credibility (P8-01 through P8-05 complete, D-076–D-080). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle.
+- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15, P8-16 complete, D-076–D-082). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle. P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082).
 
-**Where things stand:** P1–P7 and P8-01 through P8-05 are fully implemented, verified, and passing across all suites! Version 1.3.0. 240/240 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7 and P8-01 through P8-05, P8-15, and P8-16 are fully implemented, verified, and passing across all suites! Version 1.3.0. 244/244 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-26, session 83, local Linux environment)
+**Verified** (2026-10-27, session 84, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **240/240 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **244/244 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
-| `python3 tools/manual.py check docs/manual.json` | **6 sections, 40 entries, 0 errors, 0 warnings** |
+| `python3 tools/manual.py check docs/manual.json` | **6 sections, 43 entries, 0 errors, 0 warnings** |
 
 **What works**
 
@@ -90,6 +90,38 @@ _Last updated: 2026-10-26, session 83, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 84 (2026-10-27): Phase 8 Studio Credibility: Utterance Metre Synchronization & Keep Wing Ergonomic Polish (P8-15, P8-16, D-081, D-082)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Conduct a deep-level audit across the full ensemble to ensure all instruments and elements speak the same musical language per utterance without metric drift or harmonic collision across 12-step and 16-step metres (P8-15, D-081), and perform an ergonomic UX pass over the Keep Wing (segmented telegraph decks) and Kapellmeister console (fluid flex grouping) to resolve visual bloat and whitespace glitches (P8-16, D-082).
+
+**Done:** All parts implemented and verified. 244/244 automated tests pass.
+
+**Changed:**
+1. Aural Coherence & Metre Synchronization (P8-15, D-081):
+   - `src/tuning.mjs`: `stepUnitSeconds` accepts `stepsCount = 12` with 16-step bar-aligned calculation.
+   - `src/ensemble.mjs`: `delayTimeFor` accepts `unitOverride`, synchronizing echo taps to active step duration.
+   - `src/mycelium.mjs`: `myceliumEvents` scales biological spore puffs and hyphal triggers to `stepsCount` without 12-step wrapping.
+   - `src/schedulers.mjs`: parameterized `scheduleClockworkTick` to true quarter notes and half-bars; dynamically scaled filter sweeps, detune cycles, and region damping to active measure stride ($S/4$).
+   - `src/accompaniment.mjs`: `buildPerformance` generates 4-chord progression regions in 16-step mode.
+   - `src/app.mjs`: passed `melodyFor(currentScore, activeGridSteps)` and `stepsCount: activeGridSteps` to `conductEnsemble()`, fixing the 16-step runtime out-of-bounds exception.
+   - `tests/utterance-coherence.test.mjs`: added comprehensive regression test suite (4/4 passing).
+2. UX & Ergonomic Polish (P8-16, D-082):
+   - `index.html`: added `.keep-deck-nav` tab selector in `#drawer-body-keep` (`#keep-tab-export`, `#keep-tab-session`, `#keep-tab-studio`, `#keep-tab-herbarium`); grouped Kapellmeister controls into `.kapellmeister-group-rulebook` and `.kapellmeister-group-tuning`; formatted export parameters into $2 \times 2$ grid (`.export-format-grid`) with Victorian sublabels.
+   - `styles.css`: added styles for telegraph deck navigation, panel isolation (`.wing-keep .beat-engine[hidden] { display: none !important; }`), Kapellmeister flex wrapping, and export format grid cells.
+   - `src/app.mjs`: implemented `readKeepDeck()`, `writeKeepDeck()`, and `initKeepDeckTabs()` with guarded `window.localStorage` persistence under `whimsy-machine.keep-deck`.
+3. 3x Documentation & Engine Integrity:
+   - Added entries `utterance-metre-synchronizer`, `kapellmeister-fluid-layout`, and `keep-segmented-decks` to `docs/manual.json` (43 entries, 0 warnings) and built `manual.html`.
+   - Logged D-081 and D-082 in `docs/DECISIONS.md`.
+   - Updated `ROADMAP.md` (P8-15, P8-16), `docs/ARCHITECTURE.md`, `docs/TESTING.md`, and archived Session 72 in `docs/archive/sessions.md`.
+   - Re-stamped asset version via `tools/stamp_assets.mjs`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 244/244 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 43 entries, 0 errors, 0 warnings.
 
 ### Session 83 (2026-10-26): Phase 8 Studio Credibility: Native 16-Step Straight Grid Metre (P8-05, D-079)
 
@@ -396,35 +428,6 @@ _Last updated: 2026-10-26, session 83, on `main`._
 - `node --test tests/*.test.mjs`: 186/186 checks passed.
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
-
-### Session 72: 2026-10-23: raw instrumentation 48-step base groove loops in the Loop Machine (D-059)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Enable using the creature's raw 48-step base groove (4 passes of 12 steps) as loops in the Loop Machine so mixes longer than 5 seconds / 12 steps can be created and exported across WAV, Stems, and MIDI.
-
-**Done:** D-059 is accepted and verified. 185/185 checks pass.
-
-**Changed:**
-1. `src/looper.mjs`:
-   - `sectionPassForLoop(song, loopIndex, repeat)` now resolves pass 0..3 across contiguous `main` groove loops.
-   - `validateSong(raw, path)` permits empty takes (`slots.every(s => s === null)`) when `loop.role === "main"`. Non-main roles (`intro`, `bridge`, `outro`) still require keys.
-2. `index.html` & `styles.css`:
-   - Added `<button class="beat-button looper-button looper-section-button" id="looper-insert-groove" type="button">+ GROOVE</button>` between `+ INTRO` and `+ BRIDGE`.
-   - Added emerald/verdigris border accent `.looper-tile[data-role="main"]`.
-3. `src/app.mjs`:
-   - `insertSectionLoops("main")` inserts 4 loops of `emptyTake()` with `role: "main"` when no key is held on the manual (raw band without organ ducking), or Fun Machine progression takes when a key is held.
-   - `harmonicPassAt(absoluteStep)` queries `sectionPassForLoop` for the active loop, ensuring groove loops walk passes 0..3.
-   - `followSong(transport, loop, stepIndex, liveSlot)` tracks `raw:${currentHarmonicPass}` when `lead` is null, seamlessly re-conducting the band to the current pass of the harmonic cycle at each groove loop boundary.
-   - Readout and tiles display `L1 [GROOVE 1/4]`, `L2 [GROOVE 2/4]`, etc.
-4. Tests & documentation:
-   - Updated `tests/looper.test.mjs` with test coverage for raw groove loops and pass resolution.
-   - Stamped asset version (`node tools/stamp_assets.mjs`).
-
-**Verified:**
-- 185/185 automated tests pass (`node --test tests/*.test.mjs`).
-- Documentation check passes with 0 errors and 0 warnings (`python3 tools/check_docs.py`).
-- Manual check passes with 0 errors and 0 warnings (`python3 tools/manual.py check docs/manual.json`).
 
 
 

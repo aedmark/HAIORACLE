@@ -107,8 +107,8 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
   // chord), and the region's three lead notes held four steps each.
   if (pass !== null && style === "progression") {
     const regionIndex = ((Math.trunc(pass) % 4) + 4) % 4;
-    const { spine, moves } = varied && score ? varyProgression(chords, key, genre, score) : { spine: chords.flatMap((chord) => [chord, chord, chord]), moves: [] };
     const stride = stepsCount === 16 ? 4 : 3;
+    const { spine, moves } = varied && score ? varyProgression(chords, key, genre, score) : { spine: chords.flatMap((chord) => Array(stride).fill(chord)), moves: [] };
     const steps = Array.from({ length: stepsCount }, (_, index) => {
       const entry = (regionIndex * stride + Math.floor(index / 4)) % spine.length;
       const chord = spine[entry] || chords[regionIndex];
@@ -208,7 +208,7 @@ export function buildPerformance(keySemitone, style, genre, tonicRoot = 0, { pas
     chords: Object.freeze([...chords]),
     steps: Object.freeze(steps),
     summary,
-    regionSteps: 3,
+    regionSteps: stepsPerRegion,
     variation: sectionMoves,
   });
 }

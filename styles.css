@@ -2018,10 +2018,31 @@ h1 em {
 
 .kapellmeister-actions {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.5rem 0.75rem;
   min-width: 0;
   max-width: 100%;
+}
+
+.kapellmeister-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid rgba(184, 146, 73, 0.25);
+  background: rgba(14, 10, 8, 0.55);
+}
+
+.kapellmeister-group-rulebook {
+  border-color: rgba(184, 146, 73, 0.35);
+}
+
+.kapellmeister-group-tuning {
+  border-color: rgba(184, 146, 73, 0.25);
+  background: rgba(10, 8, 6, 0.75);
 }
 
 /* The Fun Machine's telemetry narrates every held key and progression, so
@@ -2886,22 +2907,89 @@ noscript {
       0 30px 80px rgba(0, 0, 0, 0.92);
   }
 
-  /* In keep drawer, put session-engine, export-engine, and studio-engine side by side */
+  /* In keep drawer, display active segmented deck panel cleanly */
   #drawer-body-keep:not([hidden]) {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: clamp(1.2rem, 3vw, 2.5rem);
+    display: block;
     padding: 1.2rem clamp(1.1rem, 3vw, 2.8rem);
   }
 
-  #session-engine,
-  #export-engine {
-    border-right: 2px solid var(--brass-dim);
-    border-bottom: 0;
+  .wing-keep .beat-engine[hidden] {
+    display: none !important;
   }
 
-  #studio-engine {
-    border-bottom: 0;
+  #session-engine,
+  #export-engine,
+  #studio-engine,
+  #herbarium-engine {
+    border: 1.5px solid var(--brass-dim);
+    margin-top: 0.65rem;
+  }
+}
+
+/* Keep Wing Segmented Decks & Export Format Grid (P8-16, D-082) */
+.keep-deck-nav {
+  margin: 0.5rem 0 0.85rem;
+  padding: 0;
+}
+
+.keep-deck-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  border-bottom: 2px solid var(--brass-dim);
+  padding-bottom: 0.5rem;
+}
+
+.keep-deck-tab {
+  background: rgba(22, 17, 13, 0.85);
+  border: 1px solid var(--brass-dim);
+  color: var(--parchment-deep);
+  font-family: var(--mono-ledger);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.keep-deck-tab:hover {
+  color: var(--parchment-light);
+  border-color: var(--brass);
+}
+
+.keep-deck-tab.is-active,
+.keep-deck-tab[aria-selected="true"] {
+  background: var(--brass-dim);
+  color: #120e0a;
+  border-color: var(--brass-bright);
+}
+
+.export-format-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  width: 100%;
+}
+
+.export-format-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.export-sublabel {
+  font-family: var(--mono-ledger);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--brass-bright);
+  text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+  .export-format-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
