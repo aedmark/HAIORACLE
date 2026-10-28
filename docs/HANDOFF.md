@@ -4,22 +4,22 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-27, session 85, on `main`._
+_Last updated: 2026-10-27, session 86, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
 - D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
 - Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
-- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15, P8-16, P8-17 complete, D-076–D-082, D-084). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle. P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084).
+- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084, D-085). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle. P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085).
 - Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-17, and Phase 9 (P9-01 through P9-03) are fully implemented, verified, and passing across all suites! Version 1.4.1. 252/252 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stage 1), and Phase 9 (P9-01 through P9-03) are fully implemented, verified, and passing across all suites! Version 1.4.2. 254/254 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-27, session 85, local Linux environment)
+**Verified** (2026-10-27, session 86, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
-| `node --test tests/*.test.mjs` | **252/252 behavioral and structural checks passed** |
+| `node --test tests/*.test.mjs` | **254/254 behavioral and structural checks passed** |
 | `python3 tools/check_docs.py` | **0 errors, 0 warnings across 14 documents** |
 | `python3 tools/manual.py check docs/manual.json` | **6 sections, 44 entries, 0 errors, 0 warnings** |
 
@@ -91,6 +91,28 @@ _Last updated: 2026-10-27, session 85, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 86 (2026-10-27): Ensemble Timbral Expansion Stage 1 — Lead Register Elevation & Mycelium Physical Modeling (P8-18, D-085)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Implement Stage 1 of the ensemble timbral expansion (P8-18, D-085) per maintainer feedback, addressing two critical acoustic issues: (1) elevate the LOLCODE lead melody into singing register (C4–C6) with dynamic gate articulation, replace muddy `-12` sub-octave dragging voice stacks with shimmering overtones (`+12`, `+24`), and rebalance continuous drone sub-bass rumble so the melody soars cleanly; (2) ground the mycelium bio-acoustic droplet and spike fundamentals in `score.root` pitch class, and implement physical acoustic modeling in `scheduleFungalBioStep()` (woody shelf thumps for Bracket Conk, liquid surface-tension meniscus downward pitch chirps for falling guttation drops, and distinct acoustic decay envelopes across all eight sporophores).
+
+**Done:** All Stage 1 improvements implemented, tested, and verified. 254/254 automated tests passing.
+
+**Changed:**
+1. Lead Synthesis & Articulation (`src/schedulers.mjs`, `src/ensemble.mjs`, `src/app.mjs`, D-085):
+   - Lifted notes below middle C (MIDI 60) by +12 semitones into the singing register (C4–C6, MIDI 60–84).
+   - Scaled attack/decay dynamics dynamically with `score.gate`: crisp gate produces punchy staccato pluck transients (5–12 ms) with clean note release, while legato gate produces smooth singing sustain.
+   - Replaced sub-octave dragging layers (`{ interval: -12 }`) in `voiceStack()` with singing overtones: octave shimmer (`+12`), wide chorused octaves, and double-octave brilliance (`+24`), eliminating low-end mud while preserving consonance rules against raw unconducted fifths (`interval: 7`).
+   - Rebalanced continuous drone sub-bass resting gain from 0.085 down to 0.045 in `src/ensemble.mjs` and `src/app.mjs`.
+2. Mycelium Bio-Acoustic Grounding & Physical Modeling (`src/mycelium.mjs`, `src/schedulers.mjs`, D-085):
+   - Anchored fundamental droplet and spike frequencies to `score.root` pitch class (`rootAnchor = 2 ** (((score.root % 12) - 6) / 24)`), ensuring different phrases and keys summon distinct bio-acoustic registers while preserving bloom tilt invariants.
+   - Extended sporophore decay envelopes and added physical acoustic modeling: hollow woody shelf resonance thumps (85 Hz -> 45 Hz) for Bracket Conk (form 1), liquid surface-tension meniscus downward pitch chirps for falling guttation drops, and distinct acoustic decay envelopes across all eight sporophore forms.
+3. Automated Verification (`tests/utterance-coherence.test.mjs`, `tests/mycelium.test.mjs`):
+   - Added unit test asserting lead scheduler lifts low roots (30, 36, 48, 55) into singing register (>= MIDI 60) and confirms all voice stacks maintain non-negative intervals (`interval >= 0`).
+   - Added unit test asserting mycelium fundamental frequencies shift deterministically with root pitch class across different keys while keeping decay and peak parameters strictly bounded across all eight forms.
+   - Suite total increased from 252 to 254 tests, all passing with zero failures.
 
 ### Session 85 (2026-10-27): Phase 9 Autopoiesis & Fractal Dynamics (P9-01, P9-02, P9-03, D-083) and 16-Step Progression & Metre Synchronization (P8-17, D-084)
 
@@ -395,41 +417,6 @@ _Last updated: 2026-10-27, session 85, on `main`._
 
 **Verified:**
 - `node --test tests/*.test.mjs`: 195/195 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
-
-### Session 74 (2026-10-24): Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061)
-
-**Done:**
-- Implemented Stage 1 of the approved DAW integration specification (D-061): bidirectional Web MIDI input/output, AudioContext sink device selection, and Keep Wing Studio Deck UI.
-- All 194 automated checks pass, with zero documentation and manual warnings.
-
-**Changed:**
-1. `src/midi-io.mjs`:
-   - Note-to-semitone mapping (`midiNoteToSemitone()`) folding octaves into 0..12, preserving C5 as high C.
-   - MIDI parser (`parseMidiMessage()`) handling Note On/Off, CC 64 (sustain hold), CC 1 (mod wheel), CC 7/11 (volume), and Realtime Clock/Transport.
-   - Outbound packet generators (`makeNoteOn`, `makeNoteOff`, `makeAllNotesOff`).
-   - Web MIDI API helpers (`requestMidiAccess`, `getMidiPorts`, `bindMidiInput`, `sendMidiMessage`).
-   - Audio sink routing (`getAudioOutputDevices`, `setAudioOutputSink`, `isSetSinkIdSupported`).
-2. `src/app.mjs`:
-   - Inbound notes trigger `triggerFunKey()`, directly driving manual pad voicings, lead arpeggios, and step sequencer slots.
-   - Inbound CC 64 latches manual voices as an authentic sustain pedal until released.
-   - Inbound CC 1 drives organism agitation, perturbation, and mycelial spore bursts.
-   - Outbound score broadcasting emits precision-timestamped Note On/Off pairs across 8 channels (Manual Ch 1, Lead Ch 2, Bass Ch 3, Harmony Ch 4, Chimes Ch 5, Choir Ch 6, Mycelium Ch 7, Beat Ch 10).
-   - Audio sink selector queries output devices and calls `setAudioOutputSink()` on the audio graph.
-3. `index.html` & `styles.css`:
-   - Added `#studio-engine` inside Wing IV (Keep) with MIDI In/Out dropdowns, Connect button, Broadcast toggle, and Audio Sink selector.
-   - Responsive multi-column layout for `#drawer-body-keep:not([hidden])` supporting Session Ledger, Export Desk, and Studio Deck side-by-side.
-4. `tests/midi-io.test.mjs` & static tests:
-   - Added 8 unit tests in `tests/midi-io.test.mjs` covering note mapping, CC parsing, realtime clock, and mock MIDIAccess port binding.
-   - Updated DOM hierarchy assertions in `tests/static.test.mjs`.
-5. Assets, Manual & Decisions:
-   - Stamped `ASSET_VERSION` to `7aa3e6c86ec1`.
-   - Added `studio-deck-and-daw-routing` to `docs/manual.json` and rebuilt `manual.html`.
-   - Recorded D-061 in `docs/DECISIONS.md`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 194/194 checks passed.
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 

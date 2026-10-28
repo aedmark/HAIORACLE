@@ -330,7 +330,7 @@ export function buildEnsembleGraph(context, score, {
   const drones = [];
   const droneGains = [];
   const droneEnvelopes = [];
-  const initialDroneGains = [0.085, score.voice === 5 ? 0.035 : 0.018, SILENT_GAIN];
+  const initialDroneGains = [0.045, score.voice === 5 ? 0.025 : 0.016, SILENT_GAIN];
   for (const [index, interval] of DRONE_INTERVALS.entries()) {
     const drone = context.createOscillator();
     const droneGain = context.createGain();

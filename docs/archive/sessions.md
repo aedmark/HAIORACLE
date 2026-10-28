@@ -1898,6 +1898,42 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 35 entries, 0 errors, 0 warnings.
 
+### Session 74 (2026-10-24): Standalone Studio Companion Stage 1: Web MIDI & Audio Sink (D-061)
+
+**Done:**
+- Implemented Stage 1 of the approved DAW integration specification (D-061): bidirectional Web MIDI input/output, AudioContext sink device selection, and Keep Wing Studio Deck UI.
+- All 194 automated checks pass, with zero documentation and manual warnings.
+
+**Changed:**
+1. `src/midi-io.mjs`:
+   - Note-to-semitone mapping (`midiNoteToSemitone()`) folding octaves into 0..12, preserving C5 as high C.
+   - MIDI parser (`parseMidiMessage()`) handling Note On/Off, CC 64 (sustain hold), CC 1 (mod wheel), CC 7/11 (volume), and Realtime Clock/Transport.
+   - Outbound packet generators (`makeNoteOn`, `makeNoteOff`, `makeAllNotesOff`).
+   - Web MIDI API helpers (`requestMidiAccess`, `getMidiPorts`, `bindMidiInput`, `sendMidiMessage`).
+   - Audio sink routing (`getAudioOutputDevices`, `setAudioOutputSink`, `isSetSinkIdSupported`).
+2. `src/app.mjs`:
+   - Inbound notes trigger `triggerFunKey()`, directly driving manual pad voicings, lead arpeggios, and step sequencer slots.
+   - Inbound CC 64 latches manual voices as an authentic sustain pedal until released.
+   - Inbound CC 1 drives organism agitation, perturbation, and mycelial spore bursts.
+   - Outbound score broadcasting emits precision-timestamped Note On/Off pairs across 8 channels (Manual Ch 1, Lead Ch 2, Bass Ch 3, Harmony Ch 4, Chimes Ch 5, Choir Ch 6, Mycelium Ch 7, Beat Ch 10).
+   - Audio sink selector queries output devices and calls `setAudioOutputSink()` on the audio graph.
+3. `index.html` & `styles.css`:
+   - Added `#studio-engine` inside Wing IV (Keep) with MIDI In/Out dropdowns, Connect button, Broadcast toggle, and Audio Sink selector.
+   - Responsive multi-column layout for `#drawer-body-keep:not([hidden])` supporting Session Ledger, Export Desk, and Studio Deck side-by-side.
+4. `tests/midi-io.test.mjs` & static tests:
+   - Added 8 unit tests in `tests/midi-io.test.mjs` covering note mapping, CC parsing, realtime clock, and mock MIDIAccess port binding.
+   - Updated DOM hierarchy assertions in `tests/static.test.mjs`.
+5. Assets, Manual & Decisions:
+   - Stamped `ASSET_VERSION` to `7aa3e6c86ec1`.
+   - Added `studio-deck-and-daw-routing` to `docs/manual.json` and rebuilt `manual.html`.
+   - Recorded D-061 in `docs/DECISIONS.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 194/194 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+
 
 
 

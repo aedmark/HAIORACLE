@@ -31,14 +31,14 @@ export function voiceStack(score, step) {
   const stacks = [
     [{ interval: 0, detune: 0, gain: 1 }],
     [{ interval: 0, detune: -5, gain: 0.72 }, { interval: 0, detune: 7, gain: 0.48 }],
-    [{ interval: 0, detune: 0, gain: 0.78 }, { interval: -12, detune: -3, gain: 0.32 }],
-    [{ interval: 0, detune: 0, gain: 0.76 }, { interval: -12, detune: 4, gain: 0.3 }],
-    [{ interval: 0, detune: -9, gain: 0.6 }, { interval: 12, detune: 9, gain: 0.28 }],
-    [{ interval: 0, detune: 0, gain: 0.64 }, { interval: -12, detune: -3, gain: 0.24 }, { interval: 12, detune: 3, gain: 0.22 }],
+    [{ interval: 0, detune: 0, gain: 0.76 }, { interval: 12, detune: 4, gain: 0.34 }],
+    [{ interval: 0, detune: -6, gain: 0.68 }, { interval: 12, detune: -3, gain: 0.32 }],
+    [{ interval: 0, detune: -9, gain: 0.60 }, { interval: 12, detune: 9, gain: 0.36 }],
+    [{ interval: 0, detune: 0, gain: 0.62 }, { interval: 12, detune: -3, gain: 0.28 }, { interval: 24, detune: 4, gain: 0.18 }],
   ];
   const selected = stacks[score.voice];
   return step % 6 === 5 && score.voice < 4
-    ? [...selected, { interval: 12, detune: 0, gain: 0.2 }]
+    ? [...selected, { interval: 12, detune: 0, gain: 0.22 }]
     : selected;
 }
 
@@ -484,17 +484,24 @@ export function scheduleNote(context, transport, score, step, at, duration, {
 } = {}) {
   const field = harmonicField();
   const leadRoot = score.root + leadOctaveShift(score);
-  const primaryNote = leadRoot + transport.melody[step % transport.melody.length];
+  const rawNote = leadRoot + transport.melody[step % transport.melody.length];
+  // Singing lead register headroom: lift notes below C4 into C4–C6 (MIDI 60–84)
+  // so the melody soars cleanly above the bass and pad accompaniment (D-085).
+  const singingLift = rawNote < 60 ? 12 : 0;
+  const primaryNote = rawNote + singingLift;
   const consonantInterval = interaction.pitchBend > 0.48 ? 12 : (interaction.pitchBend > 0.2 ? 7 : (interaction.pitchBend < -0.45 ? -12 : (interaction.pitchBend < -0.2 ? -5 : 0)));
-  const shiftedNote = leadRoot + transport.melody[(step + field.phaseStep) % transport.melody.length] + consonantInterval;
+  const shiftedNote = leadRoot + transport.melody[(step + field.phaseStep) % transport.melody.length] + consonantInterval + singingLift;
   const envelope = context.createGain();
-  const attack = Math.min(0.055, duration * (0.2 + field.radius * 0.06));
+  const gateNorm = ((score.gate ?? 60) - 28) / (95 - 28);
+  const attack = Math.max(0.005, Math.min(0.045, duration * (0.04 + gateNorm * 0.16 + field.radius * 0.05)));
   const duck = (transport === currentTransport && activeHeldFunKey !== null) || transport.songLeading ? LEAD_DUCK_GAIN : 1;
   const sulkDuck = transport === currentTransport ? (1 - ((interaction.sulk || 0) * 0.45)) : 1;
-  const peakGain = 0.3 * (1 + interaction.hold * 0.16) * duck * sulkDuck;
+  const peakGain = 0.32 * (1 + interaction.hold * 0.16) * duck * sulkDuck;
+  const soundingDuration = Math.max(0.08, duration * (0.6 + gateNorm * 0.4));
   envelope.gain.setValueAtTime(0.0001, at);
-  envelope.gain.exponentialRampToValueAtTime(peakGain, at + Math.max(0.01, attack));
-  envelope.gain.exponentialRampToValueAtTime(0.0001, at + duration);
+  envelope.gain.exponentialRampToValueAtTime(peakGain, at + attack);
+  envelope.gain.exponentialRampToValueAtTime(Math.max(0.0001, peakGain * 0.45), at + attack + (soundingDuration - attack) * 0.45);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, at + soundingDuration);
   envelope.connect(transport.mix);
   logNote(transport, "lead", primaryNote, at, duration, peakGain);
 
@@ -526,7 +533,7 @@ export function scheduleNote(context, transport, score, step, at, duration, {
       level.gain.value = voice.gain * layer.weight;
       oscillator.connect(level).connect(envelope);
       oscillator.start(at);
-      oscillator.stop(at + duration + 0.06);
+      oscillator.stop(at + soundingDuration + 0.06);
     }
   }
 }
@@ -930,5 +937,35 @@ export function scheduleFungalBioStep(context, transport, score, stepIndex, at, 
     }
     source.start(start);
     source.stop(end + 0.01);
+
+    // Bio-acoustic sporophore physical modeling (D-085):
+    // 1. Bracket Conk (form 1): hollow woody shelf resonance thump
+    if (event.form === 1 && event.kind === "tone" && !event.isDrop) {
+      const shelfWoodOsc = context.createOscillator();
+      const shelfWoodGain = context.createGain();
+      shelfWoodOsc.type = "sine";
+      shelfWoodOsc.frequency.setValueAtTime(85, start);
+      shelfWoodOsc.frequency.exponentialRampToValueAtTime(45, start + 0.06);
+      shelfWoodGain.gain.setValueAtTime(0.0001, start);
+      shelfWoodGain.gain.exponentialRampToValueAtTime(event.peak * 0.7, start + 0.005);
+      shelfWoodGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.07);
+      shelfWoodOsc.connect(shelfWoodGain).connect(bus);
+      shelfWoodOsc.start(start);
+      shelfWoodOsc.stop(start + 0.08);
+    }
+    // 2. Liquid Guttation Droplet Ping (for falling drops): surface-tension meniscus chirp
+    if (event.isDrop && event.to < event.freq) {
+      const pingOsc = context.createOscillator();
+      const pingGain = context.createGain();
+      pingOsc.type = "sine";
+      pingOsc.frequency.setValueAtTime(event.freq * 1.5, start);
+      pingOsc.frequency.exponentialRampToValueAtTime(event.to * 1.2, start + Math.min(0.04, event.decay * 0.35));
+      pingGain.gain.setValueAtTime(0.0001, start);
+      pingGain.gain.exponentialRampToValueAtTime(event.peak * 0.45, start + 0.003);
+      pingGain.gain.exponentialRampToValueAtTime(0.0001, start + Math.min(0.05, event.decay * 0.4));
+      pingOsc.connect(pingGain).connect(bus);
+      pingOsc.start(start);
+      pingOsc.stop(start + 0.06);
+    }
   }
 }

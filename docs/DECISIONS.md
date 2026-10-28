@@ -1759,3 +1759,32 @@ Investigation showed two root causes:
 - The Fun Machine one-finger progression rings out smoothly across the entire 16-step bar, perfectly locked to the active tempo and downbeat.
 - Quarter-note beats under 16-step and 4/4 locked modes are mathematically identical in length ($60 / \text{BPM}$ seconds), eliminating tempo drift and lurching.
 - All 252 tests pass.
+
+## D-085 Lead singing register elevation & Mycelium bio-acoustic physical modeling (2026-10-27, status: accepted)
+
+**Context:** Hands-on listening review highlighted that the ensemble voices lacked dynamic headspace:
+1. *LOLCODE Lead trending toward lower frequency pads:*
+   - With `LEAD_FLOOR = 48` (C3 ~130 Hz), lead melodies rooted between 48 and 65 resided in the tenor/baritone register, right above the bass and in the middle of pad accompaniment.
+   - Voice stacking in `voiceStack()` assigned sub-octave layers (`{ interval: -12 }`) to voices 2, 3, and 5, dragging the synthesizer into low-frequency territory (C2 ~65 Hz).
+   - The continuous tonic drones (`score.root - 12` sub-bass at 0.085 gain) shared the lead channel strip (`strips.lead`), flooding the mix bus with low-frequency energy that masked melodic articulation.
+   - The attack envelope ramped slowly (up to 55 ms) without staccato pluck transients, making lead notes sound like swelling drone pads rather than an articulate singing lead line.
+2. *Mycelium sounding identical across utterances:*
+   - `FUNGAL_SOUNDS` in `src/mycelium.mjs` used static fundamental frequencies completely ungrounded from `score.root` or the musical key.
+   - Schedulers rendered events as brief 18–45 ms micro-clicks and noise bursts without acoustic body, physical droplet dispersion, or resonant formants, causing all eight sporophore forms to register as identical clicks.
+
+**Decision:**
+1. In `scheduleNote()` (`src/schedulers.mjs`), elevate lead notes below C4 (MIDI 60) by +12 semitones into C4–C6 (MIDI 60–84), allowing the lead melody to soar above the accompaniment in the ear's most sensitive frequency range.
+2. Scale attack/decay dynamics dynamically with `score.gate` in `scheduleNote()`: low gate gives punchy staccato pluck transients (5–12 ms attack) with clean release; high gate gives expressive singing sustain.
+3. Replace `-12` sub-octave intervals in `voiceStack()` with singing overtones: octave shimmer (`+12`), wide chorused octaves, and double-octave brilliance (`+24`), eliminating unconducted low-end mud while preserving the rule against raw parallel fifths (`interval: 7`).
+4. Rebalance continuous drone resting gains from 0.085 to 0.045 in `src/ensemble.mjs` and `src/app.mjs`, letting the drones provide warm harmonic bedrock without overpowering the lead.
+5. In `src/mycelium.mjs`, anchor droplet and spike fundamental frequencies to `score.root` pitch class (`rootAnchor = 2 ** (((score.root % 12) - 6) / 24)`), ensuring different phrases and keys summon palpably distinct bio-acoustic registers while preserving bloom tilt invariants.
+6. Extend sporophore decay envelopes and implement physical acoustic modeling in `scheduleFungalBioStep()` (`src/schedulers.mjs`):
+   - Bracket Conk (form 1): hollow woody shelf resonance thump (85 Hz -> 45 Hz).
+   - Falling guttation drops: liquid surface-tension meniscus downward pitch chirps.
+   - Distinct acoustic signatures across all 8 forms (Agaric Cap liquid drops, Bracket Conk woody knocks, Coral Clavaria glass glints, Bonnet shimmering ghost chords, Peziza chalice bloops, Morel cellular ticking, Puffball deep spore billows, Hydra rising chirps).
+7. Verified by automated tests in `tests/utterance-coherence.test.mjs` and `tests/mycelium.test.mjs` (254/254 passing).
+
+**Consequences:**
+- The LOLCODE lead sings with crisp articulation and expressive clarity across octaves 4 and 5, elevated above the drones and accompaniment.
+- The mycelium acquires organic physical presence and utterance-specific harmonic variety, sounding unique across different summoned creatures.
+- All 254 behavioral tests pass.

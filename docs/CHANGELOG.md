@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.2] - 2026-10-27
+
+### Enhanced
+
+- Lead Singing Register Elevation & Dynamic Articulation (`P8-18`, `D-085`):
+  - Elevated LOLCODE lead notes below middle C (MIDI 60) by +12 semitones into the singing register (C4–C6, MIDI 60–84), allowing the lead melody to soar above the accompaniment rather than getting buried in the low-frequency pad register.
+  - Added dynamic `score.gate` attack and decay envelope shaping in `src/schedulers.mjs`: crisp gates produce punchy staccato pluck transients (5–12 ms) with snappy note release, while legato gates produce smooth expressive sustain.
+  - Replaced sub-octave dragging layers (`{ interval: -12 }`) in `voiceStack()` with singing overtones: octave shimmer (`+12`), wide chorused octaves, and double-octave brilliance (`+24`), eliminating low-end mud while preserving consonance rules.
+  - Rebalanced continuous drone sub-bass resting gain from 0.085 down to 0.045 in `src/ensemble.mjs` and `src/app.mjs`, letting the drones provide warm harmonic bedrock without overpowering the lead melody.
+- Mycelium Bio-Acoustic Harmonic Grounding & Physical Modeling (`P8-18`, `D-085`):
+  - Anchored fundamental droplet and spike frequencies to the creature's `score.root` pitch class (`rootAnchor = 2 ** (((score.root % 12) - 6) / 24)`), ensuring different phrases and musical keys summon distinct bio-acoustic registers while preserving bloom tilt invariants.
+  - Implemented physical acoustic modeling in `scheduleFungalBioStep()`: added hollow resonant shelf thumps (85 Hz -> 45 Hz) for Bracket Conk (form 1), liquid surface-tension meniscus downward pitch chirps for falling guttation drops, and distinct acoustic decay envelopes across all eight sporophore forms.
+
 ## [1.4.1] - 2026-10-27
 
 ### Fixed

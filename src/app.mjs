@@ -663,7 +663,7 @@ function updateAudioInteraction() {
   const retaliationDetune = (interaction.retaliationPitchDrop || 0) * -420;
   const sulkDetune = Math.sin(now * 1.6) * ((interaction.sulk || 0) * -35);
 
-  const subWeight = 0.085 * (1 + Math.max(0, -interaction.pitchBend) * 0.55 * interaction.hold) * (1 - ((interaction.sulk || 0) * 0.35));
+  const subWeight = 0.045 * (1 + Math.max(0, -interaction.pitchBend) * 0.55 * interaction.hold) * (1 - ((interaction.sulk || 0) * 0.35));
   const fifthWeight = (0.035 + field.radius * 0.065 * (0.5 - 0.5 * Math.cos(field.angle * 2))) * (1 - ((interaction.sulk || 0) * 0.4));
   const shimmerWeight = (field.radius * 0.058 * (0.5 + 0.5 * Math.sin(interaction.pitchBend * Math.PI * 0.5))) * (1 - ((interaction.sulk || 0) * 0.5));
   // The tonic drones step back with the lead while the band follows a held key.

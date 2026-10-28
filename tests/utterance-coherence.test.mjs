@@ -14,6 +14,7 @@ import { composeChant } from "../src/shakespeare.mjs";
 import { melodyFor } from "../src/music.mjs";
 import { myceliumEvents } from "../src/mycelium.mjs";
 import { composeScore } from "../src/score.mjs";
+import { scheduleNote, voiceStack } from "../src/schedulers.mjs";
 import { effectiveRhythmTemplate, stepUnitSeconds } from "../src/tuning.mjs";
 
 const root = new URL("../", import.meta.url);
@@ -152,5 +153,78 @@ test("effectiveRhythmTemplate guarantees equal quarter-note beats in 16-step and
     assert.deepEqual(beatSums12, [3, 3, 3, 3], `12-step locked rhythm ${idx} produces equal 3.0-unit quarter-note beats`);
     const unit12 = stepUnitSeconds(bpm, r12, true, 12);
     assert.ok(Math.abs(unit12 * 3 - 0.5) < 1e-9, `quarter note is approximately 0.5s at 120 BPM in 12-step locked mode`);
+  }
+});
+
+test("lead singing register headroom and overtone stack consonance", () => {
+  const score = composeScore(oracleSrc, "cerulean teapot remembers");
+  for (let voice = 0; voice < 6; voice += 1) {
+    const stack = voiceStack({ voice }, 0);
+    for (const v of stack) {
+      assert.ok(v.interval >= 0, `voice stack ${voice} interval ${v.interval} is non-negative (no sub-drag)`);
+    }
+  }
+
+  // Lead scheduler lifts low roots into the singing register (>= MIDI 60, C4)
+  const fakeContext = () => {
+    const nodes = [];
+    const makeParam = (initial = 0) => ({
+      value: initial,
+      setValueAtTime() {},
+      exponentialRampToValueAtTime() {},
+      setTargetAtTime() {},
+    });
+    return {
+      currentTime: 0,
+      createGain: () => {
+        const g = { gain: makeParam(1), connect: () => g };
+        nodes.push(g);
+        return g;
+      },
+      createOscillator: () => {
+        const o = { frequency: makeParam(440), detune: makeParam(0), type: "sine", connect: () => o, start() {}, stop() {} };
+        nodes.push(o);
+        return o;
+      },
+    };
+  };
+
+  const loggedNotes = [];
+  const logNote = (transport, channel, note, at, dur, peak) => {
+    if (channel === "lead") loggedNotes.push(note);
+  };
+
+  for (const root of [30, 36, 48, 55]) {
+    const ctx = fakeContext();
+    const testScore = { ...score, root, gate: 40 };
+    const transport = { mix: ctx.createGain(), melody: [0, 2, 4, 7] };
+    scheduleNote(ctx, transport, testScore, 0, 1.0, 0.25, { currentTransport: transport, logNote });
+    const lastNote = loggedNotes.at(-1);
+    assert.ok(lastNote >= 60, `lead note for root ${root} is elevated into singing register >= 60 (got ${lastNote})`);
+  }
+});
+
+test("mycelium bio-acoustic harmonic grounding and physical modeling", () => {
+  const scoreC = { ...composeScore(oracleSrc, "connoisseur of small umbrellas"), root: 48 };
+  const scoreFSharp = { ...composeScore(oracleSrc, "connoisseur of small umbrellas"), root: 54 };
+
+  const loopEventsC = Array.from({ length: 12 }, (_, s) => myceliumEvents(scoreC, s)).flat();
+  const loopEventsFSharp = Array.from({ length: 12 }, (_, s) => myceliumEvents(scoreFSharp, s)).flat();
+
+  const tonesC = loopEventsC.filter((e) => e.kind === "tone");
+  const tonesFSharp = loopEventsFSharp.filter((e) => e.kind === "tone");
+
+  assert.ok(tonesC.length > 0 && tonesFSharp.length > 0);
+  assert.notEqual(tonesC[0].freq, tonesFSharp[0].freq, "fundamental frequencies shift with root pitch class");
+
+  // Every form produces distinct acoustic events
+  for (let form = 0; form < 8; form += 1) {
+    const formScore = { ...scoreC, fungalForm: form };
+    const loopEvents = Array.from({ length: 12 }, (_, s) => myceliumEvents(formScore, s)).flat();
+    assert.ok(loopEvents.length > 0, `form ${form} produces loop events`);
+    for (const ev of loopEvents) {
+      assert.ok(ev.decay >= 0.016 && ev.decay <= 0.36, `form ${form} decay in bounds: ${ev.decay}`);
+      assert.ok(ev.peak > 0 && ev.peak <= 0.1, `form ${form} peak in bounds: ${ev.peak}`);
+    }
   }
 });
