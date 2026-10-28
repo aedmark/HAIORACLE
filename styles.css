@@ -2019,11 +2019,11 @@ h1 em {
 .kapellmeister-actions {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: flex-start;
   gap: 0.5rem 0.75rem;
+  width: 100%;
   min-width: 0;
-  max-width: 100%;
 }
 
 .kapellmeister-group {
@@ -2069,22 +2069,25 @@ h1 em {
 }
 
 /* Genre titles and telemetry change length with the rulebook, so the
-   Kapellmeister header is a fixed grid: the title always reserves two lines,
-   the telemetry stays on one, and the menu column never moves. */
+   Kapellmeister header reserves fixed line boxes: the title always reserves two lines,
+   the telemetry stays on one, and switching genres never shifts the controls. */
 .kapellmeister-engine .beat-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
 .kapellmeister-engine .beat-identity {
+  width: 100%;
   min-width: 0;
 }
 
 .kapellmeister-engine .beat-title-row {
-  display: grid;
-  justify-items: start;
-  gap: 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.45rem 1rem;
 }
 
 #kapellmeister-heading {
@@ -2112,12 +2115,6 @@ h1 em {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-@media (max-width: 760px) {
-  .kapellmeister-engine .beat-header {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* A genre's motto from src/rulebooks.ni. Mottos differ in length, so the
