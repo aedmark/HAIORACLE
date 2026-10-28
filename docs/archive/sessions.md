@@ -1967,6 +1967,33 @@ D-041 (more genres) is committed as proposed. P5-28 phase 1 is done.
 - `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
 - `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
+### Session 76 (2026-10-24): Consonant Pad Voicing & Minor-Second Extension Suppression (D-063)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Eliminate minor-second chord cluster beating and dissonant clashes in Phrygian and altered modal passages identified in musician testing (Option A / D-063).
+
+**Done:** All parts implemented and verified under D-063. 196/196 tests pass.
+
+**Changed:**
+1. `src/accompaniment.mjs`:
+   - Updated `soundingPitchClasses(chord)` to exclude minor-second clashes against the root (`((pc - rootPc + 12) % 12) === 1`), such as Phrygian flat-second and alt-dominant flat-ninth extensions.
+   - `padVoicing()` and `arpeggioNotes()` now voice clean, resonant triads and seventh shells (e.g. A Phrygian voices A - C♯ - E, omitting the clashing B♭ in the pad).
+   - In `buildPerformance()`, resolved sustained 4-step lead notes with minor-second root clashes down to the nearest chord tone via `nearestChordTone(leadPitch, chord)`.
+   - `nearestChordTone()` operates against clean `soundingPitchClasses(chord)`.
+2. `tests/accompaniment.test.mjs`:
+   - Added unit test asserting that `soundingPitchClasses` and `padVoicing` omit minor-second extensions for both `phrygian` and `dom7alt`.
+3. Assets & Documentation:
+   - Stamped `ASSET_VERSION` to `cab1d7a1d929`.
+   - Recorded D-063 in `docs/DECISIONS.md`.
+   - Updated `docs/CHANGELOG.md`.
+
+**Verified:**
+- `node --test tests/*.test.mjs`: 196/196 checks passed.
+- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
+- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
+
+
 
 
 

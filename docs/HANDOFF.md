@@ -4,18 +4,18 @@ Read this first when resuming work. Protocol: [AGENTS.md](../AGENTS.md). Plan: [
 
 ## Current state
 
-_Last updated: 2026-10-27, session 87, on `main`._
+_Last updated: 2026-10-28, session 88, on `main`._
 
 - P5-28–P5-30: 22 Inform 7 genres, rhythmic feel, THE CREATURE'S OWN rulebook, variations, and creature voices (D-040, D-041, D-043, D-044, D-060).
 - D-045–D-065: Console UX (D-056), Wave 3 rhythms (D-060), Studio Companion (P5-32: D-061–D-064), Neocities release (D-065, Q-001).
 - D-066–D-071: v1.0.0 Release, App Icon, Module decomposition (P4-03, D-067), GitHub Actions CI (P4-04), MIDI Clock 24-PPQ Sync (P5-33, D-068), Esoteric Step Inspector (P5-34, D-069), Naturalist's Herbarium (P5-35, D-070), and Kapellmeister's Manuscript (P5-36, D-071), packaged into `v1.1.0`.
 - Phase 7: Hardware & Firmware Integration (M-VAVE FM-1) complete (P7-01 through P7-06, D-072–D-075).
-- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-086). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle. P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085); Plates I–V archetype synthesis overhaul across Malbolge beats, Brainfuck bass, Befunge harmony organ, Piet/FRACTRAN chimes, and Shakespeare formant choir (D-086).
+- Phase 8: Studio Credibility (P8-01 through P8-05, P8-15 through P8-18, D-076–D-082, D-084–D-087). P8-01: studio-grade 16/24/32f WAV export with tail folding, phrase-seeded TPDF dither, dry stems, sample-peak ceiling, and smpl/acid/INFO chunks. P8-02: DAW-ready MIDI with key & time signatures and GM drum channel preservation. P8-03: engine versioning & golden fixture fingerprint. P8-04: real-time key, mode, and concert pitch A4 retuning. P8-05: 4/4 Bar Lock and native 16-step straight grid metre toggle; restored 12-step compound shuffle default on fresh runs (D-087). P8-15: unified utterance metre and multi-instrument synchronization (D-081). P8-16: Keep Wing segmented telegraph decks and Kapellmeister ergonomic polish (D-082). P8-17: 16-step metre alignment & Fun Machine progression temporal synchronization (D-084). P8-18: Lead singing register elevation (C4–C6), dynamic gate attack/decay articulation, overtone stacking (+12, +24), continuous drone rebalance, mycelium root pitch-class grounding, and physical sporophore modeling (D-085); Plates I–V archetype synthesis overhaul across Malbolge beats, Brainfuck bass, Befunge harmony organ, Piet/FRACTRAN chimes, and Shakespeare formant choir (D-086).
 - Phase 9: Autopoiesis & Fractal Dynamics (P9-01 through P9-03 complete, D-083). P9-01: discrete graph and 1D boundary solver for Project Navi's Creative Determinant nonlinear elliptic boundary value problem (Coherence, Contradiction, Care), Picard iteration steady-state solver, spectral viability test. P9-02: seed-deterministic Clifford strange attractor glowing nuclear dust and self-similar Weierstrass fractal fluting in Apparition Vitrine. P9-03: Tonnetz harmonic vitality field evaluation, Fibonacci golden-ratio delay tap cascades, and self-similar fractal arpeggiation.
 
-**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), and Phase 9 (P9-01 through P9-03) are fully implemented, verified, and passing across all suites! Version 1.4.2. 255/255 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
+**Where things stand:** P1–P7, P8-01 through P8-05, P8-15 through P8-18 (Stages 1 and 2), and Phase 9 (P9-01 through P9-03) are fully implemented, verified, and passing across all suites! Version 1.4.3. 255/255 automated tests passing. Zero-dependency web core and portable desktop/firmware ecosystem intact.
 
-**Verified** (2026-10-27, session 87, local Linux environment)
+**Verified** (2026-10-28, session 88, local Linux environment)
 
 | Suite | Result |
 | --- | --- |
@@ -91,6 +91,26 @@ _Last updated: 2026-10-27, session 87, on `main`._
 - None (Q-001 answered by D-065).
 
 ## Session log
+
+### Session 88 (2026-10-28): Restored 12-Step Triplet Metre Default for Natural Parlor Arrangements (D-087)
+
+**Contributor:** Antigravity with maintainer direction
+
+**Goal:** Restore the 12-step compound shuffle metric grid as the default on fresh runs per maintainer direction, ensuring newly summoned creatures and initial loads embody the natural swing the generative score, motifs, and esoteric VM scripts were originally arranged around.
+
+**Done:** Default restored, static UI aligned, and automated tests passing under D-087. 255/255 automated checks pass.
+
+**Changed:**
+1. Default Grid Steps (`src/tuning.mjs`, D-087):
+   - Set `DEFAULT_GRID_STEPS = 12` (preserving `GRID_STEPS_OPTIONS = [12, 16]`).
+2. Static Shell Alignment (`index.html`, D-087):
+   - Set `#transport-grid-steps` static button state to `12 STEPS (TRIPLET)` with `aria-pressed="false"`.
+   - Set `#transport-position` static readout to `STEP -- / 12`.
+   - Restamped `ASSET_VERSION` to `348c06057dfb` via `tools/stamp_assets.mjs`.
+3. Unit Testing & Decisions (`tests/metre.test.mjs`, `docs/DECISIONS.md`, `docs/CHANGELOG.md`):
+   - Updated `tests/metre.test.mjs` asserting `DEFAULT_GRID_STEPS === 12`.
+   - Recorded D-087 in `docs/DECISIONS.md`.
+   - Archived Session 76 to `docs/archive/sessions.md` to maintain exactly 10 handoff log entries.
 
 ### Session 87 (2026-10-27): Ensemble Timbral Expansion Stage 2 — Plates I–V Archetype Synthesis Overhaul (P8-18, D-086)
 
@@ -408,31 +428,6 @@ _Last updated: 2026-10-27, session 87, on `main`._
 
 **Next session should start with:** P6-01 (choose public hosting and domain) or user hands-on DAW production with the standalone companion.
 
-### Session 76 (2026-10-24): Consonant Pad Voicing & Minor-Second Extension Suppression (D-063)
-
-**Contributor:** Antigravity with maintainer direction
-
-**Goal:** Eliminate minor-second chord cluster beating and dissonant clashes in Phrygian and altered modal passages identified in musician testing (Option A / D-063).
-
-**Done:** All parts implemented and verified under D-063. 196/196 tests pass.
-
-**Changed:**
-1. `src/accompaniment.mjs`:
-   - Updated `soundingPitchClasses(chord)` to exclude minor-second clashes against the root (`((pc - rootPc + 12) % 12) === 1`), such as Phrygian flat-second and alt-dominant flat-ninth extensions.
-   - `padVoicing()` and `arpeggioNotes()` now voice clean, resonant triads and seventh shells (e.g. A Phrygian voices A - C♯ - E, omitting the clashing B♭ in the pad).
-   - In `buildPerformance()`, resolved sustained 4-step lead notes with minor-second root clashes down to the nearest chord tone via `nearestChordTone(leadPitch, chord)`.
-   - `nearestChordTone()` operates against clean `soundingPitchClasses(chord)`.
-2. `tests/accompaniment.test.mjs`:
-   - Added unit test asserting that `soundingPitchClasses` and `padVoicing` omit minor-second extensions for both `phrygian` and `dom7alt`.
-3. Assets & Documentation:
-   - Stamped `ASSET_VERSION` to `cab1d7a1d929`.
-   - Recorded D-063 in `docs/DECISIONS.md`.
-   - Updated `docs/CHANGELOG.md`.
-
-**Verified:**
-- `node --test tests/*.test.mjs`: 196/196 checks passed.
-- `python3 tools/check_docs.py`: 0 errors, 0 warnings across 14 documents.
-- `python3 tools/manual.py check docs/manual.json`: 6 sections, 36 entries, 0 errors, 0 warnings.
 
 
 

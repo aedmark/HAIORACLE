@@ -1834,3 +1834,19 @@ Investigation showed two root causes:
 - Every esoteric plate now exhibits pronounced, audible tonal and timbral variance across all eight archetypes.
 - Phrases summoning different modes and parameters no longer sound like generic synth presets playing different note patterns; they embody distinct acoustic instruments, vocal tracts, drum machinery, and organ pipe registrations.
 - All 255 behavioral and structural tests pass cleanly.
+
+## D-087 Default Grid Steps Restored to 12-Step Triplet Shuffle (2026-10-28, status: accepted)
+
+**Context:** While native 16-step straight grid generation was introduced in D-079 (`P8-05`), hands-on maintainer review determined that fresh summon runs and new page visits sound most natural and cohesive in the original 12-step compound shuffle metre that the generative score, motifs, Inform 7 rulebooks, and esoteric VM scripts were originally composed around. Defaulting to 16 steps caused fresh runs to bypass the authentic parlor swing feel.
+
+**Decision:**
+1. In `src/tuning.mjs`, update `DEFAULT_GRID_STEPS = 12` (while preserving `GRID_STEPS_OPTIONS = Object.freeze([12, 16])`).
+2. In `index.html`, set the static master transport grid button `#transport-grid-steps` default state to `12 STEPS (TRIPLET)` with `aria-pressed="false"`.
+3. In `index.html`, set the static transport position readout `#transport-position` default text to `STEP -- / 12`.
+4. In `tests/metre.test.mjs`, update the default constant assertion to `assert.equal(DEFAULT_GRID_STEPS, 12)`.
+5. Retain the interactive transport button `#transport-grid-steps` and `.fun` session format v7 serialization (`gridSteps`), allowing users to freely switch to 16-step straight time on demand or restore 16-step sessions seamlessly.
+
+**Consequences:**
+- Fresh runs and newly summoned creatures immediately play in the natural 12-step parlor shuffle metre.
+- Toggling the transport button immediately recomposes all plates into 16-step straight time on demand.
+- All 255 behavioral and structural tests pass cleanly.

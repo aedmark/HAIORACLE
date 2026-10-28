@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.4.3] - 2026-10-28
+
+### Changed
+
+- Default Grid Steps Restored to 12-Step Triplet Shuffle (`D-087`):
+  - Changed `DEFAULT_GRID_STEPS` in `src/tuning.mjs` from 16 to 12, ensuring fresh runs and newly summoned creatures immediately play in the natural compound shuffle swing the generative score and esoteric scripts were originally composed around.
+  - Set static default transport button `#transport-grid-steps` in `index.html` to `12 STEPS (TRIPLET)` (`aria-pressed="false"`) and position readout to `STEP -- / 12`.
+  - Preserved on-demand 16-step straight grid switching and `.fun` session persistence.
+
 ## [1.4.2] - 2026-10-27
 
 ### Enhanced

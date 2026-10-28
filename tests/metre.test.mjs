@@ -19,7 +19,7 @@ const root = new URL("../", import.meta.url);
 
 test("stepUnitSeconds calculates sample-accurate durations for 12 and 16-step metre (P8-05)", () => {
   assert.deepEqual(GRID_STEPS_OPTIONS, [12, 16]);
-  assert.equal(DEFAULT_GRID_STEPS, 16);
+  assert.equal(DEFAULT_GRID_STEPS, 12);
 
   const bpm = 120;
   const flatRhythm = [1, 1, 1, 1];

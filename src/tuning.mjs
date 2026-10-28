@@ -13,7 +13,7 @@ export const MAX_REFERENCE_PITCH = 466;
 export const REFERENCE_PITCH_PRESETS = Object.freeze([415, 432, 440, 442, 444, 466]);
 
 export const GRID_STEPS_OPTIONS = Object.freeze([12, 16]);
-export const DEFAULT_GRID_STEPS = 16;
+export const DEFAULT_GRID_STEPS = 12;
 
 let reference = DEFAULT_REFERENCE_PITCH;
 
